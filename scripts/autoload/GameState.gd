@@ -2,6 +2,7 @@ extends Node
 
 signal language_changed(language: String)
 signal state_changed
+signal save_loaded
 
 const SAVE_VERSION := 1
 
@@ -39,7 +40,12 @@ func get_default_state() -> Dictionary:
 		"quests": {},
 		"workers": {},
 		"upgrades": {},
-		"last_saved_at": 0
+		"last_saved_at": 0,
+		"last_income_timestamp": now,
+		"last_active_timestamp": now,
+		"pending_offline_income": 0,
+		"pending_offline_seconds": 0,
+		"offline_claim_available": false
 	}
 
 
@@ -55,6 +61,7 @@ func apply_loaded_state(loaded_state: Dictionary) -> void:
 			merged_state[key] = loaded_state[key]
 
 	state = merged_state
+	save_loaded.emit()
 	state_changed.emit()
 	language_changed.emit(get_language())
 
@@ -82,3 +89,12 @@ func set_language(language: String) -> void:
 	state["language"] = language
 	language_changed.emit(language)
 	state_changed.emit()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		set_value("last_active_timestamp", Time.get_unix_time_from_system())
+		if has_node("/root/SaveSystem"):
+			var save_sys = get_node("/root/SaveSystem")
+			if save_sys.has_method("save_game"):
+				save_sys.save_game()

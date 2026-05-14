@@ -718,5 +718,77 @@
 	"achievement.discover_first_variant.name": {
 		"pl": "Pierwszy wariant",
 		"en": "First Variant"
+	},
+	"income.title": {
+		"pl": "Dochód",
+		"en": "Income"
+	},
+	"income.per_min": {
+		"pl": "Dochód: R$ {amount} / min",
+		"en": "Income: R$ {amount} / min"
+	},
+	"income.next": {
+		"pl": "Następny dochód",
+		"en": "Next income"
+	},
+	"income.in_seconds": {
+		"pl": "Dochód za: {seconds}s",
+		"en": "Income in: {seconds}s"
+	},
+	"income.plus": {
+		"pl": "+R$ {amount}",
+		"en": "+R$ {amount}"
+	},
+	"income.away_title": {
+		"pl": "Zarobek podczas nieobecności",
+		"en": "Away earnings"
+	},
+	"income.away_message": {
+		"pl": "Twoje gady zarobiły:",
+		"en": "Your reptiles earned:"
+	},
+	"income.collect": {
+		"pl": "Odbierz",
+		"en": "Collect"
+	},
+	"income.none": {
+		"pl": "Brak dochodu",
+		"en": "No income"
+	},
+	"income.no_assigned_reptiles": {
+		"pl": "Brak gadów generujących dochód",
+		"en": "No reptiles generating income"
+	},
+	"ui.offline_income_title": {
+		"pl": "Dochód offline",
+		"en": "Offline income"
+	},
+	"ui.offline_income_message": {
+		"pl": "Podczas Twojej nieobecności gady zarobiły:",
+		"en": "While you were away, your reptiles earned:"
+	},
+	"ui.offline_time": {
+		"pl": "Czas offline",
+		"en": "Offline time"
+	},
+	"ui.offline_reward": {
+		"pl": "Nagroda",
+		"en": "Reward"
+	},
+	"ui.claim": {
+		"pl": "Odbierz",
+		"en": "Claim"
+	},
+	"ui.no_offline_reward": {
+		"pl": "Brak nagrody offline",
+		"en": "No offline reward"
+	},
+	"ui.offline_cap_applied": {
+		"pl": "Zastosowano limit 4 godzin",
+		"en": "4-hour cap applied"
+	},
+	"ui.offline_income": {
+		"pl": "Dochód offline",
+		"en": "Offline income"
 	}
 }
