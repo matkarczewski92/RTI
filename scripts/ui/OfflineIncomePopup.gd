@@ -54,8 +54,7 @@ func _build_ui() -> void:
 	vbox.add_child(time_lbl)
 	
 	var chest_icon = TextureRect.new()
-	if AssetPaths.has_method("load_texture"):
-		chest_icon.texture = AssetPaths.load_texture("res://assets/art/ui/icons/menu/chest.png")
+	chest_icon.texture = load("res://assets/art/ui/icons/menu/chest.png")
 	chest_icon.custom_minimum_size = Vector2(80, 80)
 	chest_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	chest_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

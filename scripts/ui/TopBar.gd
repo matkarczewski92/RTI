@@ -30,11 +30,14 @@ func _ready() -> void:
 	EconomySystem.currency_changed.connect(func(_currency_id: String, _amount: Variant) -> void: _refresh())
 	GameState.state_changed.connect(_refresh)
 	
-	# Dynamicznie dodajemy okienko zarobku offline do interfejsu
-	var popup_scene = load("res://scenes/popups/OfflineIncomePopup.tscn")
-	if popup_scene:
-		var popup = popup_scene.instantiate()
-		add_child(popup)
+	# Dynamicznie dodajemy skrypt okienka zarobku offline, pomijając brakującą scenę
+	if ResourceLoader.exists("res://scripts/ui/OfflineIncomePopup.gd"):
+		var popup_script = load("res://scripts/ui/OfflineIncomePopup.gd")
+		if popup_script:
+			var popup = popup_script.new()
+			add_child(popup)
+	else:
+		push_warning("OfflineIncomePopup.gd not found. Offline income popup will not appear.")
 
 
 func _build_layout() -> void:

@@ -14,7 +14,7 @@ func _ready() -> void:
 
 
 func get_default_state() -> Dictionary:
-	var now: int = Time.get_unix_time_from_system()
+	var now: float = Time.get_unix_time_from_system()
 	return {
 		"save_version": SAVE_VERSION,
 		"repticash": 100,
