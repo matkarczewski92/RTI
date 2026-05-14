@@ -27,9 +27,13 @@ var plus_icon: TextureRect
 var reptile_icon: TextureRect
 var alert_icon: TextureRect
 var income_progress: ProgressBar
+var upgrade_label: Label
 var occupied_icon_path := ""
+var purchased_texture_path := PURCHASED_EMPTY_TEXTURE_PATH
 var needs_attention := false
 var income_progress_value := 0.0
+var is_upgrading := false
+var upgrade_status_text := ""
 var hint_label: Label
 var touch_button: Button
 
@@ -165,6 +169,24 @@ func _build_layout() -> void:
 	income_progress.add_theme_stylebox_override("fill", progress_fill)
 	visual_root.add_child(income_progress)
 
+	upgrade_label = Label.new()
+	upgrade_label.name = "UpgradeLabel"
+	upgrade_label.anchor_left = 0.5
+	upgrade_label.anchor_top = 0.0
+	upgrade_label.anchor_right = 0.5
+	upgrade_label.anchor_bottom = 0.0
+	upgrade_label.offset_left = -68
+	upgrade_label.offset_top = 22
+	upgrade_label.offset_right = 68
+	upgrade_label.offset_bottom = 52
+	upgrade_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	upgrade_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	upgrade_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	upgrade_label.add_theme_font_size_override("font_size", 11)
+	upgrade_label.add_theme_color_override("font_color", Color(0.98, 0.92, 0.78, 1.0))
+	upgrade_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	visual_root.add_child(upgrade_label)
+
 	touch_button = Button.new()
 	touch_button.name = "TouchButton"
 	touch_button.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -182,21 +204,24 @@ func _refresh_visuals() -> void:
 
 	var texture_path := EMPTY_TEXTURE_PATH
 	if slot_state == STATE_PURCHASED_EMPTY or slot_state == STATE_OCCUPIED:
-		texture_path = PURCHASED_EMPTY_TEXTURE_PATH
+		texture_path = purchased_texture_path if not purchased_texture_path.is_empty() else PURCHASED_EMPTY_TEXTURE_PATH
 
 	_apply_state_geometry()
 	var texture: Texture2D = AssetPaths.load_texture(texture_path)
 	background.texture = texture
 	background.visible = texture != null
 	fallback_panel.visible = texture == null
-	plus_icon.visible = slot_state != STATE_OCCUPIED and plus_icon.texture != null
+	plus_icon.visible = slot_state != STATE_OCCUPIED and not is_upgrading and plus_icon.texture != null
 	_apply_occupied_icon_texture()
 	reptile_icon.visible = slot_state == STATE_OCCUPIED and reptile_icon.texture != null
 	if alert_icon != null:
-		alert_icon.visible = slot_state == STATE_OCCUPIED and needs_attention and alert_icon.texture != null
+		alert_icon.visible = slot_state == STATE_OCCUPIED and not is_upgrading and needs_attention and alert_icon.texture != null
 	if income_progress != null:
-		income_progress.visible = slot_state == STATE_OCCUPIED
+		income_progress.visible = slot_state == STATE_OCCUPIED and not is_upgrading
 		income_progress.value = income_progress_value * 100.0
+	if upgrade_label != null:
+		upgrade_label.text = upgrade_status_text
+		upgrade_label.visible = is_upgrading and not upgrade_status_text.is_empty()
 	_refresh_text()
 
 
@@ -213,7 +238,7 @@ func set_needs_attention(value: bool) -> void:
 	if alert_icon == null:
 		return
 
-	alert_icon.visible = slot_state == STATE_OCCUPIED and needs_attention and alert_icon.texture != null
+	alert_icon.visible = slot_state == STATE_OCCUPIED and not is_upgrading and needs_attention and alert_icon.texture != null
 
 
 func set_income_progress(value: float) -> void:
@@ -221,8 +246,19 @@ func set_income_progress(value: float) -> void:
 	if income_progress == null:
 		return
 
-	income_progress.visible = slot_state == STATE_OCCUPIED
+	income_progress.visible = slot_state == STATE_OCCUPIED and not is_upgrading
 	income_progress.value = income_progress_value * 100.0
+
+
+func set_habitat_texture(texture_path: String) -> void:
+	purchased_texture_path = texture_path
+	_refresh_visuals()
+
+
+func set_upgrade_status(value: bool, status_text: String = "") -> void:
+	is_upgrading = value
+	upgrade_status_text = status_text
+	_refresh_visuals()
 
 
 func _apply_occupied_icon_texture() -> void:
@@ -260,6 +296,8 @@ func _refresh_text() -> void:
 
 	if slot_state == STATE_NOT_PURCHASED:
 		hint_label.text = LocalizationSystem.tr_key("ui.buy_habitat")
+	elif is_upgrading:
+		hint_label.text = LocalizationSystem.tr_key("habitat.upgrading")
 	elif slot_state == STATE_PURCHASED_EMPTY:
 		hint_label.text = LocalizationSystem.tr_key("ui.place_reptile")
 	else:

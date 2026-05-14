@@ -175,6 +175,10 @@
 		"pl": "Galeria",
 		"en": "Gallery"
 	},
+	"animals.tab.achievements": {
+		"pl": "Osi\u0105gni\u0119cia",
+		"en": "Achievements"
+	},
 	"animals.empty_title": {
 		"pl": "Nie masz jeszcze \u017cadnych gad\u00f3w.",
 		"en": "You do not own any reptiles yet."
@@ -238,6 +242,110 @@
 	"animals.no_empty_habitats": {
 		"pl": "Nie masz wolnego kupionego habitatu.",
 		"en": "You do not have an empty purchased habitat."
+	},
+	"nav.achievements": {
+		"pl": "Osi\u0105gni\u0119cia",
+		"en": "Achievements"
+	},
+	"achievements.title": {
+		"pl": "Osi\u0105gni\u0119cia",
+		"en": "Achievements"
+	},
+	"achievements.claim": {
+		"pl": "Odbierz",
+		"en": "Claim"
+	},
+	"achievements.claimed": {
+		"pl": "Odebrano",
+		"en": "Claimed"
+	},
+	"achievements.reward": {
+		"pl": "Nagroda",
+		"en": "Reward"
+	},
+	"achievements.progress": {
+		"pl": "Post\u0119p",
+		"en": "Progress"
+	},
+	"achievements.completed": {
+		"pl": "Uko\u0144czono",
+		"en": "Completed"
+	},
+	"achievements.in_progress": {
+		"pl": "W trakcie",
+		"en": "In progress"
+	},
+	"achievement.buy_first_reptile.title": {
+		"pl": "Pierwszy gad",
+		"en": "First reptile"
+	},
+	"achievement.buy_first_reptile.desc": {
+		"pl": "Kup pierwszego gada.",
+		"en": "Buy your first reptile."
+	},
+	"achievement.first_habitat_with_animal.title": {
+		"pl": "Pierwszy mieszkaniec",
+		"en": "First resident"
+	},
+	"achievement.first_habitat_with_animal.desc": {
+		"pl": "Umie\u015b\u0107 pierwszego gada w habitacie.",
+		"en": "Place your first reptile in a habitat."
+	},
+	"achievement.get_first_varity.title": {
+		"pl": "Pierwszy wariant",
+		"en": "First variant"
+	},
+	"achievement.get_first_varity.desc": {
+		"pl": "Odkryj pierwszy wariant.",
+		"en": "Discover your first variant."
+	},
+	"achievement.get_three_variety.title": {
+		"pl": "Ma\u0142a kolekcja",
+		"en": "Small collection"
+	},
+	"achievement.get_three_variety.desc": {
+		"pl": "Odkryj 3 warianty.",
+		"en": "Discover 3 variants."
+	},
+	"achievement.first_rare_variant.title": {
+		"pl": "Co\u015b rzadkiego",
+		"en": "Something rare"
+	},
+	"achievement.first_rare_variant.desc": {
+		"pl": "Odkryj pierwszy rzadki wariant.",
+		"en": "Discover your first rare variant."
+	},
+	"achievement.first_female.title": {
+		"pl": "Pierwsza samica",
+		"en": "First female"
+	},
+	"achievement.first_female.desc": {
+		"pl": "Zdob\u0105d\u017a pierwsz\u0105 samic\u0119.",
+		"en": "Get your first female reptile."
+	},
+	"achievement.first_male.title": {
+		"pl": "Pierwszy samiec",
+		"en": "First male"
+	},
+	"achievement.first_male.desc": {
+		"pl": "Zdob\u0105d\u017a pierwszego samca.",
+		"en": "Get your first male reptile."
+	},
+	"achievement.complete_gecko_collection.title": {
+		"pl": "Kolekcja gekona",
+		"en": "Gecko collection"
+	},
+	"achievement.complete_gecko_collection.desc": {
+		"pl": "Odkryj wszystkie warianty gekona lamparciego.",
+		"en": "Discover all leopard gecko variants."
+	},
+	"achievement.complete_green_meadow_part.title": {
+		"pl": "Zielona Polana",
+		"en": "Green Meadow"
+	},
+	"achievement.complete_green_meadow_part.desc": {
+		"pl": "Odkryj cz\u0119\u015b\u0107 kolekcji Zielonej Polany.",
+		"en": "Discover part of the Green Meadow collection."
 	},
 	"shop.reptiles": {
 		"pl": "Gady",
@@ -410,6 +518,126 @@
 	"ui.habitat": {
 		"pl": "Habitat",
 		"en": "Habitat"
+	},
+	"ui.choose_habitat_type": {
+		"pl": "Wybierz typ habitatu",
+		"en": "Choose habitat type"
+	},
+	"habitat.management": {
+		"pl": "Zarządzanie habitatem",
+		"en": "Habitat management"
+	},
+	"habitat.type": {
+		"pl": "Typ habitatu",
+		"en": "Habitat type"
+	},
+	"habitat.best_type": {
+		"pl": "Najlepszy habitat",
+		"en": "Best habitat"
+	},
+	"habitat.current_type": {
+		"pl": "Ten habitat",
+		"en": "This habitat"
+	},
+	"habitat.compatibility_income": {
+		"pl": "Dochód",
+		"en": "Income"
+	},
+	"habitat.level": {
+		"pl": "Poziom",
+		"en": "Level"
+	},
+	"habitat.next_level": {
+		"pl": "Następny poziom",
+		"en": "Next level"
+	},
+	"habitat.upgrade": {
+		"pl": "Rozbuduj habitat",
+		"en": "Upgrade habitat"
+	},
+	"habitat.upgrade_confirm": {
+		"pl": "Rozpocząć rozbudowę habitatu za R$ 10000? Gad zostanie wyprowadzony na czas rozbudowy.",
+		"en": "Start habitat upgrade for R$ 10000? The reptile will move out during the upgrade."
+	},
+	"habitat.upgrading": {
+		"pl": "Rozbudowa w toku",
+		"en": "Upgrade in progress"
+	},
+	"habitat.max_level": {
+		"pl": "Maksymalny poziom",
+		"en": "Maximum level"
+	},
+	"habitat.upgrade_cost": {
+		"pl": "Koszt rozbudowy",
+		"en": "Upgrade cost"
+	},
+	"habitat.upgrade_time": {
+		"pl": "Czas rozbudowy",
+		"en": "Upgrade time"
+	},
+	"habitat.upgrade_done": {
+		"pl": "Rozbudowa habitatu zakończona",
+		"en": "Habitat upgrade completed"
+	},
+	"habitat.place_reptile": {
+		"pl": "Wprowadź gada",
+		"en": "Place reptile"
+	},
+	"habitat.remove_reptile": {
+		"pl": "Wyprowadź gada",
+		"en": "Remove reptile"
+	},
+	"habitat.remove_habitat": {
+		"pl": "Usuń habitat",
+		"en": "Remove habitat"
+	},
+	"habitat.remove_reptile_confirm": {
+		"pl": "Czy na pewno wyprowadzić gada z habitatu?",
+		"en": "Are you sure you want to remove this reptile from the habitat?"
+	},
+	"habitat.remove_habitat_confirm": {
+		"pl": "Czy na pewno usunąć habitat? Zwrot kosztów nie zostanie przyznany.",
+		"en": "Are you sure you want to remove this habitat? No refund will be granted."
+	},
+	"habitat.remove_reptile_first": {
+		"pl": "Najpierw wyprowadź gada z habitatu.",
+		"en": "Remove the reptile from the habitat first."
+	},
+	"habitat.cannot_remove_during_upgrade": {
+		"pl": "Nie można usunąć habitatu w trakcie rozbudowy.",
+		"en": "Cannot remove habitat during upgrade."
+	},
+	"habitat.temporarily_removed_animal": {
+		"pl": "Gad został tymczasowo wyprowadzony z habitatu na czas rozbudowy.",
+		"en": "The reptile was temporarily removed from the habitat during the upgrade."
+	},
+	"habitat.type.grass": {
+		"pl": "Trawiasty",
+		"en": "Grass"
+	},
+	"habitat.type.sand": {
+		"pl": "Pustynny",
+		"en": "Sand"
+	},
+	"habitat.type.stone": {
+		"pl": "Kamienny",
+		"en": "Stone"
+	},
+	"habitat.type.jungle": {
+		"pl": "Dżungla",
+		"en": "Jungle"
+	},
+	"habitat.level.basic": {
+		"pl": "Basic",
+		"en": "Basic"
+	},
+	"habitat.level.middle": {
+		"pl": "Middle",
+		"en": "Middle"
+	},
+	"habitat.level.top": {
+		"pl": "Top",
+		"en": "Top"
 	},
 	"ui.price": {
 		"pl": "Cena",
@@ -704,8 +932,184 @@
 		"en": "Clean"
 	},
 	"quest.buy_first_habitat.title": {
-		"pl": "Kup pierwszy habitat",
-		"en": "Buy the first habitat"
+		"pl": "Pierwszy habitat",
+		"en": "First habitat"
+	},
+	"quests.title": {
+		"pl": "Zadania",
+		"en": "Quests"
+	},
+	"quests.claim": {
+		"pl": "Odbierz",
+		"en": "Claim"
+	},
+	"quests.claimed": {
+		"pl": "Odebrano",
+		"en": "Claimed"
+	},
+	"quests.reward": {
+		"pl": "Nagroda",
+		"en": "Reward"
+	},
+	"quests.progress": {
+		"pl": "Post\u0119p",
+		"en": "Progress"
+	},
+	"quests.completed": {
+		"pl": "Uko\u0144czono",
+		"en": "Completed"
+	},
+	"quests.in_progress": {
+		"pl": "W trakcie",
+		"en": "In progress"
+	},
+	"quests.completed_toast": {
+		"pl": "Zadanie uko\u0144czone",
+		"en": "Quest completed"
+	},
+	"quests.no_quests": {
+		"pl": "Brak aktywnych zada\u0144",
+		"en": "No active quests"
+	},
+	"quest.buy_first_habitat.desc": {
+		"pl": "Kup pierwszy habitat.",
+		"en": "Buy your first habitat."
+	},
+	"quest.open_shop.title": {
+		"pl": "Czas na zakupy",
+		"en": "Shopping time"
+	},
+	"quest.open_shop.desc": {
+		"pl": "Otw\u00f3rz sklep.",
+		"en": "Open the shop."
+	},
+	"quest.buy_first_reptile.title": {
+		"pl": "Pierwszy gad",
+		"en": "First reptile"
+	},
+	"quest.buy_first_reptile.desc": {
+		"pl": "Kup pierwszego gada.",
+		"en": "Buy your first reptile."
+	},
+	"quest.choose_first_reptile_sex.title": {
+		"pl": "Samiec czy samica?",
+		"en": "Male or female?"
+	},
+	"quest.choose_first_reptile_sex.desc": {
+		"pl": "Wybierz p\u0142e\u0107 pierwszego gada.",
+		"en": "Choose the sex of your first reptile."
+	},
+	"quest.assign_first_reptile_to_habitat.title": {
+		"pl": "Nowy dom",
+		"en": "New home"
+	},
+	"quest.assign_first_reptile_to_habitat.desc": {
+		"pl": "Umie\u015b\u0107 pierwszego gada w habitacie.",
+		"en": "Place your first reptile in a habitat."
+	},
+	"quest.name_first_reptile.title": {
+		"pl": "Nadaj imi\u0119",
+		"en": "Give a name"
+	},
+	"quest.name_first_reptile.desc": {
+		"pl": "Nadaj imi\u0119 gadowi.",
+		"en": "Name your reptile."
+	},
+	"quest.discover_first_variant.title": {
+		"pl": "Pierwszy wariant",
+		"en": "First variant"
+	},
+	"quest.discover_first_variant.desc": {
+		"pl": "Odkryj pierwszy wariant.",
+		"en": "Discover your first variant."
+	},
+	"quest.open_gallery.title": {
+		"pl": "Kolekcjoner",
+		"en": "Collector"
+	},
+	"quest.open_gallery.desc": {
+		"pl": "Otw\u00f3rz galeri\u0119 kolekcji.",
+		"en": "Open the collection gallery."
+	},
+	"quest.feed_one_reptile.title": {
+		"pl": "Karmienie",
+		"en": "Feeding"
+	},
+	"quest.feed_one_reptile.desc": {
+		"pl": "Nakarm 1 gada.",
+		"en": "Feed 1 reptile."
+	},
+	"quest.water_one_reptile.title": {
+		"pl": "Woda",
+		"en": "Water"
+	},
+	"quest.water_one_reptile.desc": {
+		"pl": "Wymie\u0144 wod\u0119.",
+		"en": "Refill water."
+	},
+	"quest.clean_one_habitat.title": {
+		"pl": "Czysty habitat",
+		"en": "Clean habitat"
+	},
+	"quest.clean_one_habitat.desc": {
+		"pl": "Wyczy\u015b\u0107 habitat.",
+		"en": "Clean a habitat."
+	},
+	"quest.play_three_times.title": {
+		"pl": "Zabawa",
+		"en": "Play"
+	},
+	"quest.play_three_times.desc": {
+		"pl": "U\u017cyj zabawy 3 razy.",
+		"en": "Use play 3 times."
+	},
+	"quest.earn_100_rs.title": {
+		"pl": "Pierwszy zarobek",
+		"en": "First income"
+	},
+	"quest.earn_100_rs.desc": {
+		"pl": "Zdob\u0105d\u017a 100 R$.",
+		"en": "Earn 100 R$."
+	},
+	"quest.buy_second_habitat.title": {
+		"pl": "Wi\u0119cej miejsca",
+		"en": "More space"
+	},
+	"quest.buy_second_habitat.desc": {
+		"pl": "Kup 2. habitat.",
+		"en": "Buy the 2nd habitat."
+	},
+	"quest.assign_two_reptiles.title": {
+		"pl": "Ma\u0142a hodowla",
+		"en": "Small breeding room"
+	},
+	"quest.assign_two_reptiles.desc": {
+		"pl": "Umie\u015b\u0107 2 gady.",
+		"en": "Place 2 reptiles."
+	},
+	"quest.discover_three_variants.title": {
+		"pl": "Trzy warianty",
+		"en": "Three variants"
+	},
+	"quest.discover_three_variants.desc": {
+		"pl": "Zdob\u0105d\u017a 3 warianty.",
+		"en": "Discover 3 variants."
+	},
+	"quest.hire_first_worker.title": {
+		"pl": "Pierwszy pracownik",
+		"en": "First worker"
+	},
+	"quest.hire_first_worker.desc": {
+		"pl": "Zatrudnij pierwszego pracownika.",
+		"en": "Hire your first worker."
+	},
+	"quest.reach_level_3.title": {
+		"pl": "Poziom 3",
+		"en": "Level 3"
+	},
+	"quest.reach_level_3.desc": {
+		"pl": "Zdob\u0105d\u017a poziom 3.",
+		"en": "Reach level 3."
 	},
 	"worker.junior_keeper.name": {
 		"pl": "M\u0142odszy opiekun",

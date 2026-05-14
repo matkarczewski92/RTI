@@ -11,17 +11,19 @@ config_version=5
 [application]
 
 config/name="RTI"
+run/main_scene="res://scenes/main/Main.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
-run/main_scene="res://scenes/main/Main.tscn"
 
 [autoload]
 
 GameState="*res://scripts/autoload/GameState.gd"
 LocalizationSystem="*res://scripts/autoload/LocalizationSystem.gd"
 EconomySystem="*res://scripts/autoload/EconomySystem.gd"
-ReptileSystem="*res://scripts/autoload/ReptileSystem.gd"
 SaveSystem="*res://scripts/autoload/SaveSystem.gd"
+ReptileSystem="*res://scripts/autoload/ReptileSystem.gd"
+AchievementSystem="*res://scripts/autoload/AchievementSystem.gd"
+QuestSystem="*res://scripts/autoload/QuestSystem.gd"
 
 [display]
 
@@ -38,3 +40,4 @@ window/handheld/orientation=1
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true

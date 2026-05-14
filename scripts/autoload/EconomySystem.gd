@@ -3,9 +3,13 @@ extends Node
 signal currency_changed(currency_id: String, amount: Variant)
 signal income_progress_updated(progress: float, time_left: int)
 signal income_tick(amount: float)
+signal offline_income_calculated(amount: float, seconds: int)
+signal offline_income_claimed(amount: float)
 
 const ECONOMY_PATH := "res://data/economy.json"
 const INCOME_TICK_SECONDS := 60.0
+const MAX_OFFLINE_SECONDS := 14400
+const MIN_OFFLINE_SECONDS := 30
 
 var economy_data: Dictionary = {}
 var income_elapsed_seconds: float = 0.0
@@ -15,6 +19,14 @@ var income_timer: Timer
 func _ready() -> void:
 	load_economy_data()
 	_start_active_income_timer()
+	call_deferred("_initialize_offline_income")
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
+		save_last_active_timestamp()
+	elif what == NOTIFICATION_APPLICATION_RESUMED:
+		_calculate_offline_income_on_resume()
 
 
 func load_economy_data() -> bool:
@@ -74,6 +86,40 @@ func get_income_time_left() -> int:
 	return int(ceil(max(0.0, INCOME_TICK_SECONDS - income_elapsed_seconds)))
 
 
+func get_pending_offline_income() -> float:
+	return float(GameState.get_value("pending_offline_income", 0.0))
+
+
+func get_pending_offline_seconds() -> int:
+	return int(GameState.get_value("pending_offline_seconds", 0))
+
+
+func has_pending_offline_income() -> bool:
+	return bool(GameState.get_value("offline_claim_available", false)) and get_pending_offline_income() > 0.0
+
+
+func save_last_active_timestamp() -> void:
+	GameState.set_value("last_active_timestamp", Time.get_unix_time_from_system())
+	SaveSystem.save_game()
+
+
+func claim_offline_income() -> float:
+	if not has_pending_offline_income():
+		return 0.0
+
+	var amount: float = get_pending_offline_income()
+	add_currency("repticash", amount)
+	var now: float = Time.get_unix_time_from_system()
+	GameState.set_value("pending_offline_income", 0.0)
+	GameState.set_value("pending_offline_seconds", 0)
+	GameState.set_value("offline_claim_available", false)
+	GameState.set_value("last_offline_claim_timestamp", now)
+	GameState.set_value("last_active_timestamp", now)
+	SaveSystem.save_game()
+	offline_income_claimed.emit(amount)
+	return amount
+
+
 func _start_active_income_timer() -> void:
 	if income_timer != null and is_instance_valid(income_timer):
 		return
@@ -103,6 +149,82 @@ func _pay_active_income() -> void:
 	add_currency("repticash", total_income)
 	SaveSystem.save_game()
 	income_tick.emit(total_income)
+
+
+func _initialize_offline_income() -> void:
+	_migrate_offline_state()
+	_calculate_offline_income_on_resume()
+
+
+func _migrate_offline_state() -> void:
+	var now: float = Time.get_unix_time_from_system()
+	var changed := false
+
+	if GameState.get_value("last_active_timestamp", null) == null:
+		GameState.set_value("last_active_timestamp", now)
+		changed = true
+	if GameState.get_value("pending_offline_income", null) == null:
+		GameState.set_value("pending_offline_income", 0.0)
+		changed = true
+	if GameState.get_value("pending_offline_seconds", null) == null:
+		GameState.set_value("pending_offline_seconds", 0)
+		changed = true
+	if GameState.get_value("offline_claim_available", null) == null:
+		GameState.set_value("offline_claim_available", false)
+		changed = true
+	if GameState.get_value("last_offline_claim_timestamp", null) == null:
+		GameState.set_value("last_offline_claim_timestamp", 0)
+		changed = true
+
+	if changed:
+		SaveSystem.save_game()
+
+
+func _calculate_offline_income_on_resume() -> void:
+	_migrate_offline_state()
+	if has_pending_offline_income():
+		offline_income_calculated.emit(get_pending_offline_income(), get_pending_offline_seconds())
+		return
+
+	var now: float = Time.get_unix_time_from_system()
+	var last_active: float = float(GameState.get_value("last_active_timestamp", now))
+	if last_active <= 0.0:
+		GameState.set_value("last_active_timestamp", now)
+		SaveSystem.save_game()
+		return
+
+	var offline_seconds: int = int(max(0.0, now - last_active))
+	var effective_seconds: int = int(min(offline_seconds, MAX_OFFLINE_SECONDS))
+	if effective_seconds < MIN_OFFLINE_SECONDS:
+		GameState.set_value("last_active_timestamp", now)
+		SaveSystem.save_game()
+		return
+
+	var total_income_per_min: float = get_total_assigned_income_per_min()
+	if total_income_per_min <= 0.0:
+		_clear_pending_offline_income(now)
+		return
+
+	var raw_reward: float = total_income_per_min * (float(effective_seconds) / 60.0)
+	var reward: float = float(round(raw_reward))
+	if reward <= 0.0:
+		_clear_pending_offline_income(now)
+		return
+
+	GameState.set_value("pending_offline_income", reward)
+	GameState.set_value("pending_offline_seconds", effective_seconds)
+	GameState.set_value("offline_claim_available", true)
+	GameState.set_value("last_active_timestamp", now)
+	SaveSystem.save_game()
+	offline_income_calculated.emit(reward, effective_seconds)
+
+
+func _clear_pending_offline_income(now: float) -> void:
+	GameState.set_value("pending_offline_income", 0.0)
+	GameState.set_value("pending_offline_seconds", 0)
+	GameState.set_value("offline_claim_available", false)
+	GameState.set_value("last_active_timestamp", now)
+	SaveSystem.save_game()
 
 
 func get_purchased_habitat_count(biome_id: String) -> int:

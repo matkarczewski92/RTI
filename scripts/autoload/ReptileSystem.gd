@@ -20,6 +20,10 @@ const FEED_XP_REWARD := 2
 const WATER_XP_REWARD := 2
 const CLEAN_XP_REWARD := 3
 const PLAY_XP_REWARD := 0.1
+const HABITAT_TYPES: Array[String] = ["grass", "sand", "stone", "jungle"]
+const HABITAT_MAX_LEVEL := 3
+const HABITAT_UPGRADE_COST := 10000
+const HABITAT_UPGRADE_DURATION_SECONDS := 172800
 
 const RARITY_ICON_PATHS: Dictionary = {
 	"common": "res://assets/art/ui/icons/icon_rarity_common.png",
@@ -220,6 +224,88 @@ func get_base_reptile_income(reptile_id: String) -> float:
 	return float(reptile.get("base_income_per_minute", 0.0))
 
 
+func get_habitat_types() -> Array[String]:
+	var result: Array[String] = []
+	for habitat_type in HABITAT_TYPES:
+		result.append(habitat_type)
+	return result
+
+
+func normalize_habitat_type(habitat_type: String) -> String:
+	var normalized: String = habitat_type.strip_edges().to_lower()
+	if normalized == "desert":
+		return "sand"
+	if HABITAT_TYPES.has(normalized):
+		return normalized
+
+	return "grass"
+
+
+func normalize_habitat_level(level: Variant) -> int:
+	return int(clamp(int(level), 1, HABITAT_MAX_LEVEL))
+
+
+func get_habitat_type_label_key(habitat_type: String) -> String:
+	return "habitat.type." + normalize_habitat_type(habitat_type)
+
+
+func get_habitat_level_label_key(level: Variant) -> String:
+	match normalize_habitat_level(level):
+		2:
+			return "habitat.level.middle"
+		3:
+			return "habitat.level.top"
+		_:
+			return "habitat.level.basic"
+
+
+func get_habitat_texture_path(habitat_type: String, habitat_level: Variant) -> String:
+	var suffix: String = "basic"
+	match normalize_habitat_level(habitat_level):
+		2:
+			suffix = "middle"
+		3:
+			suffix = "top"
+		_:
+			suffix = "basic"
+
+	return "res://assets/art/habitats/" + normalize_habitat_type(habitat_type) + "_" + suffix + ".png"
+
+
+func get_reptile_preferred_habitat_type(reptile_id: String) -> String:
+	var reptile: Dictionary = get_reptile(reptile_id)
+	if reptile.is_empty() or str(reptile.get("preferred_habitat_type", "")).is_empty():
+		return ""
+
+	return normalize_habitat_type(str(reptile.get("preferred_habitat_type", "")))
+
+
+func get_habitat_match_multiplier(instance: Dictionary) -> float:
+	var normalized: Dictionary = _normalize_owned_instance(instance)
+	var preferred_type: String = get_reptile_preferred_habitat_type(str(normalized.get("reptile_id", "")))
+	if preferred_type.is_empty():
+		return 1.0
+
+	var habitat: Dictionary = get_habitat_state(str(normalized.get("habitat_id", "")))
+	if habitat.is_empty():
+		return 1.0
+
+	var current_type: String = normalize_habitat_type(str(habitat.get("habitat_type", "grass")))
+	return 1.0 if current_type == preferred_type else 0.5
+
+
+func get_habitat_upgrade_cost() -> int:
+	return HABITAT_UPGRADE_COST
+
+
+func get_habitat_upgrade_duration_seconds() -> int:
+	return HABITAT_UPGRADE_DURATION_SECONDS
+
+
+func get_habitat_max_level() -> int:
+	return HABITAT_MAX_LEVEL
+
+
 func get_happiness_multiplier(happiness: Variant) -> float:
 	var value: float = clamp(float(happiness), 0.0, 100.0)
 	if value <= 25.0:
@@ -259,7 +345,8 @@ func get_effective_animal_income_per_min(instance: Dictionary) -> float:
 	var base_income: float = get_base_reptile_income(str(normalized.get("reptile_id", "")))
 	var happiness_multiplier: float = get_happiness_multiplier(normalized.get("happiness", 100))
 	var variant_multiplier: float = get_variant_income_multiplier(get_owned_animal_variant(normalized))
-	return base_income * happiness_multiplier * variant_multiplier * get_worker_income_multiplier(normalized) * get_upgrade_income_multiplier(normalized)
+	var habitat_match_multiplier: float = get_habitat_match_multiplier(normalized)
+	return base_income * happiness_multiplier * variant_multiplier * habitat_match_multiplier * get_worker_income_multiplier(normalized) * get_upgrade_income_multiplier(normalized)
 
 
 func get_worker_income_multiplier(_instance: Dictionary) -> float:
@@ -322,6 +409,8 @@ func apply_time_updates(save_if_changed: bool = false) -> bool:
 	var changed: bool = _update_global_resources(now)
 	if _update_owned_reptile_needs(now):
 		changed = true
+	if _update_habitat_upgrades(now):
+		changed = true
 
 	if changed and save_if_changed:
 		SaveSystem.save_game()
@@ -355,7 +444,7 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 		return {"success": false, "message_key": "ui.reptile_unavailable"}
 
 	var instance: Dictionary = _normalize_owned_instance(instance_value as Dictionary)
-	if str(instance.get("habitat_id", "")).is_empty():
+	if not _is_assigned_to_valid_habitat(instance):
 		return {"success": false, "message_key": "ui.place_reptile_to_care"}
 
 	var now: int = Time.get_unix_time_from_system()
@@ -481,6 +570,9 @@ func purchase_and_assign_reptile(reptile_id: String, habitat_id: String, biome_i
 	var habitat: Dictionary = habitat_value as Dictionary
 	if not bool(habitat.get("purchased", false)):
 		return {"success": false, "message_key": "ui.habitat_unavailable"}
+	habitat = _normalize_habitat_state(habitat_id, habitat)
+	if bool(habitat.get("is_upgrading", false)):
+		return {"success": false, "message_key": "habitat.upgrading"}
 
 	if (
 		not str(habitat.get("reptile_instance_id", "")).is_empty()
@@ -535,11 +627,15 @@ func purchase_and_assign_reptile(reptile_id: String, habitat_id: String, biome_i
 	habitat["variant_id"] = variant_id
 	habitat["habitat_variant_id"] = str(habitat.get("habitat_variant_id", "default"))
 	habitat["habitat_skin_id"] = str(habitat.get("habitat_skin_id", "default"))
+	habitat["habitat_type"] = normalize_habitat_type(str(habitat.get("habitat_type", "grass")))
+	habitat["habitat_level"] = normalize_habitat_level(habitat.get("habitat_level", 1))
+	habitat["is_upgrading"] = false
 	habitats[habitat_id] = habitat
 	GameState.set_value("habitats", habitats)
 
 	var new_variant_discovered: bool = mark_variant_discovered(variant_id)
 	SaveSystem.save_game()
+	_notify_achievement_progress_changed()
 
 	return {
 		"success": true,
@@ -609,6 +705,7 @@ func purchase_reptile_from_shop(reptile_id: String, rarity: String, sex: String 
 
 	var new_variant_discovered: bool = mark_variant_discovered(variant_id)
 	SaveSystem.save_game()
+	_notify_achievement_progress_changed()
 
 	return {
 		"success": true,
@@ -658,6 +755,9 @@ func assign_reptile_to_habitat(instance_id: String, habitat_id: String, biome_id
 	var habitat: Dictionary = habitat_value as Dictionary
 	if str(habitat.get("biome_id", biome_id)) != biome_id or not bool(habitat.get("purchased", false)):
 		return {"success": false, "message_key": "ui.habitat_unavailable"}
+	habitat = _normalize_habitat_state(habitat_id, habitat)
+	if bool(habitat.get("is_upgrading", false)):
+		return {"success": false, "message_key": "habitat.upgrading"}
 
 	if (
 		not str(habitat.get("reptile_instance_id", "")).is_empty()
@@ -676,9 +776,13 @@ func assign_reptile_to_habitat(instance_id: String, habitat_id: String, biome_id
 	habitat["variant_id"] = str(instance.get("variant_id", get_default_variant_id(str(instance.get("reptile_id", "")))))
 	habitat["habitat_variant_id"] = str(habitat.get("habitat_variant_id", "default"))
 	habitat["habitat_skin_id"] = str(habitat.get("habitat_skin_id", "default"))
+	habitat["habitat_type"] = normalize_habitat_type(str(habitat.get("habitat_type", "grass")))
+	habitat["habitat_level"] = normalize_habitat_level(habitat.get("habitat_level", 1))
+	habitat["is_upgrading"] = false
 	habitats[habitat_id] = habitat
 	GameState.set_value("habitats", habitats)
 	SaveSystem.save_game()
+	_notify_achievement_progress_changed()
 
 	return {
 		"success": true,
@@ -733,6 +837,135 @@ func get_reptile_for_habitat(habitat_id: String) -> Dictionary:
 	return {}
 
 
+func get_habitat_state(habitat_id: String) -> Dictionary:
+	var habitats: Dictionary = _get_habitats_state()
+	var habitat_value: Variant = habitats.get(habitat_id, {})
+	if typeof(habitat_value) != TYPE_DICTIONARY:
+		return {}
+
+	return _normalize_habitat_state(habitat_id, habitat_value as Dictionary)
+
+
+func is_habitat_upgrading(habitat_id: String) -> bool:
+	var habitat: Dictionary = get_habitat_state(habitat_id)
+	return bool(habitat.get("is_upgrading", false))
+
+
+func get_habitat_upgrade_remaining_seconds(habitat_id: String) -> int:
+	var habitat: Dictionary = get_habitat_state(habitat_id)
+	if not bool(habitat.get("is_upgrading", false)):
+		return 0
+
+	var finish_at: int = _timestamp_from_value(habitat.get("upgrade_finish_at", 0))
+	return int(max(0, finish_at - Time.get_unix_time_from_system()))
+
+
+func remove_reptile_from_habitat(habitat_id: String) -> Dictionary:
+	var habitats: Dictionary = _get_habitats_state()
+	var habitat_value: Variant = habitats.get(habitat_id, {})
+	if typeof(habitat_value) != TYPE_DICTIONARY:
+		return {"success": false, "message_key": "ui.habitat_unavailable"}
+
+	var habitat: Dictionary = _normalize_habitat_state(habitat_id, habitat_value as Dictionary)
+	if not bool(habitat.get("purchased", false)):
+		return {"success": false, "message_key": "ui.habitat_unavailable"}
+
+	var instances: Dictionary = get_owned_reptile_instances()
+	var instance_id: String = _get_assigned_instance_id_for_habitat(habitat, instances)
+	if instance_id.is_empty():
+		return {"success": false, "message_key": "ui.reptile_unavailable"}
+
+	_unassign_instance_from_habitat(instance_id, habitat_id, instances, habitat)
+	habitats[habitat_id] = habitat
+	GameState.set_value("owned_reptile_instances", instances)
+	GameState.set_value("habitats", habitats)
+	SaveSystem.save_game()
+	_notify_achievement_progress_changed()
+	return {"success": true, "message_key": "habitat.remove_reptile"}
+
+
+func start_habitat_upgrade(habitat_id: String) -> Dictionary:
+	var now: int = Time.get_unix_time_from_system()
+	_update_habitat_upgrades(now)
+	var habitats: Dictionary = _get_habitats_state()
+	var habitat_value: Variant = habitats.get(habitat_id, {})
+	if typeof(habitat_value) != TYPE_DICTIONARY:
+		return {"success": false, "message_key": "ui.habitat_unavailable"}
+
+	var habitat: Dictionary = _normalize_habitat_state(habitat_id, habitat_value as Dictionary)
+	if not bool(habitat.get("purchased", false)):
+		return {"success": false, "message_key": "ui.habitat_unavailable"}
+	if bool(habitat.get("is_upgrading", false)):
+		return {"success": false, "message_key": "habitat.upgrading"}
+
+	var current_level: int = normalize_habitat_level(habitat.get("habitat_level", 1))
+	if current_level >= HABITAT_MAX_LEVEL:
+		return {"success": false, "message_key": "habitat.max_level"}
+	if not EconomySystem.can_afford("repticash", HABITAT_UPGRADE_COST):
+		return {"success": false, "message_key": "ui.not_enough_currency"}
+	if not EconomySystem.spend_currency("repticash", HABITAT_UPGRADE_COST):
+		return {"success": false, "message_key": "ui.not_enough_currency"}
+
+	var instances: Dictionary = get_owned_reptile_instances()
+	var assigned_instance_id: String = _get_assigned_instance_id_for_habitat(habitat, instances)
+	var animal_removed: bool = not assigned_instance_id.is_empty()
+	if animal_removed:
+		_unassign_instance_from_habitat(assigned_instance_id, habitat_id, instances, habitat)
+
+	habitat["is_upgrading"] = true
+	habitat["upgrade_target_level"] = current_level + 1
+	habitat["upgrade_started_at"] = now
+	habitat["upgrade_finish_at"] = now + HABITAT_UPGRADE_DURATION_SECONDS
+	habitat["habitat_level"] = current_level
+	habitats[habitat_id] = habitat
+
+	GameState.set_value("owned_reptile_instances", instances)
+	GameState.set_value("habitats", habitats)
+	SaveSystem.save_game()
+	_notify_achievement_progress_changed()
+	return {"success": true, "message_key": "habitat.upgrading", "animal_removed": animal_removed}
+
+
+func remove_habitat(habitat_id: String) -> Dictionary:
+	var habitats: Dictionary = _get_habitats_state()
+	var habitat_value: Variant = habitats.get(habitat_id, {})
+	if typeof(habitat_value) != TYPE_DICTIONARY:
+		return {"success": false, "message_key": "ui.habitat_unavailable"}
+
+	var habitat: Dictionary = _normalize_habitat_state(habitat_id, habitat_value as Dictionary)
+	if not bool(habitat.get("purchased", false)):
+		return {"success": false, "message_key": "ui.habitat_unavailable"}
+	if bool(habitat.get("is_upgrading", false)):
+		return {"success": false, "message_key": "habitat.cannot_remove_during_upgrade"}
+
+	var instances: Dictionary = get_owned_reptile_instances()
+	if not _get_assigned_instance_id_for_habitat(habitat, instances).is_empty():
+		return {"success": false, "message_key": "habitat.remove_reptile_first"}
+
+	habitats[habitat_id] = {
+		"habitat_id": habitat_id,
+		"biome_id": str(habitat.get("biome_id", "")),
+		"slot_index": int(habitat.get("slot_index", 0)),
+		"purchased": false,
+		"habitat_type": "grass",
+		"habitat_level": 1,
+		"is_upgrading": false,
+		"upgrade_target_level": 0,
+		"upgrade_started_at": 0,
+		"upgrade_finish_at": 0,
+		"reptile_id": "",
+		"reptile_instance_id": "",
+		"animal_instance_id": "",
+		"variant_id": "",
+		"habitat_variant_id": "default",
+		"habitat_skin_id": "default"
+	}
+	GameState.set_value("habitats", habitats)
+	SaveSystem.save_game()
+	_notify_achievement_progress_changed()
+	return {"success": true, "message_key": "habitat.remove_habitat"}
+
+
 func mark_variant_discovered(variant_id: String) -> bool:
 	if variant_id.is_empty():
 		return false
@@ -751,6 +984,8 @@ func mark_variant_discovered(variant_id: String) -> bool:
 func migrate_save_state() -> bool:
 	var changed: bool = false
 	if _migrate_global_care_resources():
+		changed = true
+	if _migrate_habitats_state(Time.get_unix_time_from_system()):
 		changed = true
 
 	var instances: Dictionary = get_owned_reptile_instances()
@@ -827,10 +1062,128 @@ func _is_assigned_to_valid_habitat(instance: Dictionary) -> bool:
 	var habitat: Dictionary = habitat_value as Dictionary
 	if not bool(habitat.get("purchased", false)):
 		return false
+	if bool(habitat.get("is_upgrading", false)):
+		return false
 
 	var reptile_instance_id: String = str(habitat.get("reptile_instance_id", ""))
 	var animal_instance_id: String = str(habitat.get("animal_instance_id", ""))
 	return reptile_instance_id == instance_id or animal_instance_id == instance_id or (reptile_instance_id.is_empty() and animal_instance_id.is_empty() and str(habitat.get("reptile_id", "")) == str(instance.get("reptile_id", "")))
+
+
+func _normalize_habitat_state(habitat_id: String, habitat: Dictionary) -> Dictionary:
+	var normalized: Dictionary = habitat.duplicate(true)
+	normalized["habitat_id"] = str(normalized.get("habitat_id", habitat_id))
+	if str(normalized.get("biome_id", "")).is_empty():
+		normalized["biome_id"] = "green_meadow"
+	normalized["slot_index"] = int(normalized.get("slot_index", 0))
+	normalized["purchased"] = bool(normalized.get("purchased", false))
+	normalized["habitat_type"] = normalize_habitat_type(str(normalized.get("habitat_type", "grass")))
+	normalized["habitat_level"] = normalize_habitat_level(normalized.get("habitat_level", 1))
+	normalized["is_upgrading"] = bool(normalized.get("is_upgrading", false))
+	normalized["upgrade_target_level"] = int(normalized.get("upgrade_target_level", 0))
+	normalized["upgrade_started_at"] = _timestamp_from_value(normalized.get("upgrade_started_at", 0))
+	normalized["upgrade_finish_at"] = _timestamp_from_value(normalized.get("upgrade_finish_at", 0))
+	normalized["reptile_id"] = str(normalized.get("reptile_id", ""))
+	normalized["reptile_instance_id"] = str(normalized.get("reptile_instance_id", ""))
+	normalized["animal_instance_id"] = str(normalized.get("animal_instance_id", ""))
+	normalized["variant_id"] = str(normalized.get("variant_id", ""))
+	normalized["habitat_variant_id"] = str(normalized.get("habitat_variant_id", "default"))
+	normalized["habitat_skin_id"] = str(normalized.get("habitat_skin_id", "default"))
+	return normalized
+
+
+func _migrate_habitats_state(now: int) -> bool:
+	var habitats: Dictionary = _get_habitats_state()
+	var changed: bool = false
+	for habitat_id_value in habitats.keys():
+		var habitat_id: String = str(habitat_id_value)
+		var habitat_value: Variant = habitats.get(habitat_id)
+		if typeof(habitat_value) != TYPE_DICTIONARY:
+			continue
+
+		var original: Dictionary = habitat_value as Dictionary
+		var normalized: Dictionary = _normalize_habitat_state(habitat_id, original)
+		if _finalize_habitat_upgrade_if_due(normalized, now):
+			changed = true
+		if normalized != original:
+			changed = true
+		habitats[habitat_id] = normalized
+
+	if changed:
+		GameState.set_value("habitats", habitats)
+
+	return changed
+
+
+func _update_habitat_upgrades(now: int) -> bool:
+	var habitats: Dictionary = _get_habitats_state()
+	var changed: bool = false
+	for habitat_id_value in habitats.keys():
+		var habitat_id: String = str(habitat_id_value)
+		var habitat_value: Variant = habitats.get(habitat_id)
+		if typeof(habitat_value) != TYPE_DICTIONARY:
+			continue
+
+		var habitat: Dictionary = _normalize_habitat_state(habitat_id, habitat_value as Dictionary)
+		if _finalize_habitat_upgrade_if_due(habitat, now):
+			habitats[habitat_id] = habitat
+			changed = true
+
+	if changed:
+		GameState.set_value("habitats", habitats)
+
+	return changed
+
+
+func _finalize_habitat_upgrade_if_due(habitat: Dictionary, now: int) -> bool:
+	if not bool(habitat.get("is_upgrading", false)):
+		return false
+
+	var finish_at: int = _timestamp_from_value(habitat.get("upgrade_finish_at", 0))
+	if finish_at <= 0 or now < finish_at:
+		return false
+
+	var target_level: int = normalize_habitat_level(habitat.get("upgrade_target_level", int(habitat.get("habitat_level", 1)) + 1))
+	habitat["habitat_level"] = target_level
+	habitat["is_upgrading"] = false
+	habitat["upgrade_target_level"] = 0
+	habitat["upgrade_started_at"] = 0
+	habitat["upgrade_finish_at"] = 0
+	return true
+
+
+func _get_assigned_instance_id_for_habitat(habitat: Dictionary, instances: Dictionary) -> String:
+	var referenced_instance_id: String = str(habitat.get("reptile_instance_id", ""))
+	if referenced_instance_id.is_empty():
+		referenced_instance_id = str(habitat.get("animal_instance_id", ""))
+	if not referenced_instance_id.is_empty() and instances.has(referenced_instance_id):
+		return referenced_instance_id
+
+	var habitat_id: String = str(habitat.get("habitat_id", ""))
+	for instance_id in instances.keys():
+		var instance_value: Variant = instances.get(instance_id)
+		if typeof(instance_value) != TYPE_DICTIONARY:
+			continue
+		var instance: Dictionary = instance_value as Dictionary
+		if str(instance.get("habitat_id", "")) == habitat_id:
+			return str(instance_id)
+
+	return ""
+
+
+func _unassign_instance_from_habitat(instance_id: String, habitat_id: String, instances: Dictionary, habitat: Dictionary) -> void:
+	if instances.has(instance_id):
+		var instance_value: Variant = instances.get(instance_id)
+		if typeof(instance_value) == TYPE_DICTIONARY:
+			var instance: Dictionary = _normalize_owned_instance(instance_value as Dictionary)
+			if str(instance.get("habitat_id", "")) == habitat_id:
+				instance["habitat_id"] = null
+				instances[instance_id] = instance
+
+	habitat["reptile_id"] = ""
+	habitat["reptile_instance_id"] = ""
+	habitat["animal_instance_id"] = ""
+	habitat["variant_id"] = ""
 
 
 func _migrate_global_care_resources() -> bool:
@@ -1078,6 +1431,17 @@ func _get_habitats_state() -> Dictionary:
 		return {}
 
 	return value as Dictionary
+
+
+func _notify_achievement_progress_changed() -> void:
+	if has_node("/root/AchievementSystem"):
+		var achievement_system: Node = get_node("/root/AchievementSystem")
+		if achievement_system.has_method("notify_progress_changed"):
+			achievement_system.call("notify_progress_changed")
+	if has_node("/root/QuestSystem"):
+		var quest_system: Node = get_node("/root/QuestSystem")
+		if quest_system.has_method("notify_event"):
+			quest_system.call("notify_event", "state_changed", {})
 
 
 func _load_array(path: String) -> Array:

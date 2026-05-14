@@ -35,9 +35,15 @@ func get_default_state() -> Dictionary:
 		"unlocked_biomes": ["green_meadow"],
 		"habitats": {},
 		"discovered_variants": {},
+		"completed_achievements": [],
+		"claimed_achievements": [],
 		"owned_reptile_instances": {},
 		"owned_variant_instances": {},
 		"quests": {},
+		"quest_progress": {},
+		"quest_event_counters": {},
+		"completed_quests": [],
+		"claimed_quests": [],
 		"workers": {},
 		"upgrades": {},
 		"last_saved_at": 0,
@@ -45,7 +51,8 @@ func get_default_state() -> Dictionary:
 		"last_active_timestamp": now,
 		"pending_offline_income": 0,
 		"pending_offline_seconds": 0,
-		"offline_claim_available": false
+		"offline_claim_available": false,
+		"last_offline_claim_timestamp": 0
 	}
 
 
