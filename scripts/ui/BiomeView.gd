@@ -68,6 +68,10 @@ func _ready() -> void:
 	habitat_data = _load_habitats()
 	_build_layout()
 	_setup_care_update_timer()
+	if EconomySystem.has_signal("income_progress_updated"):
+		EconomySystem.income_progress_updated.connect(_on_income_progress_updated)
+	if EconomySystem.has_signal("income_tick"):
+		EconomySystem.income_tick.connect(_on_income_tick)
 	GameState.language_changed.connect(func(_language: String) -> void: _rebuild_layout())
 	GameState.state_changed.connect(_refresh_habitat_slots)
 
@@ -110,6 +114,18 @@ func _on_care_update_timer_timeout() -> void:
 	_refresh_habitat_slots()
 	if management_modal != null and not current_management_instance_id.is_empty():
 		_show_management_for_instance_id(current_management_instance_id, false)
+
+
+func _on_income_progress_updated(_progress: float, _time_left: int) -> void:
+	_refresh_habitat_income_progress()
+
+
+func _on_income_tick(amount: float) -> void:
+	if amount <= 0.0:
+		return
+
+	_show_income_float(amount)
+	_refresh_habitat_income_progress()
 
 
 func _build_layout() -> void:
@@ -2175,6 +2191,22 @@ func _format_care_success_feedback(result: Dictionary) -> String:
 	return text
 
 
+func _show_income_float(amount: float) -> void:
+	var float_label: Label = Label.new()
+	float_label.text = LocalizationSystem.tr_key("income.plus").replace("{amount}", _format_decimal(amount))
+	float_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	float_label.add_theme_color_override("font_color", Color(0.12, 0.55, 0.14, 1.0))
+	float_label.add_theme_font_size_override("font_size", 22)
+	float_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(float_label)
+
+	float_label.position = Vector2(22, TOP_BAR_HEIGHT + 8)
+	var tween: Tween = create_tween()
+	tween.tween_property(float_label, "position:y", float_label.position.y - 42.0, 1.4)
+	tween.parallel().tween_property(float_label, "modulate:a", 0.0, 1.4)
+	tween.tween_callback(float_label.queue_free)
+
+
 func _format_cooldown(seconds: int) -> String:
 	var safe_seconds: int = max(0, seconds)
 	if safe_seconds >= 60:
@@ -2377,6 +2409,18 @@ func _refresh_habitat_slots() -> void:
 			slot.call("set_occupied_icon", _get_habitat_reptile_icon_path(habitat_id) if state == STATE_OCCUPIED else "")
 			if slot.has_method("set_needs_attention"):
 				slot.call("set_needs_attention", _habitat_needs_attention(habitat_id) if state == STATE_OCCUPIED else false)
+			if slot.has_method("set_income_progress"):
+				slot.call("set_income_progress", EconomySystem.get_income_progress() if state == STATE_OCCUPIED else 0.0)
+
+
+func _refresh_habitat_income_progress() -> void:
+	for habitat_id in habitat_slots.keys():
+		var slot: Node = habitat_slots[habitat_id] as Node
+		if not slot.has_method("set_income_progress"):
+			continue
+
+		var state: String = _get_habitat_state(str(habitat_id))
+		slot.call("set_income_progress", EconomySystem.get_income_progress() if state == STATE_OCCUPIED else 0.0)
 
 
 func _get_habitat_state(habitat_id: String) -> String:

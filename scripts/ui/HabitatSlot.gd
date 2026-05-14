@@ -26,8 +26,10 @@ var fallback_panel: PanelContainer
 var plus_icon: TextureRect
 var reptile_icon: TextureRect
 var alert_icon: TextureRect
+var income_progress: ProgressBar
 var occupied_icon_path := ""
 var needs_attention := false
+var income_progress_value := 0.0
 var hint_label: Label
 var touch_button: Button
 
@@ -138,6 +140,31 @@ func _build_layout() -> void:
 	alert_icon.offset_bottom = 26
 	visual_root.add_child(alert_icon)
 
+	income_progress = ProgressBar.new()
+	income_progress.name = "IncomeProgress"
+	income_progress.anchor_left = 0.5
+	income_progress.anchor_top = 0.0
+	income_progress.anchor_right = 0.5
+	income_progress.anchor_bottom = 0.0
+	income_progress.offset_left = -52
+	income_progress.offset_top = -26
+	income_progress.offset_right = 52
+	income_progress.offset_bottom = -10
+	income_progress.min_value = 0
+	income_progress.max_value = 100
+	income_progress.show_percentage = false
+	income_progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	income_progress.modulate = Color(1.0, 1.0, 1.0, 0.96)
+	var progress_background: StyleBoxFlat = StyleBoxFlat.new()
+	progress_background.bg_color = Color(0.14, 0.10, 0.06, 0.48)
+	progress_background.set_corner_radius_all(6)
+	income_progress.add_theme_stylebox_override("background", progress_background)
+	var progress_fill: StyleBoxFlat = StyleBoxFlat.new()
+	progress_fill.bg_color = Color(0.28, 0.76, 0.28, 0.95)
+	progress_fill.set_corner_radius_all(6)
+	income_progress.add_theme_stylebox_override("fill", progress_fill)
+	visual_root.add_child(income_progress)
+
 	touch_button = Button.new()
 	touch_button.name = "TouchButton"
 	touch_button.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -167,6 +194,9 @@ func _refresh_visuals() -> void:
 	reptile_icon.visible = slot_state == STATE_OCCUPIED and reptile_icon.texture != null
 	if alert_icon != null:
 		alert_icon.visible = slot_state == STATE_OCCUPIED and needs_attention and alert_icon.texture != null
+	if income_progress != null:
+		income_progress.visible = slot_state == STATE_OCCUPIED
+		income_progress.value = income_progress_value * 100.0
 	_refresh_text()
 
 
@@ -184,6 +214,15 @@ func set_needs_attention(value: bool) -> void:
 		return
 
 	alert_icon.visible = slot_state == STATE_OCCUPIED and needs_attention and alert_icon.texture != null
+
+
+func set_income_progress(value: float) -> void:
+	income_progress_value = clamp(value, 0.0, 1.0)
+	if income_progress == null:
+		return
+
+	income_progress.visible = slot_state == STATE_OCCUPIED
+	income_progress.value = income_progress_value * 100.0
 
 
 func _apply_occupied_icon_texture() -> void:

@@ -12,32 +12,13 @@ var xp_label: Label
 var level_label: Label
 var food_label: Label
 var water_label: Label
-var income_progress: ProgressBar
-var income_time_label: Label
 
 
 func _ready() -> void:
 	_build_layout()
-	
-	if EconomySystem.has_signal("income_progress_updated"):
-		EconomySystem.income_progress_updated.connect(_on_income_progress)
-	if EconomySystem.has_signal("income_tick"):
-		EconomySystem.income_tick.connect(_on_income_tick)
-	if EconomySystem.has_signal("offline_income_claimed"):
-		EconomySystem.offline_income_claimed.connect(_on_income_tick)
-
 	_refresh()
 	EconomySystem.currency_changed.connect(func(_currency_id: String, _amount: Variant) -> void: _refresh())
 	GameState.state_changed.connect(_refresh)
-	
-	# Dynamicznie dodajemy skrypt okienka zarobku offline, pomijając brakującą scenę
-	if ResourceLoader.exists("res://scripts/ui/OfflineIncomePopup.gd"):
-		var popup_script = load("res://scripts/ui/OfflineIncomePopup.gd")
-		if popup_script:
-			var popup = popup_script.new()
-			add_child(popup)
-	else:
-		push_warning("OfflineIncomePopup.gd not found. Offline income popup will not appear.")
 
 
 func _build_layout() -> void:
@@ -94,24 +75,9 @@ func _build_layout() -> void:
 	water_label.add_theme_font_size_override("font_size", 15)
 	resource_row.add_child(water_label)
 
-	var income_row := HBoxContainer.new()
-	income_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	income_row.add_theme_constant_override("separation", 10)
-	rows.add_child(income_row)
-
-	income_progress = ProgressBar.new()
-	income_progress.custom_minimum_size = Vector2(140, 12)
-	income_progress.show_percentage = false
-	income_row.add_child(income_progress)
-
-	income_time_label = Label.new()
-	income_time_label.add_theme_font_size_override("font_size", 14)
-	income_time_label.text = "60s"
-	income_row.add_child(income_time_label)
-
 
 func _refresh() -> void:
-	cash_label.text = str(GameState.get_value("repticash", 0))
+	cash_label.text = _format_amount(float(GameState.get_value("repticash", 0)))
 	xp_label.text = _format_amount(float(GameState.get_value("xp", 0)))
 	level_label.text = LocalizationSystem.tr_key("ui.level_short") + " " + str(GameState.get_value("level", 1))
 	food_label.text = str(int(GameState.get_value("food_current", 0))) + "/" + str(int(GameState.get_value("food_max", 100)))
@@ -133,26 +99,3 @@ func _format_amount(value: float) -> String:
 		return str(int(round(value)))
 
 	return "%.1f" % value
-
-
-func _on_income_progress(progress: float, time_left: int) -> void:
-	if is_instance_valid(income_progress):
-		income_progress.value = progress * 100.0
-	if is_instance_valid(income_time_label):
-		income_time_label.text = str(time_left) + "s"
-
-
-func _on_income_tick(amount: int) -> void:
-	if amount <= 0:
-		return
-	var float_label = Label.new()
-	float_label.text = "+R$ " + str(amount)
-	float_label.add_theme_color_override("font_color", Color(0.2, 0.9, 0.2))
-	float_label.add_theme_font_size_override("font_size", 20)
-	add_child(float_label)
-	float_label.global_position = cash_label.global_position + Vector2(20, 20)
-	
-	var tween = create_tween()
-	tween.tween_property(float_label, "position:y", float_label.position.y - 40.0, 2.0)
-	tween.parallel().tween_property(float_label, "modulate:a", 0.0, 2.0)
-	tween.tween_callback(float_label.queue_free)

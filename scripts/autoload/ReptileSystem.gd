@@ -253,26 +253,68 @@ func get_variant_income_multiplier(variant: Dictionary) -> float:
 
 func get_effective_animal_income_per_min(instance: Dictionary) -> float:
 	var normalized: Dictionary = _normalize_owned_instance(instance)
-	if str(normalized.get("habitat_id", "")).is_empty():
+	if not _is_assigned_to_valid_habitat(normalized):
 		return 0.0
 
 	var base_income: float = get_base_reptile_income(str(normalized.get("reptile_id", "")))
 	var happiness_multiplier: float = get_happiness_multiplier(normalized.get("happiness", 100))
 	var variant_multiplier: float = get_variant_income_multiplier(get_owned_animal_variant(normalized))
-	return base_income * happiness_multiplier * variant_multiplier
+	return base_income * happiness_multiplier * variant_multiplier * get_worker_income_multiplier(normalized) * get_upgrade_income_multiplier(normalized)
+
+
+func get_worker_income_multiplier(_instance: Dictionary) -> float:
+	return 1.0
+
+
+func get_upgrade_income_multiplier(_instance: Dictionary) -> float:
+	return 1.0
 
 
 func get_total_assigned_income_per_min() -> float:
 	var total: float = 0.0
+	for contributor in get_animal_income_contributors():
+		if typeof(contributor) != TYPE_DICTIONARY:
+			continue
+
+		total += float((contributor as Dictionary).get("income_per_min", 0.0))
+
+	return total
+
+
+func get_animal_income_contributors() -> Array:
+	var result: Array = []
+	var seen_instances: Dictionary = {}
+	var seen_habitats: Dictionary = {}
 	var instances: Dictionary = get_owned_reptile_instances()
 	for instance_id in instances.keys():
+		if seen_instances.has(instance_id):
+			continue
+
 		var instance_value: Variant = instances.get(instance_id)
 		if typeof(instance_value) != TYPE_DICTIONARY:
 			continue
 
-		total += get_effective_animal_income_per_min(instance_value as Dictionary)
+		var instance: Dictionary = _normalize_owned_instance(instance_value as Dictionary)
+		var habitat_id: String = str(instance.get("habitat_id", ""))
+		if seen_habitats.has(habitat_id):
+			continue
 
-	return total
+		if not _is_assigned_to_valid_habitat(instance):
+			continue
+
+		var income: float = get_effective_animal_income_per_min(instance)
+		if income <= 0.0:
+			continue
+
+		seen_instances[instance_id] = true
+		seen_habitats[habitat_id] = true
+		result.append({
+			"instance_id": instance_id,
+			"habitat_id": habitat_id,
+			"income_per_min": income
+		})
+
+	return result
 
 
 func apply_time_updates(save_if_changed: bool = false) -> bool:
@@ -769,6 +811,26 @@ func _normalize_sex(sex: String) -> String:
 		return "female"
 
 	return "male"
+
+
+func _is_assigned_to_valid_habitat(instance: Dictionary) -> bool:
+	var habitat_id: String = str(instance.get("habitat_id", ""))
+	var instance_id: String = str(instance.get("instance_id", ""))
+	if habitat_id.is_empty() or instance_id.is_empty():
+		return false
+
+	var habitats: Dictionary = _get_habitats_state()
+	var habitat_value: Variant = habitats.get(habitat_id, {})
+	if typeof(habitat_value) != TYPE_DICTIONARY:
+		return false
+
+	var habitat: Dictionary = habitat_value as Dictionary
+	if not bool(habitat.get("purchased", false)):
+		return false
+
+	var reptile_instance_id: String = str(habitat.get("reptile_instance_id", ""))
+	var animal_instance_id: String = str(habitat.get("animal_instance_id", ""))
+	return reptile_instance_id == instance_id or animal_instance_id == instance_id or (reptile_instance_id.is_empty() and animal_instance_id.is_empty() and str(habitat.get("reptile_id", "")) == str(instance.get("reptile_id", "")))
 
 
 func _migrate_global_care_resources() -> bool:

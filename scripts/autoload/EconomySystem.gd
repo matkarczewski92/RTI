@@ -1,14 +1,20 @@
 extends Node
 
 signal currency_changed(currency_id: String, amount: Variant)
+signal income_progress_updated(progress: float, time_left: int)
+signal income_tick(amount: float)
 
 const ECONOMY_PATH := "res://data/economy.json"
+const INCOME_TICK_SECONDS := 60.0
 
 var economy_data: Dictionary = {}
+var income_elapsed_seconds: float = 0.0
+var income_timer: Timer
 
 
 func _ready() -> void:
 	load_economy_data()
+	_start_active_income_timer()
 
 
 func load_economy_data() -> bool:
@@ -34,7 +40,7 @@ func add_currency(currency_id: String, amount: float) -> void:
 	if amount <= 0:
 		return
 
-	var new_amount: Variant = float(get_currency(currency_id)) + amount if currency_id == "xp" else int(get_currency(currency_id)) + int(amount)
+	var new_amount: Variant = float(get_currency(currency_id)) + amount
 	GameState.set_value(currency_id, new_amount)
 	currency_changed.emit(currency_id, new_amount)
 
@@ -50,10 +56,53 @@ func spend_currency(currency_id: String, amount: int) -> bool:
 	if not can_afford(currency_id, amount):
 		return false
 
-	var new_amount: Variant = int(get_currency(currency_id)) - amount
+	var new_amount: Variant = float(get_currency(currency_id)) - float(amount)
 	GameState.set_value(currency_id, new_amount)
 	currency_changed.emit(currency_id, new_amount)
 	return true
+
+
+func get_total_assigned_income_per_min() -> float:
+	return ReptileSystem.get_total_assigned_income_per_min()
+
+
+func get_income_progress() -> float:
+	return clamp(income_elapsed_seconds / INCOME_TICK_SECONDS, 0.0, 1.0)
+
+
+func get_income_time_left() -> int:
+	return int(ceil(max(0.0, INCOME_TICK_SECONDS - income_elapsed_seconds)))
+
+
+func _start_active_income_timer() -> void:
+	if income_timer != null and is_instance_valid(income_timer):
+		return
+
+	income_timer = Timer.new()
+	income_timer.name = "ActiveIncomeTimer"
+	income_timer.wait_time = 1.0
+	income_timer.autostart = true
+	income_timer.timeout.connect(_on_active_income_timer_timeout)
+	add_child(income_timer)
+
+
+func _on_active_income_timer_timeout() -> void:
+	income_elapsed_seconds += 1.0
+	if income_elapsed_seconds >= INCOME_TICK_SECONDS:
+		_pay_active_income()
+		income_elapsed_seconds = 0.0
+
+	income_progress_updated.emit(get_income_progress(), get_income_time_left())
+
+
+func _pay_active_income() -> void:
+	var total_income: float = get_total_assigned_income_per_min()
+	if total_income <= 0.0:
+		return
+
+	add_currency("repticash", total_income)
+	SaveSystem.save_game()
+	income_tick.emit(total_income)
 
 
 func get_purchased_habitat_count(biome_id: String) -> int:
