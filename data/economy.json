@@ -1,0 +1,12 @@
+{
+	"starting_repticash": 100,
+	"starting_premium_currency": 0,
+	"currencies": [
+		"repticash",
+		"premium_currency",
+		"xp"
+	],
+	"habitat_purchase_prices": {
+		"green_meadow": [100, 150, 200, 200, 250, 300]
+	}
+}

@@ -13,6 +13,21 @@ config_version=5
 config/name="RTI"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
+run/main_scene="res://scenes/main/Main.tscn"
+
+[autoload]
+
+GameState="*res://scripts/autoload/GameState.gd"
+LocalizationSystem="*res://scripts/autoload/LocalizationSystem.gd"
+EconomySystem="*res://scripts/autoload/EconomySystem.gd"
+ReptileSystem="*res://scripts/autoload/ReptileSystem.gd"
+SaveSystem="*res://scripts/autoload/SaveSystem.gd"
+
+[display]
+
+window/size/viewport_width=720
+window/size/viewport_height=1280
+window/handheld/orientation=1
 
 [physics]
 

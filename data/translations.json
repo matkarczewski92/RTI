@@ -1,0 +1,722 @@
+{
+	"game.title": {
+		"pl": "Reptile Tycoon",
+		"en": "Reptile Tycoon"
+	},
+	"button.play": {
+		"pl": "Graj",
+		"en": "Play"
+	},
+	"button.language": {
+		"pl": "J\u0119zyk",
+		"en": "Language"
+	},
+	"button.settings": {
+		"pl": "Ustawienia",
+		"en": "Settings"
+	},
+	"screen.biome_map": {
+		"pl": "Mapa biom\u00f3w",
+		"en": "Biome Map"
+	},
+	"status.locked": {
+		"pl": "Zablokowane",
+		"en": "Locked"
+	},
+	"currency.repticash": {
+		"pl": "R$",
+		"en": "R$"
+	},
+	"currency.premium": {
+		"pl": "Kryszta\u0142y",
+		"en": "Crystals"
+	},
+	"currency.xp": {
+		"pl": "XP",
+		"en": "XP"
+	},
+	"ui.level_short": {
+		"pl": "Poz.",
+		"en": "Lv."
+	},
+	"biome.green_meadow.name": {
+		"pl": "Zielona Polana",
+		"en": "Green Meadow"
+	},
+	"biome.green_meadow.description": {
+		"pl": "Spokojny startowy biom dla pierwszych gad\u00f3w.",
+		"en": "A calm starting biome for the first reptiles."
+	},
+	"biome.dry_prairie.name": {
+		"pl": "Sucha Preria",
+		"en": "Dry Prairie"
+	},
+	"biome.dry_prairie.description": {
+		"pl": "Ciep\u0142y, suchy biom do odblokowania p\u00f3\u017aniej.",
+		"en": "A warm, dry biome to unlock later."
+	},
+	"reptile.leopard_gecko.name": {
+		"pl": "Gekon lamparci",
+		"en": "Leopard Gecko"
+	},
+	"reptile.bearded_dragon.name": {
+		"pl": "Agama brodata",
+		"en": "Bearded Dragon"
+	},
+	"reptile.corn_snake.name": {
+		"pl": "W\u0105\u017c zbo\u017cowy",
+		"en": "Corn Snake"
+	},
+	"reptile.steppe_tortoise.name": {
+		"pl": "\u017b\u00f3\u0142w stepowy",
+		"en": "Steppe Tortoise"
+	},
+	"reptile.small_monitor.name": {
+		"pl": "Ma\u0142y waran",
+		"en": "Small Monitor"
+	},
+	"rarity.common": {
+		"pl": "Zwyk\u0142y",
+		"en": "Common"
+	},
+	"rarity.rare": {
+		"pl": "Rzadki",
+		"en": "Rare"
+	},
+	"rarity.exceptional": {
+		"pl": "Wyj\u0105tkowy",
+		"en": "Exceptional"
+	},
+	"rarity.ultra_rare": {
+		"pl": "Ultra rzadki",
+		"en": "Ultra Rare"
+	},
+	"variant.leopard_gecko.common.name": {
+		"pl": "Zwyk\u0142y",
+		"en": "Common"
+	},
+	"variant.bearded_dragon.common.name": {
+		"pl": "Zwyk\u0142a",
+		"en": "Common"
+	},
+	"variant.corn_snake.common.name": {
+		"pl": "Zwyk\u0142y",
+		"en": "Common"
+	},
+	"variant.steppe_tortoise.common.name": {
+		"pl": "Zwyk\u0142y",
+		"en": "Common"
+	},
+	"variant.small_monitor.common.name": {
+		"pl": "Zwyk\u0142y",
+		"en": "Common"
+	},
+	"variant.leopard_gecko.rare.name": {
+		"pl": "Bia\u0142y",
+		"en": "White"
+	},
+	"variant.leopard_gecko.exceptional.name": {
+		"pl": "Czerwony",
+		"en": "Red"
+	},
+	"variant.leopard_gecko.ultra_rare.name": {
+		"pl": "R\u00f3\u017cowy",
+		"en": "Pink"
+	},
+	"variant.bearded_dragon.rare.name": {
+		"pl": "Czerwona",
+		"en": "Red"
+	},
+	"variant.corn_snake.rare.name": {
+		"pl": "Jasny",
+		"en": "Light"
+	},
+	"variant.steppe_tortoise.rare.name": {
+		"pl": "Jasny",
+		"en": "Light"
+	},
+	"nav.biome": {
+		"pl": "Biom",
+		"en": "Biome"
+	},
+	"nav.animals": {
+		"pl": "Zwierz\u0119ta",
+		"en": "Animals"
+	},
+	"nav.shop": {
+		"pl": "Sklep",
+		"en": "Shop"
+	},
+	"nav.quests": {
+		"pl": "Zadania",
+		"en": "Quests"
+	},
+	"nav.upgrades": {
+		"pl": "Ulepszenia",
+		"en": "Upgrades"
+	},
+	"nav.workers": {
+		"pl": "Pracownicy",
+		"en": "Workers"
+	},
+	"nav.collection": {
+		"pl": "Kolekcja",
+		"en": "Collection"
+	},
+	"animals.title": {
+		"pl": "Zwierz\u0119ta",
+		"en": "Animals"
+	},
+	"animals.tab.owned": {
+		"pl": "Posiadane",
+		"en": "Owned"
+	},
+	"animals.tab.gallery": {
+		"pl": "Galeria",
+		"en": "Gallery"
+	},
+	"animals.empty_title": {
+		"pl": "Nie masz jeszcze \u017cadnych gad\u00f3w.",
+		"en": "You do not own any reptiles yet."
+	},
+	"animals.empty_subtitle": {
+		"pl": "Kup pierwszego gada w sklepie.",
+		"en": "Buy your first reptile in the shop."
+	},
+	"animals.open_shop": {
+		"pl": "Otw\u00f3rz sklep",
+		"en": "Open shop"
+	},
+	"animals.manage": {
+		"pl": "Zarz\u0105dzaj",
+		"en": "Manage"
+	},
+	"animals.assign": {
+		"pl": "Przypisz",
+		"en": "Assign"
+	},
+	"animals.status": {
+		"pl": "Status",
+		"en": "Status"
+	},
+	"animals.status.free": {
+		"pl": "Wolny",
+		"en": "Free"
+	},
+	"animals.status.assigned": {
+		"pl": "Przypisany",
+		"en": "Assigned"
+	},
+	"animals.sex": {
+		"pl": "P\u0142e\u0107",
+		"en": "Sex"
+	},
+	"animals.gallery_progress": {
+		"pl": "Post\u0119p kolekcji",
+		"en": "Collection progress"
+	},
+	"animals.discovered": {
+		"pl": "Odkryto",
+		"en": "Discovered"
+	},
+	"animals.completion": {
+		"pl": "Uko\u0144czenie",
+		"en": "Completion"
+	},
+	"animals.locked": {
+		"pl": "Nieodkryty",
+		"en": "Undiscovered"
+	},
+	"animals.discovered_state": {
+		"pl": "Odkryty",
+		"en": "Discovered"
+	},
+	"animals.undiscovered_state": {
+		"pl": "Nieodkryty",
+		"en": "Undiscovered"
+	},
+	"animals.no_empty_habitats": {
+		"pl": "Nie masz wolnego kupionego habitatu.",
+		"en": "You do not have an empty purchased habitat."
+	},
+	"shop.reptiles": {
+		"pl": "Gady",
+		"en": "Reptiles"
+	},
+	"shop.buy_reptile": {
+		"pl": "Kup gada",
+		"en": "Buy reptile"
+	},
+	"shop.common_price": {
+		"pl": "Cena zwyk\u0142ego",
+		"en": "Common price"
+	},
+	"shop.rare_price": {
+		"pl": "Cena rzadkiego",
+		"en": "Rare price"
+	},
+	"shop.unavailable": {
+		"pl": "Niedost\u0119pne",
+		"en": "Unavailable"
+	},
+	"ui.habitat_slot": {
+		"pl": "Slot habitatu",
+		"en": "Habitat Slot"
+	},
+	"ui.select_habitat": {
+		"pl": "Wybierz habitat",
+		"en": "Select habitat"
+	},
+	"ui.quests": {
+		"pl": "Zadania",
+		"en": "Quests"
+	},
+	"ui.workers": {
+		"pl": "Pracownicy",
+		"en": "Workers"
+	},
+	"ui.active_reptile": {
+		"pl": "Aktywny gad",
+		"en": "Active Reptile"
+	},
+	"ui.buy_habitat": {
+		"pl": "Kup habitat",
+		"en": "Buy habitat"
+	},
+	"ui.add_reptile": {
+		"pl": "Kup zwierzaka",
+		"en": "Buy reptile"
+	},
+	"ui.buy_reptile": {
+		"pl": "Kup gada",
+		"en": "Buy reptile"
+	},
+	"ui.buy": {
+		"pl": "Kup",
+		"en": "Buy"
+	},
+	"ui.common": {
+		"pl": "Zwykły",
+		"en": "Common"
+	},
+	"ui.rare": {
+		"pl": "Rzadki",
+		"en": "Rare"
+	},
+	"ui.unavailable": {
+		"pl": "Niedostępne",
+		"en": "Unavailable"
+	},
+	"ui.choose_reptile": {
+		"pl": "Wybierz gada",
+		"en": "Choose reptile"
+	},
+	"ui.select": {
+		"pl": "Wybierz",
+		"en": "Select"
+	},
+	"ui.open_management": {
+		"pl": "Zarz\u0105dzaj",
+		"en": "Manage"
+	},
+	"ui.place_reptile": {
+		"pl": "Umie\u015b\u0107",
+		"en": "Place"
+	},
+	"ui.no_available_reptiles": {
+		"pl": "Brak wolnych gad\u00f3w",
+		"en": "No available reptiles"
+	},
+	"ui.no_available_reptiles_message": {
+		"pl": "Nie masz \u017cadnego wolnego gada. Kup gada w sklepie.",
+		"en": "You do not have any available reptiles. Buy a reptile in the shop."
+	},
+	"ui.open_shop": {
+		"pl": "Otw\u00f3rz sklep",
+		"en": "Open shop"
+	},
+	"ui.available_reptiles": {
+		"pl": "Dost\u0119pne gady",
+		"en": "Available reptiles"
+	},
+	"ui.owned_reptiles": {
+		"pl": "Posiadane gady",
+		"en": "Owned reptiles"
+	},
+	"ui.unassigned": {
+		"pl": "Wolny",
+		"en": "Available"
+	},
+	"ui.assigned": {
+		"pl": "Przypisany",
+		"en": "Assigned"
+	},
+	"ui.cancel": {
+		"pl": "Anuluj",
+		"en": "Cancel"
+	},
+	"ui.close": {
+		"pl": "Zamknij",
+		"en": "Close"
+	},
+	"ui.free": {
+		"pl": "Darmowy",
+		"en": "Free"
+	},
+	"ui.cost": {
+		"pl": "Koszt",
+		"en": "Cost"
+	},
+	"ui.not_enough_currency": {
+		"pl": "Brakuje R$",
+		"en": "Not enough R$"
+	},
+	"ui.base_income": {
+		"pl": "Doch\u00f3d bazowy",
+		"en": "Base income"
+	},
+	"ui.reptile_added": {
+		"pl": "Gad dodany",
+		"en": "Reptile added"
+	},
+	"ui.first_reptile_free": {
+		"pl": "Pierwszy gad jest darmowy",
+		"en": "First reptile is free"
+	},
+	"ui.per_minute": {
+		"pl": "/ min",
+		"en": "/ min"
+	},
+	"ui.sex": {
+		"pl": "P\u0142e\u0107",
+		"en": "Sex"
+	},
+	"ui.male": {
+		"pl": "Samiec",
+		"en": "Male"
+	},
+	"ui.female": {
+		"pl": "Samica",
+		"en": "Female"
+	},
+	"sex.male": {
+		"pl": "Samiec",
+		"en": "Male"
+	},
+	"sex.female": {
+		"pl": "Samica",
+		"en": "Female"
+	},
+	"ui.habitat": {
+		"pl": "Habitat",
+		"en": "Habitat"
+	},
+	"ui.price": {
+		"pl": "Cena",
+		"en": "Price"
+	},
+	"ui.new_variant_discovered": {
+		"pl": "Nowy wariant odkryty!",
+		"en": "New variant discovered!"
+	},
+	"ui.variant": {
+		"pl": "Wariant",
+		"en": "Variant"
+	},
+	"ui.rarity": {
+		"pl": "Rzadko\u015b\u0107",
+		"en": "Rarity"
+	},
+	"ui.name": {
+		"pl": "Imi\u0119",
+		"en": "Name"
+	},
+	"ui.species": {
+		"pl": "Gatunek",
+		"en": "Species"
+	},
+	"ui.status": {
+		"pl": "Status",
+		"en": "Status"
+	},
+	"ui.happiness": {
+		"pl": "Zadowolenie",
+		"en": "Happiness"
+	},
+	"ui.hydration": {
+		"pl": "Nawodnienie",
+		"en": "Hydration"
+	},
+	"ui.satiety": {
+		"pl": "Najedzenie",
+		"en": "Satiety"
+	},
+	"ui.hunger": {
+		"pl": "Najedzenie",
+		"en": "Satiety"
+	},
+	"ui.cleanliness": {
+		"pl": "Czysto\u015b\u0107",
+		"en": "Cleanliness"
+	},
+	"ui.boredom": {
+		"pl": "Znudzenie",
+		"en": "Boredom"
+	},
+	"ui.income_per_min": {
+		"pl": "Doch\u00f3d / min",
+		"en": "Income / min"
+	},
+	"ui.effective_income": {
+		"pl": "Doch\u00f3d efektywny",
+		"en": "Effective income"
+	},
+	"ui.happiness_multiplier": {
+		"pl": "Mno\u017cnik zadowolenia",
+		"en": "Happiness multiplier"
+	},
+	"ui.variant_multiplier": {
+		"pl": "Mno\u017cnik wariantu",
+		"en": "Variant multiplier"
+	},
+	"ui.feed": {
+		"pl": "Karmienie",
+		"en": "Feed"
+	},
+	"ui.water": {
+		"pl": "Woda",
+		"en": "Water"
+	},
+	"ui.clean": {
+		"pl": "Czyszczenie",
+		"en": "Clean"
+	},
+	"ui.play": {
+		"pl": "Zabawa",
+		"en": "Play"
+	},
+	"ui.soon": {
+		"pl": "Wkr\u00f3tce",
+		"en": "Soon"
+	},
+	"ui.cooldown": {
+		"pl": "Czas odnowienia",
+		"en": "Cooldown"
+	},
+	"ui.needs_attention": {
+		"pl": "Wymaga uwagi",
+		"en": "Needs attention"
+	},
+	"ui.feed_success": {
+		"pl": "Nakarmiono",
+		"en": "Fed"
+	},
+	"ui.feed_success_xp": {
+		"pl": "Nakarmiono +{xp} XP",
+		"en": "Fed +{xp} XP"
+	},
+	"ui.water_success": {
+		"pl": "Dodano wod\u0119",
+		"en": "Water refilled"
+	},
+	"ui.water_success_xp": {
+		"pl": "Dodano wod\u0119 +{xp} XP",
+		"en": "Water refilled +{xp} XP"
+	},
+	"ui.clean_success": {
+		"pl": "Wyczyszczono",
+		"en": "Cleaned"
+	},
+	"ui.clean_success_xp": {
+		"pl": "Wyczyszczono +{xp} XP",
+		"en": "Cleaned +{xp} XP"
+	},
+	"ui.play_success": {
+		"pl": "Zabawa +R$ 5",
+		"en": "Play +R$ 5"
+	},
+	"ui.play_success_xp": {
+		"pl": "Zabawa +R$ {money} +{xp} XP",
+		"en": "Play +R$ {money} +{xp} XP"
+	},
+	"ui.play_success_reward": {
+		"pl": "Zabawa +R$ {money} +{xp} XP",
+		"en": "Play +R$ {money} +{xp} XP"
+	},
+	"ui.play_xp_reward": {
+		"pl": "+{xp} XP",
+		"en": "+{xp} XP"
+	},
+	"ui.exp_reward": {
+		"pl": "+{amount} XP",
+		"en": "+{amount} XP"
+	},
+	"ui.no_food": {
+		"pl": "Brak jedzenia",
+		"en": "No food"
+	},
+	"ui.no_water": {
+		"pl": "Brak wody",
+		"en": "No water"
+	},
+	"ui.food": {
+		"pl": "Jedzenie",
+		"en": "Food"
+	},
+	"ui.water_resource": {
+		"pl": "Woda",
+		"en": "Water"
+	},
+	"ui.on_cooldown": {
+		"pl": "Akcja w trakcie odnowienia",
+		"en": "Action is on cooldown"
+	},
+	"ui.feature_later": {
+		"pl": "Funkcja zostanie dodana w kolejnym etapie.",
+		"en": "This feature will be added in the next stage."
+	},
+	"ui.place_reptile_to_care": {
+		"pl": "Umie\u015b\u0107 gada w habitacie, aby si\u0119 nim opiekowa\u0107.",
+		"en": "Place this reptile in a habitat to care for it."
+	},
+	"ui.ok": {
+		"pl": "OK",
+		"en": "OK"
+	},
+	"ui.full_management_later": {
+		"pl": "Pe\u0142ne zarz\u0105dzanie zostanie dodane p\u00f3\u017aniej",
+		"en": "Full management will be added later"
+	},
+	"ui.reptile_management": {
+		"pl": "Zarz\u0105dzanie gadem",
+		"en": "Reptile management"
+	},
+	"ui.name_reptile": {
+		"pl": "Nadaj imi\u0119",
+		"en": "Name your reptile"
+	},
+	"ui.rename_reptile": {
+		"pl": "Zmie\u0144 imi\u0119",
+		"en": "Rename reptile"
+	},
+	"ui.reptile_name_prompt": {
+		"pl": "Jak chcesz nazwa\u0107 tego gada?",
+		"en": "What would you like to name this reptile?"
+	},
+	"ui.reptile_name_placeholder": {
+		"pl": "Imi\u0119 gada",
+		"en": "Reptile name"
+	},
+	"ui.save": {
+		"pl": "Zapisz",
+		"en": "Save"
+	},
+	"ui.skip": {
+		"pl": "Pomi\u0144",
+		"en": "Skip"
+	},
+	"ui.edit_name": {
+		"pl": "Edytuj imi\u0119",
+		"en": "Edit name"
+	},
+	"ui.name_too_long": {
+		"pl": "Imi\u0119 jest za d\u0142ugie.",
+		"en": "Name is too long."
+	},
+	"ui.name_required_or_skip": {
+		"pl": "Wpisz imi\u0119 albo wybierz Pomi\u0144.",
+		"en": "Enter a name or choose Skip."
+	},
+	"ui.reptile_unavailable": {
+		"pl": "Ten gad jest niedost\u0119pny",
+		"en": "This reptile is unavailable"
+	},
+	"ui.habitat_unavailable": {
+		"pl": "Ten habitat jest niedost\u0119pny",
+		"en": "This habitat is unavailable"
+	},
+	"ui.habitat_occupied": {
+		"pl": "Ten habitat jest zaj\u0119ty",
+		"en": "This habitat is occupied"
+	},
+	"ui.reptile_selection_placeholder": {
+		"pl": "Wyb\u00f3r zwierzaka pojawi si\u0119 w kolejnym etapie.",
+		"en": "Reptile selection will be added in a later step."
+	},
+	"ui.reptile_management_placeholder": {
+		"pl": "Ekran zarz\u0105dzania gadem pojawi si\u0119 p\u00f3\u017aniej.",
+		"en": "Reptile management will be added later."
+	},
+	"ui.all_habitats_purchased": {
+		"pl": "Wszystkie habitaty s\u0105 ju\u017c kupione.",
+		"en": "All habitats are already purchased."
+	},
+	"ui.placeholder_quest": {
+		"pl": "Miejsce na kolejne zadanie",
+		"en": "Next quest placeholder"
+	},
+	"ui.placeholder_worker": {
+		"pl": "Miejsce na pracownika",
+		"en": "Worker placeholder"
+	},
+	"ui.progress_placeholder": {
+		"pl": "Post\u0119p 0/1",
+		"en": "Progress 0/1"
+	},
+	"ui.reward_placeholder": {
+		"pl": "Nagroda R$",
+		"en": "Reward R$"
+	},
+	"ui.locked_placeholder": {
+		"pl": "Zablokowane",
+		"en": "Locked"
+	},
+	"ui.cost_placeholder": {
+		"pl": "Koszt R$",
+		"en": "Cost R$"
+	},
+	"ui.view_all": {
+		"pl": "Zobacz wszystkie",
+		"en": "View all"
+	},
+	"panel.quests": {
+		"pl": "Zadania",
+		"en": "Quests"
+	},
+	"panel.workers": {
+		"pl": "Pracownicy",
+		"en": "Workers"
+	},
+	"panel.active_reptile": {
+		"pl": "Aktywny gad",
+		"en": "Active Reptile"
+	},
+	"care.feed": {
+		"pl": "Karm",
+		"en": "Feed"
+	},
+	"care.water": {
+		"pl": "Woda",
+		"en": "Water"
+	},
+	"care.clean": {
+		"pl": "Czy\u015b\u0107",
+		"en": "Clean"
+	},
+	"quest.buy_first_habitat.title": {
+		"pl": "Kup pierwszy habitat",
+		"en": "Buy the first habitat"
+	},
+	"worker.junior_keeper.name": {
+		"pl": "M\u0142odszy opiekun",
+		"en": "Junior Keeper"
+	},
+	"upgrade.starter_feeding_tools.name": {
+		"pl": "Startowe narz\u0119dzia karmienia",
+		"en": "Starter Feeding Tools"
+	},
+	"achievement.discover_first_variant.name": {
+		"pl": "Pierwszy wariant",
+		"en": "First Variant"
+	}
+}

@@ -1,0 +1,23 @@
+[
+	{
+		"id": "green_meadow",
+		"name_key": "biome.green_meadow.name",
+		"description_key": "biome.green_meadow.description",
+		"is_starting_biome": true,
+		"habitat_slots": 6,
+		"background_path": "res://assets/art/biomes/green_meadow_background.png",
+		"next_biome_id": "dry_prairie"
+	},
+	{
+		"id": "dry_prairie",
+		"name_key": "biome.dry_prairie.name",
+		"description_key": "biome.dry_prairie.description",
+		"is_starting_biome": false,
+		"habitat_slots": 5,
+		"background_path": "res://assets/art/biomes/dry_prairie.png",
+		"unlock_requirements": {
+			"level": 3,
+			"biome_progress": 100
+		}
+	}
+]

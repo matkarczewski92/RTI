@@ -1,0 +1,8 @@
+[
+	{
+		"id": "buy_first_habitat",
+		"title_key": "quest.buy_first_habitat.title",
+		"reward_repticash": 25,
+		"reward_xp": 10
+	}
+]

@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://bja6ksgdbmsgm"]
+
+[ext_resource type="Script" path="res://scripts/ui/HabitatSlot.gd" id="1"]
+
+[node name="HabitatSlot" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 164.0
+offset_bottom = 128.0
+script = ExtResource("1")

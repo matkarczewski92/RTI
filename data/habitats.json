@@ -1,0 +1,32 @@
+[
+	{
+		"id": "green_meadow_slot_1",
+		"biome_id": "green_meadow",
+		"slot_index": 1
+	},
+	{
+		"id": "green_meadow_slot_2",
+		"biome_id": "green_meadow",
+		"slot_index": 2
+	},
+	{
+		"id": "green_meadow_slot_3",
+		"biome_id": "green_meadow",
+		"slot_index": 3
+	},
+	{
+		"id": "green_meadow_slot_4",
+		"biome_id": "green_meadow",
+		"slot_index": 4
+	},
+	{
+		"id": "green_meadow_slot_5",
+		"biome_id": "green_meadow",
+		"slot_index": 5
+	},
+	{
+		"id": "green_meadow_slot_6",
+		"biome_id": "green_meadow",
+		"slot_index": 6
+	}
+]

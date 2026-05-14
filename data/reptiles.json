@@ -1,0 +1,53 @@
+[
+	{
+		"id": "leopard_gecko",
+		"name_key": "reptile.leopard_gecko.name",
+		"starting_reptile": true,
+		"biome_id": "green_meadow",
+		"base_cost": 100,
+		"base_income_per_minute": 12,
+		"default_variant_id": "leopard_gecko_common",
+		"portrait_path": "res://assets/art/reptiles/portraits/leopard_gecko_portrait_common.png",
+		"icon_path": "res://assets/art/reptiles/icons/leopard_gecko_icon_common.png"
+	},
+	{
+		"id": "bearded_dragon",
+		"name_key": "reptile.bearded_dragon.name",
+		"biome_id": "green_meadow",
+		"base_cost": 150,
+		"base_income_per_minute": 18,
+		"default_variant_id": "bearded_dragon_common",
+		"portrait_path": "res://assets/art/reptiles/portraits/bearded_dragon_portrait_common.png",
+		"icon_path": "res://assets/art/reptiles/icons/bearded_dragon_icon_common.png"
+	},
+	{
+		"id": "corn_snake",
+		"name_key": "reptile.corn_snake.name",
+		"biome_id": "green_meadow",
+		"base_cost": 250,
+		"base_income_per_minute": 24,
+		"default_variant_id": "corn_snake_common",
+		"portrait_path": "res://assets/art/reptiles/portraits/corn_snake_portrait_common.png",
+		"icon_path": "res://assets/art/reptiles/icons/corn_snake_icon_common.png"
+	},
+	{
+		"id": "steppe_tortoise",
+		"name_key": "reptile.steppe_tortoise.name",
+		"biome_id": "green_meadow",
+		"base_cost": 350,
+		"base_income_per_minute": 30,
+		"default_variant_id": "steppe_tortoise_common",
+		"portrait_path": "res://assets/art/reptiles/portraits/steppe_tortoise_portrait_common.png",
+		"icon_path": "res://assets/art/reptiles/icons/steppe_tortoise_icon_common.png"
+	},
+	{
+		"id": "small_monitor",
+		"name_key": "reptile.small_monitor.name",
+		"biome_id": "green_meadow",
+		"base_cost": 600,
+		"base_income_per_minute": 45,
+		"default_variant_id": "small_monitor_common",
+		"portrait_path": "res://assets/art/reptiles/portraits/small_monitor_portrait_common.png",
+		"icon_path": "res://assets/art/reptiles/icons/small_monitor_icon_common.png"
+	}
+]
