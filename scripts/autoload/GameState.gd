@@ -63,6 +63,9 @@ func get_default_habitat_state(habitat_id: String = "", biome_id: String = DEFAU
 		"purchased": false,
 		"habitat_type": "grass",
 		"habitat_level": 1,
+		"is_building": false,
+		"build_started_at": 0,
+		"build_finish_at": 0,
 		"is_upgrading": false,
 		"upgrade_target_level": 0,
 		"upgrade_started_at": 0,
@@ -125,12 +128,14 @@ func get_default_save_data() -> Dictionary:
 		"created_at": now,
 		"last_saved_at": 0,
 		"repticash": 100,
+		"lifetime_repticash_earned": 0,
 		"premium_currency": 0,
 		"premium": 0,
 		"xp": 0,
 		"player_xp": 0,
 		"level": 1,
 		"player_level": 1,
+		"last_rewarded_level": 1,
 		"food_current": 100,
 		"food_max": 100,
 		"water_current": 100,
@@ -241,12 +246,19 @@ func normalize_save_data(data: Dictionary) -> Dictionary:
 	normalized["settings"]["language"] = _normalize_language(settings_language)
 	normalized["language"] = str(normalized["settings"]["language"])
 	normalized["repticash"] = max(0.0, float(normalized.get("repticash", normalized.get("currency", 100))))
+	normalized["lifetime_repticash_earned"] = max(0.0, float(normalized.get("lifetime_repticash_earned", 0.0)))
 	normalized["premium_currency"] = max(0.0, float(normalized.get("premium_currency", normalized.get("premium", 0))))
 	normalized["premium"] = normalized["premium_currency"]
+	var had_last_rewarded_level: bool = data.has("last_rewarded_level")
 	normalized["xp"] = max(0.0, float(normalized.get("xp", normalized.get("player_xp", 0))))
 	normalized["player_xp"] = normalized["xp"]
-	normalized["level"] = max(1, int(normalized.get("level", normalized.get("player_level", 1))))
+	var saved_level: int = max(1, int(normalized.get("level", normalized.get("player_level", 1))))
+	normalized["level"] = max(saved_level, _get_level_for_xp(float(normalized["xp"])))
 	normalized["player_level"] = normalized["level"]
+	if had_last_rewarded_level:
+		normalized["last_rewarded_level"] = int(clamp(int(normalized.get("last_rewarded_level", 1)), 1, int(normalized["level"])))
+	else:
+		normalized["last_rewarded_level"] = int(normalized["level"])
 
 	for key in ["unlocked_biomes", "completed_achievements", "claimed_achievements", "completed_quests", "claimed_quests", "claimed_collection_rewards"]:
 		normalized[key] = _normalize_unique_string_array(normalized.get(key, []))
@@ -460,6 +472,13 @@ func _normalize_habitats(value: Variant, now: int) -> Dictionary:
 		normalized["purchased"] = bool(normalized.get("purchased", false))
 		normalized["habitat_type"] = _normalize_habitat_type(str(normalized.get("habitat_type", "grass")))
 		normalized["habitat_level"] = int(clamp(int(normalized.get("habitat_level", 1)), 1, 3))
+		normalized["is_building"] = bool(normalized.get("is_building", false))
+		normalized["build_started_at"] = _safe_timestamp(normalized.get("build_started_at", 0), 0, now)
+		normalized["build_finish_at"] = _safe_timestamp(normalized.get("build_finish_at", 0), 0, now + 315360000)
+		if bool(normalized["is_building"]) and int(normalized["build_finish_at"]) <= now:
+			normalized["is_building"] = false
+			normalized["build_started_at"] = 0
+			normalized["build_finish_at"] = 0
 		normalized["is_upgrading"] = bool(normalized.get("is_upgrading", false))
 		normalized["upgrade_target_level"] = int(clamp(int(normalized.get("upgrade_target_level", 0)), 0, 3))
 		normalized["upgrade_started_at"] = _safe_timestamp(normalized.get("upgrade_started_at", 0), 0, now)
@@ -539,7 +558,7 @@ func _normalize_assignment_relationships(save_data: Dictionary) -> void:
 			continue
 		var habitat: Dictionary = habitat_value as Dictionary
 		var instance_id: Variant = _nullable_id(habitat.get("animal_instance_id", habitat.get("reptile_instance_id", null)))
-		if instance_id == null or not animals.has(str(instance_id)) or bool(habitat.get("is_upgrading", false)):
+		if instance_id == null or not animals.has(str(instance_id)) or bool(habitat.get("is_building", false)) or bool(habitat.get("is_upgrading", false)):
 			habitat["animal_instance_id"] = null
 			habitat["reptile_instance_id"] = ""
 			habitat["reptile_id"] = ""
@@ -591,7 +610,7 @@ func _normalize_assignment_relationships(save_data: Dictionary) -> void:
 			animals[animal_id] = animal
 			continue
 		var habitat: Dictionary = target_habitat_value as Dictionary
-		if not bool(habitat.get("purchased", false)) or bool(habitat.get("is_upgrading", false)):
+		if not bool(habitat.get("purchased", false)) or bool(habitat.get("is_building", false)) or bool(habitat.get("is_upgrading", false)):
 			animal["habitat_id"] = null
 			animals[animal_id] = animal
 			continue
@@ -695,6 +714,27 @@ func _safe_timestamp(value: Variant, fallback: int, max_value: int = 2147483647)
 	if timestamp > max_value:
 		return max_value
 	return timestamp
+
+
+func _get_level_for_xp(total_xp: float) -> int:
+	var level: int = 1
+	while total_xp >= float(_get_required_xp_for_level(level + 1)):
+		level += 1
+	return level
+
+
+func _get_required_xp_for_level(level: int) -> int:
+	if level <= 1:
+		return 0
+	if level == 2:
+		return 1000
+	if level == 3:
+		return 3000
+
+	var required: float = 3000.0
+	for _next_level in range(4, level + 1):
+		required = required + (required * 1.15)
+	return int(round(required))
 
 
 func _nullable_id(value: Variant) -> Variant:

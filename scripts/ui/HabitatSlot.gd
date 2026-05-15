@@ -178,14 +178,14 @@ func _build_layout() -> void:
 	upgrade_label.anchor_right = 0.5
 	upgrade_label.anchor_bottom = 0.0
 	upgrade_label.offset_left = -68
-	upgrade_label.offset_top = 22
+	upgrade_label.offset_top = 33
 	upgrade_label.offset_right = 68
-	upgrade_label.offset_bottom = 52
+	upgrade_label.offset_bottom = 71
 	upgrade_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	upgrade_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	upgrade_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	upgrade_label.add_theme_font_size_override("font_size", 11)
-	upgrade_label.add_theme_color_override("font_color", Color(0.98, 0.92, 0.78, 1.0))
+	upgrade_label.add_theme_font_size_override("font_size", 14)
+	upgrade_label.add_theme_color_override("font_color", Color(0.0, 0.0, 0.0, 1.0))
 	upgrade_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	visual_root.add_child(upgrade_label)
 
@@ -301,7 +301,7 @@ func _refresh_text() -> void:
 	if slot_state == STATE_NOT_PURCHASED:
 		hint_label.text = LocalizationSystem.tr_key("ui.buy_habitat")
 	elif is_upgrading:
-		hint_label.text = LocalizationSystem.tr_key("habitat.upgrading")
+		hint_label.text = upgrade_status_text.split("\n")[0] if not upgrade_status_text.is_empty() else LocalizationSystem.tr_key("habitat.upgrade_in_progress")
 	elif slot_state == STATE_PURCHASED_EMPTY:
 		hint_label.text = LocalizationSystem.tr_key("ui.place_reptile")
 	else:

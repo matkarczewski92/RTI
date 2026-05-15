@@ -193,6 +193,8 @@ func notify_event(event_type: String, payload: Dictionary = {}) -> void:
 			_increment_counter("reptile_assigned", 1)
 		"variant_discovered":
 			_increment_counter("variant_discovered", 1)
+		"offline_income_claimed":
+			_increment_counter("offline_income_claimed", 1)
 		_:
 			pass
 	_mark_new_completions()
@@ -228,6 +230,8 @@ func _calculate_progress(quest: Dictionary) -> Dictionary:
 	match requirement_type:
 		"purchased_habitats_count":
 			current = _get_purchased_habitats_count()
+		"usable_habitats_count":
+			current = _get_usable_habitats_count()
 		"screen_opened":
 			current = _get_counter("screen:" + requirement_target)
 		"owned_reptiles_count":
@@ -242,12 +246,20 @@ func _calculate_progress(quest: Dictionary) -> Dictionary:
 			current = _get_discovered_variant_count()
 		"care_action_count":
 			current = _get_counter("care:" + requirement_target)
+		"total_care_actions_count":
+			current = _get_total_care_actions_count()
 		"current_currency_at_least":
 			current = int(floor(float(EconomySystem.get_currency(requirement_target if not requirement_target.is_empty() else "repticash"))))
 		"lifetime_currency_earned":
 			current = int(floor(float(GameState.get_value("lifetime_repticash_earned", EconomySystem.get_currency("repticash")))))
 		"player_level_at_least":
 			current = int(GameState.get_value("level", 1))
+		"habitats_at_level_count":
+			current = _get_habitats_at_level_count(max(1, int(requirement_target)))
+		"offline_income_claimed_count":
+			current = _get_counter("offline_income_claimed")
+		"claimed_quests_count":
+			current = _get_claimed_quests_count()
 		"workers_hired_count":
 			current = _get_workers_hired_count()
 		_:
@@ -306,6 +318,20 @@ func _get_purchased_habitats_count() -> int:
 	return count
 
 
+func _get_usable_habitats_count() -> int:
+	var count := 0
+	var habitats_value: Variant = GameState.get_value("habitats", {})
+	if typeof(habitats_value) != TYPE_DICTIONARY:
+		return count
+	for habitat_value in (habitats_value as Dictionary).values():
+		if typeof(habitat_value) != TYPE_DICTIONARY:
+			continue
+		var habitat: Dictionary = habitat_value as Dictionary
+		if bool(habitat.get("purchased", false)) and not bool(habitat.get("is_building", false)) and not bool(habitat.get("is_upgrading", false)):
+			count += 1
+	return count
+
+
 func _get_assigned_reptiles_count() -> int:
 	var count := 0
 	for instance_value in ReptileSystem.get_owned_reptile_instances().values():
@@ -344,6 +370,31 @@ func _get_discovered_variant_count() -> int:
 		if bool(discovered):
 			count += 1
 	return count
+
+
+func _get_total_care_actions_count() -> int:
+	return _get_counter("care:feed") + _get_counter("care:water") + _get_counter("care:clean") + _get_counter("care:play")
+
+
+func _get_habitats_at_level_count(required_level: int) -> int:
+	var count := 0
+	var habitats_value: Variant = GameState.get_value("habitats", {})
+	if typeof(habitats_value) != TYPE_DICTIONARY:
+		return count
+	for habitat_value in (habitats_value as Dictionary).values():
+		if typeof(habitat_value) != TYPE_DICTIONARY:
+			continue
+		var habitat: Dictionary = habitat_value as Dictionary
+		if bool(habitat.get("purchased", false)) and not bool(habitat.get("is_building", false)) and int(habitat.get("habitat_level", 1)) >= required_level:
+			count += 1
+	return count
+
+
+func _get_claimed_quests_count() -> int:
+	var claimed_value: Variant = GameState.get_value("claimed_quests", [])
+	if typeof(claimed_value) != TYPE_ARRAY:
+		return 0
+	return (claimed_value as Array).size()
 
 
 func _get_workers_hired_count() -> int:

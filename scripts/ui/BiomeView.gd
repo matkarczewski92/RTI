@@ -65,6 +65,9 @@ const GALLERY_RARITIES := ["common", "rare", "exceptional", "ultra_rare"]
 var habitat_data: Array = []
 var habitat_slots: Dictionary = {}
 var action_popup: PopupPanel
+var feedback_modal: Control
+var confirmation_modal: Control
+var level_up_modal: Control
 var reptile_selection_modal: Control
 var management_modal: Control
 var management_modal_mouse_filter_backup: Array = []
@@ -94,6 +97,8 @@ func _ready() -> void:
 		EconomySystem.income_progress_updated.connect(_on_income_progress_updated)
 	if EconomySystem.has_signal("income_tick"):
 		EconomySystem.income_tick.connect(_on_income_tick)
+	if EconomySystem.has_signal("player_level_up"):
+		EconomySystem.player_level_up.connect(_on_player_level_up)
 	if has_node("/root/WorkerSystem") and WorkerSystem.has_signal("workers_changed"):
 		WorkerSystem.workers_changed.connect(_on_workers_changed)
 	if has_node("/root/UpgradeSystem") and UpgradeSystem.has_signal("upgrades_changed"):
@@ -109,6 +114,9 @@ func _rebuild_layout() -> void:
 		child.queue_free()
 	habitat_slots.clear()
 	action_popup = null
+	feedback_modal = null
+	confirmation_modal = null
+	level_up_modal = null
 	reptile_selection_modal = null
 	management_modal = null
 	management_modal_mouse_filter_backup.clear()
@@ -159,6 +167,10 @@ func _on_income_tick(amount: float) -> void:
 
 	_show_income_float(amount)
 	_refresh_habitat_income_progress()
+
+
+func _on_player_level_up(levels: Array, reward_amount: float) -> void:
+	_show_level_up_popup(levels, reward_amount)
 
 
 func _on_workers_changed() -> void:
@@ -440,7 +452,7 @@ func _add_habitat_slots(parent: Control) -> void:
 		if slot.has_method("set_habitat_texture"):
 			slot.call("set_habitat_texture", _get_habitat_texture_path(habitat_id))
 		if slot.has_method("set_upgrade_status"):
-			slot.call("set_upgrade_status", _is_habitat_upgrading(habitat_id), _get_habitat_upgrade_status_text(habitat_id))
+			slot.call("set_upgrade_status", _is_habitat_in_progress(habitat_id), _get_habitat_in_progress_status_text(habitat_id))
 		slot.call("set_occupied_icon", _get_habitat_reptile_icon_path(habitat_id) if state == STATE_OCCUPIED else "")
 		slot.connect("habitat_pressed", Callable(self, "_on_habitat_pressed"))
 		parent.add_child(slot)
@@ -595,6 +607,9 @@ func _show_placeholder_popup(title_key: String, body_key: String) -> void:
 
 func _show_reptile_assignment_popup(habitat_id: String) -> void:
 	_close_reptile_selection_modal()
+	if _is_habitat_building(habitat_id):
+		_show_message_popup("habitat.building_in_progress")
+		return
 	if _is_habitat_upgrading(habitat_id):
 		_show_message_popup("habitat.upgrading")
 		return
@@ -957,12 +972,19 @@ func _make_shop_variant_button(reptile_id: String, rarity: String, sex_selector:
 	var rarity_label: String = LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(rarity))
 
 	if variant.is_empty():
+		button.icon = AssetPaths.load_texture(ReptileSystem.get_rarity_icon_path(rarity))
+		button.expand_icon = true
 		button.text = rarity_label + "\n" + LocalizationSystem.tr_key("shop.unavailable")
 		button.disabled = true
 		return button
 
 	var price: int = ReptileSystem.get_shop_purchase_price(reptile_id, rarity)
 	var price_text: String = LocalizationSystem.tr_key("ui.free") if price == 0 else LocalizationSystem.tr_key("currency.repticash") + " " + str(price)
+	var rarity_icon_path: String = str(variant.get("rarity_icon_path", ReptileSystem.get_rarity_icon_path(rarity)))
+	button.icon = AssetPaths.load_texture(rarity_icon_path)
+	if button.icon == null:
+		button.icon = AssetPaths.load_texture(ReptileSystem.get_rarity_icon_path(rarity))
+	button.expand_icon = true
 	button.text = LocalizationSystem.tr_key("ui.buy") + " " + rarity_label + "\n" + price_text
 	button.disabled = price > 0 and not EconomySystem.can_afford("repticash", price)
 	button.pressed.connect(func() -> void:
@@ -1100,13 +1122,6 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 		_add_management_info_row(panel_layer, str(row_data.get("key", "")), str(row_data.get("value", "")), info_y, reference_origin, reference_scale)
 		info_y += 52.0
 
-	var portrait_frame_cover: ColorRect = ColorRect.new()
-	portrait_frame_cover.name = "PortraitFrameCover"
-	portrait_frame_cover.color = Color(0.98, 0.90, 0.73, 1.0)
-	portrait_frame_cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel_layer.add_child(portrait_frame_cover)
-	_position_reference_control(portrait_frame_cover, Vector2(695, 522), Vector2(430, 432), reference_origin, reference_scale)
-
 	var portrait: TextureRect = TextureRect.new()
 	portrait.name = "ReptilePortrait"
 	portrait.texture = AssetPaths.load_texture(ReptileSystem.get_owned_animal_image_path(instance))
@@ -1180,7 +1195,7 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 		panel_layer.add_child(move_out_button)
 		_position_reference_control(move_out_button, Vector2(470, 1456), Vector2(711, 86), reference_origin, reference_scale)
 
-		var upgrade_hint_button: TextureButton = _make_management_wide_button(REPTILE_MGMT_UPGRADE_PATH, "habitat.upgrade", Callable(self, "_show_message_popup").bind("habitat.upgrade_requires_empty"), reference_scale)
+		var upgrade_hint_button: TextureButton = _make_management_wide_button(REPTILE_MGMT_UPGRADE_PATH, "habitat.upgrade", Callable(self, "_show_upgrade_blocked_popup"), reference_scale)
 		panel_layer.add_child(upgrade_hint_button)
 		_position_reference_control(upgrade_hint_button, Vector2(470, 1581), Vector2(711, 86), reference_origin, reference_scale)
 
@@ -1368,17 +1383,20 @@ func _show_habitat_management_popup(habitat_id: String) -> void:
 
 	var habitat_type: String = ReptileSystem.normalize_habitat_type(str(habitat.get("habitat_type", "grass")))
 	var habitat_level: int = ReptileSystem.normalize_habitat_level(habitat.get("habitat_level", 1))
+	var is_building: bool = bool(habitat.get("is_building", false))
 	var is_upgrading: bool = bool(habitat.get("is_upgrading", false))
 	column.add_child(_make_management_text_row("habitat.type", LocalizationSystem.tr_key(ReptileSystem.get_habitat_type_label_key(habitat_type))))
 	column.add_child(_make_management_text_row("habitat.level", LocalizationSystem.tr_key(ReptileSystem.get_habitat_level_label_key(habitat_level))))
 
-	if is_upgrading:
-		column.add_child(_make_management_text_row("habitat.upgrading", _format_duration_compact(ReptileSystem.get_habitat_upgrade_remaining_seconds(habitat_id))))
+	if is_building:
+		column.add_child(_make_management_text_row("habitat.building_in_progress", _format_duration_compact(ReptileSystem.get_habitat_build_remaining_seconds(habitat_id))))
+	elif is_upgrading:
+		column.add_child(_make_management_text_row("habitat.upgrade_in_progress", _format_duration_compact(ReptileSystem.get_habitat_upgrade_remaining_seconds(habitat_id))))
 		column.add_child(_make_management_text_row("habitat.next_level", LocalizationSystem.tr_key(ReptileSystem.get_habitat_level_label_key(habitat.get("upgrade_target_level", habitat_level + 1)))))
 	elif habitat_level < ReptileSystem.get_habitat_max_level():
 		column.add_child(_make_management_text_row("habitat.next_level", LocalizationSystem.tr_key(ReptileSystem.get_habitat_level_label_key(habitat_level + 1))))
 		column.add_child(_make_management_text_row("habitat.upgrade_cost", LocalizationSystem.tr_key("currency.repticash") + " " + str(ReptileSystem.get_habitat_upgrade_cost())))
-		column.add_child(_make_management_text_row("habitat.upgrade_time", _format_duration_compact(ReptileSystem.get_habitat_upgrade_duration_seconds())))
+		column.add_child(_make_management_text_row("habitat.upgrade_time", _format_duration_compact(ReptileSystem.get_habitat_upgrade_duration_seconds(habitat_level))))
 	else:
 		column.add_child(_make_management_text_row("habitat.next_level", LocalizationSystem.tr_key("habitat.max_level")))
 
@@ -1391,14 +1409,14 @@ func _show_habitat_management_popup(habitat_id: String) -> void:
 		_show_reptile_assignment_popup(habitat_id)
 	)
 	_style_primary_action_button(place_button)
-	place_button.disabled = is_upgrading
+	place_button.disabled = is_building or is_upgrading
 	actions.add_child(place_button)
 
 	var upgrade_button: Button = _make_popup_button("habitat.upgrade", func() -> void:
 		_confirm_habitat_upgrade(habitat_id)
 	)
 	_style_primary_action_button(upgrade_button)
-	upgrade_button.disabled = is_upgrading or habitat_level >= ReptileSystem.get_habitat_max_level()
+	upgrade_button.disabled = is_building or is_upgrading or habitat_level >= ReptileSystem.get_habitat_max_level()
 	actions.add_child(upgrade_button)
 
 	var remove_button: Button = _make_popup_button("habitat.remove_habitat", func() -> void:
@@ -2634,8 +2652,7 @@ func _on_achievement_claim_pressed(achievement_id: String) -> void:
 		_show_message_popup(str(result.get("message_key", "achievements.in_progress")))
 		return
 
-	var feedback: String = _format_achievement_claim_feedback(result)
-	_show_message_text_popup(feedback)
+	_show_reward_claim_feedback_popup(_format_achievement_claim_feedback(result), "achievements.reward_claimed_title")
 	_show_animals_view("achievements")
 
 
@@ -2688,7 +2705,7 @@ func _on_quest_claim_pressed(quest_id: String) -> void:
 		_show_message_popup(str(result.get("message_key", "quests.in_progress")))
 		return
 
-	_show_message_text_popup(_format_quest_claim_feedback(result))
+	_show_reward_claim_feedback_popup(_format_quest_claim_feedback(result), "quests.reward_claimed_title")
 	_show_quests_view()
 
 
@@ -2717,11 +2734,14 @@ func _join_text_pieces(pieces: Array[String], separator: String) -> String:
 
 
 func _notify_quest_event(event_type: String, payload: Dictionary = {}) -> void:
-	if not has_node("/root/QuestSystem"):
-		return
-	var quest_system: Node = get_node("/root/QuestSystem")
-	if quest_system.has_method("notify_event"):
-		quest_system.call("notify_event", event_type, payload)
+	if has_node("/root/QuestSystem"):
+		var quest_system: Node = get_node("/root/QuestSystem")
+		if quest_system.has_method("notify_event"):
+			quest_system.call("notify_event", event_type, payload)
+	if has_node("/root/AchievementSystem"):
+		var achievement_system: Node = get_node("/root/AchievementSystem")
+		if achievement_system.has_method("notify_progress_changed"):
+			achievement_system.call("notify_progress_changed")
 
 
 func _try_shop_buy_reptile(reptile_id: String, rarity: String, sex: String) -> void:
@@ -2830,6 +2850,8 @@ func _show_assign_instance_to_habitat_popup(instance_id: String) -> void:
 		var habitat_id: String = str(habitat.get("id", ""))
 		if _get_habitat_state(habitat_id) != STATE_PURCHASED_EMPTY:
 			continue
+		if _is_habitat_building(habitat_id):
+			continue
 		if _is_habitat_upgrading(habitat_id):
 			continue
 
@@ -2881,6 +2903,7 @@ func _try_purchase_habitat(habitat_id: String, slot_index: int, habitat_type: St
 		_show_message_popup("ui.not_enough_currency")
 		return
 
+	var now: int = Time.get_unix_time_from_system()
 	var habitats: Dictionary = _get_habitats_state()
 	habitats[habitat_id] = {
 		"habitat_id": habitat_id,
@@ -2889,6 +2912,9 @@ func _try_purchase_habitat(habitat_id: String, slot_index: int, habitat_type: St
 		"purchased": true,
 		"habitat_type": ReptileSystem.normalize_habitat_type(habitat_type),
 		"habitat_level": 1,
+		"is_building": true,
+		"build_started_at": now,
+		"build_finish_at": now + ReptileSystem.get_habitat_build_duration_seconds(),
 		"is_upgrading": false,
 		"upgrade_target_level": 0,
 		"upgrade_started_at": 0,
@@ -2910,42 +2936,210 @@ func _try_purchase_habitat(habitat_id: String, slot_index: int, habitat_type: St
 
 
 func _show_message_popup(message_key: String) -> void:
-	var popup: PopupPanel = _create_action_popup()
-	var column: VBoxContainer = _add_popup_column(popup)
-	column.add_child(_make_popup_label(LocalizationSystem.tr_key(message_key), 18))
-	column.add_child(_make_popup_button("ui.cancel", func() -> void:
-		popup.hide()
-	))
-	popup.popup_centered(Vector2(330, 170))
+	_show_feedback_modal("", LocalizationSystem.tr_key(message_key), "ui.ok", false)
 
 
 func _show_message_text_popup(message: String) -> void:
-	var popup: PopupPanel = _create_action_popup()
-	var column: VBoxContainer = _add_popup_column(popup)
-	column.add_child(_make_popup_label(message, 18))
-	column.add_child(_make_popup_button("ui.ok", func() -> void:
-		popup.hide()
-	))
-	popup.popup_centered(Vector2(330, 170))
+	_show_feedback_modal("", message, "ui.ok", false)
+
+
+func _show_reward_claim_feedback_popup(reward_text: String, title_key: String) -> void:
+	_show_feedback_modal(LocalizationSystem.tr_key(title_key), reward_text, "ui.ok", true)
+
+
+func _show_upgrade_blocked_popup() -> void:
+	_show_feedback_modal(LocalizationSystem.tr_key("habitat.upgrade_blocked_title"), LocalizationSystem.tr_key("habitat.remove_reptile_first"), "ui.ok", false)
+
+
+func _show_feedback_modal(title_text: String, message_text: String, ok_key: String = "ui.ok", reward_style: bool = false) -> void:
+	_close_feedback_modal()
+
+	feedback_modal = Control.new()
+	feedback_modal.name = "FeedbackModal"
+	feedback_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
+	feedback_modal.z_index = 100
+	add_child(feedback_modal)
+	feedback_modal.move_to_front()
+
+	var overlay: ColorRect = ColorRect.new()
+	overlay.name = "DimOverlay"
+	overlay.color = Color(0.04, 0.05, 0.04, 0.34)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	feedback_modal.add_child(overlay)
+
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.offset_left = 26
+	center.offset_right = -26
+	center.offset_top = TOP_BAR_HEIGHT * 0.5
+	center.offset_bottom = -(BOTTOM_NAV_HEIGHT * 0.35)
+	feedback_modal.add_child(center)
+
+	var panel: PanelContainer = PanelContainer.new()
+	var panel_height: float = 230.0 if reward_style else 210.0
+	panel.custom_minimum_size = Vector2(410, panel_height)
+	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
+	center.add_child(panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 22)
+	margin.add_theme_constant_override("margin_right", 22)
+	margin.add_theme_constant_override("margin_top", 20)
+	margin.add_theme_constant_override("margin_bottom", 20)
+	panel.add_child(margin)
+
+	var column: VBoxContainer = VBoxContainer.new()
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.add_theme_constant_override("separation", 12)
+	margin.add_child(column)
+
+	if not title_text.is_empty():
+		var title: Label = _make_popup_label(title_text, 21)
+		_apply_label_color(title, POPUP_TEXT_PRIMARY)
+		column.add_child(title)
+
+	var message_font_size: int = 18 if reward_style else 16
+	var message: Label = _make_popup_label(message_text, message_font_size)
+	_apply_label_color(message, POPUP_TEXT_SUCCESS if reward_style else POPUP_TEXT_PRIMARY)
+	column.add_child(message)
+
+	var ok_button: Button = _make_popup_button(ok_key, func() -> void:
+		_close_feedback_modal()
+	)
+	_style_primary_action_button(ok_button)
+	column.add_child(ok_button)
+
+
+func _show_level_up_popup(levels: Array, reward_amount: float) -> void:
+	if levels.is_empty():
+		return
+
+	_close_level_up_modal()
+	level_up_modal = Control.new()
+	level_up_modal.name = "LevelUpModal"
+	level_up_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
+	level_up_modal.z_index = 95
+	add_child(level_up_modal)
+
+	var overlay: ColorRect = ColorRect.new()
+	overlay.color = Color(0.04, 0.05, 0.04, 0.46)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	level_up_modal.add_child(overlay)
+
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.offset_left = 24
+	center.offset_right = -24
+	center.offset_top = TOP_BAR_HEIGHT * 0.5
+	center.offset_bottom = -(BOTTOM_NAV_HEIGHT * 0.35)
+	level_up_modal.add_child(center)
+
+	var panel: PanelContainer = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(430, 290)
+	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
+	center.add_child(panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 22)
+	margin.add_theme_constant_override("margin_right", 22)
+	margin.add_theme_constant_override("margin_top", 20)
+	margin.add_theme_constant_override("margin_bottom", 20)
+	panel.add_child(margin)
+
+	var column: VBoxContainer = VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	margin.add_child(column)
+
+	var new_level: int = int(levels[levels.size() - 1])
+	var title: Label = _make_popup_label(LocalizationSystem.tr_key("player.level_up_title"), 22)
+	_apply_label_color(title, POPUP_TEXT_PRIMARY)
+	column.add_child(title)
+
+	var message: Label = _make_popup_label(LocalizationSystem.tr_key("player.level_up_message").replace("{level}", str(new_level)), 16)
+	_apply_label_color(message, POPUP_TEXT_SECONDARY)
+	column.add_child(message)
+
+	var reward: Label = _make_popup_label(LocalizationSystem.tr_key("player.level_reward").replace("{amount}", _format_decimal(reward_amount)), 17)
+	_apply_label_color(reward, POPUP_TEXT_SUCCESS)
+	column.add_child(reward)
+
+	var ok_button: Button = _make_popup_button("player.level_up_ok", func() -> void:
+		_close_level_up_modal()
+	)
+	_style_primary_action_button(ok_button)
+	column.add_child(ok_button)
 
 
 func _show_confirmation_popup(message_key: String, confirm_key: String, callback: Callable) -> void:
-	var popup: PopupPanel = _create_action_popup()
-	var column: VBoxContainer = _add_popup_column(popup)
-	var message: Label = _make_popup_label(LocalizationSystem.tr_key(message_key), 16)
+	_show_styled_confirmation_popup("", message_key, confirm_key, "ui.cancel", callback)
+
+
+func _show_styled_confirmation_popup(title_key: String, message_key: String, confirm_key: String, cancel_key: String, callback: Callable) -> void:
+	_close_confirmation_modal()
+
+	confirmation_modal = Control.new()
+	confirmation_modal.name = "ConfirmationModal"
+	confirmation_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
+	confirmation_modal.z_index = 90
+	add_child(confirmation_modal)
+
+	var overlay: ColorRect = ColorRect.new()
+	overlay.name = "DimOverlay"
+	overlay.color = Color(0.04, 0.05, 0.04, 0.46)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	confirmation_modal.add_child(overlay)
+
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.offset_left = 24
+	center.offset_right = -24
+	center.offset_top = TOP_BAR_HEIGHT * 0.5
+	center.offset_bottom = -(BOTTOM_NAV_HEIGHT * 0.35)
+	confirmation_modal.add_child(center)
+
+	var panel: PanelContainer = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(430, 270)
+	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
+	center.add_child(panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 22)
+	margin.add_theme_constant_override("margin_right", 22)
+	margin.add_theme_constant_override("margin_top", 20)
+	margin.add_theme_constant_override("margin_bottom", 20)
+	panel.add_child(margin)
+
+	var column: VBoxContainer = VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	margin.add_child(column)
+
+	if not title_key.is_empty():
+		var title: Label = _make_popup_label(LocalizationSystem.tr_key(title_key), 21)
+		_apply_label_color(title, POPUP_TEXT_PRIMARY)
+		column.add_child(title)
+
+	var message: Label = _make_popup_label(LocalizationSystem.tr_key(message_key), 15)
 	_apply_label_color(message, POPUP_TEXT_PRIMARY)
 	column.add_child(message)
 
+	var actions: HBoxContainer = HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 10)
+	column.add_child(actions)
+
+	var cancel_button: Button = _make_popup_button(cancel_key, func() -> void:
+		_close_confirmation_modal()
+	)
+	cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_button_text_color(cancel_button, POPUP_TEXT_PRIMARY)
+	actions.add_child(cancel_button)
+
 	var confirm_button: Button = _make_popup_button(confirm_key, func() -> void:
-		popup.hide()
+		_close_confirmation_modal()
 		callback.call()
 	)
+	confirm_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_style_primary_action_button(confirm_button)
-	column.add_child(confirm_button)
-	column.add_child(_make_popup_button("ui.cancel", func() -> void:
-		popup.hide()
-	))
-	popup.popup_centered(Vector2(380, 220))
+	actions.add_child(confirm_button)
 
 
 func _confirm_remove_reptile(habitat_id: String) -> void:
@@ -2966,7 +3160,12 @@ func _try_remove_reptile_from_habitat(habitat_id: String) -> void:
 
 
 func _confirm_habitat_upgrade(habitat_id: String) -> void:
-	_show_confirmation_popup("habitat.upgrade_confirm", "habitat.upgrade", func() -> void:
+	var habitat: Dictionary = _get_saved_habitat_state(habitat_id)
+	if _habitat_has_assigned_reptile(habitat):
+		_show_upgrade_blocked_popup()
+		return
+
+	_show_styled_confirmation_popup("habitat.upgrade_confirm_title", "habitat.upgrade_confirm_message", "habitat.upgrade_confirm_button", "ui.cancel", func() -> void:
 		_try_start_habitat_upgrade(habitat_id)
 	)
 
@@ -2974,6 +3173,9 @@ func _confirm_habitat_upgrade(habitat_id: String) -> void:
 func _try_start_habitat_upgrade(habitat_id: String) -> void:
 	var result: Dictionary = ReptileSystem.start_habitat_upgrade(habitat_id)
 	if not bool(result.get("success", false)):
+		if str(result.get("message_key", "")) == "habitat.remove_reptile_first":
+			_show_upgrade_blocked_popup()
+			return
 		_show_message_popup(str(result.get("message_key", "ui.habitat_unavailable")))
 		return
 
@@ -2984,7 +3186,7 @@ func _try_start_habitat_upgrade(habitat_id: String) -> void:
 
 
 func _confirm_remove_habitat(habitat_id: String) -> void:
-	_show_confirmation_popup("habitat.remove_habitat_confirm", "habitat.remove_habitat", func() -> void:
+	_show_styled_confirmation_popup("habitat.remove_confirm_title", "habitat.remove_confirm_message", "habitat.remove_confirm_button", "ui.cancel", func() -> void:
 		_try_remove_habitat(habitat_id)
 	)
 
@@ -3266,6 +3468,7 @@ func _create_action_popup() -> PopupPanel:
 
 	action_popup = PopupPanel.new()
 	action_popup.name = "HabitatActionPopup"
+	action_popup.add_theme_stylebox_override("panel", _make_modal_panel_style())
 	add_child(action_popup)
 	return action_popup
 
@@ -3309,6 +3512,30 @@ func _close_reptile_selection_modal() -> void:
 
 	reptile_selection_modal.queue_free()
 	reptile_selection_modal = null
+
+
+func _close_feedback_modal() -> void:
+	if feedback_modal == null:
+		return
+
+	feedback_modal.queue_free()
+	feedback_modal = null
+
+
+func _close_confirmation_modal() -> void:
+	if confirmation_modal == null:
+		return
+
+	confirmation_modal.queue_free()
+	confirmation_modal = null
+
+
+func _close_level_up_modal() -> void:
+	if level_up_modal == null:
+		return
+
+	level_up_modal.queue_free()
+	level_up_modal = null
 
 
 func _close_management_modal() -> void:
@@ -3909,7 +4136,7 @@ func _refresh_habitat_slots() -> void:
 			if slot.has_method("set_habitat_texture"):
 				slot.call("set_habitat_texture", _get_habitat_texture_path(habitat_id))
 			if slot.has_method("set_upgrade_status"):
-				slot.call("set_upgrade_status", _is_habitat_upgrading(habitat_id), _get_habitat_upgrade_status_text(habitat_id))
+				slot.call("set_upgrade_status", _is_habitat_in_progress(habitat_id), _get_habitat_in_progress_status_text(habitat_id))
 			slot.call("set_occupied_icon", _get_habitat_reptile_icon_path(habitat_id) if state == STATE_OCCUPIED else "")
 			if slot.has_method("set_needs_attention"):
 				slot.call("set_needs_attention", _habitat_needs_attention(habitat_id) if state == STATE_OCCUPIED else false)
@@ -3946,6 +4173,16 @@ func _get_habitat_state(habitat_id: String) -> String:
 	return STATE_PURCHASED_EMPTY
 
 
+func _habitat_has_assigned_reptile(habitat: Dictionary) -> bool:
+	if habitat.is_empty():
+		return false
+	return (
+		not str(habitat.get("reptile_id", "")).is_empty()
+		or not str(habitat.get("reptile_instance_id", "")).is_empty()
+		or _id_or_empty(habitat.get("animal_instance_id", null)) != ""
+	)
+
+
 func _get_habitats_state() -> Dictionary:
 	var value: Variant = GameState.get_value("habitats", {})
 	if typeof(value) != TYPE_DICTIONARY:
@@ -3977,10 +4214,15 @@ func _get_habitat_texture_path(habitat_id: String) -> String:
 	var habitat: Dictionary = _get_saved_habitat_state(habitat_id)
 	if habitat.is_empty() or not bool(habitat.get("purchased", false)):
 		return ""
-	if bool(habitat.get("is_upgrading", false)):
+	if bool(habitat.get("is_building", false)) or bool(habitat.get("is_upgrading", false)):
 		return HABITAT_IN_PROGRESS_PATH
 
 	return ReptileSystem.get_habitat_texture_path(str(habitat.get("habitat_type", "grass")), habitat.get("habitat_level", 1))
+
+
+func _is_habitat_building(habitat_id: String) -> bool:
+	var habitat: Dictionary = _get_saved_habitat_state(habitat_id)
+	return bool(habitat.get("is_building", false))
 
 
 func _is_habitat_upgrading(habitat_id: String) -> bool:
@@ -3988,12 +4230,19 @@ func _is_habitat_upgrading(habitat_id: String) -> bool:
 	return bool(habitat.get("is_upgrading", false))
 
 
-func _get_habitat_upgrade_status_text(habitat_id: String) -> String:
+func _is_habitat_in_progress(habitat_id: String) -> bool:
+	return _is_habitat_building(habitat_id) or _is_habitat_upgrading(habitat_id)
+
+
+func _get_habitat_in_progress_status_text(habitat_id: String) -> String:
+	if _is_habitat_building(habitat_id):
+		var build_remaining: int = ReptileSystem.get_habitat_build_remaining_seconds(habitat_id)
+		return LocalizationSystem.tr_key("habitat.building_in_progress") + "\n" + LocalizationSystem.tr_key("habitat.build_time_remaining").replace("{time}", _format_duration_compact(build_remaining))
 	if not _is_habitat_upgrading(habitat_id):
 		return ""
 
 	var remaining: int = ReptileSystem.get_habitat_upgrade_remaining_seconds(habitat_id)
-	return LocalizationSystem.tr_key("habitat.upgrading") + "\n" + _format_duration_compact(remaining)
+	return LocalizationSystem.tr_key("habitat.upgrade_in_progress") + "\n" + LocalizationSystem.tr_key("habitat.upgrade_time_remaining").replace("{time}", _format_duration_compact(remaining))
 
 
 func _get_habitat_data(habitat_id: String) -> Dictionary:

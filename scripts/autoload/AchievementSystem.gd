@@ -122,7 +122,23 @@ func get_achievement_progress(achievement: Dictionary) -> Dictionary:
 			target = max(1, int(collection_progress.get("target", requirement_value)))
 		"biome_discovered_count":
 			current = _get_biome_discovered_variant_count(requirement_target)
+		"purchased_habitats_count":
+			current = _get_purchased_habitats_count()
+		"occupied_habitats_count":
+			current = _get_occupied_habitats_count()
+		"habitats_at_level_count":
+			current = _get_habitats_at_level_count(max(1, int(requirement_target)))
+		"lifetime_currency_earned":
+			current = int(floor(float(GameState.get_value("lifetime_repticash_earned", 0.0))))
+		"player_level_at_least":
+			current = int(GameState.get_value("level", GameState.get_value("player_level", 1)))
+		"income_per_min_at_least":
+			current = int(floor(EconomySystem.get_total_assigned_income_per_min()))
+		"biome_unlocked":
+			current = 1 if _is_biome_unlocked(requirement_target) else 0
+			target = 1
 		_:
+			push_warning("Unknown achievement requirement type: " + requirement_type)
 			current = 0
 
 	return {
@@ -282,6 +298,57 @@ func _get_biome_discovered_variant_count(biome_id: String) -> int:
 			count += 1
 
 	return count
+
+
+func _get_purchased_habitats_count() -> int:
+	var count := 0
+	var habitats_value: Variant = GameState.get_value("habitats", {})
+	if typeof(habitats_value) != TYPE_DICTIONARY:
+		return count
+	for habitat_value in (habitats_value as Dictionary).values():
+		if typeof(habitat_value) == TYPE_DICTIONARY and bool((habitat_value as Dictionary).get("purchased", false)):
+			count += 1
+	return count
+
+
+func _get_occupied_habitats_count() -> int:
+	var count := 0
+	var habitats_value: Variant = GameState.get_value("habitats", {})
+	if typeof(habitats_value) != TYPE_DICTIONARY:
+		return count
+	for habitat_value in (habitats_value as Dictionary).values():
+		if typeof(habitat_value) != TYPE_DICTIONARY:
+			continue
+		var habitat: Dictionary = habitat_value as Dictionary
+		if not bool(habitat.get("purchased", false)):
+			continue
+		var reptile_id: String = str(habitat.get("reptile_instance_id", habitat.get("animal_instance_id", "")))
+		if reptile_id.is_empty():
+			reptile_id = str(habitat.get("reptile_id", ""))
+		if not reptile_id.is_empty():
+			count += 1
+	return count
+
+
+func _get_habitats_at_level_count(required_level: int) -> int:
+	var count := 0
+	var habitats_value: Variant = GameState.get_value("habitats", {})
+	if typeof(habitats_value) != TYPE_DICTIONARY:
+		return count
+	for habitat_value in (habitats_value as Dictionary).values():
+		if typeof(habitat_value) != TYPE_DICTIONARY:
+			continue
+		var habitat: Dictionary = habitat_value as Dictionary
+		if bool(habitat.get("purchased", false)) and not bool(habitat.get("is_building", false)) and int(habitat.get("habitat_level", 1)) >= required_level:
+			count += 1
+	return count
+
+
+func _is_biome_unlocked(biome_id: String) -> bool:
+	var unlocked_value: Variant = GameState.get_value("unlocked_biomes", [])
+	if typeof(unlocked_value) != TYPE_ARRAY:
+		return false
+	return (unlocked_value as Array).has(biome_id)
 
 
 func _get_discovered_variant_ids() -> Array:

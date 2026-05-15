@@ -23,7 +23,9 @@ const PLAY_XP_REWARD := 0.1
 const HABITAT_TYPES: Array[String] = ["grass", "sand", "stone", "jungle"]
 const HABITAT_MAX_LEVEL := 3
 const HABITAT_UPGRADE_COST := 10000
-const HABITAT_UPGRADE_DURATION_SECONDS := 7200
+const HABITAT_BUILD_DURATION_SECONDS := 1800
+const HABITAT_UPGRADE_LEVEL_2_DURATION_SECONDS := 7200
+const HABITAT_UPGRADE_LEVEL_3_DURATION_SECONDS := 86400
 
 const RARITY_ICON_PATHS: Dictionary = {
 	"common": "res://assets/art/ui/icons/icon_rarity_common.png",
@@ -317,8 +319,17 @@ func get_habitat_upgrade_cost() -> int:
 	return HABITAT_UPGRADE_COST
 
 
-func get_habitat_upgrade_duration_seconds() -> int:
-	return HABITAT_UPGRADE_DURATION_SECONDS
+func get_habitat_build_duration_seconds() -> int:
+	return HABITAT_BUILD_DURATION_SECONDS
+
+
+func get_habitat_upgrade_duration_seconds(current_level: Variant = 1) -> int:
+	var target_level: int = normalize_habitat_level(int(current_level) + 1)
+	match target_level:
+		3:
+			return HABITAT_UPGRADE_LEVEL_3_DURATION_SECONDS
+		_:
+			return HABITAT_UPGRADE_LEVEL_2_DURATION_SECONDS
 
 
 func get_habitat_max_level() -> int:
@@ -446,11 +457,13 @@ func apply_time_updates(save_if_changed: bool = false) -> bool:
 	var changed: bool = _update_global_resources(now)
 	if _update_owned_reptile_needs(now):
 		changed = true
-	if _update_habitat_upgrades(now):
+	if _update_habitat_timers(now):
 		changed = true
 
-	if changed and save_if_changed:
-		SaveSystem.save_game()
+	if changed:
+		_notify_achievement_progress_changed()
+		if save_if_changed:
+			SaveSystem.save_game()
 
 	return changed
 
@@ -675,6 +688,8 @@ func purchase_and_assign_reptile(reptile_id: String, habitat_id: String, biome_i
 	if not bool(habitat.get("purchased", false)):
 		return {"success": false, "message_key": "ui.habitat_unavailable"}
 	habitat = _normalize_habitat_state(habitat_id, habitat)
+	if bool(habitat.get("is_building", false)):
+		return {"success": false, "message_key": "habitat.building_in_progress"}
 	if bool(habitat.get("is_upgrading", false)):
 		return {"success": false, "message_key": "habitat.upgrading"}
 
@@ -860,6 +875,8 @@ func assign_reptile_to_habitat(instance_id: String, habitat_id: String, biome_id
 	if str(habitat.get("biome_id", biome_id)) != biome_id or not bool(habitat.get("purchased", false)):
 		return {"success": false, "message_key": "ui.habitat_unavailable"}
 	habitat = _normalize_habitat_state(habitat_id, habitat)
+	if bool(habitat.get("is_building", false)):
+		return {"success": false, "message_key": "habitat.building_in_progress"}
 	if bool(habitat.get("is_upgrading", false)):
 		return {"success": false, "message_key": "habitat.upgrading"}
 
@@ -955,6 +972,20 @@ func is_habitat_upgrading(habitat_id: String) -> bool:
 	return bool(habitat.get("is_upgrading", false))
 
 
+func is_habitat_building(habitat_id: String) -> bool:
+	var habitat: Dictionary = get_habitat_state(habitat_id)
+	return bool(habitat.get("is_building", false))
+
+
+func get_habitat_build_remaining_seconds(habitat_id: String) -> int:
+	var habitat: Dictionary = get_habitat_state(habitat_id)
+	if not bool(habitat.get("is_building", false)):
+		return 0
+
+	var finish_at: int = _timestamp_from_value(habitat.get("build_finish_at", 0))
+	return int(max(0, finish_at - Time.get_unix_time_from_system()))
+
+
 func get_habitat_upgrade_remaining_seconds(habitat_id: String) -> int:
 	var habitat: Dictionary = get_habitat_state(habitat_id)
 	if not bool(habitat.get("is_upgrading", false)):
@@ -990,7 +1021,7 @@ func remove_reptile_from_habitat(habitat_id: String) -> Dictionary:
 
 func start_habitat_upgrade(habitat_id: String) -> Dictionary:
 	var now: int = Time.get_unix_time_from_system()
-	_update_habitat_upgrades(now)
+	_update_habitat_timers(now)
 	var habitats: Dictionary = _get_habitats_state()
 	var habitat_value: Variant = habitats.get(habitat_id, {})
 	if typeof(habitat_value) != TYPE_DICTIONARY:
@@ -999,6 +1030,8 @@ func start_habitat_upgrade(habitat_id: String) -> Dictionary:
 	var habitat: Dictionary = _normalize_habitat_state(habitat_id, habitat_value as Dictionary)
 	if not bool(habitat.get("purchased", false)):
 		return {"success": false, "message_key": "ui.habitat_unavailable"}
+	if bool(habitat.get("is_building", false)):
+		return {"success": false, "message_key": "habitat.building_in_progress"}
 	if bool(habitat.get("is_upgrading", false)):
 		return {"success": false, "message_key": "habitat.upgrading"}
 
@@ -1017,7 +1050,7 @@ func start_habitat_upgrade(habitat_id: String) -> Dictionary:
 	habitat["is_upgrading"] = true
 	habitat["upgrade_target_level"] = current_level + 1
 	habitat["upgrade_started_at"] = now
-	habitat["upgrade_finish_at"] = now + HABITAT_UPGRADE_DURATION_SECONDS
+	habitat["upgrade_finish_at"] = now + get_habitat_upgrade_duration_seconds(current_level)
 	habitat["habitat_level"] = current_level
 	habitats[habitat_id] = habitat
 
@@ -1051,6 +1084,9 @@ func remove_habitat(habitat_id: String) -> Dictionary:
 		"purchased": false,
 		"habitat_type": "grass",
 		"habitat_level": 1,
+		"is_building": false,
+		"build_started_at": 0,
+		"build_finish_at": 0,
 		"is_upgrading": false,
 		"upgrade_target_level": 0,
 		"upgrade_started_at": 0,
@@ -1164,6 +1200,8 @@ func _is_assigned_to_valid_habitat(instance: Dictionary) -> bool:
 	var habitat: Dictionary = habitat_value as Dictionary
 	if not bool(habitat.get("purchased", false)):
 		return false
+	if bool(habitat.get("is_building", false)):
+		return false
 	if bool(habitat.get("is_upgrading", false)):
 		return false
 
@@ -1182,6 +1220,9 @@ func _normalize_habitat_state(habitat_id: String, habitat: Dictionary) -> Dictio
 	normalized["purchased"] = bool(normalized.get("purchased", false))
 	normalized["habitat_type"] = normalize_habitat_type(str(normalized.get("habitat_type", "grass")))
 	normalized["habitat_level"] = normalize_habitat_level(normalized.get("habitat_level", 1))
+	normalized["is_building"] = bool(normalized.get("is_building", false))
+	normalized["build_started_at"] = _timestamp_from_value(normalized.get("build_started_at", 0))
+	normalized["build_finish_at"] = _timestamp_from_value(normalized.get("build_finish_at", 0))
 	normalized["is_upgrading"] = bool(normalized.get("is_upgrading", false))
 	normalized["upgrade_target_level"] = int(normalized.get("upgrade_target_level", 0))
 	normalized["upgrade_started_at"] = _timestamp_from_value(normalized.get("upgrade_started_at", 0))
@@ -1206,6 +1247,8 @@ func _migrate_habitats_state(now: int) -> bool:
 
 		var original: Dictionary = habitat_value as Dictionary
 		var normalized: Dictionary = _normalize_habitat_state(habitat_id, original)
+		if _finalize_habitat_build_if_due(normalized, now):
+			changed = true
 		if _finalize_habitat_upgrade_if_due(normalized, now):
 			changed = true
 		if normalized != original:
@@ -1218,7 +1261,7 @@ func _migrate_habitats_state(now: int) -> bool:
 	return changed
 
 
-func _update_habitat_upgrades(now: int) -> bool:
+func _update_habitat_timers(now: int) -> bool:
 	var habitats: Dictionary = _get_habitats_state()
 	var changed: bool = false
 	for habitat_id_value in habitats.keys():
@@ -1228,6 +1271,9 @@ func _update_habitat_upgrades(now: int) -> bool:
 			continue
 
 		var habitat: Dictionary = _normalize_habitat_state(habitat_id, habitat_value as Dictionary)
+		if _finalize_habitat_build_if_due(habitat, now):
+			habitats[habitat_id] = habitat
+			changed = true
 		if _finalize_habitat_upgrade_if_due(habitat, now):
 			habitats[habitat_id] = habitat
 			changed = true
@@ -1236,6 +1282,25 @@ func _update_habitat_upgrades(now: int) -> bool:
 		GameState.set_value("habitats", habitats)
 
 	return changed
+
+
+func _update_habitat_upgrades(now: int) -> bool:
+	return _update_habitat_timers(now)
+
+
+func _finalize_habitat_build_if_due(habitat: Dictionary, now: int) -> bool:
+	if not bool(habitat.get("is_building", false)):
+		return false
+
+	var finish_at: int = _timestamp_from_value(habitat.get("build_finish_at", 0))
+	if finish_at <= 0 or now < finish_at:
+		return false
+
+	habitat["is_building"] = false
+	habitat["build_started_at"] = 0
+	habitat["build_finish_at"] = 0
+	habitat["habitat_level"] = normalize_habitat_level(habitat.get("habitat_level", 1))
+	return true
 
 
 func _finalize_habitat_upgrade_if_due(habitat: Dictionary, now: int) -> bool:

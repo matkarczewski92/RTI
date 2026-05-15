@@ -5,6 +5,8 @@ signal income_progress_updated(progress: float, time_left: int)
 signal income_tick(amount: float)
 signal offline_income_calculated(amount: float, seconds: int)
 signal offline_income_claimed(amount: float)
+signal player_level_changed(level: int)
+signal player_level_up(levels: Array, reward_amount: float)
 
 const ECONOMY_PATH := "res://data/economy.json"
 const INCOME_TICK_SECONDS := 60.0
@@ -18,6 +20,10 @@ var income_timer: Timer
 
 func _ready() -> void:
 	load_economy_data()
+	var save_loaded_callback := Callable(self, "update_player_level_from_xp")
+	if not GameState.save_loaded.is_connected(save_loaded_callback):
+		GameState.save_loaded.connect(save_loaded_callback)
+	update_player_level_from_xp()
 	_start_active_income_timer()
 	call_deferred("_initialize_offline_income")
 
@@ -54,7 +60,13 @@ func add_currency(currency_id: String, amount: float) -> void:
 
 	var new_amount: Variant = float(get_currency(currency_id)) + amount
 	GameState.set_value(currency_id, new_amount)
+	if currency_id == "repticash":
+		var lifetime: float = float(GameState.get_value("lifetime_repticash_earned", 0.0))
+		GameState.set_value("lifetime_repticash_earned", lifetime + amount)
+		_notify_achievement_progress_changed()
 	currency_changed.emit(currency_id, new_amount)
+	if currency_id == "xp":
+		update_player_level_from_xp()
 
 
 func can_afford(currency_id: String, amount: int) -> bool:
@@ -72,6 +84,100 @@ func spend_currency(currency_id: String, amount: int) -> bool:
 	GameState.set_value(currency_id, new_amount)
 	currency_changed.emit(currency_id, new_amount)
 	return true
+
+
+func get_required_xp_for_level(level: int) -> int:
+	if level <= 1:
+		return 0
+	if level == 2:
+		return 1000
+	if level == 3:
+		return 3000
+
+	var required: float = 3000.0
+	for _next_level in range(4, level + 1):
+		required = required + (required * 1.15)
+	return int(round(required))
+
+
+func get_next_level_required_xp(current_level: int) -> int:
+	return get_required_xp_for_level(max(1, current_level) + 1)
+
+
+func get_level_reward(level: int) -> int:
+	if level <= 1:
+		return 0
+	if level == 2:
+		return 250
+	if level == 3:
+		return 500
+	if level == 4:
+		return 900
+
+	var reward: float = 900.0
+	for _next_level in range(5, level + 1):
+		reward *= 1.42
+	return int(round(reward / 50.0) * 50)
+
+
+func update_player_level_from_xp() -> Dictionary:
+	var total_xp: float = float(GameState.get_value("xp", GameState.get_value("player_xp", 0)))
+	var current_level: int = max(1, int(GameState.get_value("level", GameState.get_value("player_level", 1))))
+	var new_level: int = current_level
+	while total_xp >= float(get_required_xp_for_level(new_level + 1)):
+		new_level += 1
+
+	if new_level <= current_level:
+		return {"leveled_up": false, "level": current_level, "levels": [], "reward": 0}
+
+	var levels_gained: Array = []
+	for level in range(current_level + 1, new_level + 1):
+		levels_gained.append(level)
+
+	GameState.set_value("level", new_level)
+	var reward: int = _grant_level_rewards(levels_gained)
+	player_level_changed.emit(new_level)
+	player_level_up.emit(levels_gained, reward)
+	_notify_progression_changed()
+	return {"leveled_up": true, "level": new_level, "levels": levels_gained, "reward": reward}
+
+
+func _grant_level_rewards(levels_gained: Array) -> int:
+	var last_rewarded_level: int = max(1, int(GameState.get_value("last_rewarded_level", 1)))
+	var highest_rewarded_level: int = last_rewarded_level
+	var total_reward: int = 0
+	for level_value in levels_gained:
+		var level: int = int(level_value)
+		if level <= last_rewarded_level:
+			continue
+		total_reward += get_level_reward(level)
+		highest_rewarded_level = max(highest_rewarded_level, level)
+
+	if highest_rewarded_level != last_rewarded_level:
+		GameState.set_value("last_rewarded_level", highest_rewarded_level)
+
+	if total_reward > 0:
+		var new_cash: float = float(GameState.get_value("repticash", 0.0)) + float(total_reward)
+		GameState.set_value("repticash", new_cash)
+		GameState.set_value("lifetime_repticash_earned", float(GameState.get_value("lifetime_repticash_earned", 0.0)) + float(total_reward))
+		currency_changed.emit("repticash", new_cash)
+
+	return total_reward
+
+
+func _notify_progression_changed() -> void:
+	if has_node("/root/QuestSystem"):
+		var quest_system: Node = get_node("/root/QuestSystem")
+		if quest_system.has_method("notify_event"):
+			quest_system.call("notify_event", "state_changed", {})
+	_notify_achievement_progress_changed()
+
+
+func _notify_achievement_progress_changed() -> void:
+	if has_node("/root/AchievementSystem"):
+		var achievement_system: Node = get_node("/root/AchievementSystem")
+		if achievement_system.has_method("notify_progress_changed"):
+			achievement_system.call("notify_progress_changed")
 
 
 func get_total_assigned_income_per_min() -> float:
@@ -126,6 +232,10 @@ func claim_offline_income() -> float:
 	GameState.set_value("last_active_timestamp", now)
 	SaveSystem.save_game()
 	offline_income_claimed.emit(amount)
+	if has_node("/root/QuestSystem"):
+		var quest_system: Node = get_node("/root/QuestSystem")
+		if quest_system.has_method("notify_event"):
+			quest_system.call("notify_event", "offline_income_claimed", {"amount": amount})
 	return amount
 
 

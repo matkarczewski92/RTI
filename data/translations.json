@@ -311,6 +311,10 @@
 		"pl": "W trakcie",
 		"en": "In progress"
 	},
+	"achievements.reward_claimed_title": {
+		"pl": "Nagroda odebrana!",
+		"en": "Reward claimed!"
+	},
 	"achievement.buy_first_reptile.title": {
 		"pl": "Pierwszy gad",
 		"en": "First reptile"
@@ -382,6 +386,174 @@
 	"achievement.complete_green_meadow_part.desc": {
 		"pl": "Odkryj cz\u0119\u015b\u0107 kolekcji Zielonej Polany.",
 		"en": "Discover part of the Green Meadow collection."
+	},
+	"achievement.buy_first_habitat.title": {
+		"pl": "Pierwszy habitat",
+		"en": "First habitat"
+	},
+	"achievement.buy_first_habitat.desc": {
+		"pl": "Kup pierwszy habitat.",
+		"en": "Buy your first habitat."
+	},
+	"achievement.own_three_habitats.title": {
+		"pl": "Rozbudowa terenu",
+		"en": "Expanding grounds"
+	},
+	"achievement.own_three_habitats.desc": {
+		"pl": "Posiadaj 3 kupione habitaty.",
+		"en": "Own 3 purchased habitats."
+	},
+	"achievement.habitat_reaches_level_2.title": {
+		"pl": "Lepszy dom",
+		"en": "Better home"
+	},
+	"achievement.habitat_reaches_level_2.desc": {
+		"pl": "Ulepsz dowolny habitat do poziomu 2.",
+		"en": "Upgrade any habitat to level 2."
+	},
+	"achievement.habitat_reaches_level_3.title": {
+		"pl": "Luksusowy habitat",
+		"en": "Luxury habitat"
+	},
+	"achievement.habitat_reaches_level_3.desc": {
+		"pl": "Ulepsz dowolny habitat do poziomu 3.",
+		"en": "Upgrade any habitat to level 3."
+	},
+	"achievement.occupied_four_habitats.title": {
+		"pl": "Pe\u0142ne zoo",
+		"en": "Busy zoo"
+	},
+	"achievement.occupied_four_habitats.desc": {
+		"pl": "Umie\u015b\u0107 gady w 4 habitatach jednocze\u015bnie.",
+		"en": "Place reptiles in 4 habitats at once."
+	},
+	"achievement.own_three_reptiles.title": {
+		"pl": "Ma\u0142a hodowla",
+		"en": "Small breeder"
+	},
+	"achievement.own_three_reptiles.desc": {
+		"pl": "Posiadaj 3 gady.",
+		"en": "Own 3 reptiles."
+	},
+	"achievement.own_five_reptiles.title": {
+		"pl": "Prawdziwy hodowca",
+		"en": "True breeder"
+	},
+	"achievement.own_five_reptiles.desc": {
+		"pl": "Posiadaj 5 gad\u00f3w.",
+		"en": "Own 5 reptiles."
+	},
+	"achievement.assign_three_reptiles.title": {
+		"pl": "Na miejscu",
+		"en": "On site"
+	},
+	"achievement.assign_three_reptiles.desc": {
+		"pl": "Przypisz 3 gady do habitat\u00f3w.",
+		"en": "Assign 3 reptiles to habitats."
+	},
+	"achievement.assign_six_reptiles.title": {
+		"pl": "Pe\u0142na obsada",
+		"en": "Full roster"
+	},
+	"achievement.assign_six_reptiles.desc": {
+		"pl": "Przypisz 6 gad\u00f3w do habitat\u00f3w.",
+		"en": "Assign 6 reptiles to habitats."
+	},
+	"achievement.discover_five_variants.title": {
+		"pl": "Kolekcjoner",
+		"en": "Collector"
+	},
+	"achievement.discover_five_variants.desc": {
+		"pl": "Odkryj 5 wariant\u00f3w.",
+		"en": "Discover 5 variants."
+	},
+	"achievement.discover_ten_variants.title": {
+		"pl": "Ekspert kolekcji",
+		"en": "Collection expert"
+	},
+	"achievement.discover_ten_variants.desc": {
+		"pl": "Odkryj 10 wariant\u00f3w.",
+		"en": "Discover 10 variants."
+	},
+	"achievement.first_exceptional_variant.title": {
+		"pl": "Wyj\u0105tkowy okaz",
+		"en": "Exceptional find"
+	},
+	"achievement.first_exceptional_variant.desc": {
+		"pl": "Odkryj pierwszy wyj\u0105tkowy wariant.",
+		"en": "Discover your first exceptional variant."
+	},
+	"achievement.first_ultra_rare_variant.title": {
+		"pl": "Skarb kolekcji",
+		"en": "Collection treasure"
+	},
+	"achievement.first_ultra_rare_variant.desc": {
+		"pl": "Odkryj pierwszy ultra rzadki wariant.",
+		"en": "Discover your first ultra rare variant."
+	},
+	"achievement.complete_bearded_dragon_collection.title": {
+		"pl": "Kolekcja agamy",
+		"en": "Dragon collection"
+	},
+	"achievement.complete_bearded_dragon_collection.desc": {
+		"pl": "Odkryj wszystkie warianty agamy brodatej.",
+		"en": "Discover all bearded dragon variants."
+	},
+	"achievement.lifetime_earn_2500.title": {
+		"pl": "Pierwsze zyski",
+		"en": "First profits"
+	},
+	"achievement.lifetime_earn_2500.desc": {
+		"pl": "Zar\u00f3b \u0142\u0105cznie 2500 R$.",
+		"en": "Earn 2500 R$ in total."
+	},
+	"achievement.lifetime_earn_25000.title": {
+		"pl": "Magnat gad\u00f3w",
+		"en": "Reptile tycoon"
+	},
+	"achievement.lifetime_earn_25000.desc": {
+		"pl": "Zar\u00f3b \u0142\u0105cznie 25 000 R$.",
+		"en": "Earn 25,000 R$ in total."
+	},
+	"achievement.reach_level_3.title": {
+		"pl": "Awans hodowcy",
+		"en": "Breeder promotion"
+	},
+	"achievement.reach_level_3.desc": {
+		"pl": "Osi\u0105gnij poziom gracza 3.",
+		"en": "Reach player level 3."
+	},
+	"achievement.reach_level_5.title": {
+		"pl": "Mistrz hodowli",
+		"en": "Master breeder"
+	},
+	"achievement.reach_level_5.desc": {
+		"pl": "Osi\u0105gnij poziom gracza 5.",
+		"en": "Reach player level 5."
+	},
+	"achievement.income_per_min_60.title": {
+		"pl": "Stabilny doch\u00f3d",
+		"en": "Steady income"
+	},
+	"achievement.income_per_min_60.desc": {
+		"pl": "Osi\u0105gnij 60 R$/min z przypisanych gad\u00f3w.",
+		"en": "Reach 60 R$/min from assigned reptiles."
+	},
+	"achievement.income_per_min_200.title": {
+		"pl": "Złoty strumień",
+		"en": "Golden stream"
+	},
+	"achievement.income_per_min_200.desc": {
+		"pl": "Osi\u0105gnij 200 R$/min z przypisanych gad\u00f3w.",
+		"en": "Reach 200 R$/min from assigned reptiles."
+	},
+	"achievement.unlock_dry_prairie.title": {
+		"pl": "Nowy biom",
+		"en": "New biome"
+	},
+	"achievement.unlock_dry_prairie.desc": {
+		"pl": "Odblokuj biom Sucha Preria.",
+		"en": "Unlock the Dry Prairie biome."
 	},
 	"shop.reptiles": {
 		"pl": "Gady",
@@ -643,6 +815,46 @@
 		"pl": "Rozbudowa w toku",
 		"en": "Upgrade in progress"
 	},
+	"habitat.building_in_progress": {
+		"pl": "Budowa w toku",
+		"en": "Building in progress"
+	},
+	"habitat.upgrade_in_progress": {
+		"pl": "Rozbudowa w toku",
+		"en": "Upgrade in progress"
+	},
+	"habitat.build_time_remaining": {
+		"pl": "Pozostalo: {time}",
+		"en": "Remaining: {time}"
+	},
+	"habitat.upgrade_time_remaining": {
+		"pl": "Pozostalo: {time}",
+		"en": "Remaining: {time}"
+	},
+	"habitat.upgrade_confirm_title": {
+		"pl": "Rozbudowa habitatu",
+		"en": "Habitat upgrade"
+	},
+	"habitat.upgrade_confirm_message": {
+		"pl": "Czy chcesz rozpoczac rozbudowe habitatu?",
+		"en": "Do you want to start upgrading this habitat?"
+	},
+	"habitat.upgrade_confirm_button": {
+		"pl": "Rozbuduj",
+		"en": "Upgrade"
+	},
+	"habitat.remove_confirm_title": {
+		"pl": "Usun habitat",
+		"en": "Remove habitat"
+	},
+	"habitat.remove_confirm_message": {
+		"pl": "Czy na pewno chcesz usunac ten habitat? Tej operacji nie mozna cofnac.",
+		"en": "Are you sure you want to remove this habitat? This cannot be undone."
+	},
+	"habitat.remove_confirm_button": {
+		"pl": "Usun",
+		"en": "Remove"
+	},
 	"habitat.max_level": {
 		"pl": "Maksymalny poziom",
 		"en": "Maximum level"
@@ -682,6 +894,10 @@
 	"habitat.remove_reptile_first": {
 		"pl": "Najpierw wyprowadź gada z habitatu.",
 		"en": "Remove the reptile from the habitat first."
+	},
+	"habitat.upgrade_blocked_title": {
+		"pl": "Nie mo\u017cna rozbudowa\u0107",
+		"en": "Cannot upgrade"
 	},
 	"habitat.upgrade_requires_empty": {
 		"pl": "Aby rozbudować habitat, musisz najpierw wyprowadzić gada.",
@@ -1034,6 +1250,10 @@
 	"quests.reward": {
 		"pl": "Nagroda",
 		"en": "Reward"
+	},
+	"quests.reward_claimed_title": {
+		"pl": "Nagroda odebrana!",
+		"en": "Reward claimed!"
 	},
 	"quests.progress": {
 		"pl": "Post\u0119p",
@@ -1799,6 +2019,26 @@
 		"pl": "Osi\u0105gni\u0119to poziom {level}",
 		"en": "Reached level {level}"
 	},
+	"player.level_up_title": {
+		"pl": "Awans!",
+		"en": "Level up!"
+	},
+	"player.level_up_message": {
+		"pl": "Osiagnieto poziom {level}",
+		"en": "Reached level {level}"
+	},
+	"player.level_reward": {
+		"pl": "Nagroda: R$ {amount}",
+		"en": "Reward: R$ {amount}"
+	},
+	"player.level_up_ok": {
+		"pl": "Super!",
+		"en": "Great!"
+	},
+	"quest.reach_level": {
+		"pl": "Osiagnij poziom {level}",
+		"en": "Reach level {level}"
+	},
 	"progression.biome_progress": {
 		"pl": "Progres biomu",
 		"en": "Biome progress"
@@ -1938,6 +2178,174 @@
 	"save.migrated": {
 		"pl": "Zapis gry zosta\u0142 zaktualizowany.",
 		"en": "Save file was updated."
+	},
+	"quest.finish_first_habitat_build.title": {
+		"pl": "Pierwsza budowa",
+		"en": "First build"
+	},
+	"quest.finish_first_habitat_build.desc": {
+		"pl": "Poczekaj, az pierwszy habitat bedzie gotowy.",
+		"en": "Wait until your first habitat is ready."
+	},
+	"quest.play_one_time.title": {
+		"pl": "Zabawa",
+		"en": "Play time"
+	},
+	"quest.play_one_time.desc": {
+		"pl": "Pobaw sie z gadem 1 raz.",
+		"en": "Play with a reptile once."
+	},
+	"quest.earn_500_rs.title": {
+		"pl": "Pierwsze R$ 500",
+		"en": "First R$ 500"
+	},
+	"quest.earn_500_rs.desc": {
+		"pl": "Zarob lacznie R$ 500.",
+		"en": "Earn R$ 500 total."
+	},
+	"quest.reach_level_2.title": {
+		"pl": "Poziom 2",
+		"en": "Level 2"
+	},
+	"quest.reach_level_2.desc": {
+		"pl": "Osiagnij poziom 2.",
+		"en": "Reach level 2."
+	},
+	"quest.own_two_habitats.title": {
+		"pl": "Dwa habitaty",
+		"en": "Two habitats"
+	},
+	"quest.own_two_habitats.desc": {
+		"pl": "Posiadaj 2 habitaty.",
+		"en": "Own 2 habitats."
+	},
+	"quest.own_two_reptiles.title": {
+		"pl": "Dwa gady",
+		"en": "Two reptiles"
+	},
+	"quest.own_two_reptiles.desc": {
+		"pl": "Posiadaj 2 gady.",
+		"en": "Own 2 reptiles."
+	},
+	"quest.discover_two_variants.title": {
+		"pl": "Dwa warianty",
+		"en": "Two variants"
+	},
+	"quest.discover_two_variants.desc": {
+		"pl": "Odkryj 2 warianty.",
+		"en": "Discover 2 variants."
+	},
+	"quest.earn_2500_rs.title": {
+		"pl": "R$ 2500",
+		"en": "R$ 2,500"
+	},
+	"quest.earn_2500_rs.desc": {
+		"pl": "Zarob lacznie R$ 2500.",
+		"en": "Earn R$ 2,500 total."
+	},
+	"quest.upgrade_habitat_level_2.title": {
+		"pl": "Lepszy habitat",
+		"en": "Better habitat"
+	},
+	"quest.upgrade_habitat_level_2.desc": {
+		"pl": "Rozbuduj dowolny habitat do poziomu 2.",
+		"en": "Upgrade any habitat to level 2."
+	},
+	"quest.complete_5_care_actions.title": {
+		"pl": "Opiekun",
+		"en": "Keeper"
+	},
+	"quest.complete_5_care_actions.desc": {
+		"pl": "Wykonaj 5 akcji opieki.",
+		"en": "Complete 5 care actions."
+	},
+	"quest.complete_10_care_actions.title": {
+		"pl": "Dobry opiekun",
+		"en": "Good keeper"
+	},
+	"quest.complete_10_care_actions.desc": {
+		"pl": "Wykonaj 10 akcji opieki.",
+		"en": "Complete 10 care actions."
+	},
+	"quest.collect_offline_income_once.title": {
+		"pl": "Powrot do rezerwatu",
+		"en": "Back to the reserve"
+	},
+	"quest.collect_offline_income_once.desc": {
+		"pl": "Odbierz dochod offline 1 raz.",
+		"en": "Collect offline income once."
+	},
+	"quest.own_three_habitats.title": {
+		"pl": "Trzy habitaty",
+		"en": "Three habitats"
+	},
+	"quest.own_three_habitats.desc": {
+		"pl": "Posiadaj 3 habitaty.",
+		"en": "Own 3 habitats."
+	},
+	"quest.upgrade_habitat_level_3.title": {
+		"pl": "Topowy habitat",
+		"en": "Top habitat"
+	},
+	"quest.upgrade_habitat_level_3.desc": {
+		"pl": "Rozbuduj dowolny habitat do poziomu 3.",
+		"en": "Upgrade any habitat to level 3."
+	},
+	"quest.reach_level_4.title": {
+		"pl": "Poziom 4",
+		"en": "Level 4"
+	},
+	"quest.reach_level_4.desc": {
+		"pl": "Osiagnij poziom 4.",
+		"en": "Reach level 4."
+	},
+	"quest.reach_level_5.title": {
+		"pl": "Poziom 5",
+		"en": "Level 5"
+	},
+	"quest.reach_level_5.desc": {
+		"pl": "Osiagnij poziom 5.",
+		"en": "Reach level 5."
+	},
+	"quest.earn_10000_rs.title": {
+		"pl": "R$ 10000",
+		"en": "R$ 10,000"
+	},
+	"quest.earn_10000_rs.desc": {
+		"pl": "Zarob lacznie R$ 10000.",
+		"en": "Earn R$ 10,000 total."
+	},
+	"quest.own_five_reptiles.title": {
+		"pl": "Piec gadow",
+		"en": "Five reptiles"
+	},
+	"quest.own_five_reptiles.desc": {
+		"pl": "Posiadaj 5 gadow.",
+		"en": "Own 5 reptiles."
+	},
+	"quest.discover_five_variants.title": {
+		"pl": "Piec wariantow",
+		"en": "Five variants"
+	},
+	"quest.discover_five_variants.desc": {
+		"pl": "Odkryj 5 wariantow.",
+		"en": "Discover 5 variants."
+	},
+	"quest.complete_10_quests.title": {
+		"pl": "Lista zadan",
+		"en": "Quest list"
+	},
+	"quest.complete_10_quests.desc": {
+		"pl": "Odbierz nagrody za 10 zadan.",
+		"en": "Claim rewards from 10 quests."
+	},
+	"quest.complete_20_quests.title": {
+		"pl": "Duzy postep",
+		"en": "Big progress"
+	},
+	"quest.complete_20_quests.desc": {
+		"pl": "Odbierz nagrody za 20 zadan.",
+		"en": "Claim rewards from 20 quests."
 	},
 	"save.default_animal_name": {
 		"pl": "Gad",
