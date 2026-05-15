@@ -1,11 +1,12 @@
 extends Control
 
+signal settings_pressed
+
 const AssetPaths := preload("res://scripts/helpers/AssetPaths.gd")
 
-const REPTICASH_ICON_PATH := "res://assets/art/icons/icon_repticash.png"
-const XP_ICON_PATH := "res://assets/art/ui/icons/menu/xp.png"
-const FOOD_ICON_PATH := "res://assets/art/ui/icons/menu/food.png"
-const WATER_ICON_PATH := "res://assets/art/ui/icons/menu/water.png"
+const TOP_BAR_ART_PATH := "res://assets/art/ui/top_bar.png"
+const SETTINGS_ICON_PATH := "res://assets/art/ui/icons/menu/settings.png"
+const TOP_BAR_HEIGHT := 124.0
 
 var cash_label: Label
 var xp_label: Label
@@ -22,91 +23,93 @@ func _ready() -> void:
 
 
 func _build_layout() -> void:
-	custom_minimum_size = Vector2(0, 78)
+	custom_minimum_size = Vector2(0, TOP_BAR_HEIGHT)
 
-	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(panel)
+	var art := TextureRect.new()
+	art.name = "TopBarArt"
+	art.texture = AssetPaths.load_texture(TOP_BAR_ART_PATH)
+	art.set_anchors_preset(Control.PRESET_FULL_RECT)
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(art)
 
-	var margin := MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 20)
-	margin.add_theme_constant_override("margin_right", 20)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
-	panel.add_child(margin)
+	cash_label = _make_value_label(17, HORIZONTAL_ALIGNMENT_CENTER)
+	add_child(cash_label)
+	_position_relative(cash_label, Vector2(0.135, 0.70), Vector2(0.140, 0.34))
 
-	var rows := VBoxContainer.new()
-	rows.alignment = BoxContainer.ALIGNMENT_CENTER
-	rows.add_theme_constant_override("separation", 2)
-	margin.add_child(rows)
+	xp_label = _make_value_label(17, HORIZONTAL_ALIGNMENT_CENTER)
+	add_child(xp_label)
+	_position_relative(xp_label, Vector2(0.345, 0.70), Vector2(0.145, 0.34))
 
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 14)
-	rows.add_child(row)
+	food_label = _make_value_label(17, HORIZONTAL_ALIGNMENT_CENTER)
+	add_child(food_label)
+	_position_relative(food_label, Vector2(0.585, 0.70), Vector2(0.125, 0.34))
 
-	_add_icon(row, REPTICASH_ICON_PATH)
-	cash_label = Label.new()
-	cash_label.add_theme_font_size_override("font_size", 18)
-	row.add_child(cash_label)
+	water_label = _make_value_label(17, HORIZONTAL_ALIGNMENT_CENTER)
+	add_child(water_label)
+	_position_relative(water_label, Vector2(0.795, 0.70), Vector2(0.120, 0.34))
+	
+	level_label = _make_value_label(17, HORIZONTAL_ALIGNMENT_CENTER)
+	add_child(level_label)
+	_position_relative(level_label, Vector2(0.935, 0.75), Vector2(0.075, 0.34))
 
-	_add_icon(row, XP_ICON_PATH, Vector2(28, 28), "XP")
-	xp_label = Label.new()
-	xp_label.add_theme_font_size_override("font_size", 18)
-	row.add_child(xp_label)
-
-	level_label = Label.new()
-	level_label.add_theme_font_size_override("font_size", 18)
-	row.add_child(level_label)
-
-	var resource_row := HBoxContainer.new()
-	resource_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	resource_row.add_theme_constant_override("separation", 12)
-	rows.add_child(resource_row)
-
-	_add_icon(resource_row, FOOD_ICON_PATH, Vector2(24, 24))
-	food_label = Label.new()
-	food_label.add_theme_font_size_override("font_size", 15)
-	resource_row.add_child(food_label)
-
-	_add_icon(resource_row, WATER_ICON_PATH, Vector2(24, 24))
-	water_label = Label.new()
-	water_label.add_theme_font_size_override("font_size", 15)
-	resource_row.add_child(water_label)
+	var settings_button := TextureButton.new()
+	settings_button.name = "SettingsButton"
+	settings_button.texture_normal = AssetPaths.load_texture(SETTINGS_ICON_PATH)
+	settings_button.texture_hover = settings_button.texture_normal
+	settings_button.texture_pressed = settings_button.texture_normal
+	settings_button.ignore_texture_size = true
+	settings_button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	settings_button.focus_mode = Control.FOCUS_NONE
+	settings_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	settings_button.tooltip_text = LocalizationSystem.tr_key("settings.title")
+	settings_button.pressed.connect(func() -> void: settings_pressed.emit())
+	add_child(settings_button)
+	_position_relative(settings_button, Vector2(0.476, 0.22), Vector2(0.145, 0.45))
+	if settings_button.texture_normal == null:
+		var fallback := Label.new()
+		fallback.text = "S"
+		fallback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		fallback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		fallback.add_theme_font_size_override("font_size", 14)
+		fallback.add_theme_color_override("font_color", Color(1.0, 0.97, 0.86, 1.0))
+		fallback.set_anchors_preset(Control.PRESET_FULL_RECT)
+		settings_button.add_child(fallback)
 
 
 func _refresh() -> void:
 	cash_label.text = _format_amount(float(GameState.get_value("repticash", 0)))
 	xp_label.text = _format_amount(float(GameState.get_value("xp", 0)))
-	level_label.text = LocalizationSystem.tr_key("ui.level_short") + " " + str(GameState.get_value("level", 1))
+	level_label.text = str(GameState.get_value("level", 1))
 	food_label.text = str(int(GameState.get_value("food_current", 0))) + "/" + str(int(GameState.get_value("food_max", 100)))
 	water_label.text = str(int(GameState.get_value("water_current", 0))) + "/" + str(int(GameState.get_value("water_max", 100)))
 
 
-func _add_icon(row: HBoxContainer, texture_path: String, icon_size: Vector2 = Vector2(28, 28), fallback_text: String = "") -> void:
-	var icon_box := CenterContainer.new()
-	icon_box.custom_minimum_size = icon_size
-	icon_box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	icon_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+func _make_value_label(font_size: int, alignment: HorizontalAlignment) -> Label:
+	var label := Label.new()
+	label.horizontal_alignment = alignment
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.clip_text = true
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", Color(0.94, 0.90, 0.78, 1.0))
+	label.add_theme_color_override("font_shadow_color", Color(0.04, 0.025, 0.01, 0.95))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
 
-	var texture: Texture2D = AssetPaths.load_texture(texture_path)
-	if texture != null:
-		var icon := TextureRect.new()
-		icon.texture = texture
-		icon.custom_minimum_size = icon_size
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon_box.add_child(icon)
-	else:
-		var fallback := Label.new()
-		fallback.text = fallback_text if not fallback_text.is_empty() else "?"
-		fallback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		fallback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		fallback.add_theme_font_size_override("font_size", 11)
-		icon_box.add_child(fallback)
 
-	row.add_child(icon_box)
+func _position_relative(control: Control, center_ratio: Vector2, size_ratio: Vector2) -> void:
+	control.anchor_left = center_ratio.x - size_ratio.x * 0.5
+	control.anchor_top = center_ratio.y - size_ratio.y * 0.5
+	control.anchor_right = center_ratio.x + size_ratio.x * 0.5
+	control.anchor_bottom = center_ratio.y + size_ratio.y * 0.5
+	control.offset_left = 0.0
+	control.offset_top = 0.0
+	control.offset_right = 0.0
+	control.offset_bottom = 0.0
 
 
 func _format_amount(value: float) -> String:

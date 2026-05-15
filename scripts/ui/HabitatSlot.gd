@@ -6,8 +6,10 @@ const AssetPaths := preload("res://scripts/helpers/AssetPaths.gd")
 
 const EMPTY_TEXTURE_PATH := "res://assets/art/habitats/habitat_slot_empty.png"
 const PURCHASED_EMPTY_TEXTURE_PATH := "res://assets/art/habitats/habitat_slot_purchased_empty.png"
+const IN_PROGRESS_TEXTURE_PATH := "res://assets/art/habitats/in_progress.png"
 const PLUS_ICON_PATH := "res://assets/art/icons/icon_plus.png"
 const ALERT_ICON_PATH := "res://assets/art/ui/icons/menu/alert.png"
+const INCOME_PROGRESS_VERTICAL_OFFSET := 64
 
 const STATE_NOT_PURCHASED := "not_purchased"
 const STATE_PURCHASED_EMPTY := "purchased_empty"
@@ -151,9 +153,9 @@ func _build_layout() -> void:
 	income_progress.anchor_right = 0.5
 	income_progress.anchor_bottom = 0.0
 	income_progress.offset_left = -52
-	income_progress.offset_top = -26
+	income_progress.offset_top = -26 + INCOME_PROGRESS_VERTICAL_OFFSET
 	income_progress.offset_right = 52
-	income_progress.offset_bottom = -10
+	income_progress.offset_bottom = -10 + INCOME_PROGRESS_VERTICAL_OFFSET
 	income_progress.min_value = 0
 	income_progress.max_value = 100
 	income_progress.show_percentage = false
@@ -203,7 +205,9 @@ func _refresh_visuals() -> void:
 		return
 
 	var texture_path := EMPTY_TEXTURE_PATH
-	if slot_state == STATE_PURCHASED_EMPTY or slot_state == STATE_OCCUPIED:
+	if is_upgrading:
+		texture_path = IN_PROGRESS_TEXTURE_PATH
+	elif slot_state == STATE_PURCHASED_EMPTY or slot_state == STATE_OCCUPIED:
 		texture_path = purchased_texture_path if not purchased_texture_path.is_empty() else PURCHASED_EMPTY_TEXTURE_PATH
 
 	_apply_state_geometry()

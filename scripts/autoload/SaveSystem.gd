@@ -7,9 +7,13 @@ signal save_corrupted(backup_path: String)
 signal save_migrated(from_version: int, to_version: int)
 
 const SAVE_PATH := "user://save_game.json"
-const TEMP_SAVE_PATH := "user://save_game.json.tmp"
-const BACKUP_SAVE_PATH := "user://save_backup.json"
+const SAVE_BACKUP_PATH := "user://save_game_backup.json"
+const SAVE_TEMP_PATH := "user://save_game.tmp"
 const CURRENT_SAVE_VERSION := GameState.CURRENT_SAVE_VERSION
+const ERROR_THROTTLE_SECONDS := 5.0
+
+var last_save_error_message := ""
+var last_save_error_time := -9999.0
 
 
 func _ready() -> void:
@@ -25,41 +29,29 @@ func save_game() -> bool:
 	var json_text: String = JSON.stringify(GameState.state, "\t")
 	if json_text.is_empty():
 		save_failed.emit("Could not serialize save data.")
-		push_warning("Could not serialize save data.")
+		_push_save_error("SaveSystem: Could not serialize save data.")
 		return false
 
-	var file: FileAccess = FileAccess.open(TEMP_SAVE_PATH, FileAccess.WRITE)
-	if file == null:
+	var temp_file: FileAccess = FileAccess.open(SAVE_TEMP_PATH, FileAccess.WRITE)
+	if temp_file == null:
+		var open_error: Error = FileAccess.get_open_error()
 		save_failed.emit("Could not open temporary save file for writing.")
-		push_warning("Could not open temporary save file for writing.")
+		_push_save_error("SaveSystem: Failed to open temp save file: %s error=%s" % [SAVE_TEMP_PATH, open_error])
 		return false
 
-	file.store_string(json_text)
-	file.flush()
-	file.close()
-
-	var user_dir: DirAccess = DirAccess.open("user://")
-	if user_dir == null:
-		save_failed.emit("Could not open user save directory.")
-		push_warning("Could not open user save directory.")
-		return false
+	temp_file.store_string(json_text)
+	temp_file.flush()
+	temp_file.close()
 
 	if FileAccess.file_exists(SAVE_PATH):
-		var backup_error := user_dir.copy("save_game.json", "save_backup.json")
+		var backup_error: Error = DirAccess.copy_absolute(SAVE_PATH, SAVE_BACKUP_PATH)
 		if backup_error != OK:
-			push_warning("Could not update save backup: " + str(backup_error))
+			_push_save_warning("SaveSystem: Could not update save backup: %s" % backup_error)
 
-	if FileAccess.file_exists(SAVE_PATH):
-		var remove_error := user_dir.remove("save_game.json")
-		if remove_error != OK:
-			save_failed.emit("Could not replace old save file.")
-			push_warning("Could not replace old save file: " + str(remove_error))
-			return false
-
-	var rename_error := user_dir.rename("save_game.json.tmp", "save_game.json")
-	if rename_error != OK:
-		save_failed.emit("Could not move temporary save into place.")
-		push_warning("Could not move temporary save into place: " + str(rename_error))
+	var save_error: Error = DirAccess.copy_absolute(SAVE_TEMP_PATH, SAVE_PATH)
+	if save_error != OK:
+		save_failed.emit("Could not write save file.")
+		_push_save_error("SaveSystem: Failed to write save file: %s error=%s" % [SAVE_PATH, save_error])
 		return false
 
 	save_saved.emit()
@@ -73,39 +65,48 @@ func load_game() -> bool:
 		save_loaded.emit()
 		return true
 
-	var file: FileAccess = FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if file == null:
-		GameState.reset_to_default()
-		save_game()
-		save_failed.emit("Could not open save file for reading.")
-		push_warning("Could not open save file for reading. Started a new game state.")
-		save_loaded.emit()
-		return false
+	var loaded: Dictionary = _load_save_dictionary(SAVE_PATH)
+	if loaded.is_empty():
+		loaded = _load_save_dictionary(SAVE_BACKUP_PATH)
+		if loaded.is_empty():
+			GameState.reset_to_default()
+			save_game()
+			save_loaded.emit()
+			return true
 
-	var raw_text: String = file.get_as_text()
-	file.close()
-	var parsed: Variant = JSON.parse_string(raw_text)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		var backup_path: String = _backup_corrupted_save(raw_text)
-		GameState.reset_to_default()
-		save_game()
-		save_corrupted.emit(backup_path)
-		save_failed.emit("Save file was corrupted. Started a new game state.")
-		push_warning("Save file was corrupted. Backup: " + backup_path)
-		save_loaded.emit()
-		return false
-
-	var loaded: Dictionary = parsed as Dictionary
 	var old_version: int = int(loaded.get("save_version", 0))
 	GameState.apply_loaded_state(loaded)
 	var new_version: int = int(GameState.state.get("save_version", CURRENT_SAVE_VERSION))
 	if old_version < new_version:
 		save_migrated.emit(old_version, new_version)
-		push_warning("Save migrated from version " + str(old_version) + " to " + str(new_version) + ".")
+		_push_save_warning("SaveSystem: Save migrated from version %s to %s." % [old_version, new_version])
 		save_game()
 
 	save_loaded.emit()
 	return true
+
+
+func _load_save_dictionary(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+
+	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		save_failed.emit("Could not open save file for reading.")
+		_push_save_error("SaveSystem: Failed to open save file: %s error=%s" % [path, FileAccess.get_open_error()])
+		return {}
+
+	var raw_text: String = file.get_as_text()
+	file.close()
+	var parsed: Variant = JSON.parse_string(raw_text)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		var corrupted_backup_path: String = _backup_corrupted_save(raw_text)
+		save_corrupted.emit(corrupted_backup_path)
+		save_failed.emit("Save file was corrupted.")
+		_push_save_warning("SaveSystem: Save file was corrupted: %s backup=%s" % [path, corrupted_backup_path])
+		return {}
+
+	return parsed as Dictionary
 
 
 func reset_game() -> bool:
@@ -124,3 +125,22 @@ func _backup_corrupted_save(raw_text: String) -> String:
 	backup_file.flush()
 	backup_file.close()
 	return backup_path
+
+
+func _push_save_error(message: String) -> void:
+	if _should_print_save_message(message):
+		push_error(message)
+
+
+func _push_save_warning(message: String) -> void:
+	if _should_print_save_message(message):
+		push_warning(message)
+
+
+func _should_print_save_message(message: String) -> bool:
+	var now: float = Time.get_ticks_msec() / 1000.0
+	if message == last_save_error_message and now - last_save_error_time < ERROR_THROTTLE_SECONDS:
+		return false
+	last_save_error_message = message
+	last_save_error_time = now
+	return true

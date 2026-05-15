@@ -38,9 +38,13 @@ func _show_main_menu() -> void:
 
 func _show_biome_map() -> void:
 	var map: Node = _set_screen(BIOME_MAP_SCENE)
+	if map.has_signal("back_pressed"):
+		map.connect("back_pressed", Callable(self, "_show_main_menu"))
 	if map.has_signal("biome_selected"):
 		map.connect("biome_selected", Callable(self, "_show_biome_view"))
 
 
 func _show_biome_view(_biome_id: String) -> void:
-	_set_screen(BIOME_VIEW_SCENE)
+	var biome_view: Node = _set_screen(BIOME_VIEW_SCENE)
+	if biome_view.has_signal("biome_map_requested"):
+		biome_view.connect("biome_map_requested", Callable(self, "_show_biome_map"))

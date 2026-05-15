@@ -7,6 +7,10 @@
 		"pl": "Graj",
 		"en": "Play"
 	},
+	"menu.play": {
+		"pl": "Graj",
+		"en": "Play"
+	},
 	"button.language": {
 		"pl": "J\u0119zyk",
 		"en": "Language"
@@ -15,9 +19,29 @@
 		"pl": "Ustawienia",
 		"en": "Settings"
 	},
+	"button.back": {
+		"pl": "Wstecz",
+		"en": "Back"
+	},
+	"menu.settings": {
+		"pl": "Ustawienia",
+		"en": "Settings"
+	},
 	"screen.biome_map": {
 		"pl": "Mapa biom\u00f3w",
 		"en": "Biome Map"
+	},
+	"biome.map_title": {
+		"pl": "Mapa biom\u00f3w",
+		"en": "Biome Map"
+	},
+	"biome.locked_message": {
+		"pl": "Ten biom jest jeszcze zablokowany.",
+		"en": "This biome is still locked."
+	},
+	"biome.coming_soon_message": {
+		"pl": "Ten biom b\u0119dzie dost\u0119pny p\u00f3\u017aniej.",
+		"en": "This biome will be available later."
 	},
 	"status.locked": {
 		"pl": "Zablokowane",
@@ -43,6 +67,10 @@
 		"pl": "Zielona Polana",
 		"en": "Green Meadow"
 	},
+	"biome.green_meadow": {
+		"pl": "Zielona Polana",
+		"en": "Green Meadow"
+	},
 	"biome.green_meadow.description": {
 		"pl": "Spokojny startowy biom dla pierwszych gad\u00f3w.",
 		"en": "A calm starting biome for the first reptiles."
@@ -50,6 +78,14 @@
 	"biome.dry_prairie.name": {
 		"pl": "Sucha Preria",
 		"en": "Dry Prairie"
+	},
+	"biome.dry_prairie": {
+		"pl": "Sucha Preria",
+		"en": "Dry Prairie"
+	},
+	"biome.new_biome": {
+		"pl": "Nowy Biom",
+		"en": "New Biome"
 	},
 	"biome.dry_prairie.description": {
 		"pl": "Ciep\u0142y, suchy biom do odblokowania p\u00f3\u017aniej.",
@@ -968,7 +1004,7 @@
 		"en": "Active Reptile"
 	},
 	"care.feed": {
-		"pl": "Karm",
+		"pl": "Karmienie",
 		"en": "Feed"
 	},
 	"care.water": {
@@ -976,7 +1012,7 @@
 		"en": "Water"
 	},
 	"care.clean": {
-		"pl": "Czy\u015b\u0107",
+		"pl": "Czyszczenie",
 		"en": "Clean"
 	},
 	"quest.buy_first_habitat.title": {
@@ -1479,6 +1515,10 @@
 		"pl": "Status",
 		"en": "Status"
 	},
+	"reptile.habitat": {
+		"pl": "Habitat",
+		"en": "Habitat"
+	},
 	"reptile.in_habitat": {
 		"pl": "Przypisany",
 		"en": "Assigned"
@@ -1567,6 +1607,14 @@
 		"pl": "Zarz\u0105dzanie gadem",
 		"en": "Reptile management"
 	},
+	"management.needs": {
+		"pl": "Potrzeby",
+		"en": "Needs"
+	},
+	"management.income": {
+		"pl": "Doch\u00f3d",
+		"en": "Income"
+	},
 	"management.full_later": {
 		"pl": "Pe\u0142ne zarz\u0105dzanie zostanie dodane p\u00f3\u017aniej",
 		"en": "Full management will be added later"
@@ -1601,7 +1649,7 @@
 	},
 	"care.hunger": {
 		"pl": "Najedzenie",
-		"en": "Hunger"
+		"en": "Satiety"
 	},
 	"care.hydration": {
 		"pl": "Nawodnienie",
@@ -1842,6 +1890,26 @@
 	"settings.reset_game": {
 		"pl": "Reset gry",
 		"en": "Reset game"
+	},
+	"settings.version": {
+		"pl": "Wersja",
+		"en": "Version"
+	},
+	"settings.privacy_policy": {
+		"pl": "Polityka prywatno\u015bci",
+		"en": "Privacy policy"
+	},
+	"settings.privacy_placeholder": {
+		"pl": "Polityka prywatno\u015bci zostanie dodana przed publikacj\u0105 w Google Play.",
+		"en": "Privacy policy will be added before Google Play release."
+	},
+	"settings.on": {
+		"pl": "W\u0142\u0105czone",
+		"en": "On"
+	},
+	"settings.off": {
+		"pl": "Wy\u0142\u0105czone",
+		"en": "Off"
 	},
 	"save.reset_title": {
 		"pl": "Reset gry",

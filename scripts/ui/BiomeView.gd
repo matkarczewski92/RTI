@@ -1,11 +1,14 @@
 extends Control
 
+signal biome_map_requested
+
 const AssetPaths := preload("res://scripts/helpers/AssetPaths.gd")
 
 const TOP_BAR_SCENE := preload("res://scenes/ui/TopBar.tscn")
 const BOTTOM_NAV_SCENE := preload("res://scenes/ui/BottomNav.tscn")
 const HABITAT_SLOT_SCENE := preload("res://scenes/habitat/HabitatSlot.tscn")
 const OFFLINE_INCOME_POPUP_SCRIPT := preload("res://scripts/ui/OfflineIncomePopup.gd")
+const SETTINGS_MODAL_SCRIPT := preload("res://scripts/ui/SettingsModal.gd")
 
 const BACKGROUND_PATH := "res://assets/art/biomes/green_meadow_background.png"
 const LOGO_PATH := "res://assets/art/ui/logo.png"
@@ -27,14 +30,23 @@ const COOLDOWN_ICON_PATH := "res://assets/art/ui/icons/menu/cooldown.png"
 const ALERT_ICON_PATH := "res://assets/art/ui/icons/menu/alert.png"
 const WORKERS_ICON_PATH := "res://assets/art/ui/icons/menu/emp_team.png"
 const UPGRADE_BUTTON_ICON_PATH := "res://assets/art/ui/icons/menu/upgrade_button.png"
+const REPTILE_MGMT_BACKGROUND_PATH := "res://assets/art/ui/reptile_mgm/background.png"
+const REPTILE_MGMT_CLOSE_PATH := "res://assets/art/ui/reptile_mgm/close.png"
+const REPTILE_MGMT_FEED_PATH := "res://assets/art/ui/reptile_mgm/feed.png"
+const REPTILE_MGMT_WATER_PATH := "res://assets/art/ui/reptile_mgm/water.png"
+const REPTILE_MGMT_CLEAN_PATH := "res://assets/art/ui/reptile_mgm/clean.png"
+const REPTILE_MGMT_PLAY_PATH := "res://assets/art/ui/reptile_mgm/play.png"
+const REPTILE_MGMT_EXPORT_PATH := "res://assets/art/ui/reptile_mgm/export.png"
+const REPTILE_MGMT_UPGRADE_PATH := "res://assets/art/ui/reptile_mgm/upgrade.png"
+const HABITAT_IN_PROGRESS_PATH := "res://assets/art/habitats/in_progress.png"
 const HABITATS_PATH := "res://data/habitats.json"
 
 const BIOME_ID := "green_meadow"
 const STATE_NOT_PURCHASED := "not_purchased"
 const STATE_PURCHASED_EMPTY := "purchased_empty"
 const STATE_OCCUPIED := "occupied"
-const TOP_BAR_HEIGHT := 78
-const BOTTOM_NAV_HEIGHT := 176
+const TOP_BAR_HEIGHT := 84
+const BOTTOM_NAV_HEIGHT := 172
 const POPUP_TEXT_PRIMARY := Color(0.14, 0.10, 0.07, 1.0)
 const POPUP_TEXT_SECONDARY := Color(0.28, 0.22, 0.15, 1.0)
 const POPUP_TEXT_ACCENT := Color(0.35, 0.24, 0.08, 1.0)
@@ -42,6 +54,7 @@ const POPUP_TEXT_SUCCESS := Color(0.10, 0.36, 0.14, 1.0)
 const BUTTON_TEXT_COLOR := Color(1.0, 0.98, 0.90, 1.0)
 const RARITY_ICON_SIZE := Vector2(32, 32)
 const MANAGEMENT_PORTRAIT_SIZE := Vector2(520, 520)
+const REPTILE_MGMT_REFERENCE_SIZE := Vector2(941, 1672)
 const DISCOVERY_PORTRAIT_SIZE := Vector2(132, 132)
 const DISCOVERY_RARITY_ICON_SIZE := Vector2(112, 112)
 const LOGO_SIZE := Vector2(150, 112)
@@ -54,6 +67,7 @@ var habitat_slots: Dictionary = {}
 var action_popup: PopupPanel
 var reptile_selection_modal: Control
 var management_modal: Control
+var management_modal_mouse_filter_backup: Array = []
 var habitat_purchase_modal: Control
 var variant_discovery_modal: Control
 var naming_modal: Control
@@ -62,6 +76,7 @@ var animals_view: Control
 var quests_view: Control
 var workers_view: Control
 var upgrades_view: Control
+var settings_modal: Control
 var pending_name_instance_id: String = ""
 var current_management_instance_id: String = ""
 var current_management_feedback_key: String = ""
@@ -83,7 +98,8 @@ func _ready() -> void:
 		WorkerSystem.workers_changed.connect(_on_workers_changed)
 	if has_node("/root/UpgradeSystem") and UpgradeSystem.has_signal("upgrades_changed"):
 		UpgradeSystem.upgrades_changed.connect(_on_upgrades_changed)
-	GameState.language_changed.connect(func(_language: String) -> void: _rebuild_layout())
+	if not GameState.language_changed.is_connected(_on_language_changed):
+		GameState.language_changed.connect(_on_language_changed)
 	GameState.state_changed.connect(_refresh_habitat_slots)
 
 
@@ -95,6 +111,7 @@ func _rebuild_layout() -> void:
 	action_popup = null
 	reptile_selection_modal = null
 	management_modal = null
+	management_modal_mouse_filter_backup.clear()
 	habitat_purchase_modal = null
 	variant_discovery_modal = null
 	naming_modal = null
@@ -103,6 +120,7 @@ func _rebuild_layout() -> void:
 	quests_view = null
 	workers_view = null
 	upgrades_view = null
+	settings_modal = null
 	pending_name_instance_id = ""
 	current_management_instance_id = ""
 	current_management_feedback_key = ""
@@ -157,11 +175,17 @@ func _on_upgrades_changed() -> void:
 		_show_upgrades_view()
 
 
+func _on_language_changed(_language: String) -> void:
+	var reopen_settings: bool = settings_modal != null and not bool(settings_modal.get_meta("closing_for_reset", false))
+	_rebuild_layout()
+	if reopen_settings:
+		call_deferred("_show_settings_screen")
+
+
 func _build_layout() -> void:
 	_add_background()
 	_add_top_bar()
 	_add_map_area()
-	_add_top_logo()
 	_add_workers_shortcut()
 	_add_bottom_nav()
 	_add_offline_income_popup()
@@ -192,6 +216,8 @@ func _add_top_bar() -> void:
 	top_bar.name = "TopBar"
 	top_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	top_bar.offset_bottom = TOP_BAR_HEIGHT
+	if top_bar.has_signal("settings_pressed"):
+		top_bar.connect("settings_pressed", Callable(self, "_show_settings_screen"))
 	add_child(top_bar)
 
 
@@ -265,6 +291,24 @@ func _add_offline_income_popup() -> void:
 	offline_income_popup = OFFLINE_INCOME_POPUP_SCRIPT.new() as CanvasLayer
 	offline_income_popup.name = "OfflineIncomePopup"
 	add_child(offline_income_popup)
+
+
+func _show_settings_screen() -> void:
+	if settings_modal != null and is_instance_valid(settings_modal):
+		settings_modal.move_to_front()
+		return
+
+	settings_modal = SETTINGS_MODAL_SCRIPT.new() as Control
+	settings_modal.name = "SettingsModal"
+	settings_modal.z_index = 220
+	settings_modal.connect("closed", func() -> void:
+		settings_modal = null
+	)
+	settings_modal.connect("reset_completed", func() -> void:
+		settings_modal = null
+		_rebuild_layout()
+	)
+	add_child(settings_modal)
 
 
 func _add_map_area() -> void:
@@ -975,8 +1019,9 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 	management_modal = Control.new()
 	management_modal.name = "ReptileManagementModal"
 	management_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
-	management_modal.z_index = 20
+	management_modal.z_index = 80
 	add_child(management_modal)
+	management_modal.move_to_front()
 
 	var overlay: ColorRect = ColorRect.new()
 	overlay.name = "DimOverlay"
@@ -984,127 +1029,115 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	management_modal.add_child(overlay)
 
-	var sheet_height: float = get_viewport_rect().size.y * 0.80
+	var nav_cover: ColorRect = ColorRect.new()
+	nav_cover.name = "BottomNavigationCover"
+	nav_cover.color = Color(0.02, 0.04, 0.03, 0.88)
+	nav_cover.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	nav_cover.offset_top = -BOTTOM_NAV_HEIGHT
+	nav_cover.offset_bottom = 0
+	management_modal.add_child(nav_cover)
 
-	var panel: PanelContainer = PanelContainer.new()
-	panel.name = "ManagementSheet"
-	panel.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	panel.offset_left = 0
-	panel.offset_right = 0
-	panel.offset_top = -sheet_height
-	panel.offset_bottom = 0
-	panel.add_theme_stylebox_override("panel", _make_bottom_sheet_style())
-	management_modal.add_child(panel)
+	var panel_layer: Control = Control.new()
+	panel_layer.name = "ReptileManagementPanel"
+	panel_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	management_modal.add_child(panel_layer)
 
-	var margin: MarginContainer = MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 24)
-	margin.add_theme_constant_override("margin_right", 24)
-	margin.add_theme_constant_override("margin_top", 18)
-	margin.add_theme_constant_override("margin_bottom", 20)
-	panel.add_child(margin)
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var reference_scale: float = min(viewport_size.x / REPTILE_MGMT_REFERENCE_SIZE.x, viewport_size.y / REPTILE_MGMT_REFERENCE_SIZE.y)
+	var reference_origin: Vector2 = (viewport_size - REPTILE_MGMT_REFERENCE_SIZE * reference_scale) * 0.5
 
-	var column: VBoxContainer = VBoxContainer.new()
-	column.add_theme_constant_override("separation", 14)
-	margin.add_child(column)
+	var panel_background: TextureRect = TextureRect.new()
+	panel_background.name = "ParchmentPanel"
+	panel_background.texture = AssetPaths.load_texture(REPTILE_MGMT_BACKGROUND_PATH)
+	panel_background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	panel_background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	panel_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel_layer.add_child(panel_background)
+	_position_reference_control(panel_background, Vector2(470.5, 836.0), REPTILE_MGMT_REFERENCE_SIZE, reference_origin, reference_scale)
 
-	var header: HBoxContainer = HBoxContainer.new()
-	header.add_theme_constant_override("separation", 10)
-	column.add_child(header)
+	var title_label: Label = _make_reference_label(LocalizationSystem.tr_key("management.reptile").to_upper(), 40, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, reference_scale)
+	title_label.add_theme_color_override("font_shadow_color", Color(0.18, 0.10, 0.04, 0.95))
+	title_label.add_theme_constant_override("shadow_offset_x", max(1, int(round(3.0 * reference_scale))))
+	title_label.add_theme_constant_override("shadow_offset_y", max(1, int(round(4.0 * reference_scale))))
+	panel_layer.add_child(title_label)
+	_position_reference_control(title_label, Vector2(485, 167), Vector2(620, 78), reference_origin, reference_scale)
 
-	var title: Label = _make_popup_label(LocalizationSystem.tr_key("ui.reptile_management"), 21)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_apply_label_color(title, POPUP_TEXT_PRIMARY)
-	header.add_child(title)
+	var close_button: TextureButton = _make_reference_texture_button(REPTILE_MGMT_CLOSE_PATH, Callable(self, "_close_management_modal"))
+	panel_layer.add_child(close_button)
+	_position_reference_control(close_button, Vector2(880, 190), Vector2(124, 128), reference_origin, reference_scale)
 
-	var header_close: Button = Button.new()
-	header_close.text = LocalizationSystem.tr_key("ui.close")
-	header_close.custom_minimum_size = Vector2(88, 42)
-	_apply_button_text_color(header_close, POPUP_TEXT_PRIMARY)
-	header_close.pressed.connect(_close_management_modal)
-	header.add_child(header_close)
+	var name_label: Label = _make_reference_label(_get_reptile_display_name(instance, reptile), 40, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_LEFT, reference_scale)
+	name_label.clip_text = true
+	panel_layer.add_child(name_label)
+	_position_reference_control(name_label, Vector2(232, 300), Vector2(270, 68), reference_origin, reference_scale)
 
-	var body: Control = Control.new()
-	body.custom_minimum_size = Vector2(0, 560)
-	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(body)
+	var edit_button: Button = _make_edit_icon_button(str(instance.get("instance_id", "")))
+	edit_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.38, 0.70, 0.22, 1.0)))
+	edit_button.add_theme_stylebox_override("hover", _make_button_style(Color(0.46, 0.80, 0.28, 1.0)))
+	edit_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.30, 0.58, 0.17, 1.0)))
+	panel_layer.add_child(edit_button)
+	_position_reference_control(edit_button, Vector2(425, 300), Vector2(62, 62), reference_origin, reference_scale)
+
+	var species_name: String = LocalizationSystem.tr_key(str(reptile.get("name_key", "ui.reptile_management_placeholder")))
+	var variant_name: String = LocalizationSystem.tr_key(str(variant.get("name_key", "ui.variant")))
+	var rarity_name: String = LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(str(variant.get("rarity", "common"))))
+	var sex_name: String = _get_localized_sex(str(instance.get("sex", "male")))
+	var status_key: String = "animals.status.assigned" if is_assigned else "animals.status.free"
+	var habitat_name: String = _get_habitat_display_name(str(instance.get("habitat_id", ""))) if is_assigned else "-"
+	var preferred_type: String = ReptileSystem.get_reptile_preferred_habitat_type(str(instance.get("reptile_id", "")))
+	var best_habitat_name: String = LocalizationSystem.tr_key(ReptileSystem.get_habitat_type_label_key(preferred_type)) if not preferred_type.is_empty() else "-"
+	var info_rows: Array = [
+		{"key": "reptile.species", "value": species_name},
+		{"key": "reptile.variant", "value": variant_name},
+		{"key": "reptile.rarity", "value": rarity_name},
+		{"key": "reptile.sex", "value": sex_name},
+		{"key": "reptile.status", "value": LocalizationSystem.tr_key(status_key)},
+		{"key": "reptile.habitat", "value": habitat_name},
+		{"key": "nav.biome", "value": best_habitat_name}
+	]
+	var info_y: float = 380.0
+	for row_data in info_rows:
+		_add_management_info_row(panel_layer, str(row_data.get("key", "")), str(row_data.get("value", "")), info_y, reference_origin, reference_scale)
+		info_y += 52.0
+
+	var portrait_frame_cover: ColorRect = ColorRect.new()
+	portrait_frame_cover.name = "PortraitFrameCover"
+	portrait_frame_cover.color = Color(0.98, 0.90, 0.73, 1.0)
+	portrait_frame_cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel_layer.add_child(portrait_frame_cover)
+	_position_reference_control(portrait_frame_cover, Vector2(695, 522), Vector2(430, 432), reference_origin, reference_scale)
 
 	var portrait: TextureRect = TextureRect.new()
-	portrait.name = "DecorativePortrait"
+	portrait.name = "ReptilePortrait"
 	portrait.texture = AssetPaths.load_texture(ReptileSystem.get_owned_animal_image_path(instance))
-	portrait.anchor_left = 1.0
-	portrait.anchor_top = 1.0
-	portrait.anchor_right = 1.0
-	portrait.anchor_bottom = 1.0
-	var portrait_overflow: float = MANAGEMENT_PORTRAIT_SIZE.x * 0.15 + 24.0
-	portrait.offset_left = -MANAGEMENT_PORTRAIT_SIZE.x + portrait_overflow
-	portrait.offset_top = -MANAGEMENT_PORTRAIT_SIZE.y + 20.0
-	portrait.offset_right = portrait_overflow
-	portrait.offset_bottom = 20.0
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	body.add_child(portrait)
+	panel_layer.add_child(portrait)
+	_position_reference_control(portrait, Vector2(690, 522), Vector2(430, 430), reference_origin, reference_scale)
 
-	var details: VBoxContainer = VBoxContainer.new()
-	details.anchor_left = 0.0
-	details.anchor_top = 0.0
-	details.anchor_right = 0.62
-	details.anchor_bottom = 1.0
-	details.offset_left = 0.0
-	details.offset_top = 10.0
-	details.offset_right = -10.0
-	details.offset_bottom = -10.0
-	details.custom_minimum_size = Vector2(300, 220)
-	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	details.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	details.add_theme_constant_override("separation", 9)
-	body.add_child(details)
+	var needs_title: Label = _make_reference_label(LocalizationSystem.tr_key("management.needs").to_upper(), 30, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, reference_scale)
+	needs_title.add_theme_color_override("font_shadow_color", Color(0.10, 0.20, 0.06, 0.85))
+	needs_title.add_theme_constant_override("shadow_offset_x", max(1, int(round(2.0 * reference_scale))))
+	needs_title.add_theme_constant_override("shadow_offset_y", max(1, int(round(3.0 * reference_scale))))
+	panel_layer.add_child(needs_title)
+	_position_reference_control(needs_title, Vector2(253, 790), Vector2(190, 42), reference_origin, reference_scale)
 
-	var name_row: HBoxContainer = HBoxContainer.new()
-	name_row.add_theme_constant_override("separation", 8)
-	name_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	details.add_child(name_row)
-
-	var name_label: Label = _make_popup_label(_get_reptile_display_name(instance, reptile), 20)
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	name_label.autowrap_mode = TextServer.AUTOWRAP_OFF
-	name_label.clip_text = true
-	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_apply_label_color(name_label, POPUP_TEXT_PRIMARY)
-	name_row.add_child(name_label)
-
-	var edit_button: Button = _make_edit_icon_button(str(instance.get("instance_id", "")))
-	name_row.add_child(edit_button)
-
-	details.add_child(_make_management_text_row("ui.species", LocalizationSystem.tr_key(str(reptile.get("name_key", "ui.reptile_management_placeholder")))))
-	details.add_child(_make_management_text_row("ui.variant", LocalizationSystem.tr_key(str(variant.get("name_key", "ui.variant")))))
-	details.add_child(_make_management_icon_row("ui.rarity", str(variant.get("rarity_icon_path", "")), LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(str(variant.get("rarity", "common"))))))
-
-	var sex_icon_path: String = FEMALE_ICON_PATH if str(instance.get("sex", "male")) == "female" else MALE_ICON_PATH
-	details.add_child(_make_management_icon_row("ui.sex", sex_icon_path, _get_localized_sex(str(instance.get("sex", "male")))))
-
-	var status_icon_path: String = ASSIGNED_ICON_PATH if is_assigned else FREE_ICON_PATH
-	var status_key: String = "animals.status.assigned" if is_assigned else "animals.status.free"
-	details.add_child(_make_management_icon_row("ui.status", status_icon_path, LocalizationSystem.tr_key(status_key)))
-
-	if is_assigned:
-		details.add_child(_make_management_text_row("ui.habitat", _get_habitat_display_name(str(instance.get("habitat_id", "")))))
-
-	var preferred_type: String = ReptileSystem.get_reptile_preferred_habitat_type(str(instance.get("reptile_id", "")))
-	if not preferred_type.is_empty():
-		details.add_child(_make_management_text_row("habitat.best_type", LocalizationSystem.tr_key(ReptileSystem.get_habitat_type_label_key(preferred_type))))
+	var income_title: Label = _make_reference_label(LocalizationSystem.tr_key("management.income").to_upper(), 30, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, reference_scale)
+	income_title.add_theme_color_override("font_shadow_color", Color(0.10, 0.20, 0.06, 0.85))
+	income_title.add_theme_constant_override("shadow_offset_x", max(1, int(round(2.0 * reference_scale))))
+	income_title.add_theme_constant_override("shadow_offset_y", max(1, int(round(3.0 * reference_scale))))
+	panel_layer.add_child(income_title)
+	_position_reference_control(income_title, Vector2(660, 790), Vector2(190, 42), reference_origin, reference_scale)
 
 	var happiness: int = _get_percent_state(instance, "happiness", 100)
-	details.add_child(_make_need_bar_row("ui.happiness", HAPPY_ICON_PATH, happiness))
 	var satiety: int = _get_percent_state(instance, "hunger", 100)
-	details.add_child(_make_need_bar_row("ui.satiety", FOOD_ICON_PATH, satiety))
 	var hydration: int = _get_percent_state(instance, "hydration", 100)
-	details.add_child(_make_need_bar_row("ui.hydration", WATER_ICON_PATH, hydration))
 	var cleanliness: int = _get_percent_state(instance, "cleanliness", 100)
-	details.add_child(_make_need_bar_row("ui.cleanliness", CLEAN_ICON_PATH, cleanliness))
+	_add_management_need_row(panel_layer, "care.happiness", happiness, Color(0.31, 0.76, 0.08, 1.0), 878.0, reference_origin, reference_scale)
+	_add_management_need_row(panel_layer, "care.hunger", satiety, Color(0.38, 0.84, 0.10, 1.0), 965.0, reference_origin, reference_scale)
+	_add_management_need_row(panel_layer, "care.hydration", hydration, Color(0.04, 0.64, 0.95, 1.0), 1053.0, reference_origin, reference_scale)
+	_add_management_need_row(panel_layer, "care.cleanliness", cleanliness, Color(0.98, 0.65, 0.08, 1.0), 1138.0, reference_origin, reference_scale)
 
 	var base_income: float = ReptileSystem.get_base_reptile_income(str(instance.get("reptile_id", "")))
 	var happiness_multiplier: float = ReptileSystem.get_happiness_multiplier(instance.get("happiness", 100))
@@ -1112,56 +1145,158 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 	var habitat_multiplier: float = ReptileSystem.get_habitat_match_multiplier(instance)
 	var habitat_level_multiplier: float = ReptileSystem.get_habitat_level_income_multiplier(instance)
 	var effective_income: float = ReptileSystem.get_effective_animal_income_per_min(instance)
-	details.add_child(_make_management_icon_row("ui.base_income", INCOME_ICON_PATH, _format_repticash_per_min(base_income)))
-	details.add_child(_make_management_text_row("ui.happiness_multiplier", _format_multiplier(happiness_multiplier)))
-	details.add_child(_make_management_text_row("ui.variant_multiplier", _format_multiplier(variant_multiplier)))
-	if is_assigned and not preferred_type.is_empty():
-		details.add_child(_make_management_text_row("habitat.compatibility_income", _format_multiplier(habitat_multiplier)))
-	if is_assigned:
-		details.add_child(_make_management_text_row("habitat.level_bonus", _format_multiplier(habitat_level_multiplier)))
-	details.add_child(_make_management_icon_row("ui.effective_income", INCOME_ICON_PATH, _format_repticash_per_min(effective_income)))
+	var income_rows: Array = [
+		{"key": "management.base_income", "value": _format_repticash_per_min(base_income), "final": false},
+		{"key": "management.happiness_multiplier", "value": _format_multiplier(happiness_multiplier), "final": false},
+		{"key": "management.variant_multiplier", "value": _format_multiplier(variant_multiplier), "final": false},
+		{"key": "management.habitat_multiplier", "value": _format_multiplier(habitat_multiplier), "final": false},
+		{"key": "management.habitat_level_bonus", "value": _format_multiplier(habitat_level_multiplier), "final": false},
+		{"key": "management.effective_income", "value": _format_decimal(effective_income), "final": true}
+	]
+	var income_y: float = 842.0
+	for income_data in income_rows:
+		_add_management_income_row(panel_layer, str(income_data.get("key", "")), str(income_data.get("value", "")), bool(income_data.get("final", false)), income_y, reference_origin, reference_scale)
+		income_y += 57.0
+		if bool(income_data.get("final", false)):
+			income_y += 12.0
 
 	var care_hint_key: String = current_management_feedback_key
 	if care_hint_key.is_empty() and not is_assigned:
-		care_hint_key = "ui.place_reptile_to_care"
-	var care_hint_text: String = LocalizationSystem.tr_key(care_hint_key) if care_hint_key.begins_with("ui.") else care_hint_key
-	var placeholder_label: Label = _make_popup_label(care_hint_text, 12)
-	placeholder_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	placeholder_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	placeholder_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_apply_label_color(placeholder_label, POPUP_TEXT_SECONDARY)
-	placeholder_label.visible = not care_hint_key.is_empty()
-	details.add_child(placeholder_label)
+		care_hint_key = "care.place_reptile_to_care"
+	if not care_hint_key.is_empty():
+		var care_hint_text: String = LocalizationSystem.tr_key(care_hint_key) if care_hint_key.begins_with("ui.") or care_hint_key.begins_with("care.") or care_hint_key.begins_with("habitat.") else care_hint_key
+		var feedback_label: Label = _make_reference_label(care_hint_text, 18, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_CENTER, reference_scale)
+		feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		panel_layer.add_child(feedback_label)
+		_position_reference_control(feedback_label, Vector2(470, 1218), Vector2(760, 42), reference_origin, reference_scale)
 
-	var care_grid: GridContainer = GridContainer.new()
-	care_grid.columns = 2
-	care_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	care_grid.add_theme_constant_override("h_separation", 8)
-	care_grid.add_theme_constant_override("v_separation", 8)
-	details.add_child(care_grid)
-
-	care_grid.add_child(_make_care_action_button("feed", "ui.feed", FOOD_ACTION_ICON_PATH, instance, is_assigned))
-	care_grid.add_child(_make_care_action_button("water", "ui.water", WATER_ACTION_ICON_PATH, instance, is_assigned))
-	care_grid.add_child(_make_care_action_button("clean", "ui.clean", CLEAN_ACTION_ICON_PATH, instance, is_assigned))
-	care_grid.add_child(_make_care_action_button("play", "ui.play", PLAY_ICON_PATH, instance, is_assigned))
+	_add_management_care_button(panel_layer, "feed", "care.feed", REPTILE_MGMT_FEED_PATH, instance, is_assigned, Vector2(168, 1302), reference_origin, reference_scale)
+	_add_management_care_button(panel_layer, "water", "care.water", REPTILE_MGMT_WATER_PATH, instance, is_assigned, Vector2(370, 1302), reference_origin, reference_scale)
+	_add_management_care_button(panel_layer, "clean", "care.clean", REPTILE_MGMT_CLEAN_PATH, instance, is_assigned, Vector2(570, 1302), reference_origin, reference_scale)
+	_add_management_care_button(panel_layer, "play", "care.play", REPTILE_MGMT_PLAY_PATH, instance, is_assigned, Vector2(770, 1302), reference_origin, reference_scale)
 
 	if is_assigned:
-		var move_out_button: Button = _make_popup_button("habitat.remove_reptile", func() -> void:
-			_confirm_remove_reptile(str(instance.get("habitat_id", "")))
-		)
-		move_out_button.custom_minimum_size = Vector2(0, 40)
-		move_out_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.62, 0.35, 0.18, 1.0)))
-		move_out_button.add_theme_stylebox_override("hover", _make_button_style(Color(0.70, 0.42, 0.22, 1.0)))
-		move_out_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.50, 0.28, 0.15, 1.0)))
-		_apply_button_text_color(move_out_button, BUTTON_TEXT_COLOR)
-		details.add_child(move_out_button)
+		var move_out_button: TextureButton = _make_management_wide_button(REPTILE_MGMT_EXPORT_PATH, "habitat.remove_reptile", Callable(self, "_confirm_remove_reptile").bind(str(instance.get("habitat_id", ""))), reference_scale)
+		panel_layer.add_child(move_out_button)
+		_position_reference_control(move_out_button, Vector2(470, 1456), Vector2(711, 86), reference_origin, reference_scale)
 
-		var upgrade_hint_button: Button = _make_popup_button("habitat.upgrade", func() -> void:
-			_show_message_popup("habitat.upgrade_requires_empty")
-		)
-		upgrade_hint_button.custom_minimum_size = Vector2(0, 40)
-		_style_primary_action_button(upgrade_hint_button)
-		details.add_child(upgrade_hint_button)
+		var upgrade_hint_button: TextureButton = _make_management_wide_button(REPTILE_MGMT_UPGRADE_PATH, "habitat.upgrade", Callable(self, "_show_message_popup").bind("habitat.upgrade_requires_empty"), reference_scale)
+		panel_layer.add_child(upgrade_hint_button)
+		_position_reference_control(upgrade_hint_button, Vector2(470, 1581), Vector2(711, 86), reference_origin, reference_scale)
+
+
+func _position_reference_control(control: Control, reference_center: Vector2, reference_size: Vector2, origin: Vector2, scale: float) -> void:
+	var scaled_size: Vector2 = reference_size * scale
+	control.position = origin + (reference_center - reference_size * 0.5) * scale
+	control.size = scaled_size
+	control.custom_minimum_size = scaled_size
+
+
+func _make_reference_label(text: String, base_font_size: int, color: Color, alignment: HorizontalAlignment, scale: float = 1.0) -> Label:
+	var label: Label = Label.new()
+	label.text = text
+	label.horizontal_alignment = alignment
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.clip_text = true
+	label.add_theme_font_size_override("font_size", max(9, int(round(float(base_font_size) * scale))))
+	label.add_theme_color_override("font_color", color)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
+
+
+func _make_reference_texture_button(texture_path: String, pressed_callable: Callable) -> TextureButton:
+	var button: TextureButton = TextureButton.new()
+	button.texture_normal = AssetPaths.load_texture(texture_path)
+	button.texture_hover = button.texture_normal
+	button.texture_pressed = button.texture_normal
+	button.texture_disabled = button.texture_normal
+	button.ignore_texture_size = true
+	button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.pressed.connect(pressed_callable)
+	return button
+
+
+func _add_management_info_row(parent: Control, label_key: String, value: String, reference_y: float, origin: Vector2, scale: float) -> void:
+	var label: Label = _make_reference_label(LocalizationSystem.tr_key(label_key) + ":", 18, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_LEFT, scale)
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.clip_text = false
+	parent.add_child(label)
+	_position_reference_control(label, Vector2(205, reference_y), Vector2(145, 30), origin, scale)
+
+	var value_label: Label = _make_reference_label(value, 18, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_LEFT, scale)
+	value_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	value_label.clip_text = false
+	parent.add_child(value_label)
+	_position_reference_control(value_label, Vector2(393, reference_y), Vector2(190, 30), origin, scale)
+
+
+func _add_management_need_row(parent: Control, label_key: String, value: int, fill_color: Color, reference_y: float, origin: Vector2, scale: float) -> void:
+	var label: Label = _make_reference_label(LocalizationSystem.tr_key(label_key), 22, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_LEFT, scale)
+	parent.add_child(label)
+	_position_reference_control(label, Vector2(230, reference_y - 22.0), Vector2(154, 34), origin, scale)
+
+	var progress: ProgressBar = ProgressBar.new()
+	progress.min_value = 0
+	progress.max_value = 100
+	progress.value = value
+	progress.show_percentage = false
+	progress.add_theme_stylebox_override("background", _make_progress_background_style(Color(0.86, 0.72, 0.43, 0.35)))
+	progress.add_theme_stylebox_override("fill", _make_progress_fill_style(fill_color))
+	parent.add_child(progress)
+	_position_reference_control(progress, Vector2(262, reference_y + 13.0), Vector2(225, 24), origin, scale)
+
+	var value_label: Label = _make_reference_label(str(value) + "%", 22, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_RIGHT, scale)
+	parent.add_child(value_label)
+	_position_reference_control(value_label, Vector2(410, reference_y + 13.0), Vector2(58, 32), origin, scale)
+
+
+func _add_management_income_row(parent: Control, label_key: String, value: String, is_final: bool, reference_y: float, origin: Vector2, scale: float) -> void:
+	var color: Color = POPUP_TEXT_PRIMARY if is_final else POPUP_TEXT_SECONDARY
+	var value_color: Color = POPUP_TEXT_SUCCESS if is_final else POPUP_TEXT_SECONDARY
+	var font_size: int = 23 if is_final else 18
+	var row_offset: Vector2 = Vector2(28.0, 28.0) if is_final else Vector2(18.0, 7.0)
+	var row_y: float = reference_y + row_offset.y
+
+	var label: Label = _make_reference_label(LocalizationSystem.tr_key(label_key) + ":", font_size, color, HORIZONTAL_ALIGNMENT_LEFT, scale)
+	parent.add_child(label)
+	_position_reference_control(label, Vector2(622 + row_offset.x, row_y), Vector2(222, 34), origin, scale)
+
+	var value_label: Label = _make_reference_label(value, font_size, value_color, HORIZONTAL_ALIGNMENT_RIGHT, scale)
+	parent.add_child(value_label)
+	_position_reference_control(value_label, Vector2(770 + row_offset.x, row_y), Vector2(154, 34), origin, scale)
+
+
+func _add_management_care_button(parent: Control, action_id: String, label_key: String, texture_path: String, instance: Dictionary, is_assigned: bool, reference_center: Vector2, origin: Vector2, scale: float) -> void:
+	var remaining: int = ReptileSystem.get_care_cooldown_remaining(instance, action_id)
+	var button: TextureButton = _make_reference_texture_button(texture_path, Callable(self, "_on_care_action_pressed").bind(action_id))
+	button.disabled = not is_assigned or remaining > 0
+	button.modulate = Color(1.0, 1.0, 1.0, 0.48) if button.disabled else Color.WHITE
+	button.mouse_default_cursor_shape = Control.CURSOR_ARROW if button.disabled else Control.CURSOR_POINTING_HAND
+	parent.add_child(button)
+	_position_reference_control(button, reference_center, Vector2(178, 178), origin, scale)
+
+	var label_text: String = _format_cooldown(remaining) if remaining > 0 else LocalizationSystem.tr_key(label_key).to_upper()
+	var label: Label = _make_reference_label(label_text, 22, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	label.add_theme_color_override("font_shadow_color", Color(0.08, 0.16, 0.04, 0.95))
+	label.add_theme_constant_override("shadow_offset_x", max(1, int(round(2.0 * scale))))
+	label.add_theme_constant_override("shadow_offset_y", max(1, int(round(3.0 * scale))))
+	button.add_child(label)
+	_position_reference_control(label, Vector2(89, 143), Vector2(148, 36), Vector2.ZERO, scale)
+
+
+func _make_management_wide_button(texture_path: String, label_key: String, pressed_callable: Callable, scale: float) -> TextureButton:
+	var button: TextureButton = _make_reference_texture_button(texture_path, pressed_callable)
+
+	var label: Label = _make_reference_label(LocalizationSystem.tr_key(label_key).to_upper(), 28, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	label.add_theme_color_override("font_shadow_color", Color(0.14, 0.08, 0.03, 0.90))
+	label.add_theme_constant_override("shadow_offset_x", max(1, int(round(2.0 * scale))))
+	label.add_theme_constant_override("shadow_offset_y", max(1, int(round(3.0 * scale))))
+	button.add_child(label)
+	_position_reference_control(label, Vector2(399, 43), Vector2(500, 54), Vector2.ZERO, scale)
+	return button
 
 
 func _show_habitat_management_popup(habitat_id: String) -> void:
@@ -1191,7 +1326,7 @@ func _show_habitat_management_popup(habitat_id: String) -> void:
 	center.offset_left = 24
 	center.offset_right = -24
 	center.offset_top = TOP_BAR_HEIGHT * 0.5
-	center.offset_bottom = -(BOTTOM_NAV_HEIGHT * 0.5)
+	center.offset_bottom = -(BOTTOM_NAV_HEIGHT * 0.1)
 	management_modal.add_child(center)
 
 	var panel: PanelContainer = PanelContainer.new()
@@ -1287,6 +1422,10 @@ func _style_primary_action_button(button: Button) -> void:
 
 
 func _on_bottom_nav_pressed(item_id: String) -> void:
+	if item_id == "map":
+		biome_map_requested.emit()
+		return
+
 	if item_id == "biome":
 		_close_animals_view()
 		_close_quests_view()
@@ -2981,14 +3120,17 @@ func _show_reptile_name_popup(instance_id: String, edit_mode: bool) -> void:
 	naming_modal = Control.new()
 	naming_modal.name = "ReptileNamingModal"
 	naming_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
-	naming_modal.z_index = 100
+	naming_modal.mouse_filter = Control.MOUSE_FILTER_STOP
+	naming_modal.z_index = 500
 	add_child(naming_modal)
 	naming_modal.move_to_front()
+	_set_management_modal_input_blocked(true)
 
 	var overlay: ColorRect = ColorRect.new()
 	overlay.name = "DimOverlay"
 	overlay.color = Color(0.04, 0.05, 0.04, 0.66)
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	naming_modal.add_child(overlay)
 
 	var center: CenterContainer = CenterContainer.new()
@@ -3001,6 +3143,7 @@ func _show_reptile_name_popup(instance_id: String, edit_mode: bool) -> void:
 
 	var panel: PanelContainer = PanelContainer.new()
 	panel.custom_minimum_size = Vector2(420, 390)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
 	center.add_child(panel)
 
@@ -3174,6 +3317,7 @@ func _close_management_modal() -> void:
 
 	management_modal.queue_free()
 	management_modal = null
+	management_modal_mouse_filter_backup.clear()
 	current_management_instance_id = ""
 	current_management_feedback_key = ""
 
@@ -3200,10 +3344,38 @@ func _close_variant_discovery_modal() -> void:
 
 func _close_naming_modal() -> void:
 	if naming_modal == null:
+		_set_management_modal_input_blocked(false)
 		return
 
 	naming_modal.queue_free()
 	naming_modal = null
+	_set_management_modal_input_blocked(false)
+
+
+func _set_management_modal_input_blocked(blocked: bool) -> void:
+	if blocked:
+		management_modal_mouse_filter_backup.clear()
+		if management_modal != null:
+			_backup_and_set_mouse_filter(management_modal, Control.MOUSE_FILTER_IGNORE)
+		return
+
+	for entry in management_modal_mouse_filter_backup:
+		var control: Control = entry.get("control", null) as Control
+		if is_instance_valid(control):
+			control.mouse_filter = int(entry.get("mouse_filter", Control.MOUSE_FILTER_PASS))
+	management_modal_mouse_filter_backup.clear()
+
+
+func _backup_and_set_mouse_filter(control: Control, mouse_filter: int) -> void:
+	management_modal_mouse_filter_backup.append({
+		"control": control,
+		"mouse_filter": control.mouse_filter
+	})
+	control.mouse_filter = mouse_filter
+
+	for child in control.get_children():
+		if child is Control:
+			_backup_and_set_mouse_filter(child as Control, mouse_filter)
 
 
 func _make_modal_panel_style() -> StyleBoxFlat:
@@ -3805,6 +3977,8 @@ func _get_habitat_texture_path(habitat_id: String) -> String:
 	var habitat: Dictionary = _get_saved_habitat_state(habitat_id)
 	if habitat.is_empty() or not bool(habitat.get("purchased", false)):
 		return ""
+	if bool(habitat.get("is_upgrading", false)):
+		return HABITAT_IN_PROGRESS_PATH
 
 	return ReptileSystem.get_habitat_texture_path(str(habitat.get("habitat_type", "grass")), habitat.get("habitat_level", 1))
 

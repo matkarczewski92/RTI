@@ -23,7 +23,7 @@ const PLAY_XP_REWARD := 0.1
 const HABITAT_TYPES: Array[String] = ["grass", "sand", "stone", "jungle"]
 const HABITAT_MAX_LEVEL := 3
 const HABITAT_UPGRADE_COST := 10000
-const HABITAT_UPGRADE_DURATION_SECONDS := 172800
+const HABITAT_UPGRADE_DURATION_SECONDS := 7200
 
 const RARITY_ICON_PATHS: Dictionary = {
 	"common": "res://assets/art/ui/icons/icon_rarity_common.png",

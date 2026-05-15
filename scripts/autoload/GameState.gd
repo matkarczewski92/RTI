@@ -17,6 +17,7 @@ func _ready() -> void:
 
 func get_default_settings() -> Dictionary:
 	return {
+		"language": "pl",
 		"music_enabled": true,
 		"sfx_enabled": true,
 		"vibration_enabled": true
@@ -179,6 +180,7 @@ func get_default_state() -> Dictionary:
 
 func reset_to_default() -> void:
 	state = get_default_save_data()
+	language_changed.emit(get_language())
 	state_changed.emit()
 
 
@@ -231,7 +233,13 @@ func normalize_save_data(data: Dictionary) -> Dictionary:
 	normalized["created_at"] = _safe_timestamp(normalized.get("created_at", now), now)
 	normalized["last_saved_at"] = _safe_timestamp(normalized.get("last_saved_at", 0), 0)
 	normalized["language"] = _normalize_language(str(normalized.get("language", "pl")))
-	normalized["settings"] = _merge_dictionary(get_default_settings(), normalized.get("settings", {}))
+	var incoming_settings: Variant = normalized.get("settings", {})
+	normalized["settings"] = _merge_dictionary(get_default_settings(), incoming_settings)
+	var settings_language: String = normalized["language"]
+	if typeof(incoming_settings) == TYPE_DICTIONARY and (incoming_settings as Dictionary).has("language"):
+		settings_language = str((incoming_settings as Dictionary).get("language", normalized["language"]))
+	normalized["settings"]["language"] = _normalize_language(settings_language)
+	normalized["language"] = str(normalized["settings"]["language"])
 	normalized["repticash"] = max(0.0, float(normalized.get("repticash", normalized.get("currency", 100))))
 	normalized["premium_currency"] = max(0.0, float(normalized.get("premium_currency", normalized.get("premium", 0))))
 	normalized["premium"] = normalized["premium_currency"]
@@ -311,10 +319,37 @@ func get_language() -> String:
 func set_language(language: String) -> void:
 	language = _normalize_language(language)
 	if state.get("language", "pl") == language:
+		var existing_settings: Dictionary = get_settings()
+		existing_settings["language"] = language
+		state["settings"] = existing_settings
 		return
 
 	state["language"] = language
+	var settings: Dictionary = get_settings()
+	settings["language"] = language
+	state["settings"] = settings
 	language_changed.emit(language)
+	state_changed.emit()
+
+
+func get_settings() -> Dictionary:
+	var settings: Dictionary = _merge_dictionary(get_default_settings(), state.get("settings", {}))
+	settings["language"] = _normalize_language(str(settings.get("language", state.get("language", "pl"))))
+	return settings
+
+
+func get_setting(key: String, fallback: Variant = null) -> Variant:
+	var settings: Dictionary = get_settings()
+	return settings.get(key, fallback)
+
+
+func set_setting(key: String, value: Variant) -> void:
+	var settings: Dictionary = get_settings()
+	settings[key] = value
+	if key == "language":
+		set_language(str(value))
+		return
+	state["settings"] = settings
 	state_changed.emit()
 
 
