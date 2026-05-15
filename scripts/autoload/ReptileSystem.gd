@@ -5,9 +5,9 @@ const VARIANTS_PATH: String = "res://data/reptile_variants.json"
 const VALID_RARITIES: Array[String] = ["common", "rare", "exceptional", "ultra_rare"]
 const NEED_DECAY_INTERVAL_SECONDS := 600.0
 const NEED_DECAY_AMOUNT := 1.0
-const FEED_COOLDOWN_SECONDS := 60
-const WATER_COOLDOWN_SECONDS := 60
-const CLEAN_COOLDOWN_SECONDS := 180
+const FEED_COOLDOWN_SECONDS := 20
+const WATER_COOLDOWN_SECONDS := 20
+const CLEAN_COOLDOWN_SECONDS := 60
 const PLAY_COOLDOWN_SECONDS := 5
 const FEED_SATIETY_GAIN := 25.0
 const WATER_HYDRATION_GAIN := 25.0
@@ -286,12 +286,31 @@ func get_habitat_match_multiplier(instance: Dictionary) -> float:
 	if preferred_type.is_empty():
 		return 1.0
 
-	var habitat: Dictionary = get_habitat_state(str(normalized.get("habitat_id", "")))
+	var habitat: Dictionary = get_habitat_state(_id_or_empty(normalized.get("habitat_id", null)))
 	if habitat.is_empty():
 		return 1.0
 
 	var current_type: String = normalize_habitat_type(str(habitat.get("habitat_type", "grass")))
 	return 1.0 if current_type == preferred_type else 0.5
+
+
+func get_habitat_level_income_multiplier(instance: Dictionary) -> float:
+	var normalized: Dictionary = _normalize_owned_instance(instance)
+	if not _is_assigned_to_valid_habitat(normalized):
+		return 1.0
+
+	var habitats: Dictionary = _get_habitats_state()
+	var habitat_value: Variant = habitats.get(_id_or_empty(normalized.get("habitat_id", null)), {})
+	if typeof(habitat_value) != TYPE_DICTIONARY:
+		return 1.0
+
+	match int((habitat_value as Dictionary).get("habitat_level", 1)):
+		2:
+			return 1.25
+		3:
+			return 1.50
+		_:
+			return 1.0
 
 
 func get_habitat_upgrade_cost() -> int:
@@ -346,15 +365,33 @@ func get_effective_animal_income_per_min(instance: Dictionary) -> float:
 	var happiness_multiplier: float = get_happiness_multiplier(normalized.get("happiness", 100))
 	var variant_multiplier: float = get_variant_income_multiplier(get_owned_animal_variant(normalized))
 	var habitat_match_multiplier: float = get_habitat_match_multiplier(normalized)
-	return base_income * happiness_multiplier * variant_multiplier * habitat_match_multiplier * get_worker_income_multiplier(normalized) * get_upgrade_income_multiplier(normalized)
+	var habitat_level_multiplier: float = get_habitat_level_income_multiplier(normalized)
+	return base_income * happiness_multiplier * variant_multiplier * habitat_match_multiplier * habitat_level_multiplier * get_worker_income_multiplier(normalized) * get_upgrade_income_multiplier(normalized)
 
 
 func get_worker_income_multiplier(_instance: Dictionary) -> float:
+	if not has_node("/root/WorkerSystem"):
+		return 1.0
+
+	var worker_system: Node = get_node("/root/WorkerSystem")
+	if worker_system.has_method("get_manager_income_multiplier"):
+		return float(worker_system.call("get_manager_income_multiplier"))
+
 	return 1.0
 
 
 func get_upgrade_income_multiplier(_instance: Dictionary) -> float:
-	return 1.0
+	if not has_node("/root/UpgradeSystem"):
+		return 1.0
+
+	var upgrade_system: Node = get_node("/root/UpgradeSystem")
+	var income_multiplier: float = 1.0
+	var collection_multiplier: float = 1.0
+	if upgrade_system.has_method("get_reptile_income_multiplier"):
+		income_multiplier = float(upgrade_system.call("get_reptile_income_multiplier"))
+	if upgrade_system.has_method("get_collection_bonus_multiplier"):
+		collection_multiplier = float(upgrade_system.call("get_collection_bonus_multiplier"))
+	return income_multiplier * collection_multiplier
 
 
 func get_total_assigned_income_per_min() -> float:
@@ -382,7 +419,7 @@ func get_animal_income_contributors() -> Array:
 			continue
 
 		var instance: Dictionary = _normalize_owned_instance(instance_value as Dictionary)
-		var habitat_id: String = str(instance.get("habitat_id", ""))
+		var habitat_id: String = _id_or_empty(instance.get("habitat_id", null))
 		if seen_habitats.has(habitat_id):
 			continue
 
@@ -454,6 +491,7 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 
 	var message_key: String = ""
 	var xp_reward: float = 0.0
+	var money_reward: float = 0.0
 	match action_id:
 		"feed":
 			if int(GameState.get_value("food_current", 0)) <= 0:
@@ -485,8 +523,10 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 		"play":
 			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + PLAY_HAPPINESS_GAIN)
 			instance["last_play_timestamp"] = now
-			EconomySystem.add_currency("repticash", PLAY_REPTICASH_REWARD)
-			xp_reward = PLAY_XP_REWARD
+			var play_reward_multiplier: float = _get_play_reward_multiplier()
+			money_reward = float(PLAY_REPTICASH_REWARD) * play_reward_multiplier
+			EconomySystem.add_currency("repticash", money_reward)
+			xp_reward = float(PLAY_XP_REWARD) * play_reward_multiplier
 			message_key = "ui.play_success_reward"
 		_:
 			return {"success": false, "message_key": "ui.reptile_unavailable"}
@@ -502,8 +542,72 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 		"message_key": message_key,
 		"instance_id": instance_id,
 		"xp": xp_reward,
-		"money": PLAY_REPTICASH_REWARD if action_id == "play" else 0
+		"money": money_reward if action_id == "play" else 0
 	}
+
+
+func apply_worker_care_effect(instance_id: String, worker_type: String, threshold: float, effect_value: float) -> bool:
+	var instances: Dictionary = get_owned_reptile_instances()
+	if not instances.has(instance_id):
+		return false
+
+	var instance_value: Variant = instances.get(instance_id)
+	if typeof(instance_value) != TYPE_DICTIONARY:
+		return false
+
+	var instance: Dictionary = _normalize_owned_instance(instance_value as Dictionary)
+	if not _is_assigned_to_valid_habitat(instance):
+		return false
+
+	var now: int = Time.get_unix_time_from_system()
+	var changed := false
+	match worker_type:
+		"food":
+			if float(instance.get("hunger", 100)) >= threshold:
+				return false
+			if int(GameState.get_value("food_current", 0)) <= 0:
+				return false
+			_set_global_resource("food", int(GameState.get_value("food_current", 0)) - 1)
+			instance["hunger"] = _clamp_percent(float(instance.get("hunger", 100)) + effect_value)
+			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + CARE_SMALL_HAPPINESS_GAIN)
+			instance["last_feed_timestamp"] = now
+			instance["last_fed_at"] = now
+			changed = true
+		"water":
+			if float(instance.get("hydration", 100)) >= threshold:
+				return false
+			if int(GameState.get_value("water_current", 0)) <= 0:
+				return false
+			_set_global_resource("water", int(GameState.get_value("water_current", 0)) - 1)
+			instance["hydration"] = _clamp_percent(float(instance.get("hydration", 100)) + effect_value)
+			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + CARE_SMALL_HAPPINESS_GAIN)
+			instance["last_water_timestamp"] = now
+			instance["last_water_at"] = now
+			changed = true
+		"clean":
+			if float(instance.get("cleanliness", 100)) >= threshold:
+				return false
+			instance["cleanliness"] = _clamp_percent(float(instance.get("cleanliness", 100)) + effect_value)
+			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + CLEAN_HAPPINESS_GAIN)
+			instance["last_clean_timestamp"] = now
+			instance["last_cleaned_at"] = now
+			changed = true
+		"play":
+			if float(instance.get("happiness", 100)) >= threshold:
+				return false
+			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + effect_value)
+			instance["last_play_timestamp"] = now
+			changed = true
+		_:
+			return false
+
+	if not changed:
+		return false
+
+	instance["last_needs_update_timestamp"] = now
+	instances[instance_id] = instance
+	GameState.set_value("owned_reptile_instances", instances)
+	return true
 
 
 func get_care_cooldown_remaining(instance: Dictionary, action_id: String, now: int = 0) -> int:
@@ -576,7 +680,7 @@ func purchase_and_assign_reptile(reptile_id: String, habitat_id: String, biome_i
 
 	if (
 		not str(habitat.get("reptile_instance_id", "")).is_empty()
-		or not str(habitat.get("animal_instance_id", "")).is_empty()
+		or not _id_or_empty(habitat.get("animal_instance_id", null)).is_empty()
 		or not str(habitat.get("reptile_id", "")).is_empty()
 	):
 		return {"success": false, "message_key": "ui.habitat_occupied"}
@@ -761,7 +865,7 @@ func assign_reptile_to_habitat(instance_id: String, habitat_id: String, biome_id
 
 	if (
 		not str(habitat.get("reptile_instance_id", "")).is_empty()
-		or not str(habitat.get("animal_instance_id", "")).is_empty()
+		or not _id_or_empty(habitat.get("animal_instance_id", null)).is_empty()
 		or not str(habitat.get("reptile_id", "")).is_empty()
 	):
 		return {"success": false, "message_key": "ui.habitat_occupied"}
@@ -808,7 +912,7 @@ func get_reptile_for_habitat(habitat_id: String) -> Dictionary:
 		var habitat: Dictionary = habitat_value as Dictionary
 		var referenced_instance_id: String = str(habitat.get("reptile_instance_id", ""))
 		if referenced_instance_id.is_empty():
-			referenced_instance_id = str(habitat.get("animal_instance_id", ""))
+			referenced_instance_id = _id_or_empty(habitat.get("animal_instance_id", null))
 		if not referenced_instance_id.is_empty() and instances.has(referenced_instance_id):
 			var referenced_instance_value: Variant = instances.get(referenced_instance_id)
 			if typeof(referenced_instance_value) == TYPE_DICTIONARY:
@@ -831,7 +935,7 @@ func get_reptile_for_habitat(habitat_id: String) -> Dictionary:
 			continue
 
 		var instance: Dictionary = instance_value as Dictionary
-		if str(instance.get("habitat_id", "")) == habitat_id:
+		if _id_or_empty(instance.get("habitat_id", null)) == habitat_id:
 			return _normalize_owned_instance(instance)
 
 	return {}
@@ -901,16 +1005,14 @@ func start_habitat_upgrade(habitat_id: String) -> Dictionary:
 	var current_level: int = normalize_habitat_level(habitat.get("habitat_level", 1))
 	if current_level >= HABITAT_MAX_LEVEL:
 		return {"success": false, "message_key": "habitat.max_level"}
+	var instances: Dictionary = get_owned_reptile_instances()
+	var assigned_instance_id: String = _get_assigned_instance_id_for_habitat(habitat, instances)
+	if not assigned_instance_id.is_empty():
+		return {"success": false, "message_key": "habitat.remove_reptile_first"}
 	if not EconomySystem.can_afford("repticash", HABITAT_UPGRADE_COST):
 		return {"success": false, "message_key": "ui.not_enough_currency"}
 	if not EconomySystem.spend_currency("repticash", HABITAT_UPGRADE_COST):
 		return {"success": false, "message_key": "ui.not_enough_currency"}
-
-	var instances: Dictionary = get_owned_reptile_instances()
-	var assigned_instance_id: String = _get_assigned_instance_id_for_habitat(habitat, instances)
-	var animal_removed: bool = not assigned_instance_id.is_empty()
-	if animal_removed:
-		_unassign_instance_from_habitat(assigned_instance_id, habitat_id, instances, habitat)
 
 	habitat["is_upgrading"] = true
 	habitat["upgrade_target_level"] = current_level + 1
@@ -923,7 +1025,7 @@ func start_habitat_upgrade(habitat_id: String) -> Dictionary:
 	GameState.set_value("habitats", habitats)
 	SaveSystem.save_game()
 	_notify_achievement_progress_changed()
-	return {"success": true, "message_key": "habitat.upgrading", "animal_removed": animal_removed}
+	return {"success": true, "message_key": "habitat.upgrading", "animal_removed": false}
 
 
 func remove_habitat(habitat_id: String) -> Dictionary:
@@ -1049,8 +1151,8 @@ func _normalize_sex(sex: String) -> String:
 
 
 func _is_assigned_to_valid_habitat(instance: Dictionary) -> bool:
-	var habitat_id: String = str(instance.get("habitat_id", ""))
-	var instance_id: String = str(instance.get("instance_id", ""))
+	var habitat_id: String = _id_or_empty(instance.get("habitat_id", null))
+	var instance_id: String = _id_or_empty(instance.get("instance_id", null))
 	if habitat_id.is_empty() or instance_id.is_empty():
 		return false
 
@@ -1065,14 +1167,15 @@ func _is_assigned_to_valid_habitat(instance: Dictionary) -> bool:
 	if bool(habitat.get("is_upgrading", false)):
 		return false
 
-	var reptile_instance_id: String = str(habitat.get("reptile_instance_id", ""))
-	var animal_instance_id: String = str(habitat.get("animal_instance_id", ""))
+	var reptile_instance_id: String = _id_or_empty(habitat.get("reptile_instance_id", null))
+	var animal_instance_id: String = _id_or_empty(habitat.get("animal_instance_id", null))
 	return reptile_instance_id == instance_id or animal_instance_id == instance_id or (reptile_instance_id.is_empty() and animal_instance_id.is_empty() and str(habitat.get("reptile_id", "")) == str(instance.get("reptile_id", "")))
 
 
 func _normalize_habitat_state(habitat_id: String, habitat: Dictionary) -> Dictionary:
 	var normalized: Dictionary = habitat.duplicate(true)
-	normalized["habitat_id"] = str(normalized.get("habitat_id", habitat_id))
+	var normalized_habitat_id: String = _id_or_empty(normalized.get("habitat_id", habitat_id))
+	normalized["habitat_id"] = habitat_id if normalized_habitat_id.is_empty() else normalized_habitat_id
 	if str(normalized.get("biome_id", "")).is_empty():
 		normalized["biome_id"] = "green_meadow"
 	normalized["slot_index"] = int(normalized.get("slot_index", 0))
@@ -1083,9 +1186,9 @@ func _normalize_habitat_state(habitat_id: String, habitat: Dictionary) -> Dictio
 	normalized["upgrade_target_level"] = int(normalized.get("upgrade_target_level", 0))
 	normalized["upgrade_started_at"] = _timestamp_from_value(normalized.get("upgrade_started_at", 0))
 	normalized["upgrade_finish_at"] = _timestamp_from_value(normalized.get("upgrade_finish_at", 0))
-	normalized["reptile_id"] = str(normalized.get("reptile_id", ""))
-	normalized["reptile_instance_id"] = str(normalized.get("reptile_instance_id", ""))
-	normalized["animal_instance_id"] = str(normalized.get("animal_instance_id", ""))
+	normalized["reptile_id"] = _id_or_empty(normalized.get("reptile_id", ""))
+	normalized["reptile_instance_id"] = _id_or_empty(normalized.get("reptile_instance_id", ""))
+	normalized["animal_instance_id"] = _id_or_empty(normalized.get("animal_instance_id", ""))
 	normalized["variant_id"] = str(normalized.get("variant_id", ""))
 	normalized["habitat_variant_id"] = str(normalized.get("habitat_variant_id", "default"))
 	normalized["habitat_skin_id"] = str(normalized.get("habitat_skin_id", "default"))
@@ -1153,9 +1256,9 @@ func _finalize_habitat_upgrade_if_due(habitat: Dictionary, now: int) -> bool:
 
 
 func _get_assigned_instance_id_for_habitat(habitat: Dictionary, instances: Dictionary) -> String:
-	var referenced_instance_id: String = str(habitat.get("reptile_instance_id", ""))
+	var referenced_instance_id: String = _id_or_empty(habitat.get("reptile_instance_id", null))
 	if referenced_instance_id.is_empty():
-		referenced_instance_id = str(habitat.get("animal_instance_id", ""))
+		referenced_instance_id = _id_or_empty(habitat.get("animal_instance_id", null))
 	if not referenced_instance_id.is_empty() and instances.has(referenced_instance_id):
 		return referenced_instance_id
 
@@ -1165,7 +1268,7 @@ func _get_assigned_instance_id_for_habitat(habitat: Dictionary, instances: Dicti
 		if typeof(instance_value) != TYPE_DICTIONARY:
 			continue
 		var instance: Dictionary = instance_value as Dictionary
-		if str(instance.get("habitat_id", "")) == habitat_id:
+		if _id_or_empty(instance.get("habitat_id", null)) == habitat_id:
 			return str(instance_id)
 
 	return ""
@@ -1176,7 +1279,7 @@ func _unassign_instance_from_habitat(instance_id: String, habitat_id: String, in
 		var instance_value: Variant = instances.get(instance_id)
 		if typeof(instance_value) == TYPE_DICTIONARY:
 			var instance: Dictionary = _normalize_owned_instance(instance_value as Dictionary)
-			if str(instance.get("habitat_id", "")) == habitat_id:
+			if _id_or_empty(instance.get("habitat_id", null)) == habitat_id:
 				instance["habitat_id"] = null
 				instances[instance_id] = instance
 
@@ -1298,10 +1401,11 @@ func _update_owned_reptile_needs(now: int) -> bool:
 
 		var decay: float = float(elapsed) / NEED_DECAY_INTERVAL_SECONDS * NEED_DECAY_AMOUNT
 		if decay > 0.0:
+			var happiness_decay: float = decay * _get_happiness_decay_multiplier()
 			instance["hunger"] = _clamp_percent(float(instance.get("hunger", 100)) - decay)
 			instance["hydration"] = _clamp_percent(float(instance.get("hydration", 100)) - decay)
 			instance["cleanliness"] = _clamp_percent(float(instance.get("cleanliness", 100)) - decay)
-			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) - decay)
+			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) - happiness_decay)
 			instance["last_needs_update_timestamp"] = now
 			instances[instance_id] = instance
 			changed = true
@@ -1320,6 +1424,28 @@ func _timestamp_from_value(value: Variant) -> int:
 
 func _clamp_percent(value: float) -> float:
 	return clamp(value, 0.0, 100.0)
+
+
+func _get_play_reward_multiplier() -> float:
+	if not has_node("/root/UpgradeSystem"):
+		return 1.0
+
+	var upgrade_system: Node = get_node("/root/UpgradeSystem")
+	if upgrade_system.has_method("get_play_reward_multiplier"):
+		return float(upgrade_system.call("get_play_reward_multiplier"))
+
+	return 1.0
+
+
+func _get_happiness_decay_multiplier() -> float:
+	if not has_node("/root/UpgradeSystem"):
+		return 1.0
+
+	var upgrade_system: Node = get_node("/root/UpgradeSystem")
+	if upgrade_system.has_method("get_happiness_decay_multiplier"):
+		return float(upgrade_system.call("get_happiness_decay_multiplier"))
+
+	return 1.0
 
 
 func _normalize_owned_instance(instance: Dictionary) -> Dictionary:
@@ -1343,8 +1469,18 @@ func _normalize_owned_instance(instance: Dictionary) -> Dictionary:
 	normalized["last_play_timestamp"] = _timestamp_from_value(normalized.get("last_play_timestamp", 0))
 	if not normalized.has("habitat_id"):
 		normalized["habitat_id"] = null
+	elif _id_or_empty(normalized.get("habitat_id", null)).is_empty():
+		normalized["habitat_id"] = null
 	if not normalized.has("breeding_state"):
 		normalized["breeding_state"] = "none"
+	if not normalized.has("breeding_partner_id"):
+		normalized["breeding_partner_id"] = null
+	if not normalized.has("breeding_started_at"):
+		normalized["breeding_started_at"] = 0
+	if not normalized.has("egg_lay_finish_at"):
+		normalized["egg_lay_finish_at"] = 0
+	if not normalized.has("incubator_egg_id"):
+		normalized["incubator_egg_id"] = null
 	if not normalized.has("paired_with_instance_id"):
 		normalized["paired_with_instance_id"] = ""
 	if not normalized.has("pregnancy_started_at"):
@@ -1411,6 +1547,15 @@ func _first_existing_path(paths: Array) -> String:
 			return path
 
 	return ""
+
+
+func _id_or_empty(value: Variant) -> String:
+	if value == null:
+		return ""
+	var text: String = str(value).strip_edges()
+	if text.is_empty() or text == "<null>" or text.to_lower() == "null":
+		return ""
+	return text
 
 
 func _get_default_income_multiplier(rarity: String) -> float:

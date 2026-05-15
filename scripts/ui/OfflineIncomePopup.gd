@@ -64,24 +64,24 @@ func _build_popup() -> void:
 		content.add_child(chest)
 
 	var title := Label.new()
-	title.text = _tr("ui.offline_income_title", "Offline income")
+	title.text = _tr("offline.title")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 26)
 	title.add_theme_color_override("font_color", Color(0.16, 0.11, 0.07, 1.0))
 	content.add_child(title)
 
 	var message := Label.new()
-	message.text = _tr("ui.offline_income_message", "While you were away, your reptiles earned:")
+	message.text = _tr("offline.message")
 	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	message.add_theme_color_override("font_color", Color(0.29, 0.22, 0.15, 1.0))
 	content.add_child(message)
 
-	content.add_child(_make_info_row(CLOCK_ICON_PATH, _tr("ui.offline_time", "Offline time"), true))
-	content.add_child(_make_info_row(CURRENCY_ICON_PATH, _tr("ui.offline_reward", "Reward"), false))
+	content.add_child(_make_info_row(CLOCK_ICON_PATH, _tr("offline.time"), true))
+	content.add_child(_make_info_row(CURRENCY_ICON_PATH, _tr("offline.reward"), false))
 
 	cap_label = Label.new()
-	cap_label.text = _tr("ui.offline_cap_applied", "4-hour cap applied")
+	cap_label.text = _tr("offline.cap_applied")
 	cap_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cap_label.add_theme_font_size_override("font_size", 13)
 	cap_label.add_theme_color_override("font_color", Color(0.48, 0.32, 0.08, 1.0))
@@ -107,7 +107,7 @@ func _build_popup() -> void:
 
 	var claim_label := Button.new()
 	claim_label.name = "ClaimLabelButton"
-	claim_label.text = _tr("ui.claim", "Claim")
+	claim_label.text = _tr("offline.claim")
 	claim_label.flat = true
 	claim_label.custom_minimum_size = Vector2(180, 34)
 	claim_label.add_theme_font_size_override("font_size", 24)
@@ -155,9 +155,11 @@ func _on_offline_income_calculated(amount: float, seconds: int) -> void:
 	if time_value_label != null:
 		time_value_label.text = _format_duration(seconds)
 	if reward_value_label != null:
-		reward_value_label.text = "R$ " + _format_amount(amount)
+		reward_value_label.text = _tr("currency.repticash") + " " + _format_amount(amount)
 	if cap_label != null:
-		cap_label.visible = seconds >= EconomySystem.MAX_OFFLINE_SECONDS
+		var max_offline_seconds: int = EconomySystem.get_max_offline_seconds() if EconomySystem.has_method("get_max_offline_seconds") else EconomySystem.MAX_OFFLINE_SECONDS
+		cap_label.visible = seconds >= max_offline_seconds
+		cap_label.text = _tr("ui.offline_cap_applied").replace("{time}", _format_duration(max_offline_seconds))
 
 	show()
 
@@ -186,10 +188,10 @@ func _format_amount(amount: float) -> String:
 	return "%.1f" % amount
 
 
-func _tr(key: String, fallback: String) -> String:
+func _tr(key: String) -> String:
 	if has_node("/root/LocalizationSystem") and LocalizationSystem.has_method("tr_key"):
 		return LocalizationSystem.tr_key(key)
-	return fallback
+	return key
 
 
 func _load_icon(path: String) -> Texture2D:

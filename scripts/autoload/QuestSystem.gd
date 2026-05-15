@@ -349,5 +349,9 @@ func _get_discovered_variant_count() -> int:
 func _get_workers_hired_count() -> int:
 	var workers_value: Variant = GameState.get_value("workers", {})
 	if typeof(workers_value) == TYPE_DICTIONARY:
-		return (workers_value as Dictionary).size()
+		var count := 0
+		for worker_value in (workers_value as Dictionary).values():
+			if typeof(worker_value) == TYPE_DICTIONARY and int((worker_value as Dictionary).get("level", 0)) > 0:
+				count += 1
+		return count
 	return 0

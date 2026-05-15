@@ -94,6 +94,15 @@ func get_pending_offline_seconds() -> int:
 	return int(GameState.get_value("pending_offline_seconds", 0))
 
 
+func get_max_offline_seconds() -> int:
+	if has_node("/root/UpgradeSystem"):
+		var upgrade_system: Node = get_node("/root/UpgradeSystem")
+		if upgrade_system.has_method("get_offline_income_cap_seconds"):
+			return int(upgrade_system.call("get_offline_income_cap_seconds"))
+
+	return MAX_OFFLINE_SECONDS
+
+
 func has_pending_offline_income() -> bool:
 	return bool(GameState.get_value("offline_claim_available", false)) and get_pending_offline_income() > 0.0
 
@@ -194,7 +203,8 @@ func _calculate_offline_income_on_resume() -> void:
 		return
 
 	var offline_seconds: int = int(max(0.0, now - last_active))
-	var effective_seconds: int = int(min(offline_seconds, MAX_OFFLINE_SECONDS))
+	var max_offline_seconds: int = get_max_offline_seconds()
+	var effective_seconds: int = int(min(offline_seconds, max_offline_seconds))
 	if effective_seconds < MIN_OFFLINE_SECONDS:
 		GameState.set_value("last_active_timestamp", now)
 		SaveSystem.save_game()

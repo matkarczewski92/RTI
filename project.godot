@@ -24,6 +24,8 @@ SaveSystem="*res://scripts/autoload/SaveSystem.gd"
 ReptileSystem="*res://scripts/autoload/ReptileSystem.gd"
 AchievementSystem="*res://scripts/autoload/AchievementSystem.gd"
 QuestSystem="*res://scripts/autoload/QuestSystem.gd"
+WorkerSystem="*res://scripts/autoload/WorkerSystem.gd"
+UpgradeSystem="*res://scripts/autoload/UpgradeSystem.gd"
 
 [display]
 

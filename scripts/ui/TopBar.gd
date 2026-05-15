@@ -3,7 +3,7 @@ extends Control
 const AssetPaths := preload("res://scripts/helpers/AssetPaths.gd")
 
 const REPTICASH_ICON_PATH := "res://assets/art/icons/icon_repticash.png"
-const XP_ICON_PATH := "res://assets/art/icons/icon_xp.png"
+const XP_ICON_PATH := "res://assets/art/ui/icons/menu/xp.png"
 const FOOD_ICON_PATH := "res://assets/art/ui/icons/menu/food.png"
 const WATER_ICON_PATH := "res://assets/art/ui/icons/menu/water.png"
 
@@ -51,7 +51,7 @@ func _build_layout() -> void:
 	cash_label.add_theme_font_size_override("font_size", 18)
 	row.add_child(cash_label)
 
-	_add_icon(row, XP_ICON_PATH)
+	_add_icon(row, XP_ICON_PATH, Vector2(28, 28), "XP")
 	xp_label = Label.new()
 	xp_label.add_theme_font_size_override("font_size", 18)
 	row.add_child(xp_label)
@@ -84,14 +84,29 @@ func _refresh() -> void:
 	water_label.text = str(int(GameState.get_value("water_current", 0))) + "/" + str(int(GameState.get_value("water_max", 100)))
 
 
-func _add_icon(row: HBoxContainer, texture_path: String, icon_size: Vector2 = Vector2(28, 28)) -> void:
-	var icon := TextureRect.new()
-	icon.texture = AssetPaths.load_texture(texture_path)
-	icon.custom_minimum_size = icon_size
-	icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.visible = icon.texture != null
-	row.add_child(icon)
+func _add_icon(row: HBoxContainer, texture_path: String, icon_size: Vector2 = Vector2(28, 28), fallback_text: String = "") -> void:
+	var icon_box := CenterContainer.new()
+	icon_box.custom_minimum_size = icon_size
+	icon_box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	icon_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+
+	var texture: Texture2D = AssetPaths.load_texture(texture_path)
+	if texture != null:
+		var icon := TextureRect.new()
+		icon.texture = texture
+		icon.custom_minimum_size = icon_size
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon_box.add_child(icon)
+	else:
+		var fallback := Label.new()
+		fallback.text = fallback_text if not fallback_text.is_empty() else "?"
+		fallback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		fallback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		fallback.add_theme_font_size_override("font_size", 11)
+		icon_box.add_child(fallback)
+
+	row.add_child(icon_box)
 
 
 func _format_amount(value: float) -> String:

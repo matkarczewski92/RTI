@@ -25,6 +25,8 @@ const WATER_ACTION_ICON_PATH := "res://assets/art/ui/icons/menu/wather_add.png"
 const CLEAN_ACTION_ICON_PATH := "res://assets/art/ui/icons/menu/clean_add.png"
 const COOLDOWN_ICON_PATH := "res://assets/art/ui/icons/menu/cooldown.png"
 const ALERT_ICON_PATH := "res://assets/art/ui/icons/menu/alert.png"
+const WORKERS_ICON_PATH := "res://assets/art/ui/icons/menu/emp_team.png"
+const UPGRADE_BUTTON_ICON_PATH := "res://assets/art/ui/icons/menu/upgrade_button.png"
 const HABITATS_PATH := "res://data/habitats.json"
 
 const BIOME_ID := "green_meadow"
@@ -58,6 +60,8 @@ var naming_modal: Control
 var shop_view: Control
 var animals_view: Control
 var quests_view: Control
+var workers_view: Control
+var upgrades_view: Control
 var pending_name_instance_id: String = ""
 var current_management_instance_id: String = ""
 var current_management_feedback_key: String = ""
@@ -75,6 +79,10 @@ func _ready() -> void:
 		EconomySystem.income_progress_updated.connect(_on_income_progress_updated)
 	if EconomySystem.has_signal("income_tick"):
 		EconomySystem.income_tick.connect(_on_income_tick)
+	if has_node("/root/WorkerSystem") and WorkerSystem.has_signal("workers_changed"):
+		WorkerSystem.workers_changed.connect(_on_workers_changed)
+	if has_node("/root/UpgradeSystem") and UpgradeSystem.has_signal("upgrades_changed"):
+		UpgradeSystem.upgrades_changed.connect(_on_upgrades_changed)
 	GameState.language_changed.connect(func(_language: String) -> void: _rebuild_layout())
 	GameState.state_changed.connect(_refresh_habitat_slots)
 
@@ -93,6 +101,8 @@ func _rebuild_layout() -> void:
 	shop_view = null
 	animals_view = null
 	quests_view = null
+	workers_view = null
+	upgrades_view = null
 	pending_name_instance_id = ""
 	current_management_instance_id = ""
 	current_management_feedback_key = ""
@@ -133,11 +143,26 @@ func _on_income_tick(amount: float) -> void:
 	_refresh_habitat_income_progress()
 
 
+func _on_workers_changed() -> void:
+	_refresh_habitat_slots()
+	if management_modal != null and not current_management_instance_id.is_empty():
+		_show_management_for_instance_id(current_management_instance_id, false)
+
+
+func _on_upgrades_changed() -> void:
+	_refresh_habitat_slots()
+	if management_modal != null and not current_management_instance_id.is_empty():
+		_show_management_for_instance_id(current_management_instance_id, false)
+	if upgrades_view != null:
+		_show_upgrades_view()
+
+
 func _build_layout() -> void:
 	_add_background()
 	_add_top_bar()
 	_add_map_area()
 	_add_top_logo()
+	_add_workers_shortcut()
 	_add_bottom_nav()
 	_add_offline_income_popup()
 
@@ -191,6 +216,38 @@ func _add_top_logo() -> void:
 	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(logo)
+
+
+func _add_workers_shortcut() -> void:
+	var button: Button = Button.new()
+	button.name = "WorkersShortcut"
+	button.anchor_left = 1.0
+	button.anchor_top = 1.0
+	button.anchor_right = 1.0
+	button.anchor_bottom = 1.0
+	button.offset_left = -706.0
+	button.offset_top = -(BOTTOM_NAV_HEIGHT + 224.0)
+	button.offset_right = -494.0
+	button.offset_bottom = -(BOTTOM_NAV_HEIGHT + 12.0)
+	button.text = ""
+	button.flat = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_stylebox_override("normal", _make_transparent_button_style())
+	button.add_theme_stylebox_override("hover", _make_transparent_button_style())
+	button.add_theme_stylebox_override("pressed", _make_transparent_button_style())
+	button.pressed.connect(_show_workers_view)
+	add_child(button)
+
+	var content: CenterContainer = CenterContainer.new()
+	content.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(content)
+
+	var icon: TextureRect = _make_fixed_texture(WORKERS_ICON_PATH, Vector2(178, 178))
+	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	content.add_child(icon)
 
 
 func _add_bottom_nav() -> void:
@@ -501,6 +558,7 @@ func _show_reptile_assignment_popup(habitat_id: String) -> void:
 	reptile_selection_modal = Control.new()
 	reptile_selection_modal.name = "ReptileAssignmentModal"
 	reptile_selection_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
+	reptile_selection_modal.z_index = 30
 	add_child(reptile_selection_modal)
 
 	var overlay: ColorRect = ColorRect.new()
@@ -559,11 +617,14 @@ func _show_reptile_assignment_popup(habitat_id: String) -> void:
 
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0, 450)
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
 
 	var list: VBoxContainer = VBoxContainer.new()
 	list.add_theme_constant_override("separation", 8)
+	list.custom_minimum_size = Vector2(max(0.0, modal_width - 36.0), 0)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(list)
 
 	var instances: Array = ReptileSystem.get_owned_unassigned_reptiles()
@@ -647,6 +708,7 @@ func _show_no_available_reptiles_popup() -> void:
 func _make_assignable_reptile_card(instance: Dictionary, habitat_id: String) -> Control:
 	var card: PanelContainer = PanelContainer.new()
 	card.custom_minimum_size = Vector2(0, 140)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.add_theme_stylebox_override("panel", _make_card_style())
 
 	var margin: MarginContainer = MarginContainer.new()
@@ -657,6 +719,7 @@ func _make_assignable_reptile_card(instance: Dictionary, habitat_id: String) -> 
 	card.add_child(margin)
 
 	var row: HBoxContainer = HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 14)
 	margin.add_child(row)
 
@@ -726,6 +789,7 @@ func _make_assignable_reptile_card(instance: Dictionary, habitat_id: String) -> 
 
 	var action_area: CenterContainer = CenterContainer.new()
 	action_area.custom_minimum_size = Vector2(104, 0)
+	action_area.size_flags_horizontal = Control.SIZE_SHRINK_END
 	row.add_child(action_area)
 
 	var button: Button = Button.new()
@@ -911,6 +975,7 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 	management_modal = Control.new()
 	management_modal.name = "ReptileManagementModal"
 	management_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
+	management_modal.z_index = 20
 	add_child(management_modal)
 
 	var overlay: ColorRect = ColorRect.new()
@@ -919,7 +984,7 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	management_modal.add_child(overlay)
 
-	var sheet_height: float = get_viewport_rect().size.y * 0.65
+	var sheet_height: float = get_viewport_rect().size.y * 0.80
 
 	var panel: PanelContainer = PanelContainer.new()
 	panel.name = "ManagementSheet"
@@ -961,7 +1026,7 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 	header.add_child(header_close)
 
 	var body: Control = Control.new()
-	body.custom_minimum_size = Vector2(0, 470)
+	body.custom_minimum_size = Vector2(0, 560)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(body)
@@ -1045,12 +1110,15 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 	var happiness_multiplier: float = ReptileSystem.get_happiness_multiplier(instance.get("happiness", 100))
 	var variant_multiplier: float = ReptileSystem.get_variant_income_multiplier(variant)
 	var habitat_multiplier: float = ReptileSystem.get_habitat_match_multiplier(instance)
+	var habitat_level_multiplier: float = ReptileSystem.get_habitat_level_income_multiplier(instance)
 	var effective_income: float = ReptileSystem.get_effective_animal_income_per_min(instance)
 	details.add_child(_make_management_icon_row("ui.base_income", INCOME_ICON_PATH, _format_repticash_per_min(base_income)))
 	details.add_child(_make_management_text_row("ui.happiness_multiplier", _format_multiplier(happiness_multiplier)))
 	details.add_child(_make_management_text_row("ui.variant_multiplier", _format_multiplier(variant_multiplier)))
 	if is_assigned and not preferred_type.is_empty():
 		details.add_child(_make_management_text_row("habitat.compatibility_income", _format_multiplier(habitat_multiplier)))
+	if is_assigned:
+		details.add_child(_make_management_text_row("habitat.level_bonus", _format_multiplier(habitat_level_multiplier)))
 	details.add_child(_make_management_icon_row("ui.effective_income", INCOME_ICON_PATH, _format_repticash_per_min(effective_income)))
 
 	var care_hint_key: String = current_management_feedback_key
@@ -1088,8 +1156,12 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 		_apply_button_text_color(move_out_button, BUTTON_TEXT_COLOR)
 		details.add_child(move_out_button)
 
-	var footer_close: Button = _make_popup_button("ui.close", _close_management_modal)
-	column.add_child(footer_close)
+		var upgrade_hint_button: Button = _make_popup_button("habitat.upgrade", func() -> void:
+			_show_message_popup("habitat.upgrade_requires_empty")
+		)
+		upgrade_hint_button.custom_minimum_size = Vector2(0, 40)
+		_style_primary_action_button(upgrade_hint_button)
+		details.add_child(upgrade_hint_button)
 
 
 func _show_habitat_management_popup(habitat_id: String) -> void:
@@ -1105,6 +1177,7 @@ func _show_habitat_management_popup(habitat_id: String) -> void:
 	management_modal = Control.new()
 	management_modal.name = "HabitatManagementModal"
 	management_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
+	management_modal.z_index = 20
 	add_child(management_modal)
 
 	var overlay: ColorRect = ColorRect.new()
@@ -1204,8 +1277,6 @@ func _show_habitat_management_popup(habitat_id: String) -> void:
 	_apply_button_text_color(remove_button, BUTTON_TEXT_COLOR)
 	actions.add_child(remove_button)
 
-	column.add_child(_make_popup_button("ui.close", _close_management_modal))
-
 
 func _style_primary_action_button(button: Button) -> void:
 	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.25, 0.58, 0.24, 1.0)))
@@ -1220,6 +1291,8 @@ func _on_bottom_nav_pressed(item_id: String) -> void:
 		_close_animals_view()
 		_close_quests_view()
 		_close_shop_view()
+		_close_workers_view()
+		_close_upgrades_view()
 		_close_management_modal()
 		_close_reptile_selection_modal()
 		_close_habitat_purchase_modal()
@@ -1237,6 +1310,10 @@ func _on_bottom_nav_pressed(item_id: String) -> void:
 		_show_quests_view()
 		return
 
+	if item_id == "upgrades":
+		_show_upgrades_view()
+		return
+
 	_show_nav_placeholder("nav." + item_id)
 
 
@@ -1244,6 +1321,8 @@ func _show_nav_placeholder(title_key: String) -> void:
 	_close_animals_view()
 	_close_quests_view()
 	_close_shop_view()
+	_close_workers_view()
+	_close_upgrades_view()
 	_show_message_popup(title_key)
 
 
@@ -1251,6 +1330,8 @@ func _show_shop_view() -> void:
 	_close_animals_view()
 	_close_quests_view()
 	_close_shop_view()
+	_close_workers_view()
+	_close_upgrades_view()
 	_close_management_modal()
 	_close_reptile_selection_modal()
 	_close_habitat_purchase_modal()
@@ -1333,6 +1414,8 @@ func _show_animals_view(tab_id: String = "owned") -> void:
 	_close_animals_view()
 	_close_quests_view()
 	_close_shop_view()
+	_close_workers_view()
+	_close_upgrades_view()
 	_close_management_modal()
 	_close_reptile_selection_modal()
 	_close_habitat_purchase_modal()
@@ -1442,6 +1525,8 @@ func _show_quests_view() -> void:
 	_close_quests_view()
 	_close_animals_view()
 	_close_shop_view()
+	_close_workers_view()
+	_close_upgrades_view()
 	_close_management_modal()
 	_close_reptile_selection_modal()
 	_close_habitat_purchase_modal()
@@ -1501,6 +1586,437 @@ func _show_quests_view() -> void:
 	list.add_theme_constant_override("separation", 10)
 	scroll.add_child(list)
 	_populate_quests_list(list)
+
+
+func _show_workers_view() -> void:
+	_close_workers_view()
+	_close_animals_view()
+	_close_quests_view()
+	_close_shop_view()
+	_close_upgrades_view()
+	_close_management_modal()
+	_close_reptile_selection_modal()
+	_close_habitat_purchase_modal()
+	_notify_quest_event("screen_opened", {"screen": "workers"})
+
+	workers_view = Control.new()
+	workers_view.name = "WorkersView"
+	workers_view.anchor_left = 0.0
+	workers_view.anchor_top = 0.0
+	workers_view.anchor_right = 1.0
+	workers_view.anchor_bottom = 1.0
+	workers_view.offset_top = TOP_BAR_HEIGHT + 10
+	workers_view.offset_bottom = -(BOTTOM_NAV_HEIGHT + 8)
+	add_child(workers_view)
+
+	var panel: PanelContainer = PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
+	workers_view.add_child(panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	panel.add_child(margin)
+
+	var column: VBoxContainer = VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	margin.add_child(column)
+
+	var header: HBoxContainer = HBoxContainer.new()
+	header.add_theme_constant_override("separation", 10)
+	column.add_child(header)
+
+	var title: Label = _make_popup_label(LocalizationSystem.tr_key("nav.workers"), 24)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_label_color(title, POPUP_TEXT_PRIMARY)
+	header.add_child(title)
+
+	var close_button: Button = Button.new()
+	close_button.text = LocalizationSystem.tr_key("ui.close")
+	close_button.custom_minimum_size = Vector2(96, 42)
+	close_button.pressed.connect(_close_workers_view)
+	_apply_button_text_color(close_button, POPUP_TEXT_PRIMARY)
+	header.add_child(close_button)
+
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(scroll)
+
+	var list: VBoxContainer = VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 10)
+	scroll.add_child(list)
+	_populate_workers_list(list)
+
+
+func _show_upgrades_view() -> void:
+	_close_upgrades_view()
+	_close_workers_view()
+	_close_animals_view()
+	_close_quests_view()
+	_close_shop_view()
+	_close_management_modal()
+	_close_reptile_selection_modal()
+	_close_habitat_purchase_modal()
+
+	upgrades_view = Control.new()
+	upgrades_view.name = "UpgradesView"
+	upgrades_view.anchor_left = 0.0
+	upgrades_view.anchor_top = 0.0
+	upgrades_view.anchor_right = 1.0
+	upgrades_view.anchor_bottom = 1.0
+	upgrades_view.offset_top = TOP_BAR_HEIGHT + 10
+	upgrades_view.offset_bottom = -(BOTTOM_NAV_HEIGHT + 8)
+	add_child(upgrades_view)
+
+	var panel: PanelContainer = PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
+	upgrades_view.add_child(panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	panel.add_child(margin)
+
+	var column: VBoxContainer = VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	margin.add_child(column)
+
+	var header: HBoxContainer = HBoxContainer.new()
+	header.add_theme_constant_override("separation", 10)
+	column.add_child(header)
+
+	var title: Label = _make_popup_label(LocalizationSystem.tr_key("ui.upgrades"), 24)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_label_color(title, POPUP_TEXT_PRIMARY)
+	header.add_child(title)
+
+	var close_button: Button = Button.new()
+	close_button.text = LocalizationSystem.tr_key("ui.close")
+	close_button.custom_minimum_size = Vector2(96, 42)
+	close_button.pressed.connect(_close_upgrades_view)
+	_apply_button_text_color(close_button, POPUP_TEXT_PRIMARY)
+	header.add_child(close_button)
+
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(scroll)
+
+	var list: VBoxContainer = VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 10)
+	scroll.add_child(list)
+	_populate_upgrades_list(list)
+
+
+func _populate_upgrades_list(parent: VBoxContainer) -> void:
+	if not has_node("/root/UpgradeSystem"):
+		parent.add_child(_make_popup_label(LocalizationSystem.tr_key("upgrades.unavailable"), 16))
+		return
+
+	var definitions: Array = UpgradeSystem.get_upgrade_definitions(false)
+	if definitions.is_empty():
+		parent.add_child(_make_popup_label(LocalizationSystem.tr_key("upgrades.unavailable"), 16))
+		return
+
+	for upgrade_value in definitions:
+		if typeof(upgrade_value) != TYPE_DICTIONARY:
+			continue
+		parent.add_child(_make_upgrade_card(upgrade_value as Dictionary))
+
+
+func _make_upgrade_card(upgrade: Dictionary) -> Control:
+	var upgrade_id: String = str(upgrade.get("id", ""))
+	var level: int = UpgradeSystem.get_upgrade_level(upgrade_id)
+	var max_level: int = int(upgrade.get("max_level", 1))
+	var next_cost: int = UpgradeSystem.get_upgrade_cost(upgrade_id)
+	var at_max: bool = level >= max_level
+
+	var card: PanelContainer = PanelContainer.new()
+	card.custom_minimum_size = Vector2(0, 178)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.add_theme_stylebox_override("panel", _make_card_style())
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	card.add_child(margin)
+
+	var row: HBoxContainer = HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 16)
+	margin.add_child(row)
+
+	var icon_column: CenterContainer = CenterContainer.new()
+	icon_column.custom_minimum_size = Vector2(104, 104)
+	icon_column.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	icon_column.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(icon_column)
+
+	var icon: Control = _make_icon_or_fallback(str(upgrade.get("icon_path", "")), Vector2(92, 92), "+")
+	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon_column.add_child(icon)
+
+	var info: VBoxContainer = VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_theme_constant_override("separation", 4)
+	row.add_child(info)
+
+	var name_label: Label = Label.new()
+	name_label.text = LocalizationSystem.tr_key(str(upgrade.get("name_key", upgrade_id)))
+	name_label.clip_text = true
+	name_label.add_theme_font_size_override("font_size", 16)
+	_apply_label_color(name_label, POPUP_TEXT_PRIMARY)
+	info.add_child(name_label)
+
+	var desc_label: Label = Label.new()
+	desc_label.text = LocalizationSystem.tr_key(str(upgrade.get("description_key", upgrade_id)))
+	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc_label.add_theme_font_size_override("font_size", 12)
+	_apply_label_color(desc_label, POPUP_TEXT_SECONDARY)
+	info.add_child(desc_label)
+
+	var level_label: Label = Label.new()
+	level_label.text = LocalizationSystem.tr_key("ui.upgrade_level") + " " + str(level) + " / " + str(max_level)
+	level_label.add_theme_font_size_override("font_size", 12)
+	_apply_label_color(level_label, POPUP_TEXT_ACCENT)
+	info.add_child(level_label)
+
+	var current_label: Label = Label.new()
+	current_label.text = LocalizationSystem.tr_key("ui.upgrade_current_effect") + ": " + _format_upgrade_effect(upgrade, level)
+	current_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	current_label.add_theme_font_size_override("font_size", 12)
+	_apply_label_color(current_label, POPUP_TEXT_SUCCESS if level > 0 else POPUP_TEXT_SECONDARY)
+	info.add_child(current_label)
+
+	if not at_max:
+		var next_label: Label = Label.new()
+		next_label.text = LocalizationSystem.tr_key("ui.upgrade_next_effect") + ": " + _format_upgrade_effect(upgrade, level + 1)
+		next_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		next_label.add_theme_font_size_override("font_size", 12)
+		_apply_label_color(next_label, POPUP_TEXT_SECONDARY)
+		info.add_child(next_label)
+
+	var action_area: VBoxContainer = VBoxContainer.new()
+	action_area.custom_minimum_size = Vector2(132, 0)
+	action_area.alignment = BoxContainer.ALIGNMENT_CENTER
+	action_area.add_theme_constant_override("separation", 6)
+	row.add_child(action_area)
+
+	var cost_label: Label = Label.new()
+	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cost_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	cost_label.add_theme_font_size_override("font_size", 12)
+	_apply_label_color(cost_label, POPUP_TEXT_ACCENT)
+	cost_label.text = LocalizationSystem.tr_key("ui.upgrade_max") if at_max else LocalizationSystem.tr_key("ui.upgrade_cost") + ": " + LocalizationSystem.tr_key("currency.repticash") + " " + str(next_cost)
+	action_area.add_child(cost_label)
+
+	var action_button: Button = _make_upgrade_action_button("ui.upgrade_upgrade" if level > 0 else "ui.upgrade_buy")
+	action_button.disabled = at_max
+	action_button.mouse_default_cursor_shape = Control.CURSOR_ARROW if action_button.disabled else Control.CURSOR_POINTING_HAND
+	action_button.add_theme_stylebox_override("disabled", _make_button_style(Color(0.45, 0.45, 0.42, 0.75)))
+	action_button.pressed.connect(func() -> void:
+		_try_buy_upgrade(upgrade_id)
+	)
+	action_area.add_child(action_button)
+
+	return card
+
+
+func _format_upgrade_effect(upgrade: Dictionary, level: int) -> String:
+	var effect_type: String = str(upgrade.get("effect_type", ""))
+	var per_level: float = float(upgrade.get("effect_per_level", 0.0))
+	var effect_value: float = float(max(0, level)) * per_level
+	match effect_type:
+		"reptile_income_multiplier":
+			return LocalizationSystem.tr_key("ui.upgrade_reptile_income_effect").replace("{value}", _format_multiplier(1.0 + effect_value))
+		"offline_cap_seconds":
+			return LocalizationSystem.tr_key("ui.upgrade_offline_cap_effect").replace("{time}", _format_duration_compact(UpgradeSystem.BASE_OFFLINE_CAP_SECONDS + int(round(effect_value))))
+		"play_reward_multiplier":
+			return LocalizationSystem.tr_key("ui.upgrade_play_reward_effect").replace("{value}", _format_multiplier(1.0 + effect_value))
+		"happiness_decay_multiplier":
+			return LocalizationSystem.tr_key("ui.upgrade_happiness_decay_effect").replace("{value}", _format_multiplier(max(0.25, 1.0 - effect_value)))
+		"worker_efficiency_multiplier":
+			return LocalizationSystem.tr_key("ui.upgrade_worker_efficiency_effect").replace("{value}", _format_multiplier(1.0 + effect_value))
+		"collection_bonus_multiplier":
+			return LocalizationSystem.tr_key("ui.upgrade_collection_bonus_effect").replace("{value}", _format_multiplier(1.0 + effect_value))
+		_:
+			return _format_decimal(effect_value)
+
+
+func _try_buy_upgrade(upgrade_id: String) -> void:
+	var result: Dictionary = UpgradeSystem.buy_upgrade(upgrade_id)
+	if not bool(result.get("success", false)):
+		_show_message_popup(str(result.get("message_key", "ui.not_enough_rs")))
+		return
+
+	_show_upgrades_view()
+
+
+func _populate_workers_list(parent: VBoxContainer) -> void:
+	if not has_node("/root/WorkerSystem"):
+		parent.add_child(_make_popup_label(LocalizationSystem.tr_key("workers.unavailable"), 16))
+		return
+
+	var definitions: Array = WorkerSystem.get_worker_definitions(false)
+	if definitions.is_empty():
+		parent.add_child(_make_popup_label(LocalizationSystem.tr_key("workers.unavailable"), 16))
+		return
+
+	for worker_value in definitions:
+		if typeof(worker_value) != TYPE_DICTIONARY:
+			continue
+		parent.add_child(_make_worker_card(worker_value as Dictionary))
+
+
+func _make_worker_card(worker: Dictionary) -> Control:
+	var worker_id: String = str(worker.get("id", ""))
+	var level: int = WorkerSystem.get_worker_level(worker_id)
+	var max_level: int = int(worker.get("max_level", 1))
+	var next_cost: int = WorkerSystem.get_next_cost(worker_id)
+	var at_max: bool = level >= max_level
+
+	var card: PanelContainer = PanelContainer.new()
+	card.custom_minimum_size = Vector2(0, 196)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.add_theme_stylebox_override("panel", _make_card_style())
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	card.add_child(margin)
+
+	var row: HBoxContainer = HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 18)
+	margin.add_child(row)
+
+	var icon_column: CenterContainer = CenterContainer.new()
+	icon_column.custom_minimum_size = Vector2(148, 148)
+	icon_column.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	icon_column.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(icon_column)
+
+	var worker_icon: TextureRect = _make_fixed_texture(str(worker.get("icon_path", "")), Vector2(136, 136))
+	worker_icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	worker_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon_column.add_child(worker_icon)
+
+	var info: VBoxContainer = VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_theme_constant_override("separation", 4)
+	row.add_child(info)
+
+	var name_label: Label = Label.new()
+	name_label.text = LocalizationSystem.tr_key(str(worker.get("name_key", worker_id)))
+	name_label.clip_text = true
+	name_label.add_theme_font_size_override("font_size", 16)
+	_apply_label_color(name_label, POPUP_TEXT_PRIMARY)
+	info.add_child(name_label)
+
+	var desc_label: Label = Label.new()
+	desc_label.text = LocalizationSystem.tr_key(str(worker.get("description_key", worker_id)))
+	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc_label.add_theme_font_size_override("font_size", 12)
+	_apply_label_color(desc_label, POPUP_TEXT_SECONDARY)
+	info.add_child(desc_label)
+
+	var status_label: Label = Label.new()
+	status_label.text = _format_worker_status(worker_id, level)
+	status_label.add_theme_font_size_override("font_size", 12)
+	_apply_label_color(status_label, POPUP_TEXT_ACCENT)
+	info.add_child(status_label)
+
+	var effect_label: Label = Label.new()
+	effect_label.text = _format_worker_effect_summary(worker_id, worker, level)
+	effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	effect_label.add_theme_font_size_override("font_size", 12)
+	_apply_label_color(effect_label, POPUP_TEXT_SUCCESS if level > 0 else POPUP_TEXT_SECONDARY)
+	info.add_child(effect_label)
+
+	var action_area: VBoxContainer = VBoxContainer.new()
+	action_area.custom_minimum_size = Vector2(128, 0)
+	action_area.alignment = BoxContainer.ALIGNMENT_CENTER
+	action_area.add_theme_constant_override("separation", 6)
+	row.add_child(action_area)
+
+	var cost_label: Label = Label.new()
+	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cost_label.add_theme_font_size_override("font_size", 12)
+	_apply_label_color(cost_label, POPUP_TEXT_ACCENT)
+	cost_label.text = LocalizationSystem.tr_key("ui.worker_max") if at_max else LocalizationSystem.tr_key("ui.worker_cost") + ": " + LocalizationSystem.tr_key("currency.repticash") + " " + str(next_cost)
+	action_area.add_child(cost_label)
+
+	var action_button: Button = _make_owned_card_action_button("ui.worker_upgrade" if level > 0 else "ui.worker_buy")
+	action_button.disabled = at_max or (next_cost > 0 and not EconomySystem.can_afford("repticash", next_cost))
+	action_button.mouse_default_cursor_shape = Control.CURSOR_ARROW if action_button.disabled else Control.CURSOR_POINTING_HAND
+	action_button.add_theme_stylebox_override("disabled", _make_button_style(Color(0.45, 0.45, 0.42, 0.75)))
+	action_button.pressed.connect(func() -> void:
+		_try_buy_or_upgrade_worker(worker_id)
+	)
+	action_area.add_child(action_button)
+
+	return card
+
+
+func _format_worker_status(worker_id: String, level: int) -> String:
+	var max_level: int = int(WorkerSystem.get_worker_definition(worker_id).get("max_level", 1))
+	var level_text: String = LocalizationSystem.tr_key("ui.worker_level") + " " + str(level) + " / " + str(max_level)
+	if level <= 0:
+		return level_text + " - " + LocalizationSystem.tr_key("ui.worker_not_owned")
+	return level_text + " - " + LocalizationSystem.tr_key("ui.worker_active")
+
+
+func _format_worker_effect_summary(worker_id: String, worker: Dictionary, level: int) -> String:
+	var worker_type: String = str(worker.get("type", ""))
+	var display_level: int = max(1, level)
+	var interval: int = WorkerSystem.get_worker_interval(worker_id, display_level)
+	var effect_value: float = WorkerSystem.get_worker_effect_value(worker_id, display_level)
+	var threshold: int = int(WorkerSystem.get_worker_threshold(worker_id))
+	var prefix: String = LocalizationSystem.tr_key("ui.worker_effect") if level > 0 else LocalizationSystem.tr_key("ui.worker_next_effect")
+
+	if worker_type == "manager":
+		var multiplier: float = 1.0 + WorkerSystem.get_worker_effect_value(worker_id, display_level)
+		return prefix + ": " + LocalizationSystem.tr_key("ui.worker_income_bonus") + " " + _format_multiplier(multiplier)
+
+	var stat_key: String = "ui.happiness"
+	match worker_type:
+		"food":
+			stat_key = "ui.satiety"
+		"water":
+			stat_key = "ui.hydration"
+		"clean":
+			stat_key = "ui.cleanliness"
+		"play":
+			stat_key = "ui.happiness"
+
+	return prefix + ": +" + _format_decimal(effect_value) + " " + LocalizationSystem.tr_key(stat_key) + ", <" + str(threshold) + "%, " + str(interval) + "s"
+
+
+func _try_buy_or_upgrade_worker(worker_id: String) -> void:
+	var result: Dictionary = WorkerSystem.buy_or_upgrade_worker(worker_id)
+	if not bool(result.get("success", false)):
+		_show_message_popup(str(result.get("message_key", "ui.not_enough_currency")))
+		return
+
+	_show_workers_view()
 
 
 func _populate_quests_list(parent: VBoxContainer) -> void:
@@ -2109,6 +2625,22 @@ func _close_quests_view() -> void:
 	quests_view = null
 
 
+func _close_workers_view() -> void:
+	if workers_view == null:
+		return
+
+	workers_view.queue_free()
+	workers_view = null
+
+
+func _close_upgrades_view() -> void:
+	if upgrades_view == null:
+		return
+
+	upgrades_view.queue_free()
+	upgrades_view = null
+
+
 func _show_assign_instance_to_habitat_popup(instance_id: String) -> void:
 	_close_reptile_selection_modal()
 
@@ -2449,7 +2981,9 @@ func _show_reptile_name_popup(instance_id: String, edit_mode: bool) -> void:
 	naming_modal = Control.new()
 	naming_modal.name = "ReptileNamingModal"
 	naming_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
+	naming_modal.z_index = 100
 	add_child(naming_modal)
+	naming_modal.move_to_front()
 
 	var overlay: ColorRect = ColorRect.new()
 	overlay.name = "DimOverlay"
@@ -2559,9 +3093,7 @@ func _show_reptile_name_popup(instance_id: String, edit_mode: bool) -> void:
 			_refresh_habitat_slots()
 			_close_naming_modal()
 			if edit_mode:
-				var habitat_id: String = str(instance.get("habitat_id", ""))
-				if not habitat_id.is_empty():
-					_show_management_popup(habitat_id)
+				_show_management_for_instance_id(instance_id, false)
 	)
 	save_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	save_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.25, 0.58, 0.24, 1.0)))
@@ -2693,6 +3225,14 @@ func _make_bottom_sheet_style() -> StyleBoxFlat:
 	return style
 
 
+func _make_transparent_button_style() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(1.0, 1.0, 1.0, 0.0)
+	style.border_color = Color(1.0, 1.0, 1.0, 0.0)
+	style.set_corner_radius_all(0)
+	return style
+
+
 func _make_card_style() -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = Color(1.0, 0.985, 0.93, 1.0)
@@ -2710,6 +3250,15 @@ func _make_owned_card_action_button(label_key: String) -> Button:
 	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.30, 0.66, 0.29, 1.0)))
 	button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.20, 0.48, 0.19, 1.0)))
 	_apply_button_text_color(button, BUTTON_TEXT_COLOR)
+	return button
+
+
+func _make_upgrade_action_button(label_key: String) -> Button:
+	var button: Button = _make_owned_card_action_button(label_key)
+	var texture: Texture2D = AssetPaths.load_texture(UPGRADE_BUTTON_ICON_PATH)
+	if texture != null:
+		button.icon = texture
+		button.expand_icon = true
 	return button
 
 
@@ -2739,6 +3288,27 @@ func _make_fixed_texture(path: String, texture_size: Vector2) -> TextureRect:
 	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return texture_rect
+
+
+func _make_icon_or_fallback(path: String, icon_size: Vector2, fallback_text: String) -> Control:
+	var texture: Texture2D = AssetPaths.load_texture(path)
+	if texture != null:
+		var texture_rect: TextureRect = TextureRect.new()
+		texture_rect.custom_minimum_size = icon_size
+		texture_rect.texture = texture
+		texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		return texture_rect
+
+	var fallback: Label = Label.new()
+	fallback.custom_minimum_size = icon_size
+	fallback.text = fallback_text
+	fallback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	fallback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	fallback.add_theme_font_size_override("font_size", 24)
+	_apply_label_color(fallback, POPUP_TEXT_ACCENT)
+	return fallback
 
 
 func _make_icon_text_row(icon_path: String, text: String, icon_size: int) -> HBoxContainer:
@@ -3197,7 +3767,7 @@ func _get_habitat_state(habitat_id: String) -> String:
 	if (
 		not str(saved.get("reptile_id", "")).is_empty()
 		or not str(saved.get("reptile_instance_id", "")).is_empty()
-		or not str(saved.get("animal_instance_id", "")).is_empty()
+		or _id_or_empty(saved.get("animal_instance_id", null)) != ""
 	):
 		return STATE_OCCUPIED
 
@@ -3209,6 +3779,15 @@ func _get_habitats_state() -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
 	return value as Dictionary
+
+
+func _id_or_empty(value: Variant) -> String:
+	if value == null:
+		return ""
+	var text: String = str(value).strip_edges()
+	if text.is_empty() or text == "<null>" or text.to_lower() == "null":
+		return ""
+	return text
 
 
 func _get_saved_habitat_state(habitat_id: String) -> Dictionary:

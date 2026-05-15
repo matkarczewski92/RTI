@@ -475,6 +475,46 @@
 		"pl": "Koszt",
 		"en": "Cost"
 	},
+	"ui.worker_level": {
+		"pl": "Poziom",
+		"en": "Level"
+	},
+	"ui.worker_buy": {
+		"pl": "Kup",
+		"en": "Buy"
+	},
+	"ui.worker_upgrade": {
+		"pl": "Ulepsz",
+		"en": "Upgrade"
+	},
+	"ui.worker_max": {
+		"pl": "Maksymalny poziom",
+		"en": "Max level"
+	},
+	"ui.worker_cost": {
+		"pl": "Koszt",
+		"en": "Cost"
+	},
+	"ui.worker_active": {
+		"pl": "Aktywny",
+		"en": "Active"
+	},
+	"ui.worker_not_owned": {
+		"pl": "Nie zatrudniono",
+		"en": "Not hired"
+	},
+	"ui.worker_effect": {
+		"pl": "Efekt",
+		"en": "Effect"
+	},
+	"ui.worker_next_effect": {
+		"pl": "Nast\u0119pny efekt",
+		"en": "Next effect"
+	},
+	"ui.worker_income_bonus": {
+		"pl": "bonus dochodu",
+		"en": "income bonus"
+	},
 	"ui.not_enough_currency": {
 		"pl": "Brakuje R$",
 		"en": "Not enough R$"
@@ -540,8 +580,12 @@
 		"en": "This habitat"
 	},
 	"habitat.compatibility_income": {
-		"pl": "Dochód",
-		"en": "Income"
+		"pl": "Mno\u017cnik habitatu / zgodno\u015bci",
+		"en": "Habitat / compatibility multiplier"
+	},
+	"habitat.level_bonus": {
+		"pl": "Bonus poziomu habitatu",
+		"en": "Habitat level bonus"
 	},
 	"habitat.level": {
 		"pl": "Poziom",
@@ -602,6 +646,10 @@
 	"habitat.remove_reptile_first": {
 		"pl": "Najpierw wyprowadź gada z habitatu.",
 		"en": "Remove the reptile from the habitat first."
+	},
+	"habitat.upgrade_requires_empty": {
+		"pl": "Aby rozbudować habitat, musisz najpierw wyprowadzić gada.",
+		"en": "To upgrade this habitat, you must remove the reptile first."
 	},
 	"habitat.cannot_remove_during_upgrade": {
 		"pl": "Nie można usunąć habitatu w trakcie rozbudowy.",
@@ -1115,6 +1163,50 @@
 		"pl": "M\u0142odszy opiekun",
 		"en": "Junior Keeper"
 	},
+	"worker.food.name": {
+		"pl": "Opiekun karmienia",
+		"en": "Food Keeper"
+	},
+	"worker.food.desc": {
+		"pl": "Automatycznie pomaga w karmieniu przypisanych gad\u00f3w.",
+		"en": "Automatically helps feed assigned reptiles."
+	},
+	"worker.water.name": {
+		"pl": "Opiekun wody",
+		"en": "Water Keeper"
+	},
+	"worker.water.desc": {
+		"pl": "Automatycznie pomaga w nawadnianiu przypisanych gad\u00f3w.",
+		"en": "Automatically helps hydrate assigned reptiles."
+	},
+	"worker.clean.name": {
+		"pl": "Ekipa sprz\u0105taj\u0105ca",
+		"en": "Cleaning Crew"
+	},
+	"worker.clean.desc": {
+		"pl": "Automatycznie utrzymuje czysto\u015b\u0107 habitat\u00f3w.",
+		"en": "Automatically keeps habitats clean."
+	},
+	"worker.play.name": {
+		"pl": "Trener",
+		"en": "Trainer"
+	},
+	"worker.play.desc": {
+		"pl": "Automatycznie poprawia zadowolenie przypisanych gad\u00f3w.",
+		"en": "Automatically improves happiness of assigned reptiles."
+	},
+	"worker.manager.name": {
+		"pl": "Manager biomu",
+		"en": "Biome Manager"
+	},
+	"worker.manager.desc": {
+		"pl": "Zwi\u0119ksza doch\u00f3d przypisanych gad\u00f3w w biomie.",
+		"en": "Increases income of assigned reptiles in the biome."
+	},
+	"workers.unavailable": {
+		"pl": "Pracownicy s\u0105 chwilowo niedost\u0119pni.",
+		"en": "Workers are temporarily unavailable."
+	},
 	"upgrade.starter_feeding_tools.name": {
 		"pl": "Startowe narz\u0119dzia karmienia",
 		"en": "Starter Feeding Tools"
@@ -1188,11 +1280,599 @@
 		"en": "No offline reward"
 	},
 	"ui.offline_cap_applied": {
-		"pl": "Zastosowano limit 4 godzin",
-		"en": "4-hour cap applied"
+		"pl": "Zastosowano limit {time}",
+		"en": "{time} cap applied"
 	},
 	"ui.offline_income": {
 		"pl": "Dochód offline",
 		"en": "Offline income"
+	},
+	"ui.upgrades": {
+		"pl": "Ulepszenia",
+		"en": "Upgrades"
+	},
+	"ui.upgrade_buy": {
+		"pl": "Kup",
+		"en": "Buy"
+	},
+	"ui.upgrade_upgrade": {
+		"pl": "Ulepsz",
+		"en": "Upgrade"
+	},
+	"ui.upgrade_level": {
+		"pl": "Poziom",
+		"en": "Level"
+	},
+	"ui.upgrade_cost": {
+		"pl": "Koszt",
+		"en": "Cost"
+	},
+	"ui.upgrade_max": {
+		"pl": "Maksymalny poziom",
+		"en": "Max level"
+	},
+	"ui.upgrade_current_effect": {
+		"pl": "Obecny efekt",
+		"en": "Current effect"
+	},
+	"ui.upgrade_next_effect": {
+		"pl": "Następny poziom",
+		"en": "Next level"
+	},
+	"ui.not_enough_rs": {
+		"pl": "Za mało R$",
+		"en": "Not enough R$"
+	},
+	"ui.upgrade_reptile_income_effect": {
+		"pl": "Dochód gadów {value}",
+		"en": "Reptile income {value}"
+	},
+	"ui.upgrade_offline_cap_effect": {
+		"pl": "Limit offline {time}",
+		"en": "Offline cap {time}"
+	},
+	"ui.upgrade_play_reward_effect": {
+		"pl": "Nagroda za zabawę {value}",
+		"en": "Play reward {value}"
+	},
+	"ui.upgrade_happiness_decay_effect": {
+		"pl": "Spadek zadowolenia {value}",
+		"en": "Happiness decay {value}"
+	},
+	"ui.upgrade_worker_efficiency_effect": {
+		"pl": "Skuteczność pracowników {value}",
+		"en": "Worker efficiency {value}"
+	},
+	"ui.upgrade_collection_bonus_effect": {
+		"pl": "Bonus kolekcji {value}",
+		"en": "Collection bonus {value}"
+	},
+	"upgrades.unavailable": {
+		"pl": "Ulepszenia są chwilowo niedostępne.",
+		"en": "Upgrades are temporarily unavailable."
+	},
+	"upgrade.reptile_income.name": {
+		"pl": "Dochód gadów",
+		"en": "Reptile income"
+	},
+	"upgrade.reptile_income.desc": {
+		"pl": "Zwiększa dochód wszystkich przypisanych gadów.",
+		"en": "Increases income of all assigned reptiles."
+	},
+	"upgrade.offline_cap.name": {
+		"pl": "Dochód offline",
+		"en": "Offline income"
+	},
+	"upgrade.offline_cap.desc": {
+		"pl": "Wydłuża maksymalny czas naliczania dochodu offline.",
+		"en": "Increases the maximum offline income duration."
+	},
+	"upgrade.play_reward.name": {
+		"pl": "Nagroda za zabawę",
+		"en": "Play reward"
+	},
+	"upgrade.play_reward.desc": {
+		"pl": "Zwiększa nagrodę za ręczną zabawę z gadem.",
+		"en": "Increases rewards from manually playing with reptiles."
+	},
+	"upgrade.happiness_decay.name": {
+		"pl": "Zadowolenie",
+		"en": "Happiness"
+	},
+	"upgrade.happiness_decay.desc": {
+		"pl": "Spowalnia spadek zadowolenia gadów.",
+		"en": "Slows down reptile happiness decay."
+	},
+	"upgrade.worker_efficiency.name": {
+		"pl": "Skuteczność pracowników",
+		"en": "Worker efficiency"
+	},
+	"upgrade.worker_efficiency.desc": {
+		"pl": "Zwiększa efekty automatycznej pracy pracowników.",
+		"en": "Increases effects of automated workers."
+	},
+	"upgrade.collection_bonus.name": {
+		"pl": "Bonus kolekcji",
+		"en": "Collection bonus"
+	},
+	"upgrade.collection_bonus.desc": {
+		"pl": "Zwiększa dochód dzięki rozwojowi kolekcji.",
+		"en": "Increases income through collection progress."
+	},
+	"ui.confirm": {
+		"pl": "Potwierd\u017a",
+		"en": "Confirm"
+	},
+	"ui.yes": {
+		"pl": "Tak",
+		"en": "Yes"
+	},
+	"ui.no": {
+		"pl": "Nie",
+		"en": "No"
+	},
+	"ui.sell": {
+		"pl": "Sprzedaj",
+		"en": "Sell"
+	},
+	"ui.upgrade": {
+		"pl": "Ulepsz",
+		"en": "Upgrade"
+	},
+	"ui.edit": {
+		"pl": "Edytuj",
+		"en": "Edit"
+	},
+	"ui.remove": {
+		"pl": "Usu\u0144",
+		"en": "Remove"
+	},
+	"ui.back": {
+		"pl": "Wr\u00f3\u0107",
+		"en": "Back"
+	},
+	"ui.loading": {
+		"pl": "\u0141adowanie",
+		"en": "Loading"
+	},
+	"animals.owned": {
+		"pl": "Posiadane",
+		"en": "Owned"
+	},
+	"animals.gallery": {
+		"pl": "Galeria",
+		"en": "Gallery"
+	},
+	"animals.achievements": {
+		"pl": "Osi\u0105gni\u0119cia",
+		"en": "Achievements"
+	},
+	"animals.no_owned": {
+		"pl": "Nie masz jeszcze \u017cadnych gad\u00f3w.",
+		"en": "You do not own any reptiles yet."
+	},
+	"animals.available": {
+		"pl": "Dost\u0119pne gady",
+		"en": "Available reptiles"
+	},
+	"reptile.name": {
+		"pl": "Imi\u0119",
+		"en": "Name"
+	},
+	"reptile.species": {
+		"pl": "Gatunek",
+		"en": "Species"
+	},
+	"reptile.variant": {
+		"pl": "Wariant",
+		"en": "Variant"
+	},
+	"reptile.rarity": {
+		"pl": "Rzadko\u015b\u0107",
+		"en": "Rarity"
+	},
+	"reptile.sex": {
+		"pl": "P\u0142e\u0107",
+		"en": "Sex"
+	},
+	"reptile.status": {
+		"pl": "Status",
+		"en": "Status"
+	},
+	"reptile.in_habitat": {
+		"pl": "Przypisany",
+		"en": "Assigned"
+	},
+	"reptile.free": {
+		"pl": "Wolny",
+		"en": "Free"
+	},
+	"reptile.best_habitat": {
+		"pl": "Najlepszy habitat",
+		"en": "Best habitat"
+	},
+	"sex.unknown": {
+		"pl": "Nieznana",
+		"en": "Unknown"
+	},
+	"variant.default": {
+		"pl": "Zwyk\u0142y",
+		"en": "Default"
+	},
+	"variant.normal": {
+		"pl": "Zwyk\u0142y",
+		"en": "Normal"
+	},
+	"variant.white": {
+		"pl": "Bia\u0142y",
+		"en": "White"
+	},
+	"variant.red": {
+		"pl": "Czerwony",
+		"en": "Red"
+	},
+	"variant.yellow": {
+		"pl": "\u017b\u00f3\u0142ty",
+		"en": "Yellow"
+	},
+	"variant.gray": {
+		"pl": "Szary",
+		"en": "Gray"
+	},
+	"variant.pink": {
+		"pl": "R\u00f3\u017cowy",
+		"en": "Pink"
+	},
+	"variant.light": {
+		"pl": "Jasny",
+		"en": "Light"
+	},
+	"shop.title": {
+		"pl": "Sklep",
+		"en": "Shop"
+	},
+	"shop.buy_common": {
+		"pl": "Kup Zwyk\u0142y",
+		"en": "Buy Common"
+	},
+	"shop.buy_rare": {
+		"pl": "Kup Rzadki",
+		"en": "Buy Rare"
+	},
+	"shop.choose_sex": {
+		"pl": "Wybierz p\u0142e\u0107",
+		"en": "Choose sex"
+	},
+	"shop.income": {
+		"pl": "Doch\u00f3d",
+		"en": "Income"
+	},
+	"shop.cost": {
+		"pl": "Koszt",
+		"en": "Cost"
+	},
+	"habitat.title": {
+		"pl": "Habitat",
+		"en": "Habitat"
+	},
+	"habitat.choose_type": {
+		"pl": "Wybierz typ habitatu",
+		"en": "Choose habitat type"
+	},
+	"habitat.buy": {
+		"pl": "Kup habitat",
+		"en": "Buy habitat"
+	},
+	"management.reptile": {
+		"pl": "Zarz\u0105dzanie gadem",
+		"en": "Reptile management"
+	},
+	"management.full_later": {
+		"pl": "Pe\u0142ne zarz\u0105dzanie zostanie dodane p\u00f3\u017aniej",
+		"en": "Full management will be added later"
+	},
+	"management.base_income": {
+		"pl": "Doch\u00f3d bazowy",
+		"en": "Base income"
+	},
+	"management.effective_income": {
+		"pl": "Doch\u00f3d efektywny",
+		"en": "Effective income"
+	},
+	"management.happiness_multiplier": {
+		"pl": "Mno\u017cnik zadowolenia",
+		"en": "Happiness multiplier"
+	},
+	"management.variant_multiplier": {
+		"pl": "Mno\u017cnik wariantu",
+		"en": "Variant multiplier"
+	},
+	"management.habitat_multiplier": {
+		"pl": "Mno\u017cnik habitatu",
+		"en": "Habitat multiplier"
+	},
+	"management.habitat_level_bonus": {
+		"pl": "Bonus poziomu habitatu",
+		"en": "Habitat level bonus"
+	},
+	"care.happiness": {
+		"pl": "Zadowolenie",
+		"en": "Happiness"
+	},
+	"care.hunger": {
+		"pl": "Najedzenie",
+		"en": "Hunger"
+	},
+	"care.hydration": {
+		"pl": "Nawodnienie",
+		"en": "Hydration"
+	},
+	"care.cleanliness": {
+		"pl": "Czysto\u015b\u0107",
+		"en": "Cleanliness"
+	},
+	"care.play": {
+		"pl": "Zabawa",
+		"en": "Play"
+	},
+	"care.cooldown": {
+		"pl": "Czas odnowienia",
+		"en": "Cooldown"
+	},
+	"care.feed_success": {
+		"pl": "Nakarmiono",
+		"en": "Fed"
+	},
+	"care.water_success": {
+		"pl": "Dodano wod\u0119",
+		"en": "Water refilled"
+	},
+	"care.clean_success": {
+		"pl": "Wyczyszczono",
+		"en": "Cleaned"
+	},
+	"care.play_success": {
+		"pl": "Zabawa",
+		"en": "Played"
+	},
+	"care.place_reptile_to_care": {
+		"pl": "Umie\u015b\u0107 gada w habitacie, aby si\u0119 nim opiekowa\u0107.",
+		"en": "Place this reptile in a habitat to care for it."
+	},
+	"care.on_cooldown": {
+		"pl": "Akcja w trakcie odnowienia",
+		"en": "Action is on cooldown"
+	},
+	"care.needs_attention": {
+		"pl": "Wymaga uwagi",
+		"en": "Needs attention"
+	},
+	"offline.title": {
+		"pl": "Doch\u00f3d offline",
+		"en": "Offline income"
+	},
+	"offline.message": {
+		"pl": "Podczas Twojej nieobecno\u015bci gady zarobi\u0142y:",
+		"en": "While you were away, your reptiles earned:"
+	},
+	"offline.time": {
+		"pl": "Czas offline",
+		"en": "Offline time"
+	},
+	"offline.reward": {
+		"pl": "Nagroda",
+		"en": "Reward"
+	},
+	"offline.claim": {
+		"pl": "Odbierz",
+		"en": "Claim"
+	},
+	"offline.cap_applied": {
+		"pl": "Zastosowano limit offline",
+		"en": "Offline cap applied"
+	},
+	"workers.title": {
+		"pl": "Pracownicy",
+		"en": "Workers"
+	},
+	"workers.level": {
+		"pl": "Poziom",
+		"en": "Level"
+	},
+	"workers.buy": {
+		"pl": "Kup",
+		"en": "Buy"
+	},
+	"workers.upgrade": {
+		"pl": "Ulepsz",
+		"en": "Upgrade"
+	},
+	"workers.max": {
+		"pl": "Maksymalny poziom",
+		"en": "Max level"
+	},
+	"workers.cost": {
+		"pl": "Koszt",
+		"en": "Cost"
+	},
+	"workers.active": {
+		"pl": "Aktywny",
+		"en": "Active"
+	},
+	"workers.not_owned": {
+		"pl": "Nie zatrudniono",
+		"en": "Not hired"
+	},
+	"upgrades.title": {
+		"pl": "Ulepszenia",
+		"en": "Upgrades"
+	},
+	"upgrades.buy": {
+		"pl": "Kup",
+		"en": "Buy"
+	},
+	"upgrades.upgrade": {
+		"pl": "Ulepsz",
+		"en": "Upgrade"
+	},
+	"upgrades.level": {
+		"pl": "Poziom",
+		"en": "Level"
+	},
+	"upgrades.cost": {
+		"pl": "Koszt",
+		"en": "Cost"
+	},
+	"upgrades.max": {
+		"pl": "Maksymalny poziom",
+		"en": "Max level"
+	},
+	"upgrades.current_effect": {
+		"pl": "Obecny efekt",
+		"en": "Current effect"
+	},
+	"upgrades.next_effect": {
+		"pl": "Nast\u0119pny poziom",
+		"en": "Next level"
+	},
+	"progression.level": {
+		"pl": "Poziom",
+		"en": "Level"
+	},
+	"progression.xp": {
+		"pl": "XP",
+		"en": "XP"
+	},
+	"progression.level_up_title": {
+		"pl": "Awans!",
+		"en": "Level up!"
+	},
+	"progression.level_up_message": {
+		"pl": "Osi\u0105gni\u0119to poziom {level}",
+		"en": "Reached level {level}"
+	},
+	"progression.biome_progress": {
+		"pl": "Progres biomu",
+		"en": "Biome progress"
+	},
+	"progression.next_biome": {
+		"pl": "Nast\u0119pny biom",
+		"en": "Next biome"
+	},
+	"progression.biome_2_requirements": {
+		"pl": "Wymagania Biom 2",
+		"en": "Biom 2 requirements"
+	},
+	"progression.requirement_level": {
+		"pl": "Poziom",
+		"en": "Level"
+	},
+	"progression.requirement_purchased_habitats": {
+		"pl": "Habitaty",
+		"en": "Habitats"
+	},
+	"progression.requirement_owned_reptiles": {
+		"pl": "Posiadane gady",
+		"en": "Owned reptiles"
+	},
+	"progression.requirement_assigned_reptiles": {
+		"pl": "Gady w habitatach",
+		"en": "Reptiles in habitats"
+	},
+	"progression.requirement_discovered_variants": {
+		"pl": "Warianty",
+		"en": "Variants"
+	},
+	"progression.requirement_completed_quests": {
+		"pl": "Zadania",
+		"en": "Quests"
+	},
+	"progression.requirement_biome_points": {
+		"pl": "Progres biomu",
+		"en": "Biome progress"
+	},
+	"progression.biome_2_ready_title": {
+		"pl": "Biom 2 gotowy!",
+		"en": "Biom 2 ready!"
+	},
+	"progression.biome_2_ready_message": {
+		"pl": "Spe\u0142niono wymagania odblokowania kolejnego biomu.",
+		"en": "Requirements for the next biome are complete."
+	},
+	"progression.locked": {
+		"pl": "Zablokowane",
+		"en": "Locked"
+	},
+	"progression.ready": {
+		"pl": "Gotowe",
+		"en": "Ready"
+	},
+	"progression.completed": {
+		"pl": "Uko\u0144czono",
+		"en": "Completed"
+	},
+	"settings.title": {
+		"pl": "Ustawienia",
+		"en": "Settings"
+	},
+	"settings.language": {
+		"pl": "J\u0119zyk",
+		"en": "Language"
+	},
+	"settings.polish": {
+		"pl": "Polski",
+		"en": "Polish"
+	},
+	"settings.english": {
+		"pl": "Angielski",
+		"en": "English"
+	},
+	"settings.music": {
+		"pl": "Muzyka",
+		"en": "Music"
+	},
+	"settings.sfx": {
+		"pl": "Efekty d\u017awi\u0119kowe",
+		"en": "Sound effects"
+	},
+	"settings.vibration": {
+		"pl": "Wibracje",
+		"en": "Vibration"
+	},
+	"settings.reset_game": {
+		"pl": "Reset gry",
+		"en": "Reset game"
+	},
+	"save.reset_title": {
+		"pl": "Reset gry",
+		"en": "Reset game"
+	},
+	"save.reset_message": {
+		"pl": "Czy na pewno chcesz zresetowa\u0107 zapis gry? Tej operacji nie mo\u017cna cofn\u0105\u0107.",
+		"en": "Are you sure you want to reset your save? This action cannot be undone."
+	},
+	"save.reset_confirm": {
+		"pl": "Resetuj",
+		"en": "Reset"
+	},
+	"save.reset_cancel": {
+		"pl": "Anuluj",
+		"en": "Cancel"
+	},
+	"save.corrupted_title": {
+		"pl": "Problem z zapisem",
+		"en": "Save problem"
+	},
+	"save.corrupted_message": {
+		"pl": "Zapis gry by\u0142 uszkodzony. Utworzono nowy zapis.",
+		"en": "Your save file was corrupted. A new save was created."
+	},
+	"save.migrated": {
+		"pl": "Zapis gry zosta\u0142 zaktualizowany.",
+		"en": "Save file was updated."
+	},
+	"save.default_animal_name": {
+		"pl": "Gad",
+		"en": "Reptile"
 	}
 }
