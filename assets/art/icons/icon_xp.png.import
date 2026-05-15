@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d2kntx14ygmcv"
-path="res://.godot/imported/green_meadow_background.png.png-763b5be71ed99bacedc6c8834ece26f6.ctex"
+uid="uid://bngfythorxqhw"
+path="res://.godot/imported/icon_xp.png-d3706801647f756c4a8deece399e9912.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/biomes/green_meadow_background.png.png"
-dest_files=["res://.godot/imported/green_meadow_background.png.png-763b5be71ed99bacedc6c8834ece26f6.ctex"]
+source_file="res://assets/art/icons/icon_xp.png"
+dest_files=["res://.godot/imported/icon_xp.png-d3706801647f756c4a8deece399e9912.ctex"]
 
 [params]
 

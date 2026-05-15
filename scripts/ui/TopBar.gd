@@ -7,6 +7,8 @@ const AssetPaths := preload("res://scripts/helpers/AssetPaths.gd")
 const TOP_BAR_ART_PATH := "res://assets/art/ui/top_bar.png"
 const SETTINGS_ICON_PATH := "res://assets/art/ui/icons/menu/settings.png"
 const TOP_BAR_HEIGHT := 124.0
+const SETTINGS_BUTTON_SIZE_RATIO := Vector2(0.145, 0.45)
+const SETTINGS_BUTTON_CENTER_RATIO := Vector2(1.0 - 0.05 - SETTINGS_BUTTON_SIZE_RATIO.x * 0.5, 0.22)
 
 var cash_label: Label
 var xp_label: Label
@@ -48,11 +50,11 @@ func _build_layout() -> void:
 
 	water_label = _make_value_label(17, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(water_label)
-	_position_relative(water_label, Vector2(0.795, 0.70), Vector2(0.120, 0.34))
+	_position_relative(water_label, Vector2(0.799, 0.70), Vector2(0.120, 0.34))
 	
 	level_label = _make_value_label(17, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(level_label)
-	_position_relative(level_label, Vector2(0.935, 0.75), Vector2(0.075, 0.34))
+	_position_relative(level_label, Vector2(0.939, 0.75), Vector2(0.075, 0.34))
 
 	var settings_button := TextureButton.new()
 	settings_button.name = "SettingsButton"
@@ -66,7 +68,7 @@ func _build_layout() -> void:
 	settings_button.tooltip_text = LocalizationSystem.tr_key("settings.title")
 	settings_button.pressed.connect(func() -> void: settings_pressed.emit())
 	add_child(settings_button)
-	_position_relative(settings_button, Vector2(0.476, 0.22), Vector2(0.145, 0.45))
+	_position_relative(settings_button, SETTINGS_BUTTON_CENTER_RATIO, SETTINGS_BUTTON_SIZE_RATIO)
 	if settings_button.texture_normal == null:
 		var fallback := Label.new()
 		fallback.text = "S"

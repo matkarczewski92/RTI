@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dslgiyevtjwld"
-path="res://.godot/imported/panel_workers.png.png-e259ddc81122c82172738b6607365cbc.ctex"
+uid="uid://dec3ij52eciye"
+path="res://.godot/imported/panel_workers.png-095a94fb45cb0a7b38c2e42c6427bd24.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/ui/panel_workers.png.png"
-dest_files=["res://.godot/imported/panel_workers.png.png-e259ddc81122c82172738b6607365cbc.ctex"]
+source_file="res://assets/art/ui/panel_workers.png"
+dest_files=["res://.godot/imported/panel_workers.png-095a94fb45cb0a7b38c2e42c6427bd24.ctex"]
 
 [params]
 

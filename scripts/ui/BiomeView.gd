@@ -47,6 +47,7 @@ const STATE_PURCHASED_EMPTY := "purchased_empty"
 const STATE_OCCUPIED := "occupied"
 const TOP_BAR_HEIGHT := 84
 const BOTTOM_NAV_HEIGHT := 172
+const UI_MODAL_CANVAS_LAYER := 100
 const POPUP_TEXT_PRIMARY := Color(0.14, 0.10, 0.07, 1.0)
 const POPUP_TEXT_SECONDARY := Color(0.28, 0.22, 0.15, 1.0)
 const POPUP_TEXT_ACCENT := Color(0.35, 0.24, 0.08, 1.0)
@@ -85,6 +86,7 @@ var current_management_instance_id: String = ""
 var current_management_feedback_key: String = ""
 var care_update_timer: Timer
 var offline_income_popup: CanvasLayer
+var ui_modal_layer: CanvasLayer
 
 
 func _ready() -> void:
@@ -134,6 +136,7 @@ func _rebuild_layout() -> void:
 	current_management_feedback_key = ""
 	care_update_timer = null
 	offline_income_popup = null
+	ui_modal_layer = null
 	_build_layout()
 	_setup_care_update_timer()
 
@@ -2652,8 +2655,8 @@ func _on_achievement_claim_pressed(achievement_id: String) -> void:
 		_show_message_popup(str(result.get("message_key", "achievements.in_progress")))
 		return
 
-	_show_reward_claim_feedback_popup(_format_achievement_claim_feedback(result), "achievements.reward_claimed_title")
 	_show_animals_view("achievements")
+	_show_reward_claim_feedback_popup(_format_achievement_claim_feedback(result), "achievements.reward_claimed_title")
 
 
 func _format_achievement_reward(state: Dictionary) -> String:
@@ -2705,8 +2708,8 @@ func _on_quest_claim_pressed(quest_id: String) -> void:
 		_show_message_popup(str(result.get("message_key", "quests.in_progress")))
 		return
 
-	_show_reward_claim_feedback_popup(_format_quest_claim_feedback(result), "quests.reward_claimed_title")
 	_show_quests_view()
+	_show_reward_claim_feedback_popup(_format_quest_claim_feedback(result), "quests.reward_claimed_title")
 
 
 func _format_quest_claim_feedback(result: Dictionary) -> String:
@@ -2904,6 +2907,7 @@ func _try_purchase_habitat(habitat_id: String, slot_index: int, habitat_type: St
 		return
 
 	var now: int = Time.get_unix_time_from_system()
+	var build_duration: int = ReptileSystem.get_habitat_build_duration_seconds(BIOME_ID)
 	var habitats: Dictionary = _get_habitats_state()
 	habitats[habitat_id] = {
 		"habitat_id": habitat_id,
@@ -2914,7 +2918,7 @@ func _try_purchase_habitat(habitat_id: String, slot_index: int, habitat_type: St
 		"habitat_level": 1,
 		"is_building": true,
 		"build_started_at": now,
-		"build_finish_at": now + ReptileSystem.get_habitat_build_duration_seconds(),
+		"build_finish_at": now + build_duration,
 		"is_upgrading": false,
 		"upgrade_target_level": 0,
 		"upgrade_started_at": 0,
@@ -2933,6 +2937,46 @@ func _try_purchase_habitat(habitat_id: String, slot_index: int, habitat_type: St
 
 	if action_popup != null:
 		action_popup.hide()
+
+
+func _ensure_ui_modal_layer() -> CanvasLayer:
+	if ui_modal_layer != null and is_instance_valid(ui_modal_layer):
+		return ui_modal_layer
+
+	ui_modal_layer = CanvasLayer.new()
+	ui_modal_layer.name = "UiModalLayer"
+	ui_modal_layer.layer = UI_MODAL_CANVAS_LAYER
+	add_child(ui_modal_layer)
+	return ui_modal_layer
+
+
+func _prepare_fullscreen_modal_root(modal: Control) -> void:
+	modal.set_anchors_preset(Control.PRESET_FULL_RECT)
+	modal.anchor_right = 1.0
+	modal.anchor_bottom = 1.0
+	modal.offset_left = 0.0
+	modal.offset_top = 0.0
+	modal.offset_right = 0.0
+	modal.offset_bottom = 0.0
+	modal.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	modal.grow_vertical = Control.GROW_DIRECTION_BOTH
+	modal.mouse_filter = Control.MOUSE_FILTER_STOP
+
+
+func _add_to_ui_modal_layer(modal: Control) -> void:
+	_ensure_ui_modal_layer()
+	_prepare_fullscreen_modal_root(modal)
+	ui_modal_layer.add_child(modal)
+	modal.move_to_front()
+
+
+func _make_modal_dim_overlay(alpha: float = 0.34) -> ColorRect:
+	var overlay: ColorRect = ColorRect.new()
+	overlay.name = "DimOverlay"
+	overlay.color = Color(0.04, 0.05, 0.04, alpha)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	return overlay
 
 
 func _show_message_popup(message_key: String) -> void:
@@ -2956,15 +3000,9 @@ func _show_feedback_modal(title_text: String, message_text: String, ok_key: Stri
 
 	feedback_modal = Control.new()
 	feedback_modal.name = "FeedbackModal"
-	feedback_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
-	feedback_modal.z_index = 100
-	add_child(feedback_modal)
-	feedback_modal.move_to_front()
+	_add_to_ui_modal_layer(feedback_modal)
 
-	var overlay: ColorRect = ColorRect.new()
-	overlay.name = "DimOverlay"
-	overlay.color = Color(0.04, 0.05, 0.04, 0.34)
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var overlay: ColorRect = _make_modal_dim_overlay(0.34)
 	feedback_modal.add_child(overlay)
 
 	var center: CenterContainer = CenterContainer.new()
@@ -2978,6 +3016,7 @@ func _show_feedback_modal(title_text: String, message_text: String, ok_key: Stri
 	var panel: PanelContainer = PanelContainer.new()
 	var panel_height: float = 230.0 if reward_style else 210.0
 	panel.custom_minimum_size = Vector2(410, panel_height)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
 	center.add_child(panel)
 
@@ -3017,13 +3056,9 @@ func _show_level_up_popup(levels: Array, reward_amount: float) -> void:
 	_close_level_up_modal()
 	level_up_modal = Control.new()
 	level_up_modal.name = "LevelUpModal"
-	level_up_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
-	level_up_modal.z_index = 95
-	add_child(level_up_modal)
+	_add_to_ui_modal_layer(level_up_modal)
 
-	var overlay: ColorRect = ColorRect.new()
-	overlay.color = Color(0.04, 0.05, 0.04, 0.46)
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var overlay: ColorRect = _make_modal_dim_overlay(0.46)
 	level_up_modal.add_child(overlay)
 
 	var center: CenterContainer = CenterContainer.new()
@@ -3036,6 +3071,7 @@ func _show_level_up_popup(levels: Array, reward_amount: float) -> void:
 
 	var panel: PanelContainer = PanelContainer.new()
 	panel.custom_minimum_size = Vector2(430, 290)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
 	center.add_child(panel)
 
@@ -3079,14 +3115,9 @@ func _show_styled_confirmation_popup(title_key: String, message_key: String, con
 
 	confirmation_modal = Control.new()
 	confirmation_modal.name = "ConfirmationModal"
-	confirmation_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
-	confirmation_modal.z_index = 90
-	add_child(confirmation_modal)
+	_add_to_ui_modal_layer(confirmation_modal)
 
-	var overlay: ColorRect = ColorRect.new()
-	overlay.name = "DimOverlay"
-	overlay.color = Color(0.04, 0.05, 0.04, 0.46)
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var overlay: ColorRect = _make_modal_dim_overlay(0.46)
 	confirmation_modal.add_child(overlay)
 
 	var center: CenterContainer = CenterContainer.new()
@@ -3099,6 +3130,7 @@ func _show_styled_confirmation_popup(title_key: String, message_key: String, con
 
 	var panel: PanelContainer = PanelContainer.new()
 	panel.custom_minimum_size = Vector2(430, 270)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
 	center.add_child(panel)
 
@@ -3210,13 +3242,9 @@ func _show_variant_discovery_popup(variant_id: String, instance_id: String = "")
 
 	variant_discovery_modal = Control.new()
 	variant_discovery_modal.name = "VariantDiscoveryModal"
-	variant_discovery_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(variant_discovery_modal)
+	_add_to_ui_modal_layer(variant_discovery_modal)
 
-	var overlay: ColorRect = ColorRect.new()
-	overlay.name = "DimOverlay"
-	overlay.color = Color(0.04, 0.05, 0.04, 0.66)
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var overlay: ColorRect = _make_modal_dim_overlay(0.66)
 	variant_discovery_modal.add_child(overlay)
 
 	var center: CenterContainer = CenterContainer.new()
@@ -3229,6 +3257,7 @@ func _show_variant_discovery_popup(variant_id: String, instance_id: String = "")
 
 	var panel: PanelContainer = PanelContainer.new()
 	panel.custom_minimum_size = Vector2(430, 580)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
 	center.add_child(panel)
 
@@ -3321,18 +3350,10 @@ func _show_reptile_name_popup(instance_id: String, edit_mode: bool) -> void:
 
 	naming_modal = Control.new()
 	naming_modal.name = "ReptileNamingModal"
-	naming_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
-	naming_modal.mouse_filter = Control.MOUSE_FILTER_STOP
-	naming_modal.z_index = 500
-	add_child(naming_modal)
-	naming_modal.move_to_front()
+	_add_to_ui_modal_layer(naming_modal)
 	_set_management_modal_input_blocked(true)
 
-	var overlay: ColorRect = ColorRect.new()
-	overlay.name = "DimOverlay"
-	overlay.color = Color(0.04, 0.05, 0.04, 0.66)
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	var overlay: ColorRect = _make_modal_dim_overlay(0.66)
 	naming_modal.add_child(overlay)
 
 	var center: CenterContainer = CenterContainer.new()
@@ -3501,6 +3522,8 @@ func _make_popup_button(key: String, callback: Callable) -> Button:
 	var button := Button.new()
 	button.text = LocalizationSystem.tr_key(key)
 	button.custom_minimum_size = Vector2(0, 44)
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.focus_mode = Control.FOCUS_ALL
 	_apply_button_text_color(button, POPUP_TEXT_PRIMARY)
 	button.pressed.connect(callback)
 	return button
@@ -3935,6 +3958,8 @@ func _format_cooldown(seconds: int) -> String:
 
 func _format_duration_compact(seconds: int) -> String:
 	var safe_seconds: int = max(0, seconds)
+	if safe_seconds < 60:
+		return str(safe_seconds) + "s"
 	var hours: int = int(safe_seconds / 3600)
 	var minutes: int = int((safe_seconds % 3600) / 60)
 	if hours > 0:

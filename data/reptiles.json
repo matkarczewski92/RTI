@@ -6,7 +6,7 @@
 		"biome_id": "green_meadow",
 		"preferred_habitat_type": "sand",
 		"base_cost": 100,
-		"base_income_per_minute": 12,
+		"base_income_per_minute": 6,
 		"default_variant_id": "leopard_gecko_common",
 		"portrait_path": "res://assets/art/reptiles/portraits/leopard_gecko_portrait_common.png",
 		"icon_path": "res://assets/art/reptiles/icons/leopard_gecko_icon_common.png"
@@ -17,7 +17,7 @@
 		"biome_id": "green_meadow",
 		"preferred_habitat_type": "sand",
 		"base_cost": 150,
-		"base_income_per_minute": 18,
+		"base_income_per_minute": 9,
 		"default_variant_id": "bearded_dragon_common",
 		"portrait_path": "res://assets/art/reptiles/portraits/bearded_dragon_portrait_common.png",
 		"icon_path": "res://assets/art/reptiles/icons/bearded_dragon_icon_common.png"
@@ -28,7 +28,7 @@
 		"biome_id": "green_meadow",
 		"preferred_habitat_type": "grass",
 		"base_cost": 250,
-		"base_income_per_minute": 24,
+		"base_income_per_minute": 12,
 		"default_variant_id": "corn_snake_common",
 		"portrait_path": "res://assets/art/reptiles/portraits/corn_snake_portrait_common.png",
 		"icon_path": "res://assets/art/reptiles/icons/corn_snake_icon_common.png"
@@ -39,7 +39,7 @@
 		"biome_id": "green_meadow",
 		"preferred_habitat_type": "sand",
 		"base_cost": 350,
-		"base_income_per_minute": 30,
+		"base_income_per_minute": 15,
 		"default_variant_id": "steppe_tortoise_common",
 		"portrait_path": "res://assets/art/reptiles/portraits/steppe_tortoise_portrait_common.png",
 		"icon_path": "res://assets/art/reptiles/icons/steppe_tortoise_icon_common.png"
@@ -50,7 +50,7 @@
 		"biome_id": "green_meadow",
 		"preferred_habitat_type": "stone",
 		"base_cost": 600,
-		"base_income_per_minute": 45,
+		"base_income_per_minute": 22.5,
 		"default_variant_id": "small_monitor_common",
 		"portrait_path": "res://assets/art/reptiles/portraits/small_monitor_portrait_common.png",
 		"icon_path": "res://assets/art/reptiles/icons/small_monitor_icon_common.png"

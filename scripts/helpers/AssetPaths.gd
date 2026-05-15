@@ -3,59 +3,63 @@ extends RefCounted
 static var _resolved_cache: Dictionary = {}
 static var _warning_cache: Dictionary = {}
 
+
+static func normalize_texture_path(path: String) -> String:
+	var normalized: String = path.strip_edges()
+	if normalized.is_empty():
+		return ""
+
+	if normalized.begins_with("res://") or normalized.begins_with("user://"):
+		normalized = normalized
+	else:
+		normalized = "res://" + normalized.trim_prefix("/")
+
+	if normalized.ends_with(".png.png"):
+		push_warning("Invalid texture path uses duplicated extension (.png.png): " + normalized)
+		normalized = normalized.substr(0, normalized.length() - 4)
+
+	return normalized
+
+
+static func _path_has_source_file(resource_path: String) -> bool:
+	if resource_path.is_empty():
+		return false
+	return FileAccess.file_exists(ProjectSettings.globalize_path(resource_path))
+
+
+static func _can_load_texture(resource_path: String) -> bool:
+	if resource_path.is_empty():
+		return false
+	if ResourceLoader.exists(resource_path):
+		return true
+	if not _path_has_source_file(resource_path):
+		return false
+	var resource: Resource = ResourceLoader.load(resource_path)
+	return resource is Texture2D
+
+
 static func find_texture_path(expected_path: String) -> String:
-	if _resolved_cache.has(expected_path):
-		return _resolved_cache[expected_path]
-	if _warning_cache.has(expected_path):
+	var normalized_path: String = normalize_texture_path(expected_path)
+	if normalized_path.is_empty():
 		return ""
 
-	var search_path: String = expected_path
-	if search_path.get_extension() == "":
-		search_path += ".png"
-
-	if ResourceLoader.exists(search_path):
-		_resolved_cache[expected_path] = search_path
-		return search_path
-
-	var directory_path: String = search_path.get_base_dir()
-	var expected_file: String = search_path.get_file()
-	var expected_stem: String = expected_file.get_basename()
-	if expected_stem.ends_with(".png"):
-		expected_stem = expected_stem.get_basename()
-
-	var directory: DirAccess = DirAccess.open(directory_path)
-	if directory == null:
-		if not _warning_cache.has(expected_path):
-			push_warning("Missing asset directory: " + directory_path)
-			_warning_cache[expected_path] = true
+	if _resolved_cache.has(normalized_path):
+		return _resolved_cache[normalized_path]
+	if _warning_cache.has(normalized_path):
 		return ""
 
-	directory.list_dir_begin()
-	var file_name: String = directory.get_next()
-	var fallback_path: String = ""
-	while not file_name.is_empty():
-		if not directory.current_is_dir():
-			var lower_name: String = file_name.to_lower()
-			var target_stem: String = expected_stem.to_lower()
-			if lower_name == target_stem + ".png" or lower_name == target_stem + ".png.png":
-				fallback_path = directory_path.path_join(file_name)
-				break
-			elif lower_name.ends_with(".png") and lower_name.begins_with(target_stem):
-				fallback_path = directory_path.path_join(file_name)
-		file_name = directory.get_next()
+	var candidate_paths: Array[String] = [normalized_path]
+	if normalized_path.get_extension().is_empty():
+		candidate_paths.append(normalized_path + ".png")
 
-	directory.list_dir_end()
+	for candidate_path in candidate_paths:
+		if _can_load_texture(candidate_path):
+			_resolved_cache[normalized_path] = candidate_path
+			return candidate_path
 
-	if not fallback_path.is_empty():
-		if not _warning_cache.has(expected_path):
-			push_warning("Asset not found at " + expected_path + ". Using fallback: " + fallback_path)
-			_warning_cache[expected_path] = true
-		_resolved_cache[expected_path] = fallback_path
-		return fallback_path
-
-	if not _warning_cache.has(expected_path):
-		push_warning("Missing asset: " + expected_path + ". Keeping placeholder UI.")
-		_warning_cache[expected_path] = true
+	if not _warning_cache.has(normalized_path):
+		push_warning("Missing texture asset at exact path: " + normalized_path)
+		_warning_cache[normalized_path] = true
 	return ""
 
 
@@ -67,4 +71,11 @@ static func load_texture(expected_path: String) -> Texture2D:
 	if resolved_path.is_empty():
 		return null
 
-	return ResourceLoader.load(resolved_path) as Texture2D
+	var resource: Resource = ResourceLoader.load(resolved_path)
+	if resource is Texture2D:
+		return resource as Texture2D
+
+	if not _warning_cache.has(expected_path):
+		push_warning("Resource is not a Texture2D: " + resolved_path)
+		_warning_cache[expected_path] = true
+	return null

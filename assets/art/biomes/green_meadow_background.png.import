@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bojr3ccbc3dqm"
-path="res://.godot/imported/icon_repticash.png.png-48b1cbdc9bdd7d880b842ef7e26ddc07.ctex"
+uid="uid://bm04unoqqlte7"
+path="res://.godot/imported/green_meadow_background.png-1e76c106b440c61dfd04182cb6b93e4a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/icons/icon_repticash.png.png"
-dest_files=["res://.godot/imported/icon_repticash.png.png-48b1cbdc9bdd7d880b842ef7e26ddc07.ctex"]
+source_file="res://assets/art/biomes/green_meadow_background.png"
+dest_files=["res://.godot/imported/green_meadow_background.png-1e76c106b440c61dfd04182cb6b93e4a.ctex"]
 
 [params]
 

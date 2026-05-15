@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://qlnwkimnto67"
-path="res://.godot/imported/panel_quests.png.png-9677124521dd6dc401967b22595bff49.ctex"
+uid="uid://d14eeio1x03cw"
+path="res://.godot/imported/icon_repticash.png-81253f45b650830dfe05b53c8a9e7a10.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/ui/panel_quests.png.png"
-dest_files=["res://.godot/imported/panel_quests.png.png-9677124521dd6dc401967b22595bff49.ctex"]
+source_file="res://assets/art/icons/icon_repticash.png"
+dest_files=["res://.godot/imported/icon_repticash.png-81253f45b650830dfe05b53c8a9e7a10.ctex"]
 
 [params]
 

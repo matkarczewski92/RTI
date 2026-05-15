@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://k380bb0ify4u"
-path="res://.godot/imported/habitat_slot_empty.png.png-1c1e8370c730a723755afe2ea4fa0e0d.ctex"
+uid="uid://c2i7fxu72eubk"
+path="res://.godot/imported/icon_plus.png-bc72dedd8fe553248f25f2141b96dfcf.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/habitats/habitat_slot_empty.png.png"
-dest_files=["res://.godot/imported/habitat_slot_empty.png.png-1c1e8370c730a723755afe2ea4fa0e0d.ctex"]
+source_file="res://assets/art/icons/icon_plus.png"
+dest_files=["res://.godot/imported/icon_plus.png-bc72dedd8fe553248f25f2141b96dfcf.ctex"]
 
 [params]
 

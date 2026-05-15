@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dl1mlybpns3xs"
-path="res://.godot/imported/habitat_slot_purchased_empty.png.png-65c946c59192457d0ad4c848f416865b.ctex"
+uid="uid://dnsiah5c81igk"
+path="res://.godot/imported/panel_quests.png-54207d3e06013e0643719e882adfe59a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/habitats/habitat_slot_purchased_empty.png.png"
-dest_files=["res://.godot/imported/habitat_slot_purchased_empty.png.png-65c946c59192457d0ad4c848f416865b.ctex"]
+source_file="res://assets/art/ui/panel_quests.png"
+dest_files=["res://.godot/imported/panel_quests.png-54207d3e06013e0643719e882adfe59a.ctex"]
 
 [params]
 

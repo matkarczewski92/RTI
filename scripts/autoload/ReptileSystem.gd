@@ -23,8 +23,8 @@ const PLAY_XP_REWARD := 0.1
 const HABITAT_TYPES: Array[String] = ["grass", "sand", "stone", "jungle"]
 const HABITAT_MAX_LEVEL := 3
 const HABITAT_UPGRADE_COST := 10000
-const HABITAT_BUILD_DURATION_SECONDS := 1800
-const HABITAT_UPGRADE_LEVEL_2_DURATION_SECONDS := 7200
+const HABITAT_BUILD_DURATIONS_SECONDS: Array[int] = [10, 60, 600, 7200, 43200, 86400]
+const HABITAT_UPGRADE_LEVEL_2_DURATION_SECONDS := 43200
 const HABITAT_UPGRADE_LEVEL_3_DURATION_SECONDS := 86400
 
 const RARITY_ICON_PATHS: Dictionary = {
@@ -319,8 +319,29 @@ func get_habitat_upgrade_cost() -> int:
 	return HABITAT_UPGRADE_COST
 
 
-func get_habitat_build_duration_seconds() -> int:
-	return HABITAT_BUILD_DURATION_SECONDS
+func get_purchased_habitats_count_in_biome(biome_id: String) -> int:
+	var count := 0
+	var habitats_value: Variant = GameState.get_value("habitats", {})
+	if typeof(habitats_value) != TYPE_DICTIONARY:
+		return count
+
+	for habitat_value in (habitats_value as Dictionary).values():
+		if typeof(habitat_value) != TYPE_DICTIONARY:
+			continue
+
+		var habitat: Dictionary = habitat_value as Dictionary
+		if str(habitat.get("biome_id", "")) != biome_id:
+			continue
+		if bool(habitat.get("purchased", false)):
+			count += 1
+
+	return count
+
+
+func get_habitat_build_duration_seconds(biome_id: String) -> int:
+	var already_purchased: int = get_purchased_habitats_count_in_biome(biome_id)
+	var duration_index: int = int(clamp(already_purchased, 0, HABITAT_BUILD_DURATIONS_SECONDS.size() - 1))
+	return HABITAT_BUILD_DURATIONS_SECONDS[duration_index]
 
 
 func get_habitat_upgrade_duration_seconds(current_level: Variant = 1) -> int:
