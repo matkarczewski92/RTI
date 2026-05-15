@@ -1,4 +1,11 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
-/docs
+/docs/*
+!/docs/ANDROID_EXPORT.md
+!/docs/GOOGLE_PLAY.md
+!/docs/QA_CHECKLIST.md
+!/docs/PRIVACY_POLICY_DRAFT.md
+!/docs/CHANGELOG.md
+!/docs/RELEASE_CHECKLIST.md
+!/docs/RELEASE_NOTES_ANDROID_DEBUG.md

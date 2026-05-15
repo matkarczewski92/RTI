@@ -3,7 +3,10 @@ extends Node
 const REPTILES_PATH: String = "res://data/reptiles.json"
 const VARIANTS_PATH: String = "res://data/reptile_variants.json"
 const VALID_RARITIES: Array[String] = ["common", "rare", "exceptional", "ultra_rare"]
-const NEED_DECAY_INTERVAL_SECONDS := 600.0
+const HAPPINESS_DECAY_INTERVAL_SECONDS := 300.0
+const SATIETY_DECAY_INTERVAL_SECONDS := 420.0
+const HYDRATION_DECAY_INTERVAL_SECONDS := 420.0
+const CLEANLINESS_DECAY_INTERVAL_SECONDS := 600.0
 const NEED_DECAY_AMOUNT := 1.0
 const FEED_COOLDOWN_SECONDS := 20
 const WATER_COOLDOWN_SECONDS := 20
@@ -1485,12 +1488,14 @@ func _update_owned_reptile_needs(now: int) -> bool:
 				changed = true
 			continue
 
-		var decay: float = float(elapsed) / NEED_DECAY_INTERVAL_SECONDS * NEED_DECAY_AMOUNT
-		if decay > 0.0:
-			var happiness_decay: float = decay * _get_happiness_decay_multiplier()
-			instance["hunger"] = _clamp_percent(float(instance.get("hunger", 100)) - decay)
-			instance["hydration"] = _clamp_percent(float(instance.get("hydration", 100)) - decay)
-			instance["cleanliness"] = _clamp_percent(float(instance.get("cleanliness", 100)) - decay)
+		var satiety_decay: float = _calculate_need_decay(elapsed, SATIETY_DECAY_INTERVAL_SECONDS)
+		var hydration_decay: float = _calculate_need_decay(elapsed, HYDRATION_DECAY_INTERVAL_SECONDS)
+		var cleanliness_decay: float = _calculate_need_decay(elapsed, CLEANLINESS_DECAY_INTERVAL_SECONDS)
+		var happiness_decay: float = _calculate_need_decay(elapsed, HAPPINESS_DECAY_INTERVAL_SECONDS) * _get_happiness_decay_multiplier()
+		if satiety_decay > 0.0 or hydration_decay > 0.0 or cleanliness_decay > 0.0 or happiness_decay > 0.0:
+			instance["hunger"] = _clamp_percent(float(instance.get("hunger", 100)) - satiety_decay)
+			instance["hydration"] = _clamp_percent(float(instance.get("hydration", 100)) - hydration_decay)
+			instance["cleanliness"] = _clamp_percent(float(instance.get("cleanliness", 100)) - cleanliness_decay)
 			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) - happiness_decay)
 			instance["last_needs_update_timestamp"] = now
 			instances[instance_id] = instance
@@ -1500,6 +1505,10 @@ func _update_owned_reptile_needs(now: int) -> bool:
 		GameState.set_value("owned_reptile_instances", instances)
 
 	return changed
+
+
+func _calculate_need_decay(elapsed_seconds: int, interval_seconds: float) -> float:
+	return float(elapsed_seconds) / max(1.0, interval_seconds) * NEED_DECAY_AMOUNT
 
 
 func _timestamp_from_value(value: Variant) -> int:

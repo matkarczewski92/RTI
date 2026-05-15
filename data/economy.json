@@ -7,6 +7,6 @@
 		"xp"
 	],
 	"habitat_purchase_prices": {
-		"green_meadow": [0, 1000, 5000, 10000, 25000, 100000]
+		"green_meadow": [0, 500, 400, 320, 256, 205]
 	}
 }
