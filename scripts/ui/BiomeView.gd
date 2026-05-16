@@ -48,6 +48,9 @@ const STATE_OCCUPIED := "occupied"
 const TOP_BAR_HEIGHT := 84
 const BOTTOM_NAV_HEIGHT := 172
 const UI_MODAL_CANVAS_LAYER := 100
+const BIOMES_DATA_PATH := "res://data/biomes.json"
+const PROGRESS_BAR_ROW_HEIGHT := 26
+const PROGRESS_BARS_HEIGHT := PROGRESS_BAR_ROW_HEIGHT * 2 + 16
 const POPUP_TEXT_PRIMARY := Color(0.14, 0.10, 0.07, 1.0)
 const POPUP_TEXT_SECONDARY := Color(0.28, 0.22, 0.15, 1.0)
 const POPUP_TEXT_ACCENT := Color(0.35, 0.24, 0.08, 1.0)
@@ -83,6 +86,12 @@ var upgrades_view: Control
 var settings_modal: Control
 var next_step_widget: PanelContainer
 var next_step_label: Label
+var progress_bars_widget: Control
+var xp_progress_bar: ProgressBar
+var xp_progress_label: Label
+var biome_unlock_bar_row: Control
+var biome_unlock_progress_bar: ProgressBar
+var biome_unlock_label: Label
 var pending_name_instance_id: String = ""
 var current_management_instance_id: String = ""
 var current_management_feedback_key: String = ""
@@ -103,6 +112,10 @@ func _ready() -> void:
 		EconomySystem.income_tick.connect(_on_income_tick)
 	if EconomySystem.has_signal("player_level_up"):
 		EconomySystem.player_level_up.connect(_on_player_level_up)
+	if EconomySystem.has_signal("currency_changed"):
+		EconomySystem.currency_changed.connect(_on_currency_changed_for_bars)
+	if EconomySystem.has_signal("player_level_changed"):
+		EconomySystem.player_level_changed.connect(_on_player_level_changed_for_bars)
 	if has_node("/root/WorkerSystem") and WorkerSystem.has_signal("workers_changed"):
 		WorkerSystem.workers_changed.connect(_on_workers_changed)
 	if has_node("/root/UpgradeSystem") and UpgradeSystem.has_signal("upgrades_changed"):
@@ -141,6 +154,12 @@ func _rebuild_layout() -> void:
 	settings_modal = null
 	next_step_widget = null
 	next_step_label = null
+	progress_bars_widget = null
+	xp_progress_bar = null
+	xp_progress_label = null
+	biome_unlock_bar_row = null
+	biome_unlock_progress_bar = null
+	biome_unlock_label = null
 	pending_name_instance_id = ""
 	current_management_instance_id = ""
 	current_management_feedback_key = ""
@@ -184,6 +203,16 @@ func _on_income_tick(amount: float) -> void:
 
 func _on_player_level_up(levels: Array, reward_amount: float) -> void:
 	_show_level_up_popup(levels, reward_amount)
+	_refresh_progress_bars()
+
+
+func _on_currency_changed_for_bars(currency_id: String, _amount: Variant) -> void:
+	if currency_id == "xp":
+		_refresh_progress_bars()
+
+
+func _on_player_level_changed_for_bars(_level: int) -> void:
+	_refresh_progress_bars()
 
 
 func _on_workers_changed() -> void:
@@ -210,8 +239,8 @@ func _on_language_changed(_language: String) -> void:
 func _build_layout() -> void:
 	_add_background()
 	_add_top_bar()
+	_add_progress_bars_widget()
 	_add_map_area()
-	_add_next_step_widget()
 	_add_workers_shortcut()
 	_add_bottom_nav()
 	_add_offline_income_popup()
@@ -344,7 +373,7 @@ func _add_map_area() -> void:
 	play_area.anchor_top = 0.0
 	play_area.anchor_right = 1.0
 	play_area.anchor_bottom = 1.0
-	play_area.offset_top = TOP_BAR_HEIGHT + 16
+	play_area.offset_top = TOP_BAR_HEIGHT + PROGRESS_BARS_HEIGHT + 4
 	play_area.offset_bottom = -(BOTTOM_NAV_HEIGHT + 18)
 	add_child(play_area)
 
@@ -412,6 +441,194 @@ func _make_next_step_style() -> StyleBoxFlat:
 	style.border_width_bottom = 1
 	style.set_corner_radius_all(8)
 	return style
+
+
+func _add_progress_bars_widget() -> void:
+	progress_bars_widget = Control.new()
+	progress_bars_widget.name = "ProgressBarsWidget"
+	progress_bars_widget.anchor_left = 0.0
+	progress_bars_widget.anchor_top = 0.0
+	progress_bars_widget.anchor_right = 1.0
+	progress_bars_widget.anchor_bottom = 0.0
+	progress_bars_widget.offset_top = TOP_BAR_HEIGHT + 45
+	progress_bars_widget.offset_bottom = TOP_BAR_HEIGHT + PROGRESS_BARS_HEIGHT + 40
+	progress_bars_widget.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(progress_bars_widget)
+
+	var bg := ColorRect.new()
+	bg.color = Color(0.06, 0.04, 0.02, 0.68)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	progress_bars_widget.add_child(bg)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_top", 5)
+	margin.add_theme_constant_override("margin_bottom", 5)
+	progress_bars_widget.add_child(margin)
+
+	var column := VBoxContainer.new()
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_theme_constant_override("separation", 4)
+	margin.add_child(column)
+
+	var xp_row := HBoxContainer.new()
+	xp_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	xp_row.add_theme_constant_override("separation", 6)
+	xp_row.custom_minimum_size = Vector2(0, PROGRESS_BAR_ROW_HEIGHT)
+	column.add_child(xp_row)
+
+	var xp_prefix := Label.new()
+	xp_prefix.text = LocalizationSystem.tr_key("ui.xp_bar_label")
+	xp_prefix.add_theme_font_size_override("font_size", 11)
+	xp_prefix.add_theme_color_override("font_color", Color(0.62, 0.75, 1.0, 1.0))
+	xp_prefix.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	xp_prefix.custom_minimum_size = Vector2(22, 0)
+	xp_prefix.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	xp_row.add_child(xp_prefix)
+
+	xp_progress_bar = ProgressBar.new()
+	xp_progress_bar.min_value = 0.0
+	xp_progress_bar.max_value = 100.0
+	xp_progress_bar.value = 0.0
+	xp_progress_bar.show_percentage = false
+	xp_progress_bar.custom_minimum_size = Vector2(0, 16)
+	xp_progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	xp_progress_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	xp_progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	xp_progress_bar.add_theme_stylebox_override("fill", _make_progress_fill_style(Color(0.28, 0.52, 0.96, 1.0)))
+	xp_progress_bar.add_theme_stylebox_override("background", _make_progress_background_style(Color(0.10, 0.18, 0.42, 0.55)))
+	xp_row.add_child(xp_progress_bar)
+
+	xp_progress_label = Label.new()
+	xp_progress_label.add_theme_font_size_override("font_size", 11)
+	xp_progress_label.add_theme_color_override("font_color", Color(0.90, 0.88, 0.78, 1.0))
+	xp_progress_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.75))
+	xp_progress_label.add_theme_constant_override("shadow_offset_x", 1)
+	xp_progress_label.add_theme_constant_override("shadow_offset_y", 1)
+	xp_progress_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	xp_progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	xp_progress_label.custom_minimum_size = Vector2(138, 0)
+	xp_progress_label.clip_text = true
+	xp_progress_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	xp_row.add_child(xp_progress_label)
+
+	biome_unlock_bar_row = HBoxContainer.new()
+	biome_unlock_bar_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	biome_unlock_bar_row.add_theme_constant_override("separation", 6)
+	biome_unlock_bar_row.custom_minimum_size = Vector2(0, PROGRESS_BAR_ROW_HEIGHT)
+	column.add_child(biome_unlock_bar_row)
+
+	var biome_prefix := Label.new()
+	biome_prefix.text = LocalizationSystem.tr_key("ui.biome_unlock_bar_label")
+	biome_prefix.add_theme_font_size_override("font_size", 11)
+	biome_prefix.add_theme_color_override("font_color", Color(0.96, 0.70, 0.28, 1.0))
+	biome_prefix.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	biome_prefix.custom_minimum_size = Vector2(22, 0)
+	biome_prefix.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	biome_unlock_bar_row.add_child(biome_prefix)
+
+	biome_unlock_progress_bar = ProgressBar.new()
+	biome_unlock_progress_bar.min_value = 0.0
+	biome_unlock_progress_bar.max_value = 100.0
+	biome_unlock_progress_bar.value = 0.0
+	biome_unlock_progress_bar.show_percentage = false
+	biome_unlock_progress_bar.custom_minimum_size = Vector2(0, 16)
+	biome_unlock_progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	biome_unlock_progress_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	biome_unlock_progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	biome_unlock_progress_bar.add_theme_stylebox_override("fill", _make_progress_fill_style(Color(0.82, 0.54, 0.14, 1.0)))
+	biome_unlock_progress_bar.add_theme_stylebox_override("background", _make_progress_background_style(Color(0.32, 0.20, 0.06, 0.55)))
+	biome_unlock_bar_row.add_child(biome_unlock_progress_bar)
+
+	biome_unlock_label = Label.new()
+	biome_unlock_label.add_theme_font_size_override("font_size", 11)
+	biome_unlock_label.add_theme_color_override("font_color", Color(0.90, 0.88, 0.78, 1.0))
+	biome_unlock_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.75))
+	biome_unlock_label.add_theme_constant_override("shadow_offset_x", 1)
+	biome_unlock_label.add_theme_constant_override("shadow_offset_y", 1)
+	biome_unlock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	biome_unlock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	biome_unlock_label.custom_minimum_size = Vector2(138, 0)
+	biome_unlock_label.clip_text = true
+	biome_unlock_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	biome_unlock_bar_row.add_child(biome_unlock_label)
+
+	_refresh_progress_bars()
+
+
+func _refresh_progress_bars() -> void:
+	if xp_progress_bar == null or xp_progress_label == null:
+		return
+
+	var current_level: int = max(1, int(GameState.get_value("level", 1)))
+	var total_xp: float = float(GameState.get_value("xp", 0))
+	var xp_for_current: float = float(EconomySystem.get_required_xp_for_level(current_level))
+	var xp_for_next: float = float(EconomySystem.get_required_xp_for_level(current_level + 1))
+	var xp_in_level: int = max(0, int(total_xp - xp_for_current))
+	var xp_needed: int = max(1, int(xp_for_next - xp_for_current))
+	var xp_ratio: float = clamp(float(xp_in_level) / float(xp_needed), 0.0, 1.0)
+	xp_progress_bar.value = xp_ratio * 100.0
+	xp_progress_label.text = (
+		LocalizationSystem.tr_key("ui.xp_to_next_level")
+			.replace("{current}", str(xp_in_level))
+			.replace("{needed}", str(xp_needed))
+			.replace("{next}", str(current_level + 1))
+	)
+
+	if biome_unlock_bar_row == null:
+		return
+
+	var biome_data: Dictionary = _get_next_biome_unlock_data()
+	var req_level: int = int(biome_data.get("req_level", 0))
+	if biome_data.is_empty() or req_level <= 0 or current_level >= req_level:
+		biome_unlock_bar_row.visible = false
+		return
+
+	biome_unlock_bar_row.visible = true
+	biome_unlock_progress_bar.value = clamp(float(current_level) / float(req_level), 0.0, 1.0) * 100.0
+	var biome_name: String = LocalizationSystem.tr_key(str(biome_data.get("name_key", "biome.new_biome")))
+	biome_unlock_label.text = (
+		biome_name + ": " + LocalizationSystem.tr_key("ui.biome_unlock_level_req")
+			.replace("{current}", str(current_level))
+			.replace("{target}", str(req_level))
+	)
+
+
+func _get_next_biome_unlock_data() -> Dictionary:
+	var file: FileAccess = FileAccess.open(BIOMES_DATA_PATH, FileAccess.READ)
+	if file == null:
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if typeof(parsed) != TYPE_ARRAY:
+		return {}
+	var biomes: Array = parsed as Array
+	var next_id: String = ""
+	for biome_value in biomes:
+		if typeof(biome_value) != TYPE_DICTIONARY:
+			continue
+		var biome: Dictionary = biome_value as Dictionary
+		if str(biome.get("id", "")) == BIOME_ID:
+			next_id = str(biome.get("next_biome_id", ""))
+			break
+	if next_id.is_empty():
+		return {}
+	for biome_value in biomes:
+		if typeof(biome_value) != TYPE_DICTIONARY:
+			continue
+		var biome: Dictionary = biome_value as Dictionary
+		if str(biome.get("id", "")) != next_id:
+			continue
+		var req: Dictionary = biome.get("unlock_requirements", {}) as Dictionary
+		return {
+			"id": next_id,
+			"name_key": str(biome.get("name_key", "biome.new_biome")),
+			"req_level": int(req.get("level", 0))
+		}
+	return {}
 
 
 func _add_habitat_slots(parent: Control) -> void:
@@ -1033,6 +1250,7 @@ func _make_shop_reptile_card(reptile: Dictionary) -> Control:
 	action_area.add_child(_make_shop_variant_button(reptile_id, "common", sex_selector))
 	action_area.add_child(_make_shop_variant_button(reptile_id, "rare", sex_selector))
 
+	_make_scroll_safe(card)
 	return card
 
 
@@ -1633,6 +1851,7 @@ func _show_shop_view() -> void:
 
 	var list: VBoxContainer = VBoxContainer.new()
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.mouse_filter = Control.MOUSE_FILTER_PASS
 	list.add_theme_constant_override("separation", 10)
 	scroll.add_child(list)
 
@@ -1715,6 +1934,7 @@ func _show_animals_view(tab_id: String = "owned") -> void:
 
 	var content: VBoxContainer = VBoxContainer.new()
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.mouse_filter = Control.MOUSE_FILTER_PASS
 	content.add_theme_constant_override("separation", 10)
 	scroll.add_child(content)
 
@@ -1810,16 +2030,6 @@ func _show_quests_view() -> void:
 	_apply_button_text_color(close_button, POPUP_TEXT_PRIMARY)
 	header.add_child(close_button)
 
-	var next_step_state: Dictionary = QuestSystem.get_next_step_quest() if has_node("/root/QuestSystem") and QuestSystem.has_method("get_next_step_quest") else {}
-	if not next_step_state.is_empty():
-		var next_step: Label = _make_popup_label(
-			LocalizationSystem.tr_key("ui.next_step").replace("{quest}", LocalizationSystem.tr_key(str(next_step_state.get("title_key", "")))),
-			14
-		)
-		next_step.clip_text = true
-		_apply_label_color(next_step, POPUP_TEXT_ACCENT)
-		column.add_child(next_step)
-
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -1827,6 +2037,7 @@ func _show_quests_view() -> void:
 
 	var list: VBoxContainer = VBoxContainer.new()
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.mouse_filter = Control.MOUSE_FILTER_PASS
 	list.add_theme_constant_override("separation", 10)
 	scroll.add_child(list)
 	_populate_quests_list(list)
@@ -1894,6 +2105,7 @@ func _show_workers_view() -> void:
 
 	var list: VBoxContainer = VBoxContainer.new()
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.mouse_filter = Control.MOUSE_FILTER_PASS
 	list.add_theme_constant_override("separation", 10)
 	scroll.add_child(list)
 	_populate_workers_list(list)
@@ -1960,6 +2172,7 @@ func _show_upgrades_view() -> void:
 
 	var list: VBoxContainer = VBoxContainer.new()
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.mouse_filter = Control.MOUSE_FILTER_PASS
 	list.add_theme_constant_override("separation", 10)
 	scroll.add_child(list)
 	_populate_upgrades_list(list)
@@ -2079,6 +2292,7 @@ func _make_upgrade_card(upgrade: Dictionary) -> Control:
 	)
 	action_area.add_child(action_button)
 
+	_make_scroll_safe(card)
 	return card
 
 
@@ -2217,6 +2431,7 @@ func _make_worker_card(worker: Dictionary) -> Control:
 	)
 	action_area.add_child(action_button)
 
+	_make_scroll_safe(card)
 	return card
 
 
@@ -2371,6 +2586,7 @@ func _make_quest_card(state: Dictionary) -> Control:
 	else:
 		status_label.text = LocalizationSystem.tr_key("quests.in_progress")
 
+	_make_scroll_safe(card)
 	return card
 
 
@@ -2407,6 +2623,7 @@ func _make_owned_empty_state() -> Control:
 	_apply_button_text_color(open_shop, BUTTON_TEXT_COLOR)
 	column.add_child(open_shop)
 
+	_make_scroll_safe(card)
 	return card
 
 
@@ -2491,6 +2708,7 @@ func _make_owned_reptile_card(instance: Dictionary) -> Control:
 		)
 		action_area.add_child(assign_button)
 
+	_make_scroll_safe(card)
 	return card
 
 
@@ -2545,6 +2763,7 @@ func _make_gallery_species_section(reptile_id: String) -> Control:
 	for rarity_value in GALLERY_RARITIES:
 		slot_row.add_child(_make_gallery_rarity_slot(reptile_id, str(rarity_value)))
 
+	_make_scroll_safe(section)
 	return section
 
 
@@ -2611,6 +2830,7 @@ func _make_gallery_rarity_slot(reptile_id: String, rarity: String) -> Control:
 	_apply_label_color(state_label, POPUP_TEXT_SUCCESS if discovered else POPUP_TEXT_SECONDARY)
 	column.add_child(state_label)
 
+	_make_scroll_safe(slot)
 	return slot
 
 
@@ -2730,6 +2950,7 @@ func _make_achievement_card(state: Dictionary) -> Control:
 	else:
 		status_label.text = LocalizationSystem.tr_key("achievements.in_progress")
 
+	_make_scroll_safe(card)
 	return card
 
 
@@ -4214,6 +4435,15 @@ func _apply_button_text_color(button: Button, color: Color) -> void:
 	button.add_theme_color_override("font_hover_color", color)
 	button.add_theme_color_override("font_pressed_color", color)
 	button.add_theme_color_override("font_disabled_color", Color(color.r, color.g, color.b, 0.65))
+
+
+func _make_scroll_safe(root: Control) -> void:
+	if root is Button or root is OptionButton or root is CheckButton or root is HSlider or root is VSlider:
+		return
+	root.mouse_filter = Control.MOUSE_FILTER_PASS
+	for child in root.get_children():
+		if child is Control:
+			_make_scroll_safe(child as Control)
 
 
 func _get_discovered_instance_sex(instance_id: String) -> String:

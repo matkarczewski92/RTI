@@ -63,6 +63,22 @@
 		"pl": "Poz.",
 		"en": "Lv."
 	},
+	"ui.xp_bar_label": {
+		"pl": "XP",
+		"en": "XP"
+	},
+	"ui.biome_unlock_bar_label": {
+		"pl": "Nowy biom",
+		"en": "New biome"
+	},
+	"ui.biome_unlock_level_req": {
+		"pl": "Poz. {current}/{target}",
+		"en": "Lv. {current}/{target}"
+	},
+	"ui.xp_to_next_level": {
+		"pl": "{current}/{needed} XP → Poz. {next}",
+		"en": "{current}/{needed} XP → Lv. {next}"
+	},
 	"biome.green_meadow.name": {
 		"pl": "Zielona Polana",
 		"en": "Green Meadow"

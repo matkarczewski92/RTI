@@ -16,8 +16,7 @@
 		"habitat_slots": 5,
 		"background_path": "res://assets/art/biomes/dry_prairie.png",
 		"unlock_requirements": {
-			"level": 3,
-			"biome_progress": 100
+			"level": 10
 		}
 	}
 ]
