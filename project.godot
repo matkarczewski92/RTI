@@ -11,11 +11,10 @@ config_version=5
 [application]
 
 config/name="Reptile Tycoon"
-config/version="0.1.0-debug"
 run/main_scene="res://scenes/main/Main.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 boot_splash/image="res://assets/art/ui/welcome_screen/welcome_screen.png"
-config/icon="res://assets/art/ui/logo.png"
+config/icon="uid://bc2ij03yk5o5h"
 
 [autoload]
 
@@ -29,6 +28,7 @@ QuestSystem="*res://scripts/autoload/QuestSystem.gd"
 WorkerSystem="*res://scripts/autoload/WorkerSystem.gd"
 UpgradeSystem="*res://scripts/autoload/UpgradeSystem.gd"
 BreedingSystem="*res://scripts/autoload/BreedingSystem.gd"
+IncubationSystem="*res://scripts/autoload/IncubationSystem.gd"
 
 [display]
 

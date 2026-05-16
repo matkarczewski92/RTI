@@ -1,0 +1,60 @@
+{
+  "offers": [
+    {
+      "id": "shop_egg_common",
+      "name_key": "egg_shop.offer_common_name",
+      "description_key": "egg_shop.offer_common_description",
+      "price": 500,
+      "asset": "res://assets/art/incubator/eggs/shop_egg_common.png",
+      "species_mode": "unlocked_species_pool",
+      "drop_rates": {
+        "common": 60,
+        "rare": 30,
+        "ultra_rare": 7,
+        "exceptional": 3
+      }
+    },
+    {
+      "id": "shop_egg_rare",
+      "name_key": "egg_shop.offer_rare_name",
+      "description_key": "egg_shop.offer_rare_description",
+      "price": 1500,
+      "asset": "res://assets/art/incubator/eggs/shop_egg_rare.png",
+      "species_mode": "unlocked_species_pool",
+      "drop_rates": {
+        "common": 35,
+        "rare": 40,
+        "ultra_rare": 18,
+        "exceptional": 7
+      }
+    },
+    {
+      "id": "shop_egg_ultra_rare",
+      "name_key": "egg_shop.offer_ultra_rare_name",
+      "description_key": "egg_shop.offer_ultra_rare_description",
+      "price": 5000,
+      "asset": "res://assets/art/incubator/eggs/shop_egg_ultra_rare.png",
+      "species_mode": "unlocked_species_pool",
+      "drop_rates": {
+        "common": 20,
+        "rare": 35,
+        "ultra_rare": 35,
+        "exceptional": 10
+      }
+    },
+    {
+      "id": "shop_egg_exceptional",
+      "name_key": "egg_shop.offer_exceptional_name",
+      "description_key": "egg_shop.offer_exceptional_description",
+      "price": 10000,
+      "asset": "res://assets/art/incubator/eggs/shop_egg_exceptional.png",
+      "species_mode": "unlocked_species_pool",
+      "drop_rates": {
+        "common": 10,
+        "rare": 25,
+        "ultra_rare": 40,
+        "exceptional": 25
+      }
+    }
+  ]
+}

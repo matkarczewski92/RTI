@@ -173,7 +173,8 @@ func get_default_save_data() -> Dictionary:
 			"eggs": [],
 			"hatchlings": []
 		},
-		"breeding_chambers": {}
+		"breeding_chambers": {},
+		"incubation_containers": {}
 	}
 	for key in get_default_achievement_state().keys():
 		defaults[key] = get_default_achievement_state()[key]
@@ -305,6 +306,7 @@ func normalize_save_data(data: Dictionary) -> Dictionary:
 	normalized["discovered_variants"] = _normalize_discovered_variants(normalized.get("discovered_variants", {}), normalized["owned_reptile_instances"])
 	normalized["incubator_storage"] = _normalize_incubator_storage(normalized.get("incubator_storage", {}))
 	normalized["breeding_chambers"] = _normalize_breeding_chambers(normalized.get("breeding_chambers", {}))
+	normalized["incubation_containers"] = _normalize_incubation_containers(normalized.get("incubation_containers", {}))
 	return normalized
 
 
@@ -320,6 +322,18 @@ func _normalize_incubator_storage(raw: Variant) -> Dictionary:
 
 
 func _normalize_breeding_chambers(raw: Variant) -> Dictionary:
+	if typeof(raw) != TYPE_DICTIONARY:
+		return {}
+	var result: Dictionary = {}
+	var src: Dictionary = raw as Dictionary
+	for key in src.keys():
+		var val: Variant = src.get(key)
+		if typeof(val) == TYPE_DICTIONARY:
+			result[str(key)] = val
+	return result
+
+
+func _normalize_incubation_containers(raw: Variant) -> Dictionary:
 	if typeof(raw) != TYPE_DICTIONARY:
 		return {}
 	var result: Dictionary = {}

@@ -1,0 +1,64 @@
+{
+  "defaults": {
+    "incubation_time_hours": 24,
+    "egg_name_pl": "Jaja gadów",
+    "egg_name_en": "Reptile Eggs"
+  },
+  "species": {
+    "leopard_gecko": {
+      "incubation_time_hours": 12,
+      "egg_name_pl": "Jaja gekona lamparciego",
+      "egg_name_en": "Leopard Gecko Eggs"
+    },
+    "bearded_dragon": {
+      "incubation_time_hours": 18,
+      "egg_name_pl": "Jaja agamy brodatej",
+      "egg_name_en": "Bearded Dragon Eggs"
+    },
+    "corn_snake": {
+      "incubation_time_hours": 16,
+      "egg_name_pl": "Jaja węża kukurydzianego",
+      "egg_name_en": "Corn Snake Eggs"
+    },
+    "steppe_tortoise": {
+      "incubation_time_hours": 24,
+      "egg_name_pl": "Jaja żółwia stepowego",
+      "egg_name_en": "Steppe Tortoise Eggs"
+    },
+    "small_monitor": {
+      "incubation_time_hours": 30,
+      "egg_name_pl": "Jaja małego warany",
+      "egg_name_en": "Small Monitor Eggs"
+    },
+    "bullsnake": {
+      "incubation_time_hours": 20,
+      "egg_name_pl": "Jaja węża byczego",
+      "egg_name_en": "Bullsnake Eggs"
+    },
+    "collared_lizard": {
+      "incubation_time_hours": 14,
+      "egg_name_pl": "Jaja jaszczurki obrożnej",
+      "egg_name_en": "Collared Lizard Eggs"
+    },
+    "western_earless_lizard": {
+      "incubation_time_hours": 12,
+      "egg_name_pl": "Jaja jaszczurki bezuchej",
+      "egg_name_en": "Western Earless Lizard Eggs"
+    },
+    "ornate_box_turtle": {
+      "incubation_time_hours": 28,
+      "egg_name_pl": "Jaja żółwia ozdobnego",
+      "egg_name_en": "Ornate Box Turtle Eggs"
+    },
+    "western_hognose_snake": {
+      "incubation_time_hours": 22,
+      "egg_name_pl": "Jaja węża ryjonosa",
+      "egg_name_en": "Western Hognose Snake Eggs"
+    },
+    "prairie_rattlesnake": {
+      "incubation_time_hours": 36,
+      "egg_name_pl": "Jaja grzechotnika preriowego",
+      "egg_name_en": "Prairie Rattlesnake Eggs"
+    }
+  }
+}

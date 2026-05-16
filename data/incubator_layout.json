@@ -1,22 +1,22 @@
 {
   "reference_resolution": { "width": 720, "height": 1280 },
-  "comment": "x/y: center pixel coords in 720x1280 reference screen. Play area runs from y=84 (top bar) to y=1108 (bottom menu). Adjust these coords visually to match the round chamber/container areas on the incubator background.",
+  "comment": "x/y: center pixel coords in 720x1280 reference screen. Play area runs from y=84 (top bar) to y=1108 (bottom menu). icon_size: size of the plus/status icon (px). habitat_size: size of the in-progress graphic (incubation_connection_in_progress / incubation_in_progress) overlaid on background (px).",
   "incubator": {
     "breeding_chambers": [
-      { "id": 1, "x": 230, "y": 250 },
-      { "id": 2, "x": 495, "y": 250 },
-      { "id": 3, "x": 220, "y": 375 },
-      { "id": 4, "x": 500, "y": 375 },
-      { "id": 5, "x": 220, "y": 510 },
-      { "id": 6, "x": 505, "y": 510 }
+      { "id": 1, "x": 230, "y": 205, "icon_size": 40, "habitat_size": 240 },
+      { "id": 2, "x": 495, "y": 250, "icon_size": 40, "habitat_size": 240 },
+      { "id": 3, "x": 230, "y": 325, "icon_size": 40, "habitat_size": 240 },
+      { "id": 4, "x": 500, "y": 325, "icon_size": 40, "habitat_size": 240 },
+      { "id": 5, "x": 230, "y": 510, "icon_size": 40, "habitat_size": 240 },
+      { "id": 6, "x": 505, "y": 510, "icon_size": 40, "habitat_size": 240 }
     ],
     "incubation_containers": [
-      { "id": 1, "x": 215, "y": 750 },
-      { "id": 2, "x": 505, "y": 750 },
-      { "id": 3, "x": 215, "y": 910 },
-      { "id": 4, "x": 505, "y": 910 },
-      { "id": 5, "x": 215, "y": 1085 },
-      { "id": 6, "x": 505, "y": 1085 }
+      { "id": 1, "x": 215, "y": 750,  "icon_size": 40, "habitat_size": 210 },
+      { "id": 2, "x": 505, "y": 750,  "icon_size": 40, "habitat_size": 210 },
+      { "id": 3, "x": 210, "y": 910,  "icon_size": 40, "habitat_size": 210 },
+      { "id": 4, "x": 510, "y": 910,  "icon_size": 40, "habitat_size": 210 },
+      { "id": 5, "x": 205, "y": 1085, "icon_size": 40, "habitat_size": 210 },
+      { "id": 6, "x": 515, "y": 1085, "icon_size": 40, "habitat_size": 210 }
     ]
   }
 }

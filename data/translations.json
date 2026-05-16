@@ -2764,5 +2764,197 @@
 	"rarity.exceptional": {
 		"pl": "Wyjątkowy",
 		"en": "Exceptional"
+	},
+	"egg_shop.title": {
+		"pl": "Sklep z jajami",
+		"en": "Egg Shop"
+	},
+	"egg_shop.buy": {
+		"pl": "Kup",
+		"en": "Buy"
+	},
+	"egg_shop.purchased": {
+		"pl": "Kupiono jajo!",
+		"en": "Egg purchased!"
+	},
+	"egg_shop.not_enough_coins": {
+		"pl": "Brak wystarczającej liczby monet",
+		"en": "Not enough coins"
+	},
+	"egg_shop.odds": {
+		"pl": "Szanse:",
+		"en": "Odds:"
+	},
+	"egg_shop.price_label": {
+		"pl": "Cena:",
+		"en": "Price:"
+	},
+	"egg_shop.offer_common_name": {
+		"pl": "Jajo zwykłe",
+		"en": "Common Egg"
+	},
+	"egg_shop.offer_common_description": {
+		"pl": "Standardowa oferta",
+		"en": "Standard offer"
+	},
+	"egg_shop.offer_rare_name": {
+		"pl": "Jajo rzadkie",
+		"en": "Rare Egg"
+	},
+	"egg_shop.offer_rare_description": {
+		"pl": "Wyższe szanse na rzadkie odmiany",
+		"en": "Higher chance of rare variants"
+	},
+	"egg_shop.offer_ultra_rare_name": {
+		"pl": "Jajo ultra rzadkie",
+		"en": "Ultra Rare Egg"
+	},
+	"egg_shop.offer_ultra_rare_description": {
+		"pl": "Wysokie szanse na ultra rzadkie odmiany",
+		"en": "High chance of ultra rare variants"
+	},
+	"egg_shop.offer_exceptional_name": {
+		"pl": "Jajo wyjątkowe",
+		"en": "Exceptional Egg"
+	},
+	"egg_shop.offer_exceptional_description": {
+		"pl": "Najwyższe szanse na wyjątkowe odmiany",
+		"en": "Highest chance of exceptional variants"
+	},
+	"egg_shop.no_species_available": {
+		"pl": "Brak dostępnych gatunków",
+		"en": "No species available"
+	},
+	"egg_shop.species_chosen": {
+		"pl": "Wylosowano: {species}",
+		"en": "Selected: {species}"
+	},
+	"incubation.container_title": {
+		"pl": "Pojemnik inkubacyjny",
+		"en": "Incubation Container"
+	},
+	"incubation.select_species": {
+		"pl": "Wybierz gatunek",
+		"en": "Select species"
+	},
+	"incubation.select_count": {
+		"pl": "Wybierz liczbę jaj",
+		"en": "Select egg count"
+	},
+	"incubation.egg_count": {
+		"pl": "Liczba jaj",
+		"en": "Egg count"
+	},
+	"incubation.available_count": {
+		"pl": "Dostępne: {count}",
+		"en": "Available: {count}"
+	},
+	"incubation.start": {
+		"pl": "Rozpocznij inkubację",
+		"en": "Start Incubation"
+	},
+	"incubation.cancel_and_return": {
+		"pl": "Anuluj i zwróć jaja",
+		"en": "Cancel and return eggs"
+	},
+	"incubation.in_progress": {
+		"pl": "Inkubacja trwa",
+		"en": "Incubation in progress"
+	},
+	"incubation.paused": {
+		"pl": "Inkubacja wstrzymana",
+		"en": "Incubation paused"
+	},
+	"incubation.humidity": {
+		"pl": "Wilgotność:",
+		"en": "Humidity:"
+	},
+	"incubation.water": {
+		"pl": "Nawodnij",
+		"en": "Water"
+	},
+	"incubation.time_remaining": {
+		"pl": "Pozostały czas:",
+		"en": "Time remaining:"
+	},
+	"incubation.ready_to_hatch": {
+		"pl": "Gotowe do wyklucia",
+		"en": "Ready to hatch"
+	},
+	"incubation.hatch": {
+		"pl": "Wykluj",
+		"en": "Hatch"
+	},
+	"incubation.hatch_placeholder": {
+		"pl": "Wykluwanie zostanie dodane w kolejnym etapie.",
+		"en": "Hatching will be added in the next stage."
+	},
+	"incubation.humidity_low_warning": {
+		"pl": "Wilgotność zbyt niska — inkubacja wstrzymana",
+		"en": "Humidity too low — incubation paused"
+	},
+	"incubation.failed_dry_message": {
+		"pl": "Wilgotność spadła do 0%. Jaja przepadły.",
+		"en": "Humidity reached 0%. The eggs were lost."
+	},
+	"incubation.clear_container": {
+		"pl": "Wyczyść pojemnik",
+		"en": "Clear container"
+	},
+	"incubation.error_one_species": {
+		"pl": "W jednym pojemniku mogą być tylko jaja jednego gatunku.",
+		"en": "Only eggs of one species can be placed in one container."
+	},
+	"incubation.error_max_eggs": {
+		"pl": "Można umieścić maksymalnie {max} jaj w jednym pojemniku.",
+		"en": "Maximum {max} eggs per container."
+	},
+	"incubation.error_already_started": {
+		"pl": "Nie można dodać jaj po rozpoczęciu inkubacji.",
+		"en": "Cannot add eggs after incubation has started."
+	},
+	"incubation.no_eggs_in_storage": {
+		"pl": "Brak jaj w schowku.",
+		"en": "No eggs in storage."
+	},
+	"incubation.large_batch_warning": {
+		"pl": "Więcej jaj → szybszy spadek wilgotności",
+		"en": "More eggs → faster humidity drop"
+	},
+	"incubation.water_no_effect": {
+		"pl": "Pojemnik nie wymaga nawodnienia.",
+		"en": "Container does not need watering."
+	},
+	"incubation.close": {
+		"pl": "Zamknij",
+		"en": "Close"
+	},
+	"incubation.incubation_time": {
+		"pl": "Czas inkubacji: {h}h",
+		"en": "Incubation time: {h}h"
+	},
+	"incubation.watered": {
+		"pl": "Pojemnik nawodniony!",
+		"en": "Container watered!"
+	},
+	"incubation.failed_short": {
+		"pl": "Nieudana",
+		"en": "Failed"
+	},
+	"incubation.ready_short": {
+		"pl": "Gotowe!",
+		"en": "Ready!"
+	},
+	"incubation.paused_short": {
+		"pl": "Wstrzymana",
+		"en": "Paused"
+	},
+	"incubation.loaded_short": {
+		"pl": "Załadowane",
+		"en": "Loaded"
+	},
+	"incubation.failed_dry_short": {
+		"pl": "Inkubacja nieudana",
+		"en": "Incubation Failed"
 	}
 }
