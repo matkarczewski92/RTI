@@ -2,7 +2,7 @@ extends Node
 
 const REPTILES_PATH: String = "res://data/reptiles.json"
 const VARIANTS_PATH: String = "res://data/reptile_variants.json"
-const VALID_RARITIES: Array[String] = ["common", "rare", "exceptional", "ultra_rare"]
+const VALID_RARITIES: Array[String] = ["common", "rare", "exceptional", "ultra_rare", "shadow"]
 const HAPPINESS_DECAY_INTERVAL_SECONDS := 300.0
 const SATIETY_DECAY_INTERVAL_SECONDS := 420.0
 const HYDRATION_DECAY_INTERVAL_SECONDS := 420.0

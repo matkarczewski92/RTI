@@ -136,6 +136,44 @@ func _build_layout() -> void:
 	privacy_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(privacy_body_label)
 
+	column.add_child(_make_separator())
+
+	var dev_label := _make_label("DEV", 13, Color(0.55, 0.18, 0.08, 0.75), HORIZONTAL_ALIGNMENT_LEFT)
+	column.add_child(dev_label)
+
+	var dev_row := HBoxContainer.new()
+	dev_row.add_theme_constant_override("separation", 8)
+	column.add_child(dev_row)
+
+	var dev_input := LineEdit.new()
+	dev_input.name = "DevInput"
+	dev_input.placeholder_text = "command..."
+	dev_input.custom_minimum_size = Vector2(0, 48)
+	dev_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dev_input.add_theme_font_size_override("font_size", 14)
+	dev_row.add_child(dev_input)
+
+	var dev_result := _make_label("", 13, Color(0.20, 0.50, 0.18, 1.0), HORIZONTAL_ALIGNMENT_LEFT)
+	dev_result.name = "DevResult"
+	column.add_child(dev_result)
+
+	var dev_accept := Button.new()
+	dev_accept.text = "OK"
+	dev_accept.custom_minimum_size = Vector2(64, 48)
+	dev_accept.focus_mode = Control.FOCUS_NONE
+	_style_button(dev_accept, Color(0.22, 0.38, 0.60, 1.0), Color(0.28, 0.46, 0.72, 1.0), Color(0.16, 0.28, 0.48, 1.0))
+	dev_accept.pressed.connect(func() -> void:
+		var msg := _execute_dev_command(dev_input.text)
+		dev_result.text = msg
+		dev_input.text = ""
+	)
+	dev_input.text_submitted.connect(func(text: String) -> void:
+		var msg := _execute_dev_command(text)
+		dev_result.text = msg
+		dev_input.text = ""
+	)
+	dev_row.add_child(dev_accept)
+
 
 func _make_toggle_row(setting_key: String, label_key: String, icon_path: String) -> Control:
 	var row := PanelContainer.new()
@@ -435,6 +473,50 @@ func _make_button_style(color: Color) -> StyleBoxFlat:
 	style.content_margin_top = 8
 	style.content_margin_bottom = 8
 	return style
+
+
+func _execute_dev_command(command: String) -> String:
+	var cmd := command.strip_edges()
+	if cmd == "add_1000_exp":
+		GameState.set_value("xp", float(GameState.get_value("xp", 0)) + 1000.0)
+		GameState.state_changed.emit()
+		return "+1000 XP"
+	elif cmd == "add_5000_exp":
+		GameState.set_value("xp", float(GameState.get_value("xp", 0)) + 5000.0)
+		GameState.state_changed.emit()
+		return "+5000 XP"
+	elif cmd == "add_50000_exp":
+		GameState.set_value("xp", float(GameState.get_value("xp", 0)) + 50000.0)
+		GameState.state_changed.emit()
+		return "+50000 XP"
+	elif cmd == "add_1000_money":
+		GameState.set_value("repticash", float(GameState.get_value("repticash", 0)) + 1000.0)
+		GameState.state_changed.emit()
+		return "+1000 repticash"
+	elif cmd == "add_5000_money":
+		GameState.set_value("repticash", float(GameState.get_value("repticash", 0)) + 5000.0)
+		GameState.state_changed.emit()
+		return "+5000 repticash"
+	elif cmd == "skip_all_build_in_progress":
+		var habitats: Variant = GameState.get_value("habitats", {})
+		if typeof(habitats) == TYPE_DICTIONARY:
+			for habitat_id in (habitats as Dictionary).keys():
+				var h: Variant = (habitats as Dictionary)[habitat_id]
+				if typeof(h) != TYPE_DICTIONARY:
+					continue
+				var hd := h as Dictionary
+				if bool(hd.get("is_building", false)):
+					hd["build_finish_at"] = 1
+				if bool(hd.get("is_upgrading", false)):
+					hd["upgrade_finish_at"] = 1
+		var reptile_system: Node = get_node_or_null("/root/ReptileSystem")
+		if reptile_system != null and reptile_system.has_method("apply_time_updates"):
+			reptile_system.call("apply_time_updates", false)
+		GameState.state_changed.emit()
+		return "Build skipped"
+	elif cmd.is_empty():
+		return ""
+	return "Unknown: " + cmd
 
 
 func _make_separator() -> HSeparator:

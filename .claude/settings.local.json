@@ -3,7 +3,9 @@
     "allow": [
       "Bash(Get-ChildItem -Path \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\" -Directory)",
       "Bash(Select-Object Name)",
-      "Bash(xargs grep -l \"achievement\\\\|quest\")"
+      "Bash(xargs grep -l \"achievement\\\\|quest\")",
+      "Bash(xargs grep -l \"dry_prairie\\\\|bullsnake\\\\|collared_lizard\")",
+      "Bash(Get-ChildItem \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\\\\data\\\\\" -Name)"
     ]
   }
 }

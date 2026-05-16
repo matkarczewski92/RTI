@@ -31,6 +31,7 @@ var alert_icon: TextureRect
 var income_progress: ProgressBar
 var upgrade_label: Label
 var occupied_icon_path := ""
+var empty_texture_path: String = EMPTY_TEXTURE_PATH
 var purchased_texture_path := PURCHASED_EMPTY_TEXTURE_PATH
 var needs_attention := false
 var income_progress_value := 0.0
@@ -204,9 +205,9 @@ func _refresh_visuals() -> void:
 	if background == null:
 		return
 
-	var texture_path := EMPTY_TEXTURE_PATH
+	var texture_path := empty_texture_path
 	if is_upgrading:
-		texture_path = IN_PROGRESS_TEXTURE_PATH
+		texture_path = purchased_texture_path if not purchased_texture_path.is_empty() else IN_PROGRESS_TEXTURE_PATH
 	elif slot_state == STATE_PURCHASED_EMPTY or slot_state == STATE_OCCUPIED:
 		texture_path = purchased_texture_path if not purchased_texture_path.is_empty() else PURCHASED_EMPTY_TEXTURE_PATH
 
@@ -252,6 +253,11 @@ func set_income_progress(value: float) -> void:
 
 	income_progress.visible = slot_state == STATE_OCCUPIED and not is_upgrading
 	income_progress.value = income_progress_value * 100.0
+
+
+func set_empty_texture(path: String) -> void:
+	empty_texture_path = path if not path.is_empty() else EMPTY_TEXTURE_PATH
+	_refresh_visuals()
 
 
 func set_habitat_texture(texture_path: String) -> void:

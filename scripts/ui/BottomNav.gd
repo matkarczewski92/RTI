@@ -6,6 +6,9 @@ const AssetPaths := preload("res://scripts/helpers/AssetPaths.gd")
 
 const BOTTOM_MENU_ART_PATH := "res://assets/art/ui/bottom_menu.png"
 const BOTTOM_NAV_HEIGHT := 172.0
+
+var art_path: String = ""
+
 const ITEMS: Array[Dictionary] = [
 	{
 		"id": "map",
@@ -45,7 +48,7 @@ func _build_layout() -> void:
 
 	var art := TextureRect.new()
 	art.name = "BottomMenuArt"
-	art.texture = AssetPaths.load_texture(BOTTOM_MENU_ART_PATH)
+	art.texture = AssetPaths.load_texture(art_path if not art_path.is_empty() else BOTTOM_MENU_ART_PATH)
 	art.set_anchors_preset(Control.PRESET_FULL_RECT)
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED

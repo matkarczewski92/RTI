@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "reference_resolution": {
+    "width": 720,
+    "height": 1280
+  },
+  "comment": "slots x/y: center pixel coords in 720x1280 reference screen (play area y=158..1090). workers_button: x_from_right/y_from_bottom = center distance from bottom-right screen corner; width/height = button size (all in reference pixels).",
+  "layouts": {
+    "green_meadow": {
+      "workers_button": {
+        "x_from_right": 600,
+        "y_from_bottom": 290,
+        "width": 212,
+        "height": 212
+      },
+      "slots": [
+        {
+          "slot_id": "green_meadow_slot_1",
+          "x": 220,
+          "y": 293,
+          "empty_offset_x": 0,
+          "empty_offset_y": 2,
+          "purchased_offset_x": -10,
+          "purchased_offset_y": -20
+        },
+        {
+          "slot_id": "green_meadow_slot_2",
+          "x": 205,
+          "y": 512,
+          "empty_offset_x": -2,
+          "empty_offset_y": 2,
+          "purchased_offset_x": -6,
+          "purchased_offset_y": -12
+        },
+        {
+          "slot_id": "green_meadow_slot_3",
+          "x": 202,
+          "y": 782,
+          "empty_offset_x": -2,
+          "empty_offset_y": 2,
+          "purchased_offset_x": -8,
+          "purchased_offset_y": -12
+        },
+        {
+          "slot_id": "green_meadow_slot_4",
+          "x": 500,
+          "y": 410,
+          "empty_offset_x": 2,
+          "empty_offset_y": 0,
+          "purchased_offset_x": 0,
+          "purchased_offset_y": -16
+        },
+        {
+          "slot_id": "green_meadow_slot_5",
+          "x": 493,
+          "y": 699,
+          "empty_offset_x": 4,
+          "empty_offset_y": 0,
+          "purchased_offset_x": 8,
+          "purchased_offset_y": -14
+        },
+        {
+          "slot_id": "green_meadow_slot_6",
+          "x": 500,
+          "y": 927,
+          "empty_offset_x": 0,
+          "empty_offset_y": 2,
+          "purchased_offset_x": 0,
+          "purchased_offset_y": -12
+        }
+      ]
+    },
+    "dry_prairie": {
+      "workers_button": {
+        "x_from_right": 630,
+        "y_from_bottom": 260,
+        "width": 212,
+        "height": 212
+      },
+      "slots": [
+        {
+          "slot_id": "dry_prairie_slot_1",
+          "x": 200,
+          "y": 248
+        },
+        {
+          "slot_id": "dry_prairie_slot_2",
+          "x": 200,
+          "y": 558
+        },
+        {
+          "slot_id": "dry_prairie_slot_3",
+          "x": 200,
+          "y": 888
+        },
+        {
+          "slot_id": "dry_prairie_slot_4",
+          "x": 500,
+          "y": 358
+        },
+        {
+          "slot_id": "dry_prairie_slot_5",
+          "x": 510,
+          "y": 688
+        },
+        {
+          "slot_id": "dry_prairie_slot_6",
+          "x": 510,
+          "y": 1005
+        }
+      ]
+    }
+  }
+}

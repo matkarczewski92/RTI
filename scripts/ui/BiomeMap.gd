@@ -13,6 +13,8 @@ const GREEN_MEADOW_PL_PATH := "res://assets/art/ui/biomes/green_meadow_pl.png"
 const GREEN_MEADOW_EN_PATH := "res://assets/art/ui/biomes/green_meadow_en.png"
 const DRY_PRAIRIE_PL_PATH := "res://assets/art/ui/biomes/dry_praire_pl.png"
 const DRY_PRAIRIE_EN_PATH := "res://assets/art/ui/biomes/dry_praire_en.png"
+const DRY_PRAIRIE_PL_UNLOCK_PATH := "res://assets/art/ui/biomes/dry_praire_pl_unlock.png"
+const DRY_PRAIRIE_EN_UNLOCK_PATH := "res://assets/art/ui/biomes/dry_praire_en_unlock.png"
 const NEW_BIOME_PL_PATH := "res://assets/art/ui/biomes/new_biome_pl.png"
 const NEW_BIOME_EN_PATH := "res://assets/art/ui/biomes/new_biome_en.png"
 
@@ -206,9 +208,18 @@ func _layout_toast(origin: Vector2, scale: float, viewport_size: Vector2) -> voi
 func _refresh_language_assets() -> void:
 	var is_polish := GameState.get_language() == "pl"
 
+	var dry_req_level: int = _get_biome_unlock_level("dry_prairie")
+	var current_level: int = int(GameState.get_value("level", 1))
+	var dry_prairie_unlocked: bool = dry_req_level <= 0 or current_level >= dry_req_level
+	var dry_prairie_asset: String
+	if dry_prairie_unlocked:
+		dry_prairie_asset = DRY_PRAIRIE_PL_UNLOCK_PATH if is_polish else DRY_PRAIRIE_EN_UNLOCK_PATH
+	else:
+		dry_prairie_asset = DRY_PRAIRIE_PL_PATH if is_polish else DRY_PRAIRIE_EN_PATH
+
 	_set_texture_rect(title_banner, TITLE_PL_PATH if is_polish else TITLE_EN_PATH, title_fallback, "biome.map_title", "Biome Map")
 	_set_button_texture(green_meadow_button, GREEN_MEADOW_PL_PATH if is_polish else GREEN_MEADOW_EN_PATH, "biome.green_meadow", "Green Meadow")
-	_set_button_texture(dry_prairie_button, DRY_PRAIRIE_PL_PATH if is_polish else DRY_PRAIRIE_EN_PATH, "biome.dry_prairie", "Dry Prairie")
+	_set_button_texture(dry_prairie_button, dry_prairie_asset, "biome.dry_prairie", "Dry Prairie")
 	_set_button_texture(new_biome_button, NEW_BIOME_PL_PATH if is_polish else NEW_BIOME_EN_PATH, "biome.new_biome", "New Biome")
 	_set_button_texture(back_button, BACK_BUTTON_PATH, "", "")
 
@@ -263,7 +274,30 @@ func _on_green_meadow_pressed() -> void:
 
 
 func _on_dry_prairie_pressed() -> void:
-	_show_feedback("biome.locked_message", "This biome is still locked.")
+	var req_level: int = _get_biome_unlock_level("dry_prairie")
+	var current_level: int = int(GameState.get_value("level", 1))
+	if req_level <= 0 or current_level >= req_level:
+		biome_selected.emit("dry_prairie")
+	else:
+		_show_feedback("biome.locked_level_message", "Reach level " + str(req_level) + " to unlock!")
+
+
+func _get_biome_unlock_level(target_biome_id: String) -> int:
+	var file := FileAccess.open("res://data/biomes.json", FileAccess.READ)
+	if file == null:
+		return 0
+	var data: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(data) != TYPE_ARRAY:
+		return 0
+	for entry in data:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		if str(entry.get("id", "")) == target_biome_id:
+			var req: Variant = entry.get("unlock_requirements", {})
+			if typeof(req) == TYPE_DICTIONARY:
+				return int((req as Dictionary).get("level", 0))
+	return 0
 
 
 func _on_new_biome_pressed() -> void:

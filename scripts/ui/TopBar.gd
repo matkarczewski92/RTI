@@ -10,6 +10,8 @@ const TOP_BAR_HEIGHT := 124.0
 const SETTINGS_BUTTON_SIZE_RATIO := Vector2(0.145, 0.45)
 const SETTINGS_BUTTON_CENTER_RATIO := Vector2(1.0 - 0.05 - SETTINGS_BUTTON_SIZE_RATIO.x * 0.5, 0.22)
 
+var art_path: String = ""
+
 var cash_label: Label
 var xp_label: Label
 var level_label: Label
@@ -29,7 +31,7 @@ func _build_layout() -> void:
 
 	var art := TextureRect.new()
 	art.name = "TopBarArt"
-	art.texture = AssetPaths.load_texture(TOP_BAR_ART_PATH)
+	art.texture = AssetPaths.load_texture(art_path if not art_path.is_empty() else TOP_BAR_ART_PATH)
 	art.set_anchors_preset(Control.PRESET_FULL_RECT)
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
@@ -38,15 +40,15 @@ func _build_layout() -> void:
 
 	cash_label = _make_value_label(17, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(cash_label)
-	_position_relative(cash_label, Vector2(0.135, 0.70), Vector2(0.140, 0.34))
+	_position_relative(cash_label, Vector2(0.155, 0.70), Vector2(0.140, 0.34))
 
 	xp_label = _make_value_label(17, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(xp_label)
-	_position_relative(xp_label, Vector2(0.345, 0.70), Vector2(0.145, 0.34))
+	_position_relative(xp_label, Vector2(0.365, 0.70), Vector2(0.145, 0.34))
 
 	food_label = _make_value_label(17, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(food_label)
-	_position_relative(food_label, Vector2(0.585, 0.70), Vector2(0.125, 0.34))
+	_position_relative(food_label, Vector2(0.595, 0.70), Vector2(0.125, 0.34))
 
 	water_label = _make_value_label(17, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(water_label)
@@ -54,7 +56,7 @@ func _build_layout() -> void:
 	
 	level_label = _make_value_label(17, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(level_label)
-	_position_relative(level_label, Vector2(0.939, 0.75), Vector2(0.075, 0.34))
+	_position_relative(level_label, Vector2(0.935, 0.75), Vector2(0.075, 0.34))
 
 	var settings_button := TextureButton.new()
 	settings_button.name = "SettingsButton"

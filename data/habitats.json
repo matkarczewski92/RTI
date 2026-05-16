@@ -28,5 +28,35 @@
 		"id": "green_meadow_slot_6",
 		"biome_id": "green_meadow",
 		"slot_index": 6
+	},
+	{
+		"id": "dry_prairie_slot_1",
+		"biome_id": "dry_prairie",
+		"slot_index": 1
+	},
+	{
+		"id": "dry_prairie_slot_2",
+		"biome_id": "dry_prairie",
+		"slot_index": 2
+	},
+	{
+		"id": "dry_prairie_slot_3",
+		"biome_id": "dry_prairie",
+		"slot_index": 3
+	},
+	{
+		"id": "dry_prairie_slot_4",
+		"biome_id": "dry_prairie",
+		"slot_index": 4
+	},
+	{
+		"id": "dry_prairie_slot_5",
+		"biome_id": "dry_prairie",
+		"slot_index": 5
+	},
+	{
+		"id": "dry_prairie_slot_6",
+		"biome_id": "dry_prairie",
+		"slot_index": 6
 	}
 ]

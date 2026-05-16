@@ -2418,5 +2418,91 @@
 	"save.default_animal_name": {
 		"pl": "Gad",
 		"en": "Reptile"
-	}
+	},
+	"reptile.bullsnake.name": {
+		"pl": "Wąż Byk",
+		"en": "Bullsnake"
+	},
+	"reptile.collared_lizard.name": {
+		"pl": "Jaszczurka Obrożna",
+		"en": "Collared Lizard"
+	},
+	"reptile.western_earless_lizard.name": {
+		"pl": "Jaszczurka Bezuszna",
+		"en": "Western Earless Lizard"
+	},
+	"reptile.ornate_box_turtle.name": {
+		"pl": "Żółw Skrzynkowy",
+		"en": "Ornate Box Turtle"
+	},
+	"reptile.western_hognose_snake.name": {
+		"pl": "Wąż Świński Zachodni",
+		"en": "Western Hognose Snake"
+	},
+	"reptile.prairie_rattlesnake.name": {
+		"pl": "Grzechotnik Preriowy",
+		"en": "Prairie Rattlesnake"
+	},
+	"variant.bullsnake.common.name": { "pl": "Wąż Byk", "en": "Bullsnake" },
+	"variant.bullsnake.rare.name": { "pl": "Wąż Byk ", "en": "Bullsnake" },
+	"variant.bullsnake.exceptional.name": { "pl": "Wąż Byk", "en": "Bullsnake" },
+	"variant.bullsnake.ultra_rare.name": { "pl": "Wąż Byk", "en": "Bullsnake" },
+	"variant.bullsnake.shadow.name": { "pl": "Wąż Byk", "en": "Bullsnake" },
+	"variant.collared_lizard.common.name": { "pl": "Jaszczurka Obrożna", "en": "Collared Lizard" },
+	"variant.collared_lizard.rare.name": { "pl": "Jaszczurka Obrożna", "en": "Collared Lizard" },
+	"variant.collared_lizard.exceptional.name": { "pl": "Jaszczurka Obrożna", "en": "Collared Lizard" },
+	"variant.collared_lizard.ultra_rare.name": { "pl": "Jaszczurka Obrożna", "en": "Collared Lizard" },
+	"variant.collared_lizard.shadow.name": { "pl": "Jaszczurka Obrożna", "en": "Collared Lizard" },
+	"variant.western_earless_lizard.common.name": { "pl": "Jaszczurka Bezuszna", "en": "Western Earless Lizard" },
+	"variant.western_earless_lizard.rare.name": { "pl": "Jaszczurka Bezuszna", "en": "Western Earless Lizard" },
+	"variant.western_earless_lizard.exceptional.name": { "pl": "Jaszczurka Bezuszna", "en": "Western Earless Lizard" },
+	"variant.western_earless_lizard.ultra_rare.name": { "pl": "Jaszczurka Bezuszna", "en": "Western Earless Lizard" },
+	"variant.western_earless_lizard.shadow.name": { "pl": "Jaszczurka Bezuszna", "en": "Western Earless Lizard" },
+	"variant.ornate_box_turtle.common.name": { "pl": "Żółw Skrzynkowy", "en": "Ornate Box Turtle" },
+	"variant.ornate_box_turtle.rare.name": { "pl": "Żółw Skrzynkowy Ozdobny ", "en": "Ornate Box Turtle" },
+	"variant.ornate_box_turtle.exceptional.name": { "pl": "Żółw Skrzynkowy Ozdobny", "en": "Ornate Box Turtle" },
+	"variant.ornate_box_turtle.ultra_rare.name": { "pl": "Żółw Skrzynkowy Ozdobny", "en": "Ornate Box Turtle" },
+	"variant.ornate_box_turtle.shadow.name": { "pl": "Żółw Skrzynkowy Ozdobny", "en": "Ornate Box Turtle" },
+	"variant.western_hognose_snake.common.name": { "pl": "Wąż Świnski Zachodni", "en": "Western Hognose Snake" },
+	"variant.western_hognose_snake.rare.name": { "pl": "Wąż Świnski Zachodni ", "en": "Western Hognose Snake" },
+	"variant.western_hognose_snake.exceptional.name": { "pl": "Wąż Świnski Zachodni", "en": "Western Hognose Snake" },
+	"variant.western_hognose_snake.ultra_rare.name": { "pl": "Wąż Świnski Zachodni", "en": "Western Hognose Snake" },
+	"variant.western_hognose_snake.shadow.name": { "pl": "Wąż Świnski Zachodni", "en": "Western Hognose Snake" },
+	"variant.prairie_rattlesnake.common.name": { "pl": "Grzechotnik Preriowy", "en": "Prairie Rattlesnake" },
+	"variant.prairie_rattlesnake.rare.name": { "pl": "Grzechotnik Preriowy ", "en": "Prairie Rattlesnake" },
+	"variant.prairie_rattlesnake.exceptional.name": { "pl": "Grzechotnik Preriowy", "en": "Prairie Rattlesnake" },
+	"variant.prairie_rattlesnake.ultra_rare.name": { "pl": "Grzechotnik Preriowy", "en": "Prairie Rattlesnake" },
+	"variant.prairie_rattlesnake.shadow.name": { "pl": "Grzechotnik Preriowy", "en": "Prairie Rattlesnake" },
+	"biome.locked_level_message": {
+		"pl": "Osiągnij wymagany poziom, aby odblokować ten biom.",
+		"en": "Reach the required level to unlock this biome."
+	},
+	"quest.reach_level_10.title": { "pl": "Osiągnij Poziom 10", "en": "Reach Level 10" },
+	"quest.reach_level_10.desc": { "pl": "Zdobadź 10. poziom, aby odblokować Suchą Prerię.", "en": "Reach level 10 to unlock Dry Prairie." },
+	"quest.own_five_habitats.title": { "pl": "Pięć Habitatów", "en": "Five Habitats" },
+	"quest.own_five_habitats.desc": { "pl": "Zbuduj łącznie 5 habitatów.", "en": "Build a total of 5 habitats." },
+	"quest.own_seven_habitats.title": { "pl": "Siedem Habitatów", "en": "Seven Habitats" },
+	"quest.own_seven_habitats.desc": { "pl": "Zbuduj łącznie 7 habitatów.", "en": "Build a total of 7 habitats." },
+	"quest.own_eight_reptiles.title": { "pl": "Ośmioro Gadów", "en": "Eight Reptiles" },
+	"quest.own_eight_reptiles.desc": { "pl": "Posiadaj łącznie 8 gadów.", "en": "Own a total of 8 reptiles." },
+	"quest.assign_seven_reptiles.title": { "pl": "Siedem Przypisanych", "en": "Seven Assigned" },
+	"quest.assign_seven_reptiles.desc": { "pl": "Przypisz 7 gadów do habitatów.", "en": "Assign 7 reptiles to habitats." },
+	"quest.discover_eight_variants.title": { "pl": "Osiem Wariantów", "en": "Eight Variants" },
+	"quest.discover_eight_variants.desc": { "pl": "Odkryj 8 różnych wariantów gadów.", "en": "Discover 8 different reptile variants." },
+	"quest.reach_level_15.title": { "pl": "Osiągnij Poziom 15", "en": "Reach Level 15" },
+	"quest.reach_level_15.desc": { "pl": "Zdobadź 15. poziom i udowodnij swoją biegłość.", "en": "Reach level 15 and prove your mastery." },
+	"achievement.reach_level_10.title": { "pl": "Poziom 10", "en": "Level 10" },
+	"achievement.reach_level_10.desc": { "pl": "Osiągnij 10. poziom.", "en": "Reach level 10." },
+	"achievement.first_dry_prairie_discovery.title": { "pl": "Pierwsza Wyprawa na Prerię", "en": "First Prairie Expedition" },
+	"achievement.first_dry_prairie_discovery.desc": { "pl": "Odkryj pierwszego gada z Suchej Prerii.", "en": "Discover your first Dry Prairie reptile variant." },
+	"achievement.dry_prairie_collector.title": { "pl": "Kolekcjoner Suchej Prerii", "en": "Dry Prairie Collector" },
+	"achievement.dry_prairie_collector.desc": { "pl": "Odkryj 5 wariantów z Suchej Prerii.", "en": "Discover 5 variants from Dry Prairie." },
+	"achievement.complete_dry_prairie_part.title": { "pl": "Mistrz Suchej Prerii", "en": "Master of Dry Prairie" },
+	"achievement.complete_dry_prairie_part.desc": { "pl": "Odkryj 10 wariantów z Suchej Prerii.", "en": "Discover 10 variants from Dry Prairie." },
+	"achievement.complete_bullsnake_collection.title": { "pl": "Kolekcja Wąży Byków", "en": "Bullsnake Collection" },
+	"achievement.complete_bullsnake_collection.desc": { "pl": "Odkryj wszystkie warianty Wąża Byka.", "en": "Discover all Bullsnake variants." },
+	"achievement.complete_prairie_rattlesnake_collection.title": { "pl": "Kolekcja Grzechotnika", "en": "Prairie Rattlesnake Collection" },
+	"achievement.complete_prairie_rattlesnake_collection.desc": { "pl": "Odkryj wszystkie warianty Grzechotnika Preriowego.", "en": "Discover all Prairie Rattlesnake variants." },
+	"achievement.own_ten_reptiles.title": { "pl": "Dziesięcioro Gadów", "en": "Ten Reptiles" },
+	"achievement.own_ten_reptiles.desc": { "pl": "Posiadaj łącznie 10 gadów.", "en": "Own a total of 10 reptiles." }
 }

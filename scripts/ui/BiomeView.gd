@@ -11,6 +11,7 @@ const OFFLINE_INCOME_POPUP_SCRIPT := preload("res://scripts/ui/OfflineIncomePopu
 const SETTINGS_MODAL_SCRIPT := preload("res://scripts/ui/SettingsModal.gd")
 
 const BACKGROUND_PATH := "res://assets/art/biomes/green_meadow_background.png"
+const BIOMES_CONFIG_PATH := "res://data/biomes.json"
 const LOGO_PATH := "res://assets/art/ui/logo.png"
 const EDIT_ICON_PATH := "res://assets/art/ui/icons/menu/edit_icon.png"
 const MALE_ICON_PATH := "res://assets/art/ui/icons/menu/male.png"
@@ -40,8 +41,14 @@ const REPTILE_MGMT_EXPORT_PATH := "res://assets/art/ui/reptile_mgm/export.png"
 const REPTILE_MGMT_UPGRADE_PATH := "res://assets/art/ui/reptile_mgm/upgrade.png"
 const HABITAT_IN_PROGRESS_PATH := "res://assets/art/habitats/in_progress.png"
 const HABITATS_PATH := "res://data/habitats.json"
+const BIOME_HABITAT_LAYOUTS_PATH := "res://data/biome_habitat_layouts.json"
+const LAYOUT_REF_W := 720.0
+const LAYOUT_REF_H := 1280.0
 
-const BIOME_ID := "green_meadow"
+var biome_id: String = "green_meadow"
+var _biome_config: Dictionary = {}
+var _biome_layout_slots: Array = []
+var _biome_workers_config: Dictionary = {}
 const STATE_NOT_PURCHASED := "not_purchased"
 const STATE_PURCHASED_EMPTY := "purchased_empty"
 const STATE_OCCUPIED := "occupied"
@@ -49,7 +56,9 @@ const TOP_BAR_HEIGHT := 84
 const BOTTOM_NAV_HEIGHT := 172
 const UI_MODAL_CANVAS_LAYER := 100
 const BIOMES_DATA_PATH := "res://data/biomes.json"
-const PROGRESS_BAR_ROW_HEIGHT := 26
+const EXP_BAR_PATH := "res://assets/art/ui/exp_progressbar.png"
+const BIOME_BAR_PATH := "res://assets/art/ui/biome_progressbar.png"
+const PROGRESS_BAR_ROW_HEIGHT := 27
 const PROGRESS_BARS_HEIGHT := PROGRESS_BAR_ROW_HEIGHT * 2 + 16
 const POPUP_TEXT_PRIMARY := Color(0.14, 0.10, 0.07, 1.0)
 const POPUP_TEXT_SECONDARY := Color(0.28, 0.22, 0.15, 1.0)
@@ -63,7 +72,7 @@ const DISCOVERY_PORTRAIT_SIZE := Vector2(132, 132)
 const DISCOVERY_RARITY_ICON_SIZE := Vector2(112, 112)
 const LOGO_SIZE := Vector2(150, 112)
 const NAME_MAX_LENGTH := 16
-const GALLERY_REPTILE_IDS := ["leopard_gecko", "bearded_dragon", "corn_snake", "steppe_tortoise", "small_monitor"]
+const GALLERY_REPTILE_IDS := ["leopard_gecko", "bearded_dragon", "corn_snake", "steppe_tortoise", "small_monitor", "bullsnake", "collared_lizard", "western_earless_lizard", "ornate_box_turtle", "western_hognose_snake", "prairie_rattlesnake"]
 const GALLERY_RARITIES := ["common", "rare", "exceptional", "ultra_rare"]
 
 var habitat_data: Array = []
@@ -101,6 +110,8 @@ var ui_modal_layer: CanvasLayer
 
 
 func _ready() -> void:
+	_load_biome_config()
+	_load_biome_layout()
 	ReptileSystem.migrate_save_state()
 	ReptileSystem.apply_time_updates(true)
 	habitat_data = _load_habitats()
@@ -131,7 +142,71 @@ func _ready() -> void:
 	call_deferred("_notify_biome_opened")
 
 
+func _load_biome_config() -> void:
+	_biome_config = {}
+	var file := FileAccess.open(BIOMES_DATA_PATH, FileAccess.READ)
+	if file == null:
+		return
+	var data: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(data) != TYPE_ARRAY:
+		return
+	for entry in data:
+		if typeof(entry) == TYPE_DICTIONARY and str(entry.get("id", "")) == biome_id:
+			_biome_config = entry as Dictionary
+			return
+
+
+func _load_biome_layout() -> void:
+	_biome_layout_slots = []
+	var file := FileAccess.open(BIOME_HABITAT_LAYOUTS_PATH, FileAccess.READ)
+	if file == null:
+		push_warning("BiomeView: biome_habitat_layouts.json not found, using fallback layout.")
+		_biome_layout_slots = _get_fallback_layout()
+		return
+	var data: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(data) != TYPE_DICTIONARY:
+		push_warning("BiomeView: biome_habitat_layouts.json malformed, using fallback layout.")
+		_biome_layout_slots = _get_fallback_layout()
+		return
+	var layouts: Variant = (data as Dictionary).get("layouts", null)
+	if layouts == null or typeof(layouts) != TYPE_DICTIONARY:
+		push_warning("BiomeView: no 'layouts' key in biome_habitat_layouts.json, using fallback.")
+		_biome_layout_slots = _get_fallback_layout()
+		return
+	var biome_layout: Variant = (layouts as Dictionary).get(biome_id, null)
+	if biome_layout == null or typeof(biome_layout) != TYPE_DICTIONARY:
+		push_warning("BiomeView: no layout for biome '" + biome_id + "' in biome_habitat_layouts.json, using fallback.")
+		_biome_layout_slots = _get_fallback_layout()
+		return
+	var slots_raw: Variant = (biome_layout as Dictionary).get("slots", null)
+	if slots_raw == null or typeof(slots_raw) != TYPE_ARRAY:
+		push_warning("BiomeView: invalid 'slots' for biome '" + biome_id + "', using fallback.")
+		_biome_layout_slots = _get_fallback_layout()
+		return
+	_biome_layout_slots = slots_raw as Array
+	var wb: Variant = (biome_layout as Dictionary).get("workers_button", null)
+	if wb != null and typeof(wb) == TYPE_DICTIONARY:
+		_biome_workers_config = wb as Dictionary
+	else:
+		_biome_workers_config = {}
+
+
+func _get_fallback_layout() -> Array:
+	return [
+		{"slot_id": biome_id + "_slot_1", "x": 200, "y": 320},
+		{"slot_id": biome_id + "_slot_2", "x": 520, "y": 380},
+		{"slot_id": biome_id + "_slot_3", "x": 200, "y": 530},
+		{"slot_id": biome_id + "_slot_4", "x": 520, "y": 600},
+		{"slot_id": biome_id + "_slot_5", "x": 200, "y": 750},
+		{"slot_id": biome_id + "_slot_6", "x": 520, "y": 820},
+	]
+
+
 func _rebuild_layout() -> void:
+	_load_biome_config()
+	_load_biome_layout()
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -248,8 +323,9 @@ func _build_layout() -> void:
 
 func _add_background() -> void:
 	var background: TextureRect = TextureRect.new()
-	background.name = "GreenMeadowBackground"
-	background.texture = AssetPaths.load_texture(BACKGROUND_PATH)
+	background.name = "BiomeBackground"
+	var bg_path: String = str(_biome_config.get("background_path", BACKGROUND_PATH))
+	background.texture = AssetPaths.load_texture(bg_path)
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
@@ -269,6 +345,9 @@ func _add_background() -> void:
 func _add_top_bar() -> void:
 	var top_bar: Control = TOP_BAR_SCENE.instantiate() as Control
 	top_bar.name = "TopBar"
+	var top_bar_art: String = str(_biome_config.get("top_bar_path", ""))
+	if not top_bar_art.is_empty() and top_bar.has_method("set") and "art_path" in top_bar:
+		top_bar.art_path = top_bar_art
 	top_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	top_bar.offset_bottom = TOP_BAR_HEIGHT
 	if top_bar.has_signal("settings_pressed"):
@@ -300,16 +379,22 @@ func _add_top_logo() -> void:
 
 
 func _add_workers_shortcut() -> void:
+	var wb := _biome_workers_config
+	var wb_xr := float(wb.get("x_from_right", 600))
+	var wb_yb := float(wb.get("y_from_bottom", 290))
+	var wb_w := float(wb.get("width", 212))
+	var wb_h := float(wb.get("height", 212))
+
 	var button: Button = Button.new()
 	button.name = "WorkersShortcut"
 	button.anchor_left = 1.0
 	button.anchor_top = 1.0
 	button.anchor_right = 1.0
 	button.anchor_bottom = 1.0
-	button.offset_left = -706.0
-	button.offset_top = -(BOTTOM_NAV_HEIGHT + 224.0)
-	button.offset_right = -494.0
-	button.offset_bottom = -(BOTTOM_NAV_HEIGHT + 12.0)
+	button.offset_left = -(wb_xr + wb_w * 0.5)
+	button.offset_top = -(wb_yb + wb_h * 0.5)
+	button.offset_right = -(wb_xr - wb_w * 0.5)
+	button.offset_bottom = -(wb_yb - wb_h * 0.5)
 	button.text = ""
 	button.flat = true
 	button.focus_mode = Control.FOCUS_NONE
@@ -334,6 +419,9 @@ func _add_workers_shortcut() -> void:
 func _add_bottom_nav() -> void:
 	var bottom_nav: Control = BOTTOM_NAV_SCENE.instantiate() as Control
 	bottom_nav.name = "BottomNav"
+	var bottom_art: String = str(_biome_config.get("bottom_menu_path", ""))
+	if not bottom_art.is_empty() and "art_path" in bottom_nav:
+		bottom_nav.art_path = bottom_art
 	bottom_nav.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	bottom_nav.offset_top = -BOTTOM_NAV_HEIGHT
 	bottom_nav.offset_bottom = 0
@@ -446,118 +534,89 @@ func _make_next_step_style() -> StyleBoxFlat:
 func _add_progress_bars_widget() -> void:
 	progress_bars_widget = Control.new()
 	progress_bars_widget.name = "ProgressBarsWidget"
-	progress_bars_widget.anchor_left = 0.0
+	progress_bars_widget.anchor_left = 0.10
 	progress_bars_widget.anchor_top = 0.0
-	progress_bars_widget.anchor_right = 1.0
+	progress_bars_widget.anchor_right = 0.90
 	progress_bars_widget.anchor_bottom = 0.0
-	progress_bars_widget.offset_top = TOP_BAR_HEIGHT + 45
-	progress_bars_widget.offset_bottom = TOP_BAR_HEIGHT + PROGRESS_BARS_HEIGHT + 40
+	progress_bars_widget.offset_top = TOP_BAR_HEIGHT + 40
+	progress_bars_widget.offset_bottom = TOP_BAR_HEIGHT + PROGRESS_BARS_HEIGHT -50
 	progress_bars_widget.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(progress_bars_widget)
-
-	var bg := ColorRect.new()
-	bg.color = Color(0.06, 0.04, 0.02, 0.68)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	progress_bars_widget.add_child(bg)
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_theme_constant_override("margin_left", 12)
 	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_top", 5)
-	margin.add_theme_constant_override("margin_bottom", 5)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_bottom", 4)
 	progress_bars_widget.add_child(margin)
 
 	var column := VBoxContainer.new()
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_theme_constant_override("separation", 4)
+	column.add_theme_constant_override("separation", 8)
 	margin.add_child(column)
 
-	var xp_row := HBoxContainer.new()
-	xp_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	xp_row.add_theme_constant_override("separation", 6)
-	xp_row.custom_minimum_size = Vector2(0, PROGRESS_BAR_ROW_HEIGHT)
-	column.add_child(xp_row)
+	var xp_art := _make_art_progress_bar(EXP_BAR_PATH, Color(0.25, 0.55, 1.0, 0.80))
+	xp_progress_bar = xp_art["bar"]
+	xp_progress_label = xp_art["label"]
+	column.add_child(xp_art["outer"])
 
-	var xp_prefix := Label.new()
-	xp_prefix.text = LocalizationSystem.tr_key("ui.xp_bar_label")
-	xp_prefix.add_theme_font_size_override("font_size", 11)
-	xp_prefix.add_theme_color_override("font_color", Color(0.62, 0.75, 1.0, 1.0))
-	xp_prefix.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	xp_prefix.custom_minimum_size = Vector2(22, 0)
-	xp_prefix.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	xp_row.add_child(xp_prefix)
-
-	xp_progress_bar = ProgressBar.new()
-	xp_progress_bar.min_value = 0.0
-	xp_progress_bar.max_value = 100.0
-	xp_progress_bar.value = 0.0
-	xp_progress_bar.show_percentage = false
-	xp_progress_bar.custom_minimum_size = Vector2(0, 16)
-	xp_progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	xp_progress_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	xp_progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	xp_progress_bar.add_theme_stylebox_override("fill", _make_progress_fill_style(Color(0.28, 0.52, 0.96, 1.0)))
-	xp_progress_bar.add_theme_stylebox_override("background", _make_progress_background_style(Color(0.10, 0.18, 0.42, 0.55)))
-	xp_row.add_child(xp_progress_bar)
-
-	xp_progress_label = Label.new()
-	xp_progress_label.add_theme_font_size_override("font_size", 11)
-	xp_progress_label.add_theme_color_override("font_color", Color(0.90, 0.88, 0.78, 1.0))
-	xp_progress_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.75))
-	xp_progress_label.add_theme_constant_override("shadow_offset_x", 1)
-	xp_progress_label.add_theme_constant_override("shadow_offset_y", 1)
-	xp_progress_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	xp_progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	xp_progress_label.custom_minimum_size = Vector2(138, 0)
-	xp_progress_label.clip_text = true
-	xp_progress_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	xp_row.add_child(xp_progress_label)
-
-	biome_unlock_bar_row = HBoxContainer.new()
-	biome_unlock_bar_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	biome_unlock_bar_row.add_theme_constant_override("separation", 6)
-	biome_unlock_bar_row.custom_minimum_size = Vector2(0, PROGRESS_BAR_ROW_HEIGHT)
+	var biome_art := _make_art_progress_bar(BIOME_BAR_PATH, Color(0.22, 0.72, 0.28, 0.80))
+	biome_unlock_bar_row = biome_art["outer"]
+	biome_unlock_progress_bar = biome_art["bar"]
+	biome_unlock_label = biome_art["label"]
 	column.add_child(biome_unlock_bar_row)
 
-	var biome_prefix := Label.new()
-	biome_prefix.text = LocalizationSystem.tr_key("ui.biome_unlock_bar_label")
-	biome_prefix.add_theme_font_size_override("font_size", 11)
-	biome_prefix.add_theme_color_override("font_color", Color(0.96, 0.70, 0.28, 1.0))
-	biome_prefix.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	biome_prefix.custom_minimum_size = Vector2(22, 0)
-	biome_prefix.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	biome_unlock_bar_row.add_child(biome_prefix)
-
-	biome_unlock_progress_bar = ProgressBar.new()
-	biome_unlock_progress_bar.min_value = 0.0
-	biome_unlock_progress_bar.max_value = 100.0
-	biome_unlock_progress_bar.value = 0.0
-	biome_unlock_progress_bar.show_percentage = false
-	biome_unlock_progress_bar.custom_minimum_size = Vector2(0, 16)
-	biome_unlock_progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	biome_unlock_progress_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	biome_unlock_progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	biome_unlock_progress_bar.add_theme_stylebox_override("fill", _make_progress_fill_style(Color(0.82, 0.54, 0.14, 1.0)))
-	biome_unlock_progress_bar.add_theme_stylebox_override("background", _make_progress_background_style(Color(0.32, 0.20, 0.06, 0.55)))
-	biome_unlock_bar_row.add_child(biome_unlock_progress_bar)
-
-	biome_unlock_label = Label.new()
-	biome_unlock_label.add_theme_font_size_override("font_size", 11)
-	biome_unlock_label.add_theme_color_override("font_color", Color(0.90, 0.88, 0.78, 1.0))
-	biome_unlock_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.75))
-	biome_unlock_label.add_theme_constant_override("shadow_offset_x", 1)
-	biome_unlock_label.add_theme_constant_override("shadow_offset_y", 1)
-	biome_unlock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	biome_unlock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	biome_unlock_label.custom_minimum_size = Vector2(138, 0)
-	biome_unlock_label.clip_text = true
-	biome_unlock_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	biome_unlock_bar_row.add_child(biome_unlock_label)
-
 	_refresh_progress_bars()
+
+
+func _make_art_progress_bar(texture_path: String, fill_color: Color) -> Dictionary:
+	var outer := Control.new()
+	outer.custom_minimum_size = Vector2(0, PROGRESS_BAR_ROW_HEIGHT)
+	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var tex := TextureRect.new()
+	tex.texture = load(texture_path)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_SCALE
+	tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	outer.add_child(tex)
+
+	var bar := ProgressBar.new()
+	bar.min_value = 0.0
+	bar.max_value = 100.0
+	bar.value = 0.0
+	bar.show_percentage = false
+	bar.anchor_left = 0.06
+	bar.anchor_right = 0.94
+	bar.anchor_top = 0.0
+	bar.anchor_bottom = 1.0
+	bar.offset_top = 8
+	bar.offset_bottom = -8
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var fill_style := StyleBoxFlat.new()
+	fill_style.bg_color = fill_color
+	fill_style.set_corner_radius_all(4)
+	bar.add_theme_stylebox_override("fill", fill_style)
+	bar.add_theme_stylebox_override("background", StyleBoxEmpty.new())
+	outer.add_child(bar)
+
+	var lbl := Label.new()
+	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 12)
+	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+	lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.90))
+	lbl.add_theme_constant_override("shadow_offset_x", 1)
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	outer.add_child(lbl)
+
+	return {"outer": outer, "bar": bar, "label": lbl}
 
 
 func _refresh_progress_bars() -> void:
@@ -611,7 +670,7 @@ func _get_next_biome_unlock_data() -> Dictionary:
 		if typeof(biome_value) != TYPE_DICTIONARY:
 			continue
 		var biome: Dictionary = biome_value as Dictionary
-		if str(biome.get("id", "")) == BIOME_ID:
+		if str(biome.get("id", "")) == biome_id:
 			next_id = str(biome.get("next_biome_id", ""))
 			break
 	if next_id.is_empty():
@@ -635,114 +694,55 @@ func _add_habitat_slots(parent: Control) -> void:
 	var default_size := Vector2(260, 220)
 	var empty_size := Vector2(130, 130)
 	var purchased_size := Vector2(273, 273)
-	# Manual Green Meadow tuning: final position = base_position + offset_percent / 100.
-	# Empty buy placeholders and purchased habitat visuals then receive separate
-	# state offsets, also expressed as percentages of this biome map container.
-	var slot_configs := [
-		{
-			"name": "slot_1_left_top",
-			"base_position": Vector2(0.225, 0.145),
-			"offset_percent": Vector2(10, 4),
-			"empty_state_offset_percent": Vector2.ZERO,
-			"purchased_state_offset_percent": Vector2.ZERO,
-			"size": default_size,
-			"empty_offset": Vector2(0, 2),
-			"purchased_offset": Vector2(-10, -20)
-		},
-		{
-			"name": "slot_2_left_middle",
-			"base_position": Vector2(0.325, 0.365),
-			"offset_percent": Vector2(-2, 7.5),
-			"empty_state_offset_percent": Vector2(0, -3),
-			"purchased_state_offset_percent": Vector2.ZERO,
-			"size": default_size,
-			"empty_offset": Vector2(-2, 2),
-			"purchased_offset": Vector2(-6, -12)
-		},
-		{
-			"name": "slot_3_left_bottom",
-			"base_position": Vector2(0.220, 0.660),
-			"offset_percent": Vector2(8, 5),
-			"empty_state_offset_percent": Vector2(0, -3),
-			"purchased_state_offset_percent": Vector2.ZERO,
-			"size": default_size,
-			"empty_offset": Vector2(-2, 2),
-			"purchased_offset": Vector2(-8, -12)
-		},
-		{
-			"name": "slot_4_right_top",
-			"base_position": Vector2(0.605, 0.170),
-			"offset_percent": Vector2(9, 14),
-			"empty_state_offset_percent": Vector2.ZERO,
-			"purchased_state_offset_percent": Vector2.ZERO,
-			"size": default_size,
-			"empty_offset": Vector2(2, 0),
-			"purchased_offset": Vector2(0, -16)
-		},
-		{
-			"name": "slot_5_right_middle",
-			"base_position": Vector2(0.725, 0.430),
-			"offset_percent": Vector2(-4, 18),
-			"empty_state_offset_percent": Vector2(0, -3),
-			"purchased_state_offset_percent": Vector2(0, -1),
-			"size": default_size,
-			"empty_offset": Vector2(4, 0),
-			"purchased_offset": Vector2(8, -14)
-		},
-		{
-			"name": "slot_6_right_bottom",
-			"base_position": Vector2(0.575, 0.755),
-			"offset_percent": Vector2(12, 8),
-			"empty_state_offset_percent": Vector2(0, -3),
-			"purchased_state_offset_percent": Vector2.ZERO,
-			"size": default_size,
-			"empty_offset": Vector2(0, 2),
-			"purchased_offset": Vector2(0, -12)
-		}
-	]
 
-	var count: int = int(min(habitat_data.size(), slot_configs.size()))
+	var play_area_ref_top := float(TOP_BAR_HEIGHT + PROGRESS_BAR_ROW_HEIGHT * 2 + 16 + 4)
+	var play_area_ref_h := LAYOUT_REF_H - play_area_ref_top - float(BOTTOM_NAV_HEIGHT + 18)
+
+	var count: int = min(habitat_data.size(), _biome_layout_slots.size())
 	for index in count:
 		var habitat: Dictionary = habitat_data[index] as Dictionary
-		var slot_config: Dictionary = slot_configs[index] as Dictionary
-		var base_position: Vector2 = slot_config.get("base_position", Vector2.ZERO) as Vector2
-		var offset_percent: Vector2 = slot_config.get("offset_percent", Vector2.ZERO) as Vector2
-		var slot_position: Vector2 = base_position + (offset_percent / 100.0)
-		var slot_size: Vector2 = slot_config.get("size", default_size) as Vector2
-		var empty_offset: Vector2 = slot_config.get("empty_offset", Vector2.ZERO) as Vector2
-		var purchased_offset: Vector2 = slot_config.get("purchased_offset", Vector2(0, -14)) as Vector2
-		var empty_state_offset_percent: Vector2 = slot_config.get("empty_state_offset_percent", Vector2.ZERO) as Vector2
-		var purchased_state_offset_percent: Vector2 = slot_config.get("purchased_state_offset_percent", Vector2.ZERO) as Vector2
-		var empty_state_offset: Vector2 = Vector2(
-			parent.size.x * empty_state_offset_percent.x / 100.0,
-			parent.size.y * empty_state_offset_percent.y / 100.0
+		var slot_def: Variant = _biome_layout_slots[index]
+		if typeof(slot_def) != TYPE_DICTIONARY:
+			push_warning("BiomeView: slot definition at index " + str(index) + " is not a dictionary, skipping.")
+			continue
+		var slot_data: Dictionary = slot_def as Dictionary
+
+		var x_ref := float(slot_data.get("x", 360))
+		var y_ref := float(slot_data.get("y", 640))
+		var anchor_x := x_ref / LAYOUT_REF_W
+		var anchor_y := (y_ref - play_area_ref_top) / play_area_ref_h
+		var slot_scale := float(slot_data.get("scale", 1.0))
+		var slot_size := default_size * slot_scale
+		var empty_offset := Vector2(
+			float(slot_data.get("empty_offset_x", 0)),
+			float(slot_data.get("empty_offset_y", 0))
 		)
-		var purchased_state_offset: Vector2 = Vector2(
-			parent.size.x * purchased_state_offset_percent.x / 100.0,
-			parent.size.y * purchased_state_offset_percent.y / 100.0
+		var purchased_offset := Vector2(
+			float(slot_data.get("purchased_offset_x", 0)),
+			float(slot_data.get("purchased_offset_y", -14))
 		)
+
 		var slot: Control = HABITAT_SLOT_SCENE.instantiate() as Control
 		var habitat_id: String = str(habitat.get("id", ""))
 		var slot_index: int = int(habitat.get("slot_index", index + 1))
 		var state: String = _get_habitat_state(habitat_id)
 
 		slot.name = "HabitatSlot" + str(slot_index)
-		slot.anchor_left = slot_position.x
-		slot.anchor_top = slot_position.y
-		slot.anchor_right = slot_position.x
-		slot.anchor_bottom = slot_position.y
+		if slot_data.has("z_index"):
+			slot.z_index = int(slot_data.get("z_index", 0))
+		slot.anchor_left = anchor_x
+		slot.anchor_top = anchor_y
+		slot.anchor_right = anchor_x
+		slot.anchor_bottom = anchor_y
 		slot.offset_left = -slot_size.x * 0.5
 		slot.offset_top = -slot_size.y * 0.5
 		slot.offset_right = slot_size.x * 0.5
 		slot.offset_bottom = slot_size.y * 0.5
-		slot.call(
-			"set_visual_tuning",
-			empty_size,
-			purchased_size,
-			empty_offset + empty_state_offset,
-			purchased_offset + purchased_state_offset
-		)
+		slot.call("set_visual_tuning", empty_size * slot_scale, purchased_size * slot_scale, empty_offset, purchased_offset)
 		slot.call("setup", habitat_id, slot_index, state)
+		if slot.has_method("set_empty_texture"):
+			var art_folder: String = str(_biome_config.get("habitat_art_folder", "res://assets/art/habitats/"))
+			slot.call("set_empty_texture", art_folder + "habitat_slot_empty.png")
 		if slot.has_method("set_habitat_texture"):
 			slot.call("set_habitat_texture", _get_habitat_texture_path(habitat_id))
 		if slot.has_method("set_upgrade_status"):
@@ -772,7 +772,7 @@ func _show_purchase_popup(habitat: Dictionary) -> void:
 
 	var habitat_id: String = str(habitat.get("id", ""))
 	var slot_index: int = int(habitat.get("slot_index", 0))
-	var purchase_cost: int = EconomySystem.get_next_habitat_price(BIOME_ID, habitat_data.size())
+	var purchase_cost: int = EconomySystem.get_next_habitat_price(biome_id, habitat_data.size())
 
 	habitat_purchase_modal = Control.new()
 	habitat_purchase_modal.name = "HabitatPurchaseModal"
@@ -855,7 +855,8 @@ func _make_habitat_type_purchase_card(habitat_id: String, slot_index: int, habit
 	column.add_theme_constant_override("separation", 6)
 	margin.add_child(column)
 
-	var preview: TextureRect = _make_fixed_texture(ReptileSystem.get_habitat_texture_path(habitat_type, 1), Vector2(118, 78))
+	var _hab_folder: String = str(_biome_config.get("habitat_art_folder", "res://assets/art/habitats/"))
+	var preview: TextureRect = _make_fixed_texture(_hab_folder + ReptileSystem.normalize_habitat_type(habitat_type) + "_basic.png", Vector2(118, 78))
 	preview.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	column.add_child(preview)
 
@@ -1289,7 +1290,7 @@ func _make_shop_variant_button(reptile_id: String, rarity: String, sex_selector:
 
 
 func _place_owned_reptile(instance_id: String, habitat_id: String) -> void:
-	var result: Dictionary = ReptileSystem.assign_reptile_to_habitat(instance_id, habitat_id, BIOME_ID)
+	var result: Dictionary = ReptileSystem.assign_reptile_to_habitat(instance_id, habitat_id, biome_id)
 	if not bool(result.get("success", false)):
 		_show_message_popup(str(result.get("message_key", "ui.not_enough_currency")))
 		return
@@ -1855,7 +1856,7 @@ func _show_shop_view() -> void:
 	list.add_theme_constant_override("separation", 10)
 	scroll.add_child(list)
 
-	var reptiles: Array = ReptileSystem.get_available_reptiles(BIOME_ID)
+	var reptiles: Array = ReptileSystem.get_available_reptiles(biome_id)
 	for reptile_value in reptiles:
 		if typeof(reptile_value) != TYPE_DICTIONARY:
 			continue
@@ -3194,7 +3195,7 @@ func _make_assign_habitat_button(instance_id: String, habitat_id: String, slot_i
 	button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.20, 0.48, 0.19, 1.0)))
 	_apply_button_text_color(button, BUTTON_TEXT_COLOR)
 	button.pressed.connect(func() -> void:
-		var result: Dictionary = ReptileSystem.assign_reptile_to_habitat(instance_id, habitat_id, BIOME_ID)
+		var result: Dictionary = ReptileSystem.assign_reptile_to_habitat(instance_id, habitat_id, biome_id)
 		if not bool(result.get("success", false)):
 			_show_message_popup(str(result.get("message_key", "ui.habitat_unavailable")))
 			return
@@ -3208,7 +3209,7 @@ func _make_assign_habitat_button(instance_id: String, habitat_id: String, slot_i
 
 
 func _try_purchase_habitat(habitat_id: String, slot_index: int, habitat_type: String = "grass") -> void:
-	var purchase_cost: int = EconomySystem.get_next_habitat_price(BIOME_ID, habitat_data.size())
+	var purchase_cost: int = EconomySystem.get_next_habitat_price(biome_id, habitat_data.size())
 	if purchase_cost < 0:
 		return
 
@@ -3221,11 +3222,11 @@ func _try_purchase_habitat(habitat_id: String, slot_index: int, habitat_type: St
 		return
 
 	var now: int = Time.get_unix_time_from_system()
-	var build_duration: int = ReptileSystem.get_habitat_build_duration_seconds(BIOME_ID)
+	var build_duration: int = ReptileSystem.get_habitat_build_duration_seconds(biome_id)
 	var habitats: Dictionary = _get_habitats_state()
 	habitats[habitat_id] = {
 		"habitat_id": habitat_id,
-		"biome_id": BIOME_ID,
+		"biome_id": biome_id,
 		"slot_index": slot_index,
 		"purchased": true,
 		"habitat_type": ReptileSystem.normalize_habitat_type(habitat_type),
@@ -4563,9 +4564,16 @@ func _get_habitat_texture_path(habitat_id: String) -> String:
 	if habitat.is_empty() or not bool(habitat.get("purchased", false)):
 		return ""
 	if bool(habitat.get("is_building", false)) or bool(habitat.get("is_upgrading", false)):
-		return HABITAT_IN_PROGRESS_PATH
+		return str(_biome_config.get("habitat_in_progress_path", HABITAT_IN_PROGRESS_PATH))
 
-	return ReptileSystem.get_habitat_texture_path(str(habitat.get("habitat_type", "grass")), habitat.get("habitat_level", 1))
+	var folder: String = str(_biome_config.get("habitat_art_folder", "res://assets/art/habitats/"))
+	var habitat_type: String = ReptileSystem.normalize_habitat_type(str(habitat.get("habitat_type", "grass")))
+	var level: int = ReptileSystem.normalize_habitat_level(habitat.get("habitat_level", 1))
+	var suffix: String = "basic"
+	match level:
+		2: suffix = "middle"
+		3: suffix = "top"
+	return folder + habitat_type + "_" + suffix + ".png"
 
 
 func _is_habitat_building(habitat_id: String) -> bool:
@@ -4631,7 +4639,7 @@ func _load_habitats() -> Array:
 	for item in parsed_array:
 		if typeof(item) == TYPE_DICTIONARY:
 			var item_dict: Dictionary = item as Dictionary
-			if str(item_dict.get("biome_id", "")) == BIOME_ID:
+			if str(item_dict.get("biome_id", "")) == biome_id:
 				result.append(item_dict)
 
 	result.sort_custom(_sort_habitats_by_slot)

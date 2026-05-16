@@ -44,7 +44,14 @@ func _show_biome_map() -> void:
 		map.connect("biome_selected", Callable(self, "_show_biome_view"))
 
 
-func _show_biome_view(_biome_id: String) -> void:
-	var biome_view: Node = _set_screen(BIOME_VIEW_SCENE)
+func _show_biome_view(selected_biome_id: String) -> void:
+	for child in content_root.get_children():
+		child.queue_free()
+	var biome_view: Node = BIOME_VIEW_SCENE.instantiate()
+	if "biome_id" in biome_view:
+		biome_view.biome_id = selected_biome_id
+	content_root.add_child(biome_view)
+	if biome_view is Control:
+		(biome_view as Control).set_anchors_preset(Control.PRESET_FULL_RECT)
 	if biome_view.has_signal("biome_map_requested"):
 		biome_view.connect("biome_map_requested", Callable(self, "_show_biome_map"))

@@ -54,5 +54,71 @@
 		"default_variant_id": "small_monitor_common",
 		"portrait_path": "res://assets/art/reptiles/portraits/small_monitor_portrait_common.png",
 		"icon_path": "res://assets/art/reptiles/icons/small_monitor_icon_common.png"
+	},
+	{
+		"id": "bullsnake",
+		"name_key": "reptile.bullsnake.name",
+		"biome_id": "dry_prairie",
+		"preferred_habitat_type": "grass",
+		"base_cost": 800,
+		"base_income_per_minute": 30,
+		"default_variant_id": "bullsnake_common",
+		"portrait_path": "res://assets/art/reptiles_dry_praire/bullsnake_common.png",
+		"icon_path": "res://assets/art/reptiles_dry_praire/bullsnake_common.png"
+	},
+	{
+		"id": "collared_lizard",
+		"name_key": "reptile.collared_lizard.name",
+		"biome_id": "dry_prairie",
+		"preferred_habitat_type": "stone",
+		"base_cost": 1100,
+		"base_income_per_minute": 40,
+		"default_variant_id": "collared_lizard_common",
+		"portrait_path": "res://assets/art/reptiles_dry_praire/collared_lizard_common.png",
+		"icon_path": "res://assets/art/reptiles_dry_praire/collared_lizard_common.png"
+	},
+	{
+		"id": "western_earless_lizard",
+		"name_key": "reptile.western_earless_lizard.name",
+		"biome_id": "dry_prairie",
+		"preferred_habitat_type": "sand",
+		"base_cost": 1500,
+		"base_income_per_minute": 55,
+		"default_variant_id": "western_earless_lizard_common",
+		"portrait_path": "res://assets/art/reptiles_dry_praire/western_earless_lizard_common.png",
+		"icon_path": "res://assets/art/reptiles_dry_praire/western_earless_lizard_common.png"
+	},
+	{
+		"id": "ornate_box_turtle",
+		"name_key": "reptile.ornate_box_turtle.name",
+		"biome_id": "dry_prairie",
+		"preferred_habitat_type": "grass",
+		"base_cost": 2000,
+		"base_income_per_minute": 70,
+		"default_variant_id": "ornate_box_turtle_common",
+		"portrait_path": "res://assets/art/reptiles_dry_praire/ornate_box_turtle_common.png",
+		"icon_path": "res://assets/art/reptiles_dry_praire/ornate_box_turtle_common.png"
+	},
+	{
+		"id": "western_hognose_snake",
+		"name_key": "reptile.western_hognose_snake.name",
+		"biome_id": "dry_prairie",
+		"preferred_habitat_type": "sand",
+		"base_cost": 2800,
+		"base_income_per_minute": 95,
+		"default_variant_id": "western_hognose_snake_common",
+		"portrait_path": "res://assets/art/reptiles_dry_praire/western_hognose_snake_common.png",
+		"icon_path": "res://assets/art/reptiles_dry_praire/western_hognose_snake_common.png"
+	},
+	{
+		"id": "prairie_rattlesnake",
+		"name_key": "reptile.prairie_rattlesnake.name",
+		"biome_id": "dry_prairie",
+		"preferred_habitat_type": "stone",
+		"base_cost": 4000,
+		"base_income_per_minute": 130,
+		"default_variant_id": "prairie_rattlesnake_common",
+		"portrait_path": "res://assets/art/reptiles_dry_praire/prairie_rattlesnake _common.png",
+		"icon_path": "res://assets/art/reptiles_dry_praire/prairie_rattlesnake _common.png"
 	}
 ]

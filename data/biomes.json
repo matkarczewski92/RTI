@@ -6,6 +6,10 @@
 		"is_starting_biome": true,
 		"habitat_slots": 6,
 		"background_path": "res://assets/art/biomes/green_meadow_background.png",
+		"top_bar_path": "res://assets/art/ui/top_bar.png",
+		"bottom_menu_path": "res://assets/art/ui/bottom_menu.png",
+		"habitat_in_progress_path": "res://assets/art/habitats/in_progress.png",
+		"habitat_art_folder": "res://assets/art/habitats/",
 		"next_biome_id": "dry_prairie"
 	},
 	{
@@ -14,9 +18,13 @@
 		"description_key": "biome.dry_prairie.description",
 		"is_starting_biome": false,
 		"habitat_slots": 5,
-		"background_path": "res://assets/art/biomes/dry_prairie.png",
+		"background_path": "res://assets/art/biomes/dry_praire_background.png",
+		"top_bar_path": "res://assets/art/ui/top_bar_dry_praire.png",
+		"bottom_menu_path": "res://assets/art/ui/bottom_menu_dry_praire.png",
+		"habitat_in_progress_path": "res://assets/art/habitats_dry_praire/in_progress.png",
+		"habitat_art_folder": "res://assets/art/habitats_dry_praire/",
 		"unlock_requirements": {
-			"level": 10
+			"level": 5
 		}
 	}
 ]
