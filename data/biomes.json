@@ -26,5 +26,23 @@
 		"unlock_requirements": {
 			"level": 5
 		}
+	},
+	{
+		"id": "incubator",
+		"name_key": "biome.incubator.name",
+		"type": "special",
+		"is_starting_biome": false,
+		"has_habitats": false,
+		"habitat_slots": 0,
+		"background_path": "res://assets/art/biomes/incubator_background.png",
+		"top_bar_path": "res://assets/art/ui/top_bar_incubation.png",
+		"bottom_menu_path": "res://assets/art/ui/bottom_menu_incubation.png",
+		"button_locked_pl": "res://assets/art/ui/biomes/incubator_pl.png",
+		"button_unlocked_pl": "res://assets/art/ui/biomes/incubator_pl_unlock.png",
+		"button_locked_en": "res://assets/art/ui/biomes/incubator_en.png",
+		"button_unlocked_en": "res://assets/art/ui/biomes/incubator_en_unlock.png",
+		"unlock_requirements": {
+			"level": 10
+		}
 	}
 ]

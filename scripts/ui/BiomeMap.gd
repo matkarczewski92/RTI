@@ -15,8 +15,10 @@ const DRY_PRAIRIE_PL_PATH := "res://assets/art/ui/biomes/dry_praire_pl.png"
 const DRY_PRAIRIE_EN_PATH := "res://assets/art/ui/biomes/dry_praire_en.png"
 const DRY_PRAIRIE_PL_UNLOCK_PATH := "res://assets/art/ui/biomes/dry_praire_pl_unlock.png"
 const DRY_PRAIRIE_EN_UNLOCK_PATH := "res://assets/art/ui/biomes/dry_praire_en_unlock.png"
-const NEW_BIOME_PL_PATH := "res://assets/art/ui/biomes/new_biome_pl.png"
-const NEW_BIOME_EN_PATH := "res://assets/art/ui/biomes/new_biome_en.png"
+const INCUBATOR_PL_PATH := "res://assets/art/ui/biomes/incubator_pl.png"
+const INCUBATOR_EN_PATH := "res://assets/art/ui/biomes/incubator_en.png"
+const INCUBATOR_PL_UNLOCK_PATH := "res://assets/art/ui/biomes/incubator_pl_unlock.png"
+const INCUBATOR_EN_UNLOCK_PATH := "res://assets/art/ui/biomes/incubator_en_unlock.png"
 
 const GREEN_MEADOW_ID := "green_meadow"
 const REFERENCE_SIZE := Vector2(941, 1672)
@@ -39,7 +41,7 @@ var title_banner: TextureRect
 var title_fallback: Label
 var green_meadow_button: TextureButton
 var dry_prairie_button: TextureButton
-var new_biome_button: TextureButton
+var incubator_button: TextureButton
 var toast_panel: PanelContainer
 var toast_label: Label
 var toast_timer: SceneTreeTimer
@@ -90,8 +92,8 @@ func _build_layout() -> void:
 	dry_prairie_button = _make_texture_button("DryPrairieButton", Callable(self, "_on_dry_prairie_pressed"))
 	_add_fallback_label(dry_prairie_button, "DryPrairieFallbackLabel")
 
-	new_biome_button = _make_texture_button("NewBiomeButton", Callable(self, "_on_new_biome_pressed"))
-	_add_fallback_label(new_biome_button, "NewBiomeFallbackLabel")
+	incubator_button = _make_texture_button("IncubatorButton", Callable(self, "_on_incubator_pressed"))
+	_add_fallback_label(incubator_button, "IncubatorFallbackLabel")
 
 	_build_toast()
 	_layout_controls()
@@ -171,12 +173,12 @@ func _layout_controls() -> void:
 	_position_control(title_banner, TITLE_CENTER, TITLE_SIZE, origin, scale)
 	_position_control(green_meadow_button, GREEN_CARD_CENTER, GREEN_CARD_SIZE, origin, scale)
 	_position_control(dry_prairie_button, DRY_CARD_CENTER, DRY_CARD_SIZE, origin, scale)
-	_position_control(new_biome_button, NEW_CARD_CENTER, NEW_CARD_SIZE, origin, scale)
+	_position_control(incubator_button, NEW_CARD_CENTER, NEW_CARD_SIZE, origin, scale)
 
 	title_fallback.add_theme_font_size_override("font_size", max(22, int(round(42.0 * scale))))
 	_layout_button_fallback(green_meadow_button, 30, scale)
 	_layout_button_fallback(dry_prairie_button, 28, scale)
-	_layout_button_fallback(new_biome_button, 28, scale)
+	_layout_button_fallback(incubator_button, 28, scale)
 	_layout_toast(origin, scale, viewport_size)
 
 
@@ -220,13 +222,20 @@ func _refresh_language_assets() -> void:
 	_set_texture_rect(title_banner, TITLE_PL_PATH if is_polish else TITLE_EN_PATH, title_fallback, "biome.map_title", "Biome Map")
 	_set_button_texture(green_meadow_button, GREEN_MEADOW_PL_PATH if is_polish else GREEN_MEADOW_EN_PATH, "biome.green_meadow", "Green Meadow")
 	_set_button_texture(dry_prairie_button, dry_prairie_asset, "biome.dry_prairie", "Dry Prairie")
-	_set_button_texture(new_biome_button, NEW_BIOME_PL_PATH if is_polish else NEW_BIOME_EN_PATH, "biome.new_biome", "New Biome")
+	var incubator_req_level: int = _get_biome_unlock_level("incubator")
+	var incubator_unlocked: bool = incubator_req_level <= 0 or current_level >= incubator_req_level
+	var incubator_asset: String
+	if incubator_unlocked:
+		incubator_asset = INCUBATOR_PL_UNLOCK_PATH if is_polish else INCUBATOR_EN_UNLOCK_PATH
+	else:
+		incubator_asset = INCUBATOR_PL_PATH if is_polish else INCUBATOR_EN_PATH
+	_set_button_texture(incubator_button, incubator_asset, "biome.incubator", "Incubator")
 	_set_button_texture(back_button, BACK_BUTTON_PATH, "", "")
 
 	back_button.tooltip_text = _localized_text("button.back", "Back")
 	green_meadow_button.tooltip_text = _localized_text("biome.green_meadow", "Green Meadow")
 	dry_prairie_button.tooltip_text = _localized_text("biome.dry_prairie", "Dry Prairie")
-	new_biome_button.tooltip_text = _localized_text("biome.new_biome", "New Biome")
+	incubator_button.tooltip_text = _localized_text("biome.incubator", "Incubator")
 
 
 func _set_texture_rect(rect: TextureRect, texture_path: String, fallback_label: Label, fallback_key: String, fallback_text: String) -> void:
@@ -300,8 +309,13 @@ func _get_biome_unlock_level(target_biome_id: String) -> int:
 	return 0
 
 
-func _on_new_biome_pressed() -> void:
-	_show_feedback("biome.coming_soon_message", "This biome will be available later.")
+func _on_incubator_pressed() -> void:
+	var req_level: int = _get_biome_unlock_level("incubator")
+	var current_level: int = int(GameState.get_value("level", 1))
+	if req_level <= 0 or current_level >= req_level:
+		biome_selected.emit("incubator")
+	else:
+		_show_feedback("incubator.locked_message", "The Incubator unlocks at level 10.")
 
 
 func _on_language_changed(_language: String) -> void:

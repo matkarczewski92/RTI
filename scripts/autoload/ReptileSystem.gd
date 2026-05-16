@@ -1599,6 +1599,8 @@ func _normalize_owned_instance(instance: Dictionary) -> Dictionary:
 		normalized["eggs"] = []
 	if not normalized.has("incubator_entry_id"):
 		normalized["incubator_entry_id"] = ""
+	if not normalized.has("breeding_cooldown_until"):
+		normalized["breeding_cooldown_until"] = 0
 
 	return normalized
 

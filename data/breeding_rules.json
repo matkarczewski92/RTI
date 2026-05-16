@@ -1,0 +1,61 @@
+{
+	"durations_hours": {
+		"fast": 24,
+		"long": 48
+	},
+	"cooldown_hours": 24,
+	"long_breeding_modifier": {
+		"ultra_rare_bonus_pp": 5,
+		"exceptional_bonus_pp": 5,
+		"exceptional_caps": {
+			"ultra_rare+ultra_rare": 10,
+			"exceptional+exceptional": 25
+		},
+		"subtract_order": ["common", "rare"]
+	},
+	"egg_count_distribution": {
+		"1": 28.0,
+		"2": 22.0,
+		"3": 25.0,
+		"4": 21.67,
+		"5": 3.33
+	},
+	"failure_chance_by_condition": {
+		"75": 5,
+		"50": 20,
+		"25": 40,
+		"0": 70
+	},
+	"rarity_pair_drop_rates": {
+		"common+common": {
+			"common": 70, "rare": 25, "ultra_rare": 4, "exceptional": 1
+		},
+		"common+rare": {
+			"common": 55, "rare": 35, "ultra_rare": 8, "exceptional": 2
+		},
+		"common+ultra_rare": {
+			"common": 40, "rare": 35, "ultra_rare": 20, "exceptional": 5
+		},
+		"common+exceptional": {
+			"common": 35, "rare": 35, "ultra_rare": 20, "exceptional": 10
+		},
+		"rare+rare": {
+			"common": 35, "rare": 45, "ultra_rare": 15, "exceptional": 5
+		},
+		"rare+ultra_rare": {
+			"common": 25, "rare": 40, "ultra_rare": 28, "exceptional": 7
+		},
+		"rare+exceptional": {
+			"common": 20, "rare": 35, "ultra_rare": 30, "exceptional": 15
+		},
+		"ultra_rare+ultra_rare": {
+			"common": 15, "rare": 40, "ultra_rare": 38, "exceptional": 7
+		},
+		"ultra_rare+exceptional": {
+			"common": 10, "rare": 25, "ultra_rare": 40, "exceptional": 25
+		},
+		"exceptional+exceptional": {
+			"common": 10, "rare": 25, "ultra_rare": 40, "exceptional": 25
+		}
+	}
+}

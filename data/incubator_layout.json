@@ -1,0 +1,22 @@
+{
+  "reference_resolution": { "width": 720, "height": 1280 },
+  "comment": "x/y: center pixel coords in 720x1280 reference screen. Play area runs from y=84 (top bar) to y=1108 (bottom menu). Adjust these coords visually to match the round chamber/container areas on the incubator background.",
+  "incubator": {
+    "breeding_chambers": [
+      { "id": 1, "x": 230, "y": 250 },
+      { "id": 2, "x": 495, "y": 250 },
+      { "id": 3, "x": 220, "y": 375 },
+      { "id": 4, "x": 500, "y": 375 },
+      { "id": 5, "x": 220, "y": 510 },
+      { "id": 6, "x": 505, "y": 510 }
+    ],
+    "incubation_containers": [
+      { "id": 1, "x": 215, "y": 750 },
+      { "id": 2, "x": 505, "y": 750 },
+      { "id": 3, "x": 215, "y": 910 },
+      { "id": 4, "x": 505, "y": 910 },
+      { "id": 5, "x": 215, "y": 1085 },
+      { "id": 6, "x": 505, "y": 1085 }
+    ]
+  }
+}

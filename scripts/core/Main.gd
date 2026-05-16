@@ -3,6 +3,7 @@ extends Control
 const MAIN_MENU_SCENE := preload("res://scenes/menu/MainMenu.tscn")
 const BIOME_MAP_SCENE := preload("res://scenes/map/BiomeMap.tscn")
 const BIOME_VIEW_SCENE := preload("res://scenes/biome/BiomeView.tscn")
+const INCUBATOR_VIEW_SCENE := preload("res://scenes/incubator/IncubatorView.tscn")
 
 var content_root: Control
 
@@ -45,6 +46,10 @@ func _show_biome_map() -> void:
 
 
 func _show_biome_view(selected_biome_id: String) -> void:
+	if selected_biome_id == "incubator":
+		_show_incubator()
+		return
+
 	for child in content_root.get_children():
 		child.queue_free()
 	var biome_view: Node = BIOME_VIEW_SCENE.instantiate()
@@ -55,3 +60,14 @@ func _show_biome_view(selected_biome_id: String) -> void:
 		(biome_view as Control).set_anchors_preset(Control.PRESET_FULL_RECT)
 	if biome_view.has_signal("biome_map_requested"):
 		biome_view.connect("biome_map_requested", Callable(self, "_show_biome_map"))
+
+
+func _show_incubator() -> void:
+	for child in content_root.get_children():
+		child.queue_free()
+	var incubator_view: Node = INCUBATOR_VIEW_SCENE.instantiate()
+	content_root.add_child(incubator_view)
+	if incubator_view is Control:
+		(incubator_view as Control).set_anchors_preset(Control.PRESET_FULL_RECT)
+	if incubator_view.has_signal("biome_map_requested"):
+		incubator_view.connect("biome_map_requested", Callable(self, "_show_biome_map"))

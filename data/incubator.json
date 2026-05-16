@@ -1,0 +1,10 @@
+{
+	"unlock_level": 10,
+	"breeding_chambers": 6,
+	"incubation_containers": 6,
+	"humidity_enabled": false,
+	"storage_enabled": true,
+	"egg_shop_enabled": false,
+	"breeding_enabled": true,
+	"incubation_enabled": false
+}

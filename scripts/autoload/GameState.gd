@@ -117,7 +117,8 @@ func get_default_animal_instance(instance_id: String = "") -> Dictionary:
 		"pregnancy_started_at": null,
 		"egg_lay_ready_at": null,
 		"eggs": [],
-		"incubator_entry_id": ""
+		"incubator_entry_id": "",
+		"breeding_cooldown_until": 0
 	}
 
 
@@ -166,7 +167,13 @@ func get_default_save_data() -> Dictionary:
 		"pending_offline_seconds": 0,
 		"offline_claim_available": false,
 		"last_offline_claim_timestamp": 0,
-		"biome_2_ready_popup_seen": false
+		"biome_2_ready_popup_seen": false,
+		"incubator_storage": {
+			"reptiles": [],
+			"eggs": [],
+			"hatchlings": []
+		},
+		"breeding_chambers": {}
 	}
 	for key in get_default_achievement_state().keys():
 		defaults[key] = get_default_achievement_state()[key]
@@ -296,7 +303,32 @@ func normalize_save_data(data: Dictionary) -> Dictionary:
 	normalized["owned_animals"] = normalized_animals.duplicate(true)
 	_normalize_assignment_relationships(normalized)
 	normalized["discovered_variants"] = _normalize_discovered_variants(normalized.get("discovered_variants", {}), normalized["owned_reptile_instances"])
+	normalized["incubator_storage"] = _normalize_incubator_storage(normalized.get("incubator_storage", {}))
+	normalized["breeding_chambers"] = _normalize_breeding_chambers(normalized.get("breeding_chambers", {}))
 	return normalized
+
+
+func _normalize_incubator_storage(raw: Variant) -> Dictionary:
+	var storage: Dictionary = {"reptiles": [], "eggs": [], "hatchlings": []}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return storage
+	var src: Dictionary = raw as Dictionary
+	for key in ["reptiles", "eggs", "hatchlings"]:
+		var val: Variant = src.get(key, [])
+		storage[key] = val if typeof(val) == TYPE_ARRAY else []
+	return storage
+
+
+func _normalize_breeding_chambers(raw: Variant) -> Dictionary:
+	if typeof(raw) != TYPE_DICTIONARY:
+		return {}
+	var result: Dictionary = {}
+	var src: Dictionary = raw as Dictionary
+	for key in src.keys():
+		var val: Variant = src.get(key)
+		if typeof(val) == TYPE_DICTIONARY:
+			result[str(key)] = val
+	return result
 
 
 func get_value(key: String, fallback: Variant = null) -> Variant:
@@ -541,6 +573,7 @@ func _normalize_animals(value: Variant) -> Dictionary:
 		normalized["breeding_started_at"] = _safe_timestamp(normalized.get("breeding_started_at", normalized.get("pregnancy_started_at", 0)), 0)
 		normalized["egg_lay_finish_at"] = _safe_timestamp(normalized.get("egg_lay_finish_at", normalized.get("egg_lay_ready_at", 0)), 0)
 		normalized["incubator_egg_id"] = _nullable_id(normalized.get("incubator_egg_id", normalized.get("incubator_entry_id", null)))
+		normalized["breeding_cooldown_until"] = _safe_timestamp(normalized.get("breeding_cooldown_until", 0), 0)
 		result[instance_id] = normalized
 	return result
 

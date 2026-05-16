@@ -2560,5 +2560,209 @@
 	"ui.upgrade_play_cooldown_reduction_effect": {
 		"pl": "Czas odnowienia zabawy -{value}%",
 		"en": "Play cooldown -{value}%"
+	},
+	"biome.incubator": {
+		"pl": "Inkubator",
+		"en": "Incubator"
+	},
+	"biome.incubator.name": {
+		"pl": "Inkubator",
+		"en": "Incubator"
+	},
+	"incubator.breeding_chambers": {
+		"pl": "Komory łączenia",
+		"en": "Breeding Chambers"
+	},
+	"incubator.incubation_containers": {
+		"pl": "Pojemniki inkubacyjne",
+		"en": "Incubation Containers"
+	},
+	"incubator.storage": {
+		"pl": "Schowek",
+		"en": "Storage"
+	},
+	"incubator.egg_shop": {
+		"pl": "Sklep z jajami",
+		"en": "Egg Shop"
+	},
+	"incubator.storage_empty": {
+		"pl": "Schowek jest pusty.",
+		"en": "Storage is empty."
+	},
+	"incubator.locked_message": {
+		"pl": "Inkubator odblokuje się na poziomie 10.",
+		"en": "The Incubator unlocks at level 10."
+	},
+	"incubator.coming_soon": {
+		"pl": "Ta funkcja zostanie dodana w kolejnym etapie.",
+		"en": "This feature will be added in a later stage."
+	},
+	"incubator.breeding_chamber_slot": {
+		"pl": "Komora łączenia",
+		"en": "Breeding Chamber"
+	},
+	"incubator.incubation_container_slot": {
+		"pl": "Pojemnik inkubacyjny",
+		"en": "Incubation Container"
+	},
+	"status.empty": {
+		"pl": "Pusty",
+		"en": "Empty"
+	},
+	"status.ready": {
+		"pl": "Gotowe",
+		"en": "Ready"
+	},
+	"status.in_progress": {
+		"pl": "W trakcie",
+		"en": "In Progress"
+	},
+	"incubator.select_first_parent": {
+		"pl": "Wybierz pierwszego rodzica",
+		"en": "Select First Parent"
+	},
+	"incubator.select_second_parent": {
+		"pl": "Wybierz drugiego rodzica",
+		"en": "Select Second Parent"
+	},
+	"incubator.choose_duration": {
+		"pl": "Wybierz czas łączenia",
+		"en": "Choose Breeding Duration"
+	},
+	"incubator.fast_breeding": {
+		"pl": "Szybkie (24h)",
+		"en": "Fast (24h)"
+	},
+	"incubator.long_breeding": {
+		"pl": "Długie (48h)",
+		"en": "Long (48h)"
+	},
+	"incubator.fast_bonus_info": {
+		"pl": "Standardowe szanse",
+		"en": "Standard drop rates"
+	},
+	"incubator.long_bonus_info": {
+		"pl": "+5pp na ultra rzadkie i wyjątkowe",
+		"en": "+5pp to ultra rare and exceptional"
+	},
+	"incubator.start_breeding": {
+		"pl": "Rozpocznij łączenie",
+		"en": "Start Breeding"
+	},
+	"incubator.cancel": {
+		"pl": "Anuluj",
+		"en": "Cancel"
+	},
+	"incubator.breeding_in_progress": {
+		"pl": "Łączenie w toku",
+		"en": "Breeding In Progress"
+	},
+	"incubator.breeding_ready": {
+		"pl": "Gotowe!",
+		"en": "Ready!"
+	},
+	"incubator.collect_eggs": {
+		"pl": "Odbierz jaja",
+		"en": "Collect Eggs"
+	},
+	"incubator.breeding_failed": {
+		"pl": "Łączenie nieudane",
+		"en": "Breeding Failed"
+	},
+	"incubator.collect_failed": {
+		"pl": "Odbiór nieudanego łączenia",
+		"en": "Collect Failed Breeding"
+	},
+	"incubator.cooldown_label": {
+		"pl": "Odpoczynek",
+		"en": "Cooldown"
+	},
+	"incubator.error_wrong_sex": {
+		"pl": "Wybierz samca i samicę tego samego gatunku.",
+		"en": "Select a male and female of the same species."
+	},
+	"incubator.error_same_sex": {
+		"pl": "Oba gady są tej samej płci.",
+		"en": "Both reptiles are the same sex."
+	},
+	"incubator.error_wrong_species": {
+		"pl": "Wybierz gady tego samego gatunku.",
+		"en": "Select reptiles of the same species."
+	},
+	"incubator.error_on_cooldown": {
+		"pl": "Ten gad jeszcze odpoczywa po łączeniu.",
+		"en": "This reptile is still on breeding cooldown."
+	},
+	"incubator.error_already_breeding": {
+		"pl": "Ten gad jest już w trakcie łączenia.",
+		"en": "This reptile is already breeding."
+	},
+	"incubator.error_chamber_full": {
+		"pl": "Wszystkie komory są zajęte.",
+		"en": "All chambers are occupied."
+	},
+	"incubator.eggs_collected": {
+		"pl": "Zebrano {count} jaj!",
+		"en": "Collected {count} eggs!"
+	},
+	"incubator.egg_collected_one": {
+		"pl": "Zebrano 1 jajo!",
+		"en": "Collected 1 egg!"
+	},
+	"incubator.breeding_chamber_empty_hint": {
+		"pl": "Dotknij aby wybrać parę",
+		"en": "Tap to select a pair"
+	},
+	"incubator.storage_reptiles": {
+		"pl": "Gady",
+		"en": "Reptiles"
+	},
+	"incubator.storage_eggs": {
+		"pl": "Jaja",
+		"en": "Eggs"
+	},
+	"incubator.return_to_pool": {
+		"pl": "Wróć do puli",
+		"en": "Return to Pool"
+	},
+	"incubator.no_reptiles_available": {
+		"pl": "Brak dostępnych gadów do łączenia.",
+		"en": "No reptiles available for breeding."
+	},
+	"incubator.no_compatible_partner": {
+		"pl": "Brak kompatybilnego partnera.",
+		"en": "No compatible partner available."
+	},
+	"incubator.rarity_label": {
+		"pl": "Rzadkość",
+		"en": "Rarity"
+	},
+	"incubator.sex_male": {
+		"pl": "Samiec",
+		"en": "Male"
+	},
+	"incubator.sex_female": {
+		"pl": "Samica",
+		"en": "Female"
+	},
+	"incubator.drop_rates": {
+		"pl": "Szanse na rzadkość:",
+		"en": "Drop rates:"
+	},
+	"rarity.common": {
+		"pl": "Zwykły",
+		"en": "Common"
+	},
+	"rarity.rare": {
+		"pl": "Rzadki",
+		"en": "Rare"
+	},
+	"rarity.ultra_rare": {
+		"pl": "Ultra rzadki",
+		"en": "Ultra Rare"
+	},
+	"rarity.exceptional": {
+		"pl": "Wyjątkowy",
+		"en": "Exceptional"
 	}
 }
