@@ -2,6 +2,7 @@ extends Node
 
 const REPTILES_PATH: String = "res://data/reptiles.json"
 const VARIANTS_PATH: String = "res://data/reptile_variants.json"
+const CARE_ACTIONS_PATH: String = "res://data/care_actions.json"
 const VALID_RARITIES: Array[String] = ["common", "rare", "exceptional", "ultra_rare", "shadow"]
 const HAPPINESS_DECAY_INTERVAL_SECONDS := 300.0
 const SATIETY_DECAY_INTERVAL_SECONDS := 420.0
@@ -40,6 +41,7 @@ const RARITY_ICON_PATHS: Dictionary = {
 
 var reptiles: Array = []
 var variants: Array = []
+var _care_actions_config: Dictionary = {}
 
 
 func _ready() -> void:
@@ -55,6 +57,7 @@ func _initialize_runtime_state() -> void:
 func load_data() -> void:
 	reptiles = _load_array(REPTILES_PATH)
 	variants = _load_array(VARIANTS_PATH)
+	_care_actions_config = _load_care_actions_config()
 
 
 func get_available_reptiles(biome_id: String) -> Array:
@@ -537,34 +540,36 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 	var money_reward: float = 0.0
 	match action_id:
 		"feed":
-			if int(GameState.get_value("food_current", 0)) <= 0:
-				return {"success": false, "message_key": "ui.no_food"}
-			_set_global_resource("food", int(GameState.get_value("food_current", 0)) - 1)
-			instance["hunger"] = _clamp_percent(float(instance.get("hunger", 100)) + FEED_SATIETY_GAIN)
+			var feed_cost: int = _get_habitat_resource_cost(instance, "feed")
+			if int(GameState.get_value("food_current", 0)) < feed_cost:
+				return {"success": false, "message_key": "care.not_enough_food"}
+			_set_global_resource("food", int(GameState.get_value("food_current", 0)) - feed_cost)
+			instance["hunger"] = _clamp_percent(float(instance.get("hunger", 100)) + _get_action_stat_gain("feed", FEED_SATIETY_GAIN))
 			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + CARE_SMALL_HAPPINESS_GAIN)
 			instance["last_feed_timestamp"] = now
 			instance["last_fed_at"] = now
 			xp_reward = FEED_XP_REWARD
 			message_key = "ui.feed_success_xp"
 		"water":
-			if int(GameState.get_value("water_current", 0)) <= 0:
-				return {"success": false, "message_key": "ui.no_water"}
-			_set_global_resource("water", int(GameState.get_value("water_current", 0)) - 1)
-			instance["hydration"] = _clamp_percent(float(instance.get("hydration", 100)) + WATER_HYDRATION_GAIN)
+			var water_cost: int = _get_habitat_resource_cost(instance, "water")
+			if int(GameState.get_value("water_current", 0)) < water_cost:
+				return {"success": false, "message_key": "care.not_enough_water"}
+			_set_global_resource("water", int(GameState.get_value("water_current", 0)) - water_cost)
+			instance["hydration"] = _clamp_percent(float(instance.get("hydration", 100)) + _get_action_stat_gain("water", WATER_HYDRATION_GAIN))
 			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + CARE_SMALL_HAPPINESS_GAIN)
 			instance["last_water_timestamp"] = now
 			instance["last_water_at"] = now
 			xp_reward = WATER_XP_REWARD
 			message_key = "ui.water_success_xp"
 		"clean":
-			instance["cleanliness"] = _clamp_percent(float(instance.get("cleanliness", 100)) + CLEANLINESS_GAIN)
+			instance["cleanliness"] = _clamp_percent(float(instance.get("cleanliness", 100)) + _get_action_stat_gain("clean", CLEANLINESS_GAIN))
 			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + CLEAN_HAPPINESS_GAIN)
 			instance["last_clean_timestamp"] = now
 			instance["last_cleaned_at"] = now
 			xp_reward = CLEAN_XP_REWARD
 			message_key = "ui.clean_success_xp"
 		"play":
-			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + PLAY_HAPPINESS_GAIN)
+			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + _get_action_stat_gain("play", PLAY_HAPPINESS_GAIN))
 			instance["last_play_timestamp"] = now
 			var play_reward_multiplier: float = _get_play_reward_multiplier()
 			money_reward = float(PLAY_REPTICASH_REWARD) * play_reward_multiplier
@@ -608,9 +613,10 @@ func apply_worker_care_effect(instance_id: String, worker_type: String, threshol
 		"food":
 			if float(instance.get("hunger", 100)) >= threshold:
 				return false
-			if int(GameState.get_value("food_current", 0)) <= 0:
+			var food_cost: int = _get_habitat_resource_cost(instance, "feed")
+			if int(GameState.get_value("food_current", 0)) < food_cost:
 				return false
-			_set_global_resource("food", int(GameState.get_value("food_current", 0)) - 1)
+			_set_global_resource("food", int(GameState.get_value("food_current", 0)) - food_cost)
 			instance["hunger"] = _clamp_percent(float(instance.get("hunger", 100)) + effect_value)
 			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + CARE_SMALL_HAPPINESS_GAIN)
 			instance["last_feed_timestamp"] = now
@@ -619,9 +625,10 @@ func apply_worker_care_effect(instance_id: String, worker_type: String, threshol
 		"water":
 			if float(instance.get("hydration", 100)) >= threshold:
 				return false
-			if int(GameState.get_value("water_current", 0)) <= 0:
+			var water_cost: int = _get_habitat_resource_cost(instance, "water")
+			if int(GameState.get_value("water_current", 0)) < water_cost:
 				return false
-			_set_global_resource("water", int(GameState.get_value("water_current", 0)) - 1)
+			_set_global_resource("water", int(GameState.get_value("water_current", 0)) - water_cost)
 			instance["hydration"] = _clamp_percent(float(instance.get("hydration", 100)) + effect_value)
 			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + CARE_SMALL_HAPPINESS_GAIN)
 			instance["last_water_timestamp"] = now
@@ -662,16 +669,16 @@ func get_care_cooldown_remaining(instance: Dictionary, action_id: String, now: i
 	match action_id:
 		"feed":
 			last_timestamp = _timestamp_from_value(instance.get("last_feed_timestamp", instance.get("last_fed_at", 0)))
-			cooldown = FEED_COOLDOWN_SECONDS
+			cooldown = _get_effective_cooldown("feed", FEED_COOLDOWN_SECONDS)
 		"water":
 			last_timestamp = _timestamp_from_value(instance.get("last_water_timestamp", instance.get("last_water_at", 0)))
-			cooldown = WATER_COOLDOWN_SECONDS
+			cooldown = _get_effective_cooldown("water", WATER_COOLDOWN_SECONDS)
 		"clean":
 			last_timestamp = _timestamp_from_value(instance.get("last_clean_timestamp", instance.get("last_cleaned_at", 0)))
-			cooldown = CLEAN_COOLDOWN_SECONDS
+			cooldown = _get_effective_cooldown("clean", CLEAN_COOLDOWN_SECONDS)
 		"play":
 			last_timestamp = _timestamp_from_value(instance.get("last_play_timestamp", 0))
-			cooldown = PLAY_COOLDOWN_SECONDS
+			cooldown = _get_effective_cooldown("play", PLAY_COOLDOWN_SECONDS)
 		_:
 			return 0
 
@@ -1688,6 +1695,88 @@ func _notify_achievement_progress_changed() -> void:
 		var quest_system: Node = get_node("/root/QuestSystem")
 		if quest_system.has_method("notify_event"):
 			quest_system.call("notify_event", "state_changed", {})
+
+
+func _load_care_actions_config() -> Dictionary:
+	var file: FileAccess = FileAccess.open(CARE_ACTIONS_PATH, FileAccess.READ)
+	if file == null:
+		push_warning("Missing care actions config: " + CARE_ACTIONS_PATH)
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if typeof(parsed) != TYPE_DICTIONARY:
+		push_warning("Invalid care actions config: " + CARE_ACTIONS_PATH)
+		return {}
+	return parsed as Dictionary
+
+
+func _get_care_action_config(action_id: String) -> Dictionary:
+	var actions_value: Variant = _care_actions_config.get("actions", {})
+	if typeof(actions_value) != TYPE_DICTIONARY:
+		return {}
+	var action_value: Variant = (actions_value as Dictionary).get(action_id, {})
+	if typeof(action_value) != TYPE_DICTIONARY:
+		return {}
+	return action_value as Dictionary
+
+
+func _get_action_stat_gain(action_id: String, fallback: float) -> float:
+	var config: Dictionary = _get_care_action_config(action_id)
+	if config.is_empty():
+		return fallback
+	return float(config.get("increase_percent", fallback))
+
+
+func _get_habitat_resource_cost(instance: Dictionary, action_id: String) -> int:
+	var resource_id: String = "food" if action_id == "feed" else "water"
+	var action_config: Dictionary = _get_care_action_config(action_id)
+
+	var base_cost: float
+	if action_config.has("resource_cost"):
+		base_cost = float(max(1, int(action_config.get("resource_cost", 1))))
+	else:
+		var habitat_level: int = 1
+		var habitat_id: String = _id_or_empty(instance.get("habitat_id", null))
+		if not habitat_id.is_empty():
+			var habitats: Dictionary = _get_habitats_state()
+			var habitat_value: Variant = habitats.get(habitat_id, {})
+			if typeof(habitat_value) == TYPE_DICTIONARY:
+				habitat_level = normalize_habitat_level((habitat_value as Dictionary).get("habitat_level", 1))
+
+		var level_costs_value: Variant = _care_actions_config.get("habitat_level_resource_cost_percent", {})
+		var cost_percent: int = 5
+		if typeof(level_costs_value) == TYPE_DICTIONARY:
+			cost_percent = int((level_costs_value as Dictionary).get(str(habitat_level), 5))
+
+		var resource_max: int = get_resource_max(resource_id)
+		base_cost = float(resource_max) * float(cost_percent) / 100.0
+
+	var cost_multiplier: float = 1.0
+	if has_node("/root/UpgradeSystem"):
+		var upgrade_system: Node = get_node("/root/UpgradeSystem")
+		if upgrade_system.has_method("get_action_cost_multiplier"):
+			cost_multiplier = float(upgrade_system.call("get_action_cost_multiplier", action_id))
+
+	return max(1, roundi(base_cost * cost_multiplier))
+
+
+func _get_effective_cooldown(action_id: String, base_cooldown: int) -> int:
+	var config: Dictionary = _get_care_action_config(action_id)
+	var cooldown: int = base_cooldown
+	if not config.is_empty() and config.has("cooldown_seconds"):
+		cooldown = max(1, int(config.get("cooldown_seconds", base_cooldown)))
+
+	var resource_value: Variant = config.get("resource", null)
+	var has_resource: bool = resource_value != null and str(resource_value) != "null" and not str(resource_value).is_empty()
+	if has_resource:
+		return cooldown
+
+	var cooldown_multiplier: float = 1.0
+	if has_node("/root/UpgradeSystem"):
+		var upgrade_system: Node = get_node("/root/UpgradeSystem")
+		if upgrade_system.has_method("get_action_cooldown_multiplier"):
+			cooldown_multiplier = float(upgrade_system.call("get_action_cooldown_multiplier", action_id))
+
+	return max(1, roundi(float(cooldown) * cooldown_multiplier))
 
 
 func _load_array(path: String) -> Array:

@@ -2504,5 +2504,61 @@
 	"achievement.complete_prairie_rattlesnake_collection.title": { "pl": "Kolekcja Grzechotnika", "en": "Prairie Rattlesnake Collection" },
 	"achievement.complete_prairie_rattlesnake_collection.desc": { "pl": "Odkryj wszystkie warianty Grzechotnika Preriowego.", "en": "Discover all Prairie Rattlesnake variants." },
 	"achievement.own_ten_reptiles.title": { "pl": "Dziesięcioro Gadów", "en": "Ten Reptiles" },
-	"achievement.own_ten_reptiles.desc": { "pl": "Posiadaj łącznie 10 gadów.", "en": "Own a total of 10 reptiles." }
+	"achievement.own_ten_reptiles.desc": { "pl": "Posiadaj łącznie 10 gadów.", "en": "Own a total of 10 reptiles." },
+	"care.not_enough_food": {
+		"pl": "Brakuje jedzenia.",
+		"en": "Not enough food."
+	},
+	"care.not_enough_water": {
+		"pl": "Brakuje wody.",
+		"en": "Not enough water."
+	},
+	"upgrade.better_food.name": {
+		"pl": "Lepsza karma",
+		"en": "Better food"
+	},
+	"upgrade.better_food.desc": {
+		"pl": "Zmniejsza zużycie karmy podczas karmienia.",
+		"en": "Reduces food consumed when feeding."
+	},
+	"upgrade.better_water.name": {
+		"pl": "Lepsza woda",
+		"en": "Better water"
+	},
+	"upgrade.better_water.desc": {
+		"pl": "Zmniejsza zużycie wody podczas pojenia.",
+		"en": "Reduces water consumed when watering."
+	},
+	"upgrade.better_clean.name": {
+		"pl": "Lepsze czyszczenie",
+		"en": "Better cleaning"
+	},
+	"upgrade.better_clean.desc": {
+		"pl": "Usprawnia czyszczenie bez obniżania efektu.",
+		"en": "Improves cleaning efficiency without reducing its effect."
+	},
+	"upgrade.better_play.name": {
+		"pl": "Lepsze zabawki",
+		"en": "Better toys"
+	},
+	"upgrade.better_play.desc": {
+		"pl": "Usprawnia zabawę bez obniżania efektu.",
+		"en": "Improves play efficiency without reducing its effect."
+	},
+	"ui.upgrade_food_cost_reduction_effect": {
+		"pl": "Zużycie karmy -{value}%",
+		"en": "Food cost -{value}%"
+	},
+	"ui.upgrade_water_cost_reduction_effect": {
+		"pl": "Zużycie wody -{value}%",
+		"en": "Water cost -{value}%"
+	},
+	"ui.upgrade_clean_cooldown_reduction_effect": {
+		"pl": "Czas odnowienia czyszczenia -{value}%",
+		"en": "Cleaning cooldown -{value}%"
+	},
+	"ui.upgrade_play_cooldown_reduction_effect": {
+		"pl": "Czas odnowienia zabawy -{value}%",
+		"en": "Play cooldown -{value}%"
+	}
 }

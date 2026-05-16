@@ -5,6 +5,14 @@ signal upgrade_purchased(upgrade_id: String, level: int)
 
 const UPGRADES_PATH := "res://data/upgrades.json"
 const BASE_OFFLINE_CAP_SECONDS := 14400
+const CARE_UPGRADE_ACTION_MAP := {
+	"feed": "better_food",
+	"water": "better_water",
+	"clean": "better_clean",
+	"play": "better_play"
+}
+const CARE_UPGRADE_REDUCTION_PER_LEVEL := 0.05
+const CARE_UPGRADE_MIN_MULTIPLIER := 0.50
 
 var upgrades: Array = []
 var upgrade_by_id: Dictionary = {}
@@ -228,6 +236,20 @@ func _normalize_upgrade_definition(upgrade: Dictionary) -> Dictionary:
 	normalized["enabled"] = bool(normalized.get("enabled", true))
 	normalized["sort_order"] = int(normalized.get("sort_order", 0))
 	return normalized
+
+
+func get_action_cost_multiplier(action_id: String) -> float:
+	var upgrade_id: String = str(CARE_UPGRADE_ACTION_MAP.get(action_id, ""))
+	if upgrade_id.is_empty():
+		return 1.0
+	var level: int = get_upgrade_level(upgrade_id)
+	if level <= 0:
+		return 1.0
+	return max(CARE_UPGRADE_MIN_MULTIPLIER, 1.0 - float(level) * CARE_UPGRADE_REDUCTION_PER_LEVEL)
+
+
+func get_action_cooldown_multiplier(action_id: String) -> float:
+	return get_action_cost_multiplier(action_id)
 
 
 func _notify_progress_changed() -> void:

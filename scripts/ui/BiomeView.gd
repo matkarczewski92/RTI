@@ -2314,6 +2314,18 @@ func _format_upgrade_effect(upgrade: Dictionary, level: int) -> String:
 			return LocalizationSystem.tr_key("ui.upgrade_worker_efficiency_effect").replace("{value}", _format_multiplier(1.0 + effect_value))
 		"collection_bonus_multiplier":
 			return LocalizationSystem.tr_key("ui.upgrade_collection_bonus_effect").replace("{value}", _format_multiplier(1.0 + effect_value))
+		"food_cost_reduction":
+			var food_pct: int = min(50, int(round(float(level) * per_level * 100.0)))
+			return LocalizationSystem.tr_key("ui.upgrade_food_cost_reduction_effect").replace("{value}", str(food_pct) + "%")
+		"water_cost_reduction":
+			var water_pct: int = min(50, int(round(float(level) * per_level * 100.0)))
+			return LocalizationSystem.tr_key("ui.upgrade_water_cost_reduction_effect").replace("{value}", str(water_pct) + "%")
+		"clean_cooldown_reduction":
+			var clean_pct: int = min(50, int(round(float(level) * per_level * 100.0)))
+			return LocalizationSystem.tr_key("ui.upgrade_clean_cooldown_reduction_effect").replace("{value}", str(clean_pct) + "%")
+		"play_cooldown_reduction":
+			var play_pct: int = min(50, int(round(float(level) * per_level * 100.0)))
+			return LocalizationSystem.tr_key("ui.upgrade_play_cooldown_reduction_effect").replace("{value}", str(play_pct) + "%")
 		_:
 			return _format_decimal(effect_value)
 

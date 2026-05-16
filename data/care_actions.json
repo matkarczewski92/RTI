@@ -1,0 +1,46 @@
+{
+	"version": 1,
+	"default_values": {
+		"min_stat": 0,
+		"max_stat": 100,
+		"min_cost_multiplier": 0.5,
+		"min_cooldown_multiplier": 0.5
+	},
+	"habitat_level_resource_cost_percent": {
+		"1": 5,
+		"2": 10,
+		"3": 15
+	},
+	"actions": {
+		"feed": {
+			"stat": "hunger",
+			"increase_percent": 25,
+			"resource": "food",
+			"resource_cost": 5,
+			"cooldown_seconds": 20,
+			"cost_upgrade_id": "better_food"
+		},
+		"water": {
+			"stat": "hydration",
+			"increase_percent": 25,
+			"resource": "water",
+			"resource_cost": 5,
+			"cooldown_seconds": 20,
+			"cost_upgrade_id": "better_water"
+		},
+		"clean": {
+			"stat": "cleanliness",
+			"increase_percent": 35,
+			"resource": null,
+			"cooldown_seconds": 60,
+			"cost_upgrade_id": "better_clean"
+		},
+		"play": {
+			"stat": "happiness",
+			"increase_percent": 10,
+			"resource": null,
+			"cooldown_seconds": 5,
+			"cost_upgrade_id": "better_play"
+		}
+	}
+}
