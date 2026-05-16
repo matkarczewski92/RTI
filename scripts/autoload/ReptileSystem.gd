@@ -26,7 +26,8 @@ const PLAY_XP_REWARD := 0.1
 const HABITAT_TYPES: Array[String] = ["grass", "sand", "stone", "jungle"]
 const HABITAT_MAX_LEVEL := 3
 const HABITAT_UPGRADE_COST := 10000
-const HABITAT_BUILD_DURATIONS_SECONDS: Array[int] = [10, 60, 600, 7200, 43200, 86400]
+const HABITAT_BUILD_BASE_DURATIONS_SECONDS: Array[int] = [10, 60, 180]
+const HABITAT_BUILD_SCALE_AFTER_THIRD := 1.75
 const HABITAT_UPGRADE_LEVEL_2_DURATION_SECONDS := 43200
 const HABITAT_UPGRADE_LEVEL_3_DURATION_SECONDS := 86400
 
@@ -343,8 +344,13 @@ func get_purchased_habitats_count_in_biome(biome_id: String) -> int:
 
 func get_habitat_build_duration_seconds(biome_id: String) -> int:
 	var already_purchased: int = get_purchased_habitats_count_in_biome(biome_id)
-	var duration_index: int = int(clamp(already_purchased, 0, HABITAT_BUILD_DURATIONS_SECONDS.size() - 1))
-	return HABITAT_BUILD_DURATIONS_SECONDS[duration_index]
+	if already_purchased < HABITAT_BUILD_BASE_DURATIONS_SECONDS.size():
+		return HABITAT_BUILD_BASE_DURATIONS_SECONDS[already_purchased]
+
+	var duration: float = float(HABITAT_BUILD_BASE_DURATIONS_SECONDS[HABITAT_BUILD_BASE_DURATIONS_SECONDS.size() - 1])
+	for _index in range(HABITAT_BUILD_BASE_DURATIONS_SECONDS.size(), already_purchased + 1):
+		duration *= HABITAT_BUILD_SCALE_AFTER_THIRD
+	return int(round(duration))
 
 
 func get_habitat_upgrade_duration_seconds(current_level: Variant = 1) -> int:

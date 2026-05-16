@@ -90,11 +90,11 @@ func get_required_xp_for_level(level: int) -> int:
 	if level <= 1:
 		return 0
 	if level == 2:
-		return 1000
+		return 500
 	if level == 3:
-		return 3000
+		return 2000
 
-	var required: float = 3000.0
+	var required: float = 2000.0
 	for _next_level in range(4, level + 1):
 		required = required + (required * 1.15)
 	return int(round(required))

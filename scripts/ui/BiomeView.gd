@@ -81,6 +81,8 @@ var quests_view: Control
 var workers_view: Control
 var upgrades_view: Control
 var settings_modal: Control
+var next_step_widget: PanelContainer
+var next_step_label: Label
 var pending_name_instance_id: String = ""
 var current_management_instance_id: String = ""
 var current_management_feedback_key: String = ""
@@ -108,6 +110,12 @@ func _ready() -> void:
 	if not GameState.language_changed.is_connected(_on_language_changed):
 		GameState.language_changed.connect(_on_language_changed)
 	GameState.state_changed.connect(_refresh_habitat_slots)
+	if has_node("/root/QuestSystem"):
+		if QuestSystem.has_signal("quest_completed") and not QuestSystem.quest_completed.is_connected(_on_quest_state_changed):
+			QuestSystem.quest_completed.connect(_on_quest_state_changed)
+		if QuestSystem.has_signal("quest_claimed") and not QuestSystem.quest_claimed.is_connected(_on_quest_state_changed):
+			QuestSystem.quest_claimed.connect(_on_quest_state_changed)
+	call_deferred("_notify_biome_opened")
 
 
 func _rebuild_layout() -> void:
@@ -131,6 +139,8 @@ func _rebuild_layout() -> void:
 	workers_view = null
 	upgrades_view = null
 	settings_modal = null
+	next_step_widget = null
+	next_step_label = null
 	pending_name_instance_id = ""
 	current_management_instance_id = ""
 	current_management_feedback_key = ""
@@ -201,6 +211,7 @@ func _build_layout() -> void:
 	_add_background()
 	_add_top_bar()
 	_add_map_area()
+	_add_next_step_widget()
 	_add_workers_shortcut()
 	_add_bottom_nav()
 	_add_offline_income_popup()
@@ -338,6 +349,69 @@ func _add_map_area() -> void:
 	add_child(play_area)
 
 	_add_habitat_slots(play_area)
+
+
+func _add_next_step_widget() -> void:
+	next_step_widget = PanelContainer.new()
+	next_step_widget.name = "NextStepWidget"
+	next_step_widget.anchor_left = 0.0
+	next_step_widget.anchor_top = 0.0
+	next_step_widget.anchor_right = 1.0
+	next_step_widget.anchor_bottom = 0.0
+	next_step_widget.offset_left = 18.0
+	next_step_widget.offset_top = TOP_BAR_HEIGHT + 8.0
+	next_step_widget.offset_right = -18.0
+	next_step_widget.offset_bottom = TOP_BAR_HEIGHT + 52.0
+	next_step_widget.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	next_step_widget.add_theme_stylebox_override("panel", _make_next_step_style())
+	add_child(next_step_widget)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 7)
+	margin.add_theme_constant_override("margin_bottom", 7)
+	next_step_widget.add_child(margin)
+
+	next_step_label = Label.new()
+	next_step_label.clip_text = true
+	next_step_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	next_step_label.add_theme_font_size_override("font_size", 14)
+	next_step_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_apply_label_color(next_step_label, POPUP_TEXT_PRIMARY)
+	margin.add_child(next_step_label)
+	_refresh_next_step_widget()
+
+
+func _refresh_next_step_widget() -> void:
+	if next_step_widget == null or next_step_label == null:
+		return
+	if not has_node("/root/QuestSystem") or not QuestSystem.has_method("get_next_step_quest"):
+		next_step_widget.visible = false
+		return
+
+	var state: Dictionary = QuestSystem.get_next_step_quest()
+	if state.is_empty():
+		next_step_widget.visible = false
+		return
+
+	var title: String = LocalizationSystem.tr_key(str(state.get("title_key", "")))
+	next_step_label.text = LocalizationSystem.tr_key("ui.next_step").replace("{quest}", title)
+	next_step_widget.visible = true
+
+
+func _make_next_step_style() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.96, 0.88, 0.64, 0.88)
+	style.border_color = Color(0.42, 0.30, 0.12, 0.35)
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.set_corner_radius_all(8)
+	return style
 
 
 func _add_habitat_slots(parent: Control) -> void:
@@ -1736,6 +1810,16 @@ func _show_quests_view() -> void:
 	_apply_button_text_color(close_button, POPUP_TEXT_PRIMARY)
 	header.add_child(close_button)
 
+	var next_step_state: Dictionary = QuestSystem.get_next_step_quest() if has_node("/root/QuestSystem") and QuestSystem.has_method("get_next_step_quest") else {}
+	if not next_step_state.is_empty():
+		var next_step: Label = _make_popup_label(
+			LocalizationSystem.tr_key("ui.next_step").replace("{quest}", LocalizationSystem.tr_key(str(next_step_state.get("title_key", "")))),
+			14
+		)
+		next_step.clip_text = true
+		_apply_label_color(next_step, POPUP_TEXT_ACCENT)
+		column.add_child(next_step)
+
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -2741,10 +2825,19 @@ func _notify_quest_event(event_type: String, payload: Dictionary = {}) -> void:
 		var quest_system: Node = get_node("/root/QuestSystem")
 		if quest_system.has_method("notify_event"):
 			quest_system.call("notify_event", event_type, payload)
+	_refresh_next_step_widget()
 	if has_node("/root/AchievementSystem"):
 		var achievement_system: Node = get_node("/root/AchievementSystem")
 		if achievement_system.has_method("notify_progress_changed"):
 			achievement_system.call("notify_progress_changed")
+
+
+func _notify_biome_opened() -> void:
+	_notify_quest_event("screen_opened", {"screen": "biome"})
+
+
+func _on_quest_state_changed(_quest_id: String = "") -> void:
+	_refresh_next_step_widget()
 
 
 func _try_shop_buy_reptile(reptile_id: String, rarity: String, sex: String) -> void:

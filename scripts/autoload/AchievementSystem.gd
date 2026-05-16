@@ -132,6 +132,10 @@ func get_achievement_progress(achievement: Dictionary) -> Dictionary:
 			current = int(floor(float(GameState.get_value("lifetime_repticash_earned", 0.0))))
 		"player_level_at_least":
 			current = int(GameState.get_value("level", GameState.get_value("player_level", 1)))
+		"care_action_count":
+			current = _get_counter("care:" + requirement_target)
+		"total_care_actions_count":
+			current = _get_total_care_actions_count()
 		"income_per_min_at_least":
 			current = int(floor(EconomySystem.get_total_assigned_income_per_min()))
 		"biome_unlocked":
@@ -342,6 +346,17 @@ func _get_habitats_at_level_count(required_level: int) -> int:
 		if bool(habitat.get("purchased", false)) and not bool(habitat.get("is_building", false)) and int(habitat.get("habitat_level", 1)) >= required_level:
 			count += 1
 	return count
+
+
+func _get_counter(counter_id: String) -> int:
+	var counters_value: Variant = GameState.get_value("quest_event_counters", {})
+	if typeof(counters_value) != TYPE_DICTIONARY:
+		return 0
+	return int((counters_value as Dictionary).get(counter_id, 0))
+
+
+func _get_total_care_actions_count() -> int:
+	return _get_counter("care:feed") + _get_counter("care:water") + _get_counter("care:clean") + _get_counter("care:play")
 
 
 func _is_biome_unlocked(biome_id: String) -> bool:

@@ -66,6 +66,8 @@ func get_all_quests(include_hidden: bool = false) -> Array:
 		var quest: Dictionary = quest_value as Dictionary
 		if not include_hidden and bool(quest.get("is_hidden", false)):
 			continue
+		if not include_hidden and not _is_quest_visible(quest):
+			continue
 
 		result.append(_make_quest_state(quest))
 
@@ -88,11 +90,14 @@ func _sort_quest_states(a: Variant, b: Variant) -> bool:
 
 
 func _get_sort_group(state: Dictionary) -> int:
+	var onboarding: bool = bool(state.get("is_onboarding", false))
 	if bool(state.get("claimable", false)):
-		return 0
+		return 0 if onboarding else 1
 	if bool(state.get("claimed", false)):
+		return 6
+	if onboarding:
 		return 2
-	return 1
+	return 3
 
 
 func get_active_quests(limit: int = 0) -> Array:
@@ -108,16 +113,23 @@ func get_active_quests(limit: int = 0) -> Array:
 			continue
 		result.append(state)
 
-	result.sort_custom(func(a: Variant, b: Variant) -> bool:
-		var qa: Dictionary = a as Dictionary
-		var qb: Dictionary = b as Dictionary
-		if bool(qa.get("claimable", false)) != bool(qb.get("claimable", false)):
-			return bool(qa.get("claimable", false))
-		return int(qa.get("sort_order", 0)) < int(qb.get("sort_order", 0))
-	)
+	result.sort_custom(_sort_quest_states)
 	if limit > 0 and result.size() > limit:
 		return result.slice(0, limit)
 	return result
+
+
+func get_next_step_quest() -> Dictionary:
+	for state_value in get_active_quests(0):
+		if typeof(state_value) != TYPE_DICTIONARY:
+			continue
+
+		var state: Dictionary = state_value as Dictionary
+		if bool(state.get("claimed", false)):
+			continue
+		return state
+
+	return {}
 
 
 func get_completed_unclaimed_quests() -> Array:
@@ -219,7 +231,45 @@ func _make_quest_state(quest: Dictionary) -> Dictionary:
 	state["completed"] = completed
 	state["claimed"] = claimed
 	state["claimable"] = completed and not claimed
+	state["prerequisites_met"] = _are_prerequisites_met(quest)
 	return state
+
+
+func _is_quest_visible(quest: Dictionary) -> bool:
+	if not bool(quest.get("is_onboarding", false)):
+		return true
+	return _are_prerequisites_met(quest)
+
+
+func _are_prerequisites_met(quest: Dictionary) -> bool:
+	var prerequisites_value: Variant = quest.get("prerequisite_quest_ids", [])
+	if typeof(prerequisites_value) != TYPE_ARRAY:
+		return true
+
+	for prerequisite_value in (prerequisites_value as Array):
+		var prerequisite_id: String = str(prerequisite_value)
+		if prerequisite_id.is_empty():
+			continue
+		if is_claimed(prerequisite_id):
+			continue
+		if _is_quest_completed(prerequisite_id):
+			continue
+		return false
+
+	return true
+
+
+func _is_quest_completed(quest_id: String) -> bool:
+	var completed_value: Variant = GameState.get_value("completed_quests", [])
+	if typeof(completed_value) == TYPE_ARRAY and (completed_value as Array).has(quest_id):
+		return true
+
+	var quest: Dictionary = _get_quest(quest_id)
+	if quest.is_empty():
+		return false
+
+	var progress: Dictionary = _calculate_progress(quest)
+	return int(progress.get("current", 0)) >= int(progress.get("target", 1))
 
 
 func _calculate_progress(quest: Dictionary) -> Dictionary:

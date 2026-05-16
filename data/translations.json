@@ -395,6 +395,46 @@
 		"pl": "Kup pierwszy habitat.",
 		"en": "Buy your first habitat."
 	},
+	"achievement.first_care_action.title": {
+		"pl": "Pierwsza opieka",
+		"en": "First care"
+	},
+	"achievement.first_care_action.desc": {
+		"pl": "Wykonaj pierwsz\u0105 akcj\u0119 opieki.",
+		"en": "Complete your first care action."
+	},
+	"achievement.lifetime_earn_500.title": {
+		"pl": "Pierwsze R$ 500",
+		"en": "First R$ 500"
+	},
+	"achievement.lifetime_earn_500.desc": {
+		"pl": "Zar\u00f3b \u0142\u0105cznie 500 R$.",
+		"en": "Earn 500 R$ in total."
+	},
+	"achievement.reach_level_2.title": {
+		"pl": "Pierwszy awans",
+		"en": "First level up"
+	},
+	"achievement.reach_level_2.desc": {
+		"pl": "Osi\u0105gnij poziom gracza 2.",
+		"en": "Reach player level 2."
+	},
+	"achievement.own_two_reptiles.title": {
+		"pl": "Para gad\u00f3w",
+		"en": "Two reptiles"
+	},
+	"achievement.own_two_reptiles.desc": {
+		"pl": "Posiadaj 2 gady.",
+		"en": "Own 2 reptiles."
+	},
+	"achievement.own_two_habitats.title": {
+		"pl": "Dwa habitaty",
+		"en": "Two habitats"
+	},
+	"achievement.own_two_habitats.desc": {
+		"pl": "Posiadaj 2 kupione habitaty.",
+		"en": "Own 2 purchased habitats."
+	},
 	"achievement.own_three_habitats.title": {
 		"pl": "Rozbudowa terenu",
 		"en": "Expanding grounds"
@@ -586,6 +626,10 @@
 	"ui.quests": {
 		"pl": "Zadania",
 		"en": "Quests"
+	},
+	"ui.next_step": {
+		"pl": "Nast\u0119pny krok: {quest}",
+		"en": "Next step: {quest}"
 	},
 	"ui.workers": {
 		"pl": "Pracownicy",
@@ -1231,6 +1275,14 @@
 		"pl": "Czyszczenie",
 		"en": "Clean"
 	},
+	"quest.welcome.title": {
+		"pl": "Witaj w Reptile Tycoon",
+		"en": "Welcome to Reptile Tycoon"
+	},
+	"quest.welcome.desc": {
+		"pl": "Wejd\u017a do pierwszego biomu.",
+		"en": "Enter the first biome."
+	},
 	"quest.buy_first_habitat.title": {
 		"pl": "Pierwszy habitat",
 		"en": "First habitat"
@@ -1280,12 +1332,12 @@
 		"en": "Buy your first habitat."
 	},
 	"quest.open_shop.title": {
-		"pl": "Czas na zakupy",
-		"en": "Shopping time"
+		"pl": "Czas na sklep",
+		"en": "Time to shop"
 	},
 	"quest.open_shop.desc": {
-		"pl": "Otw\u00f3rz sklep.",
-		"en": "Open the shop."
+		"pl": "Otw\u00f3rz sklep z gadami.",
+		"en": "Open the reptile shop."
 	},
 	"quest.buy_first_reptile.title": {
 		"pl": "Pierwszy gad",
@@ -1313,7 +1365,7 @@
 	},
 	"quest.name_first_reptile.title": {
 		"pl": "Nadaj imi\u0119",
-		"en": "Give a name"
+		"en": "Give it a name"
 	},
 	"quest.name_first_reptile.desc": {
 		"pl": "Nadaj imi\u0119 gadowi.",
@@ -1336,16 +1388,16 @@
 		"en": "Open the collection gallery."
 	},
 	"quest.feed_one_reptile.title": {
-		"pl": "Karmienie",
-		"en": "Feeding"
+		"pl": "Pierwsze karmienie",
+		"en": "First feeding"
 	},
 	"quest.feed_one_reptile.desc": {
-		"pl": "Nakarm 1 gada.",
-		"en": "Feed 1 reptile."
+		"pl": "Nakarm gada.",
+		"en": "Feed a reptile."
 	},
 	"quest.water_one_reptile.title": {
-		"pl": "Woda",
-		"en": "Water"
+		"pl": "\u015awie\u017ca woda",
+		"en": "Fresh water"
 	},
 	"quest.water_one_reptile.desc": {
 		"pl": "Wymie\u0144 wod\u0119.",
@@ -2180,19 +2232,19 @@
 		"en": "Save file was updated."
 	},
 	"quest.finish_first_habitat_build.title": {
-		"pl": "Pierwsza budowa",
-		"en": "First build"
+		"pl": "Gotowe do zamieszkania",
+		"en": "Ready to move in"
 	},
 	"quest.finish_first_habitat_build.desc": {
-		"pl": "Poczekaj, az pierwszy habitat bedzie gotowy.",
+		"pl": "Poczekaj, a\u017c pierwszy habitat b\u0119dzie gotowy.",
 		"en": "Wait until your first habitat is ready."
 	},
 	"quest.play_one_time.title": {
-		"pl": "Zabawa",
-		"en": "Play time"
+		"pl": "Zadowolony gad",
+		"en": "Happy reptile"
 	},
 	"quest.play_one_time.desc": {
-		"pl": "Pobaw sie z gadem 1 raz.",
+		"pl": "Pobaw si\u0119 z gadem.",
 		"en": "Play with a reptile once."
 	},
 	"quest.earn_500_rs.title": {
@@ -2204,24 +2256,24 @@
 		"en": "Earn R$ 500 total."
 	},
 	"quest.reach_level_2.title": {
-		"pl": "Poziom 2",
-		"en": "Level 2"
+		"pl": "Pierwszy awans",
+		"en": "First level up"
 	},
 	"quest.reach_level_2.desc": {
-		"pl": "Osiagnij poziom 2.",
+		"pl": "Osi\u0105gnij poziom 2.",
 		"en": "Reach level 2."
 	},
 	"quest.own_two_habitats.title": {
-		"pl": "Dwa habitaty",
-		"en": "Two habitats"
+		"pl": "Rosn\u0105ce centrum",
+		"en": "Growing center"
 	},
 	"quest.own_two_habitats.desc": {
-		"pl": "Posiadaj 2 habitaty.",
-		"en": "Own 2 habitats."
+		"pl": "Kup drugi habitat.",
+		"en": "Buy a second habitat."
 	},
 	"quest.own_two_reptiles.title": {
-		"pl": "Dwa gady",
-		"en": "Two reptiles"
+		"pl": "Ma\u0142a kolekcja",
+		"en": "Small collection"
 	},
 	"quest.own_two_reptiles.desc": {
 		"pl": "Posiadaj 2 gady.",
