@@ -5,7 +5,10 @@
       "Bash(Select-Object Name)",
       "Bash(xargs grep -l \"achievement\\\\|quest\")",
       "Bash(xargs grep -l \"dry_prairie\\\\|bullsnake\\\\|collared_lizard\")",
-      "Bash(Get-ChildItem \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\\\\data\\\\\" -Name)"
+      "Bash(Get-ChildItem \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\\\\data\\\\\" -Name)",
+      "Bash(Get-ChildItem -Path \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\" -Recurse -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object -First 100)",
+      "Bash(Format-Table FullName)"
     ]
   }
 }
