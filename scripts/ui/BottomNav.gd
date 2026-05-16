@@ -7,6 +7,10 @@ const AssetPaths := preload("res://scripts/helpers/AssetPaths.gd")
 const BOTTOM_MENU_ART_PATH := "res://assets/art/ui/bottom_menu.png"
 const BOTTOM_NAV_HEIGHT := 172.0
 
+# Ustaw na true żeby zobaczyć kolorowe nakładki z numerami przycisków.
+# Wyłącz (false) po potwierdzeniu, że kliknięcia trafiają poprawnie.
+const DEBUG_NAV := false
+
 var art_path: String = ""
 
 const ITEMS: Array[Dictionary] = [
@@ -63,6 +67,15 @@ func _build_layout() -> void:
 		add_child(_make_nav_item(item as Dictionary, index))
 
 
+const _DEBUG_COLORS: Array = [
+	Color(1.0, 0.0, 0.0, 0.40),
+	Color(0.0, 0.85, 0.0, 0.40),
+	Color(0.1, 0.4, 1.0, 0.40),
+	Color(1.0, 0.85, 0.0, 0.40),
+	Color(0.0, 0.90, 0.90, 0.40),
+	Color(0.90, 0.0, 0.90, 0.40),
+]
+
 func _make_nav_item(item: Dictionary, index: int) -> Control:
 	var button: Button = Button.new()
 	button.name = str(item.get("id", "nav_item"))
@@ -84,9 +97,40 @@ func _make_nav_item(item: Dictionary, index: int) -> Control:
 		set_active_item(pressed_item_id)
 		nav_pressed.emit(pressed_item_id)
 	)
-	button.add_theme_stylebox_override("normal", _make_item_style(bool(item.get("active", false))))
-	button.add_theme_stylebox_override("hover", _make_item_style(true))
-	button.add_theme_stylebox_override("pressed", _make_item_style(true))
+
+	if DEBUG_NAV:
+		var base_col: Color = _DEBUG_COLORS[index % _DEBUG_COLORS.size()]
+		var dbg := StyleBoxFlat.new()
+		dbg.bg_color = Color(base_col.r, base_col.g, base_col.b, 0.25)
+		dbg.border_color = base_col
+		dbg.set_border_width_all(4)
+		button.add_theme_stylebox_override("normal", dbg)
+		button.add_theme_stylebox_override("hover", dbg)
+		button.add_theme_stylebox_override("pressed", dbg)
+
+		var lbl := Label.new()
+		lbl.text = str(index + 1)
+		lbl.anchor_left = 0.5
+		lbl.anchor_top = 0.5
+		lbl.anchor_right = 0.5
+		lbl.anchor_bottom = 0.5
+		lbl.offset_left = -20.0
+		lbl.offset_top = -18.0
+		lbl.offset_right = 20.0
+		lbl.offset_bottom = 18.0
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lbl.add_theme_font_size_override("font_size", 28)
+		lbl.add_theme_color_override("font_color", Color.WHITE)
+		lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1))
+		lbl.add_theme_constant_override("shadow_offset_x", 2)
+		lbl.add_theme_constant_override("shadow_offset_y", 2)
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		button.add_child(lbl)
+	else:
+		button.add_theme_stylebox_override("normal", _make_item_style(bool(item.get("active", false))))
+		button.add_theme_stylebox_override("hover", _make_item_style(true))
+		button.add_theme_stylebox_override("pressed", _make_item_style(true))
 
 	return button
 
@@ -113,7 +157,7 @@ func _make_bar_style() -> StyleBoxFlat:
 	return style
 
 
-func _make_item_style(active: bool) -> StyleBoxFlat:
+func _make_item_style(_active: bool) -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = Color(1.0, 1.0, 1.0, 0.0)
 	style.border_color = Color(1.0, 1.0, 1.0, 0.0)

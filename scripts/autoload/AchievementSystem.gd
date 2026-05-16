@@ -134,6 +134,8 @@ func get_achievement_progress(achievement: Dictionary) -> Dictionary:
 			current = int(GameState.get_value("level", GameState.get_value("player_level", 1)))
 		"care_action_count":
 			current = _get_counter("care:" + requirement_target)
+		"event_counter_at_least":
+			current = _get_counter("incubator:" + requirement_target)
 		"total_care_actions_count":
 			current = _get_total_care_actions_count()
 		"income_per_min_at_least":

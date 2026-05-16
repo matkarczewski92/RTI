@@ -223,6 +223,14 @@ func collect_breeding(chamber_index: int) -> Dictionary:
 	GameState.set_value("breeding_chambers", chambers)
 	SaveSystem.save_game()
 
+	if will_succeed and eggs_data.size() > 0:
+		var counters_val: Variant = GameState.get_value("quest_event_counters", {})
+		var counters: Dictionary = counters_val as Dictionary if typeof(counters_val) == TYPE_DICTIONARY else {}
+		counters["incubator:total_eggs"] = int(counters.get("incubator:total_eggs", 0)) + eggs_data.size()
+		counters["incubator:successful_pairings"] = int(counters.get("incubator:successful_pairings", 0)) + 1
+		GameState.set_value("quest_event_counters", counters)
+		AchievementSystem.notify_progress_changed()
+
 	return {
 		"success": true,
 		"egg_count": eggs_data.size() if will_succeed else 0,

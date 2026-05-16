@@ -514,6 +514,29 @@ func _execute_dev_command(command: String) -> String:
 			reptile_system.call("apply_time_updates", false)
 		GameState.state_changed.emit()
 		return "Build skipped"
+	elif cmd == "skip_pairings":
+		var chambers_val: Variant = GameState.get_value("breeding_chambers", {})
+		if typeof(chambers_val) == TYPE_DICTIONARY:
+			for ckey in (chambers_val as Dictionary).keys():
+				var cv: Variant = (chambers_val as Dictionary)[ckey]
+				if typeof(cv) != TYPE_DICTIONARY:
+					continue
+				var cd: Dictionary = cv as Dictionary
+				if str(cd.get("state", "")) == "breeding":
+					cd["ends_at"] = 1
+					(chambers_val as Dictionary)[ckey] = cd
+			GameState.set_value("breeding_chambers", chambers_val)
+		var rs: Node = get_node_or_null("/root/ReptileSystem")
+		if rs != null and rs.has_method("apply_time_updates"):
+			rs.call("apply_time_updates", false)
+		GameState.state_changed.emit()
+		return "Pairings skipped"
+	elif cmd == "skip_incubations":
+		var is_node: Node = get_node_or_null("/root/IncubationSystem")
+		if is_node != null and is_node.has_method("skip_all_incubations"):
+			is_node.call("skip_all_incubations")
+		GameState.state_changed.emit()
+		return "Incubations skipped"
 	elif cmd.is_empty():
 		return ""
 	return "Unknown: " + cmd

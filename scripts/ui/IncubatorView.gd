@@ -65,6 +65,7 @@ var _incubation_panel_available_ids: Array = []
 
 # Egg shop
 var _egg_shop_overlay: Control
+var _hatch_results_overlay: Control
 
 
 func _ready() -> void:
@@ -139,6 +140,7 @@ func _build_layout() -> void:
 	_add_select_overlay()
 	_add_incubation_panel()
 	_add_egg_shop_overlay()
+	_add_hatch_results_overlay()
 	_add_toast()
 
 
@@ -166,6 +168,7 @@ func _rebuild_layout() -> void:
 	_incubation_panel_count = 1
 	_incubation_panel_available_ids = []
 	_egg_shop_overlay = null
+	_hatch_results_overlay = null
 	_build_layout()
 
 
@@ -289,7 +292,13 @@ func _add_slot(parent: Control, slot_def: Dictionary, index: int,
 	var y_ref := float(slot_def.get("y", 640))
 	var icon_size := float(slot_def.get("icon_size", SLOT_ICON_DEFAULT))
 	var habitat_size := float(slot_def.get("habitat_size", SLOT_HABITAT_DEFAULT))
-	var hitbox_half := (maxf(icon_size, habitat_size) + SLOT_HITBOX_PAD) * 0.5
+	var hitbox_half := (icon_size + SLOT_HITBOX_PAD) * 0.5
+
+	# Separate centers for the small icon and the habitat graphic (relative to hitbox center)
+	var icon_ox := float(slot_def.get("icon_x", x_ref)) - x_ref
+	var icon_oy := float(slot_def.get("icon_y", y_ref)) - y_ref
+	var habitat_ox := float(slot_def.get("habitat_x", x_ref)) - x_ref
+	var habitat_oy := float(slot_def.get("habitat_y", y_ref)) - y_ref
 
 	var ax := x_ref / LAYOUT_REF_W
 	var ay := (y_ref - PLAY_AREA_REF_TOP) / play_ref_h
@@ -306,6 +315,10 @@ func _add_slot(parent: Control, slot_def: Dictionary, index: int,
 	container.offset_bottom = hitbox_half
 	container.set_meta("icon_size", icon_size)
 	container.set_meta("habitat_size", habitat_size)
+	container.set_meta("icon_ox", icon_ox)
+	container.set_meta("icon_oy", icon_oy)
+	container.set_meta("habitat_ox", habitat_ox)
+	container.set_meta("habitat_oy", habitat_oy)
 	parent.add_child(container)
 
 	# Visible icon (centered in hitbox)
@@ -357,12 +370,12 @@ func _add_slot(parent: Control, slot_def: Dictionary, index: int,
 
 # ─── Slot visual refresh ───────────────────────────────────────────────
 
-func _apply_icon_size(icon: TextureRect, px: float) -> void:
+func _apply_icon_size(icon: TextureRect, px: float, ox: float = 0.0, oy: float = 0.0) -> void:
 	var h := px * 0.5
-	icon.offset_left = -h
-	icon.offset_top = -h
-	icon.offset_right = h
-	icon.offset_bottom = h
+	icon.offset_left  = -h + ox
+	icon.offset_top   = -h + oy
+	icon.offset_right =  h + ox
+	icon.offset_bottom =  h + oy
 
 
 func _refresh_slot(container: Control, index: int, slot_type: String) -> void:
@@ -371,14 +384,18 @@ func _refresh_slot(container: Control, index: int, slot_type: String) -> void:
 	if icon == null or timer_label == null:
 		return
 
-	var icon_size := float(container.get_meta("icon_size", SLOT_ICON_DEFAULT))
+	var icon_size    := float(container.get_meta("icon_size",    SLOT_ICON_DEFAULT))
 	var habitat_size := float(container.get_meta("habitat_size", SLOT_HABITAT_DEFAULT))
+	var icon_ox      := float(container.get_meta("icon_ox",    0.0))
+	var icon_oy      := float(container.get_meta("icon_oy",    0.0))
+	var habitat_ox   := float(container.get_meta("habitat_ox", 0.0))
+	var habitat_oy   := float(container.get_meta("habitat_oy", 0.0))
 
 	if slot_type == "incubation":
 		var containers: Dictionary = IncubationSystem.get_containers()
 		var cv: Variant = containers.get(str(index), null)
 		if cv == null or typeof(cv) != TYPE_DICTIONARY:
-			_apply_icon_size(icon, icon_size)
+			_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
 			icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
 			icon.modulate = Color.WHITE
 			timer_label.text = ""
@@ -387,34 +404,34 @@ func _refresh_slot(container: Control, index: int, slot_type: String) -> void:
 		var ic_state: String = str(ic.get("state", "empty"))
 		match ic_state:
 			"loaded":
-				_apply_icon_size(icon, icon_size)
+				_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
 				icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
 				icon.modulate = Color(0.70, 0.88, 1.0, 1.0)
 				timer_label.text = str(int(ic.get("egg_count", 0))) + " jaj"
 			"running":
-				_apply_icon_size(icon, habitat_size)
+				_apply_icon_size(icon, habitat_size, habitat_ox, habitat_oy)
 				icon.texture = AssetPaths.load_texture(INCUBATION_IN_PROGRESS_PATH)
 				icon.modulate = Color.WHITE
 				var rem: int = IncubationSystem.get_remaining_seconds(ic)
 				timer_label.text = _format_countdown(rem)
 			"paused_low_humidity":
-				_apply_icon_size(icon, habitat_size)
+				_apply_icon_size(icon, habitat_size, habitat_ox, habitat_oy)
 				icon.texture = AssetPaths.load_texture(INCUBATION_IN_PROGRESS_PATH)
 				icon.modulate = Color(1.0, 0.72, 0.20, 1.0)
 				var hum: int = int(float(ic.get("humidity_percent", 0.0)))
 				timer_label.text = str(hum) + "%"
 			"failed_dry":
-				_apply_icon_size(icon, icon_size)
+				_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
 				icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
 				icon.modulate = Color(1.0, 0.38, 0.32, 1.0)
 				timer_label.text = _localized_text("incubation.failed_short", "Failed")
 			"ready_to_hatch":
-				_apply_icon_size(icon, icon_size)
+				_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
 				icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
 				icon.modulate = Color(0.42, 1.0, 0.52, 1.0)
 				timer_label.text = _localized_text("incubation.ready_short", "Ready!")
 			_:
-				_apply_icon_size(icon, icon_size)
+				_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
 				icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
 				icon.modulate = Color.WHITE
 				timer_label.text = ""
@@ -424,7 +441,7 @@ func _refresh_slot(container: Control, index: int, slot_type: String) -> void:
 	var chambers: Dictionary = BreedingSystem.get_chambers()
 	var val: Variant = chambers.get(str(index), null)
 	if val == null or typeof(val) != TYPE_DICTIONARY:
-		_apply_icon_size(icon, icon_size)
+		_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
 		icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
 		icon.modulate = Color.WHITE
 		timer_label.text = ""
@@ -434,23 +451,23 @@ func _refresh_slot(container: Control, index: int, slot_type: String) -> void:
 	var state: String = str(chamber.get("state", "empty"))
 	match state:
 		"breeding":
-			_apply_icon_size(icon, habitat_size)
+			_apply_icon_size(icon, habitat_size, habitat_ox, habitat_oy)
 			icon.texture = AssetPaths.load_texture(CONNECTION_IN_PROGRESS_PATH)
 			icon.modulate = Color.WHITE
 			var secs: int = BreedingSystem.get_breeding_remaining_seconds(chamber)
 			timer_label.text = _format_countdown(secs)
 		"ready":
-			_apply_icon_size(icon, icon_size)
+			_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
 			icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
 			icon.modulate = Color(0.50, 1.0, 0.55, 1.0)
 			timer_label.text = _localized_text("incubator.breeding_ready", "Ready!")
 		"failed":
-			_apply_icon_size(icon, icon_size)
+			_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
 			icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
 			icon.modulate = Color(1.0, 0.45, 0.40, 1.0)
 			timer_label.text = _localized_text("incubator.breeding_failed", "Failed")
 		_:
-			_apply_icon_size(icon, icon_size)
+			_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
 			icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
 			icon.modulate = Color.WHITE
 			timer_label.text = ""
@@ -607,7 +624,7 @@ func _populate_storage_overlay() -> void:
 		return
 
 	if reptiles.size() > 0:
-		_add_storage_header(content, "incubator.storage_reptiles", "Reptiles")
+		_add_storage_header(content, "storage.reptiles_header", "Reptiles in Storage")
 		for entry in reptiles:
 			if typeof(entry) == TYPE_DICTIONARY:
 				content.add_child(_make_storage_reptile_row(entry as Dictionary))
@@ -620,7 +637,7 @@ func _populate_storage_overlay() -> void:
 				if not bool(e.get("in_container", false)):
 					available_eggs.append(e)
 		if available_eggs.size() > 0:
-			_add_storage_header(content, "incubator.storage_eggs", "Eggs")
+			_add_storage_header(content, "storage.eggs_header", "Eggs in Storage")
 			for entry in available_eggs:
 				content.add_child(_make_storage_egg_row(entry as Dictionary))
 
@@ -1571,7 +1588,7 @@ func _ip_show_ready(container: Dictionary) -> void:
 	_incubation_panel_content.add_child(_make_ip_info_label(egg_name, Color(0.95, 0.88, 0.68, 1.0)))
 	_incubation_panel_content.add_child(_make_ip_info_label(str(count) + " jaj"))
 	_incubation_panel_content.add_child(_make_ip_info_label(
-		_localized_text("incubation.ready_to_hatch", "Ready to hatch"),
+		_localized_text("incubation.status_ready_to_hatch", "Ready to hatch"),
 		Color(0.42, 1.0, 0.52, 1.0)
 	))
 
@@ -1580,11 +1597,28 @@ func _ip_show_ready(container: Dictionary) -> void:
 	sp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_incubation_panel_content.add_child(sp)
 
-	_incubation_panel_content.add_child(_make_ip_action_btn(
-		_localized_text("incubation.hatch", "Hatch"),
-		func() -> void:
-			_show_toast("incubation.hatch_placeholder", "Hatching will be added in the next stage.")
-	))
+	var cidx: int = _incubation_panel_idx
+	var hatch_btn := Button.new()
+	hatch_btn.text = _localized_text("incubation.hatch", "Wykluj")
+	hatch_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hatch_btn.focus_mode = Control.FOCUS_NONE
+	hatch_btn.custom_minimum_size = Vector2(0, 44)
+	hatch_btn.add_theme_font_size_override("font_size", 15)
+	hatch_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	hatch_btn.pressed.connect(func() -> void:
+		hatch_btn.disabled = true
+		var result: Dictionary = IncubationSystem.hatch_batch(cidx)
+		if bool(result.get("success", false)):
+			_incubation_panel.visible = false
+			_incubation_panel_idx = -1
+			_refresh_all_slots()
+			var results_arr: Array = result.get("results", []) as Array
+			_show_hatch_results(results_arr)
+		else:
+			hatch_btn.disabled = false
+			_show_toast(str(result.get("error_key", "")), "Hatching failed.")
+	)
+	_incubation_panel_content.add_child(hatch_btn)
 
 
 func _make_ip_info_label(text: String, color: Color = Color(0.80, 0.75, 0.62, 1.0)) -> Label:
@@ -1802,6 +1836,233 @@ func _make_egg_shop_offer_card(offer: Dictionary) -> Control:
 			_show_toast(str(result.get("error_key", "")), "Error.")
 	)
 	info.add_child(buy_btn)
+
+	return card
+
+
+# ─── Hatch results overlay ─────────────────────────────────────────────
+
+func _add_hatch_results_overlay() -> void:
+	_hatch_results_overlay = Control.new()
+	_hatch_results_overlay.name = "HatchResultsOverlay"
+	_hatch_results_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_hatch_results_overlay.visible = false
+	_hatch_results_overlay.z_index = 130
+	add_child(_hatch_results_overlay)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.72)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_hatch_results_overlay.add_child(dim)
+
+	var panel := PanelContainer.new()
+	panel.name = "HRPanel"
+	panel.anchor_left = 0.03
+	panel.anchor_top = 0.05
+	panel.anchor_right = 0.97
+	panel.anchor_bottom = 0.95
+	var ps := StyleBoxFlat.new()
+	ps.bg_color = Color(0.10, 0.07, 0.04, 0.97)
+	ps.border_color = Color(0.80, 0.65, 0.20, 0.95)
+	ps.set_border_width_all(3)
+	ps.set_corner_radius_all(16)
+	ps.content_margin_left = 14
+	ps.content_margin_right = 14
+	ps.content_margin_top = 14
+	ps.content_margin_bottom = 14
+	panel.add_theme_stylebox_override("panel", ps)
+	_hatch_results_overlay.add_child(panel)
+
+	var outer := VBoxContainer.new()
+	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer.add_theme_constant_override("separation", 8)
+	panel.add_child(outer)
+
+	var title := Label.new()
+	title.name = "HRTitle"
+	title.text = _localized_text("hatch.title", "Hatching Results")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(1.0, 0.88, 0.30, 1.0))
+	outer.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.name = "HRSubtitle"
+	subtitle.text = _localized_text("hatch.subtitle", "New reptiles hatched!")
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	subtitle.add_theme_font_size_override("font_size", 14)
+	subtitle.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55, 1.0))
+	outer.add_child(subtitle)
+
+	var sep := HSeparator.new()
+	sep.add_theme_color_override("color", Color(0.70, 0.55, 0.20, 0.70))
+	outer.add_child(sep)
+
+	var scroll := ScrollContainer.new()
+	scroll.name = "HRScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	outer.add_child(scroll)
+
+	var content := VBoxContainer.new()
+	content.name = "HRContent"
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", 8)
+	scroll.add_child(content)
+	_make_scroll_safe(content)
+
+	var ok_row := HBoxContainer.new()
+	ok_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	ok_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.add_child(ok_row)
+
+	var ok_btn := Button.new()
+	ok_btn.name = "HROkBtn"
+	ok_btn.text = _localized_text("hatch.ok", "OK")
+	ok_btn.focus_mode = Control.FOCUS_NONE
+	ok_btn.custom_minimum_size = Vector2(160, 46)
+	ok_btn.add_theme_font_size_override("font_size", 16)
+	ok_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	ok_btn.pressed.connect(func() -> void: _hatch_results_overlay.visible = false)
+	ok_row.add_child(ok_btn)
+
+
+func _show_hatch_results(results: Array) -> void:
+	if _hatch_results_overlay == null:
+		return
+	var content: VBoxContainer = _hatch_results_overlay.get_node_or_null(
+		"HRPanel/HRScroll/HRContent") as VBoxContainer
+	if content == null:
+		return
+	_clear_vbox(content)
+
+	var lang: String = GameState.get_language()
+
+	if results.is_empty():
+		var lbl := Label.new()
+		lbl.text = _localized_text("hatch.no_eggs", "No eggs hatched.")
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.add_theme_font_size_override("font_size", 14)
+		lbl.add_theme_color_override("font_color", Color(0.70, 0.65, 0.50, 1.0))
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		content.add_child(lbl)
+	else:
+		for r_val in results:
+			if typeof(r_val) == TYPE_DICTIONARY:
+				content.add_child(_make_hatch_result_card(r_val as Dictionary, lang))
+
+	var added_lbl := Label.new()
+	added_lbl.text = _localized_text("hatch.added_to_storage", "Added to storage")
+	added_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	added_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	added_lbl.add_theme_font_size_override("font_size", 13)
+	added_lbl.add_theme_color_override("font_color", Color(0.60, 0.82, 0.55, 1.0))
+	added_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.add_child(added_lbl)
+
+	_hatch_results_overlay.visible = true
+
+
+func _make_hatch_result_card(r: Dictionary, _lang: String) -> Control:
+	var rarity: String = str(r.get("rarity", "common"))
+	var is_new: bool = bool(r.get("is_new_discovery", false))
+
+	var card := PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var cs := StyleBoxFlat.new()
+	var border_col: Color = _rarity_color(rarity)
+	cs.bg_color = Color(border_col.r * 0.15, border_col.g * 0.12, border_col.b * 0.08, 0.85)
+	cs.border_color = border_col
+	cs.set_border_width_all(2)
+	cs.set_corner_radius_all(10)
+	cs.content_margin_left = 10
+	cs.content_margin_right = 10
+	cs.content_margin_top = 8
+	cs.content_margin_bottom = 8
+	card.add_theme_stylebox_override("panel", cs)
+
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 10)
+	card.add_child(hbox)
+
+	var portrait := TextureRect.new()
+	portrait.custom_minimum_size = Vector2(60, 60)
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var portrait_path: String = str(r.get("portrait_path", ""))
+	if not portrait_path.is_empty() and ResourceLoader.exists(portrait_path):
+		portrait.texture = AssetPaths.load_texture(portrait_path)
+	hbox.add_child(portrait)
+
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_theme_constant_override("separation", 3)
+	hbox.add_child(info)
+
+	var species_id: String = str(r.get("species_id", ""))
+	var variant_id: String = str(r.get("variant_id", ""))
+	var species_name: String = species_id
+	var reptile_data: Dictionary = ReptileSystem.get_reptile(species_id)
+	if not reptile_data.is_empty():
+		var name_key: String = str(reptile_data.get("name_key", ""))
+		if not name_key.is_empty():
+			var localized: String = LocalizationSystem.tr_key(name_key)
+			if not localized.is_empty() and localized != name_key:
+				species_name = localized
+	var variant_name: String = variant_id
+	var variant_data: Dictionary = ReptileSystem.get_variant(variant_id)
+	if not variant_data.is_empty():
+		var vname_key: String = str(variant_data.get("name_key", ""))
+		if not vname_key.is_empty():
+			var localized: String = LocalizationSystem.tr_key(vname_key)
+			if not localized.is_empty() and localized != vname_key:
+				variant_name = localized
+
+	var name_lbl := Label.new()
+	name_lbl.text = species_name + " — " + variant_name
+	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_lbl.add_theme_font_size_override("font_size", 14)
+	name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
+	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(name_lbl)
+
+	var rarity_lbl := Label.new()
+	var sex_key: String = "sex." + str(r.get("sex", "male"))
+	var sex_text: String = _localized_text(sex_key, str(r.get("sex", "male")))
+	rarity_lbl.text = _localized_rarity(rarity) + "  •  " + sex_text
+	rarity_lbl.add_theme_font_size_override("font_size", 12)
+	rarity_lbl.add_theme_color_override("font_color", border_col)
+	rarity_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(rarity_lbl)
+
+	if rarity == "exceptional":
+		var hl_lbl := Label.new()
+		hl_lbl.text = _localized_text("hatch.exceptional", "Exceptional hatch!")
+		hl_lbl.add_theme_font_size_override("font_size", 12)
+		hl_lbl.add_theme_color_override("font_color", Color(1.0, 0.80, 0.20, 1.0))
+		hl_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info.add_child(hl_lbl)
+	elif rarity == "ultra_rare":
+		var hl_lbl := Label.new()
+		hl_lbl.text = _localized_text("hatch.ultra_rare", "Ultra Rare hatch!")
+		hl_lbl.add_theme_font_size_override("font_size", 12)
+		hl_lbl.add_theme_color_override("font_color", Color(0.80, 0.40, 1.0, 1.0))
+		hl_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info.add_child(hl_lbl)
+
+	if is_new:
+		var disc_lbl := Label.new()
+		disc_lbl.text = _localized_text("hatch.new_discovery", "New discovery!")
+		disc_lbl.add_theme_font_size_override("font_size", 12)
+		disc_lbl.add_theme_color_override("font_color", Color(0.30, 0.95, 0.50, 1.0))
+		disc_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info.add_child(disc_lbl)
 
 	return card
 
