@@ -187,6 +187,15 @@
 		"pl": "Jasny",
 		"en": "Light"
 	},
+	"variant.bearded_dragon.exceptional.name": { "pl": "Wyjątkowa", "en": "Exceptional" },
+	"variant.bearded_dragon.ultra_rare.name": { "pl": "Ultra rzadka", "en": "Ultra Rare" },
+	"variant.corn_snake.exceptional.name": { "pl": "Wyjątkowy", "en": "Exceptional" },
+	"variant.corn_snake.ultra_rare.name": { "pl": "Ultra rzadki", "en": "Ultra Rare" },
+	"variant.steppe_tortoise.exceptional.name": { "pl": "Wyjątkowy", "en": "Exceptional" },
+	"variant.steppe_tortoise.ultra_rare.name": { "pl": "Ultra rzadki", "en": "Ultra Rare" },
+	"variant.small_monitor.rare.name": { "pl": "Rzadki", "en": "Rare" },
+	"variant.small_monitor.exceptional.name": { "pl": "Wyjątkowy", "en": "Exceptional" },
+	"variant.small_monitor.ultra_rare.name": { "pl": "Ultra rzadki", "en": "Ultra Rare" },
 	"nav.biome": {
 		"pl": "Biom",
 		"en": "Biome"
@@ -250,6 +259,38 @@
 	"animals.assign": {
 		"pl": "Przypisz",
 		"en": "Assign"
+	},
+	"animals.count": {
+		"pl": "Ilość",
+		"en": "Count"
+	},
+	"animals.view_group": {
+		"pl": "Pokaż",
+		"en": "Show"
+	},
+	"animals.release": {
+		"pl": "Wypuść",
+		"en": "Release"
+	},
+	"animals.release_confirm_title": {
+		"pl": "Potwierdź",
+		"en": "Confirm"
+	},
+	"animals.release_confirm": {
+		"pl": "Czy na pewno chcesz wypuścić to zwierzę? Tej akcji nie można cofnąć.",
+		"en": "Are you sure you want to release this animal? This action cannot be undone."
+	},
+	"animals.released_toast": {
+		"pl": "Zwierzę zostało wypuszczone.",
+		"en": "Animal released."
+	},
+	"animals.release_blocked": {
+		"pl": "Najpierw usuń zwierzę z terrarium.",
+		"en": "Remove the animal from its habitat first."
+	},
+	"animals.reptile_not_found": {
+		"pl": "Nie znaleziono zwierzęcia.",
+		"en": "Animal not found."
 	},
 	"animals.status": {
 		"pl": "Status",
@@ -3100,6 +3141,10 @@
 	"egg_shop.no_species_available": {
 		"pl": "Brak dostępnych gatunków",
 		"en": "No species available"
+	},
+	"egg_shop.from_price": {
+		"pl": "Od: {price} R$",
+		"en": "From: {price} R$"
 	},
 	"egg_shop.quality_standard": {
 		"pl": "Standardowe",

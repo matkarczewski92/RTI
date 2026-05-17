@@ -73,6 +73,9 @@ var _incubation_load_in_progress: bool = false
 # Egg shop
 var _egg_shop_overlay: Control
 var _egg_shop_content: VBoxContainer
+var _egg_shop_title_label: Label
+var _egg_shop_step: int = 0
+var _egg_shop_selected_species: Dictionary = {}
 var _hatch_results_overlay: Control
 var _quests_overlay: Control
 
@@ -189,6 +192,10 @@ func _rebuild_layout() -> void:
 	_incubation_panel_available_ids = []
 	_incubation_load_in_progress = false
 	_egg_shop_overlay = null
+	_egg_shop_content = null
+	_egg_shop_title_label = null
+	_egg_shop_step = 0
+	_egg_shop_selected_species = {}
 	_hatch_results_overlay = null
 	_quests_overlay = null
 	_upgrades_overlay = null
@@ -879,21 +886,33 @@ func _make_egg_select_group_card(group: Dictionary) -> Control:
 	top_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_row.add_theme_constant_override("separation", 9)
 	body.add_child(top_row)
-	top_row.add_child(_make_breeding_portrait(str(group.get("visual_asset", EGG_PATH)), Vector2(66, 66)))
+	var sp_id: String = str(group.get("species_id", ""))
+	var sp_portrait: String = _get_species_portrait_path(sp_id)
+	if sp_portrait == PLUS_ICON_PATH:
+		sp_portrait = str(group.get("visual_asset", EGG_PATH))
+	top_row.add_child(_make_breeding_portrait(sp_portrait, Vector2(66, 66)))
 
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.add_theme_constant_override("separation", 3)
 	top_row.add_child(info)
 
-	var name_lbl := Label.new()
-	name_lbl.text = str(group.get("egg_name", ""))
-	name_lbl.clip_text = true
-	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	name_lbl.add_theme_font_size_override("font_size", 14)
-	name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
-	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	info.add_child(name_lbl)
+	var species_name_lbl := Label.new()
+	species_name_lbl.text = _localized_species_name(sp_id)
+	species_name_lbl.clip_text = true
+	species_name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	species_name_lbl.add_theme_font_size_override("font_size", 14)
+	species_name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
+	species_name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(species_name_lbl)
+
+	var egg_name_lbl := Label.new()
+	egg_name_lbl.text = str(group.get("egg_name", ""))
+	egg_name_lbl.clip_text = true
+	egg_name_lbl.add_theme_font_size_override("font_size", 11)
+	egg_name_lbl.add_theme_color_override("font_color", Color(0.72, 0.66, 0.54, 0.90))
+	egg_name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(egg_name_lbl)
 
 	var count_lbl := Label.new()
 	count_lbl.text = _localized_text("incubator_egg_available", "Available: {count}").replace("{count}", str(int(group.get("count", 0))))
@@ -2706,6 +2725,7 @@ func _add_egg_shop_overlay() -> void:
 	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	outer.add_child(title)
+	_egg_shop_title_label = title
 
 	var sep := HSeparator.new()
 	sep.add_theme_color_override("color", Color(0.55, 0.40, 0.20, 0.70))
@@ -2736,18 +2756,32 @@ func _add_egg_shop_overlay() -> void:
 	close_btn.focus_mode = Control.FOCUS_NONE
 	close_btn.custom_minimum_size = Vector2(130, 42)
 	close_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	close_btn.pressed.connect(func() -> void: _egg_shop_overlay.visible = false)
+	close_btn.pressed.connect(func() -> void:
+		_egg_shop_step = 0
+		_egg_shop_selected_species = {}
+		_egg_shop_overlay.visible = false
+	)
 	close_row.add_child(close_btn)
 
 
 func _populate_egg_shop() -> void:
 	if _egg_shop_overlay == null or _egg_shop_content == null:
 		return
-	var content: VBoxContainer = _egg_shop_content
-	for child in content.get_children():
-		content.remove_child(child)
-		child.queue_free()
+	_clear_vbox(_egg_shop_content)
 
+	if _egg_shop_step == 0:
+		if _egg_shop_title_label != null:
+			_egg_shop_title_label.text = _localized_text("egg_shop.title", "Egg Shop")
+		_populate_egg_shop_species()
+	else:
+		if _egg_shop_title_label != null:
+			var sp_id: String = str(_egg_shop_selected_species.get("species_id", ""))
+			_egg_shop_title_label.text = _localized_species_name(sp_id)
+		_populate_egg_shop_qualities()
+
+
+func _populate_egg_shop_species() -> void:
+	var content: VBoxContainer = _egg_shop_content
 	var available: Array = IncubationSystem.get_available_species_for_shop()
 	var qualities: Dictionary = IncubationSystem.get_species_shop_qualities()
 	var quality_order: Array = IncubationSystem.get_quality_order()
@@ -2760,6 +2794,142 @@ func _populate_egg_shop() -> void:
 		content.add_child(lbl)
 		return
 
+	var sorted_species: Array = available.duplicate()
+	sorted_species.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var ba: int = _egg_shop_biome_order(str(a.get("biome_id", "")))
+		var bb: int = _egg_shop_biome_order(str(b.get("biome_id", "")))
+		if ba != bb:
+			return ba < bb
+		return str(a.get("species_id", "")) < str(b.get("species_id", ""))
+	)
+
+	for species_val in sorted_species:
+		if typeof(species_val) != TYPE_DICTIONARY:
+			continue
+		var species: Dictionary = species_val as Dictionary
+		var min_price: int = 999999
+		for qid in quality_order:
+			if qualities.has(qid):
+				var p: int = int((qualities[qid] as Dictionary).get("price", 0))
+				if p < min_price:
+					min_price = p
+		content.add_child(_make_egg_shop_species_card(species, qualities, quality_order, min_price))
+
+
+func _make_egg_shop_species_card(species: Dictionary, _qualities: Dictionary, _quality_order: Array, min_price: int) -> Control:
+	var lang: String = LocalizationSystem.get_language()
+	var sp_id: String = str(species.get("species_id", ""))
+	var egg_name: String = str(species.get("egg_name_" + lang, str(species.get("egg_name_en", sp_id))))
+	var biome_id: String = str(species.get("biome_id", ""))
+	var inc_hours: int = int(species.get("incubation_time_hours", 24))
+
+	var card := PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var cs := StyleBoxFlat.new()
+	cs.bg_color = Color(0.12, 0.09, 0.05, 0.90)
+	cs.border_color = Color(0.55, 0.40, 0.20, 0.80)
+	cs.set_border_width_all(2)
+	cs.set_corner_radius_all(10)
+	cs.content_margin_left = 10
+	cs.content_margin_right = 10
+	cs.content_margin_top = 10
+	cs.content_margin_bottom = 10
+	card.add_theme_stylebox_override("panel", cs)
+
+	var hbox := HBoxContainer.new()
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_theme_constant_override("separation", 10)
+	card.add_child(hbox)
+
+	var portrait_path: String = _get_species_portrait_path(sp_id)
+	if portrait_path == PLUS_ICON_PATH:
+		portrait_path = str(species.get("visual_asset", EGG_PATH))
+	hbox.add_child(_make_breeding_portrait(portrait_path, Vector2(64, 64)))
+
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	info.add_theme_constant_override("separation", 3)
+	hbox.add_child(info)
+
+	var sp_name_lbl := Label.new()
+	sp_name_lbl.text = _localized_species_name(sp_id)
+	sp_name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sp_name_lbl.add_theme_font_size_override("font_size", 15)
+	sp_name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
+	sp_name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(sp_name_lbl)
+
+	var egg_name_lbl := Label.new()
+	egg_name_lbl.text = egg_name
+	egg_name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	egg_name_lbl.add_theme_font_size_override("font_size", 11)
+	egg_name_lbl.add_theme_color_override("font_color", Color(0.72, 0.66, 0.54, 0.85))
+	egg_name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(egg_name_lbl)
+
+	if not biome_id.is_empty():
+		var biome_lbl := Label.new()
+		biome_lbl.text = _localized_text("biome." + biome_id, biome_id.capitalize())
+		biome_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		biome_lbl.add_theme_font_size_override("font_size", 10)
+		biome_lbl.add_theme_color_override("font_color", Color(0.55, 0.72, 0.45, 0.85))
+		biome_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info.add_child(biome_lbl)
+
+	var time_lbl := Label.new()
+	var time_text: String = _localized_text("incubator_egg_incubation_time", "Incubation time: {time}")
+	time_lbl.text = time_text.replace("{time}", str(inc_hours) + "h")
+	time_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	time_lbl.add_theme_font_size_override("font_size", 10)
+	time_lbl.add_theme_color_override("font_color", Color(0.68, 0.63, 0.50, 0.85))
+	time_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(time_lbl)
+
+	var price_lbl := Label.new()
+	var from_text: String = _localized_text("egg_shop.from_price", "From: {price} R$")
+	price_lbl.text = from_text.replace("{price}", str(min_price))
+	price_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	price_lbl.add_theme_font_size_override("font_size", 12)
+	price_lbl.add_theme_color_override("font_color", Color(0.95, 0.83, 0.38, 1.0))
+	price_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(price_lbl)
+
+	var select_btn := Button.new()
+	select_btn.text = _localized_text("incubator_egg_select", "Select")
+	select_btn.focus_mode = Control.FOCUS_NONE
+	select_btn.custom_minimum_size = Vector2(80, 36)
+	select_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	select_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var sp_copy: Dictionary = species.duplicate()
+	select_btn.pressed.connect(func() -> void:
+		_egg_shop_selected_species = sp_copy
+		_egg_shop_step = 1
+		_populate_egg_shop()
+	)
+	hbox.add_child(select_btn)
+
+	return card
+
+
+func _populate_egg_shop_qualities() -> void:
+	var content: VBoxContainer = _egg_shop_content
+	var qualities: Dictionary = IncubationSystem.get_species_shop_qualities()
+	var quality_order: Array = IncubationSystem.get_quality_order()
+	var species: Dictionary = _egg_shop_selected_species
+
+	var back_btn := Button.new()
+	back_btn.text = "← " + _localized_text("incubator_egg_back", "Back")
+	back_btn.focus_mode = Control.FOCUS_NONE
+	back_btn.custom_minimum_size = Vector2(100, 36)
+	back_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	back_btn.pressed.connect(func() -> void:
+		_egg_shop_step = 0
+		_egg_shop_selected_species = {}
+		_populate_egg_shop()
+	)
+	content.add_child(back_btn)
+
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 6)
@@ -2767,16 +2937,19 @@ func _populate_egg_shop() -> void:
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.add_child(grid)
 
-	for species_val in available:
-		if typeof(species_val) != TYPE_DICTIONARY:
+	for qid in quality_order:
+		if not qualities.has(qid):
 			continue
-		var species: Dictionary = species_val as Dictionary
-		for qid in quality_order:
-			if not qualities.has(qid):
-				continue
-			grid.add_child(_make_species_quality_card(species, qid, qualities[qid] as Dictionary))
+		grid.add_child(_make_species_quality_card(species, qid, qualities[qid] as Dictionary))
 
 	_make_scroll_safe(grid)
+
+
+func _egg_shop_biome_order(biome_id: String) -> int:
+	match biome_id:
+		"green_meadow": return 0
+		"dry_prairie":  return 1
+		_:              return 99
 
 
 func _make_species_quality_card(species: Dictionary, quality_id: String, qdef: Dictionary) -> Control:

@@ -1,5 +1,7 @@
 extends Node
 
+signal reptile_released(instance_id: String)
+
 const REPTILES_PATH: String = "res://data/reptiles.json"
 const VARIANTS_PATH: String = "res://data/reptile_variants.json"
 const CARE_ACTIONS_PATH: String = "res://data/care_actions.json"
@@ -277,7 +279,8 @@ func sync_discovered_variants_from_owned_reptiles() -> Dictionary:
 
 func get_owned_animal_variant(instance: Dictionary) -> Dictionary:
 	var reptile_id: String = str(instance.get("reptile_id", ""))
-	var variant_id: String = str(instance.get("variant_id", ""))
+	var raw: Variant = instance.get("variant_id", null)
+	var variant_id: String = raw if typeof(raw) == TYPE_STRING else ""
 	return get_variant_for_reptile(reptile_id, variant_id)
 
 
@@ -285,6 +288,23 @@ func get_owned_animal_image_path(instance: Dictionary) -> String:
 	var reptile_id: String = str(instance.get("reptile_id", ""))
 	var reptile: Dictionary = get_reptile(reptile_id)
 	var variant: Dictionary = get_owned_animal_variant(instance)
+
+	# When the stored variant_id resolves to a different rarity than the instance's
+	# actual rarity (stale data or null variant_id), prefer the rarity-based portrait.
+	var instance_rarity: String = normalize_rarity(str(instance.get("rarity", "")))
+	var variant_rarity: String = normalize_rarity(str(variant.get("rarity", "common")))
+	if not instance_rarity.is_empty() and instance_rarity != variant_rarity:
+		var rarity_variant: Dictionary = get_variant_for_reptile_rarity(reptile_id, instance_rarity)
+		if not rarity_variant.is_empty():
+			return _first_existing_path([
+				str(rarity_variant.get("portrait_path", "")),
+				str(rarity_variant.get("icon_path", "")),
+				str(variant.get("portrait_path", "")),
+				str(variant.get("icon_path", "")),
+				str(reptile.get("portrait_path", "")),
+				str(reptile.get("icon_path", ""))
+			])
+
 	return _first_existing_path([
 		str(variant.get("portrait_path", "")),
 		str(variant.get("icon_path", "")),
@@ -1229,6 +1249,24 @@ func remove_reptile_from_habitat(habitat_id: String) -> Dictionary:
 	SaveSystem.save_game()
 	_notify_achievement_progress_changed()
 	return {"success": true, "message_key": "habitat.remove_reptile"}
+
+
+func release_reptile_instance(instance_id: String) -> Dictionary:
+	var instances: Dictionary = get_owned_reptile_instances()
+	if not instances.has(instance_id):
+		return {"success": false, "message_key": "animals.reptile_not_found"}
+	var instance_value: Variant = instances.get(instance_id)
+	if typeof(instance_value) != TYPE_DICTIONARY:
+		return {"success": false, "message_key": "animals.reptile_not_found"}
+	var instance: Dictionary = _normalize_owned_instance(instance_value as Dictionary)
+	if not _id_or_empty(instance.get("habitat_id", null)).is_empty():
+		return {"success": false, "message_key": "animals.release_blocked"}
+	instances.erase(instance_id)
+	GameState.set_value("owned_reptile_instances", instances)
+	SaveSystem.save_game()
+	_notify_achievement_progress_changed()
+	reptile_released.emit(instance_id)
+	return {"success": true}
 
 
 func start_habitat_upgrade(habitat_id: String) -> Dictionary:

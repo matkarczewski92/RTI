@@ -11,7 +11,10 @@
       "Bash(Format-Table FullName)",
       "Bash(python -c \"import sys; data=sys.stdin.read\\(\\); print\\(data[data.find\\('bearded'\\):data.find\\('bearded'\\)+2000]\\)\")",
       "Bash(findstr /n \"bearded\")",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(Get-ChildItem -Path \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\" -Recurse -Filter \"*.gd\")",
+      "Bash(Select-Object -First 20)",
+      "Bash(powershell -Command \"Get-Item 'assets/art/reptiles/portraits/corn_snake_portrait_common.png', 'assets/art/reptiles/portraits/corn_snake_portrait_rare.png', 'assets/art/reptiles/portraits/bearded_dragon_portrait_common.png', 'assets/art/reptiles/portraits/bearded_dragon_portrait_rare.png', 'assets/art/reptiles/portraits/steppe_tortoise_portrait_common.png', 'assets/art/reptiles/portraits/steppe_tortoise_portrait_rare.png', 'assets/art/reptiles/portraits/leopard_gecko_portrait_common.png', 'assets/art/reptiles/portraits/leopard_gecko_portrait_rare.png' | Select-Object Name, Length\")"
     ]
   }
 }

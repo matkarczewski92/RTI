@@ -30,6 +30,7 @@ UpgradeSystem="*res://scripts/autoload/UpgradeSystem.gd"
 BreedingSystem="*res://scripts/autoload/BreedingSystem.gd"
 IncubationSystem="*res://scripts/autoload/IncubationSystem.gd"
 IncubatorUpgradeSystem="*res://scripts/autoload/IncubatorUpgradeSystem.gd"
+LevelUpOverlay="*res://scripts/autoload/LevelUpOverlay.gd"
 
 [display]
 

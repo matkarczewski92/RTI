@@ -72,6 +72,30 @@
 		"obtain_method": "future_drop"
 	},
 	{
+		"id": "bearded_dragon_exceptional",
+		"reptile_id": "bearded_dragon",
+		"rarity": "exceptional",
+		"name_key": "variant.bearded_dragon.exceptional.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/bearded_dragon_portrait_exceptional.png",
+		"icon_path": "res://assets/art/reptiles/portraits/bearded_dragon_portrait_exceptional.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/bearded_dragon_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
+		"income_multiplier": 1.25,
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "bearded_dragon_ultra_rare",
+		"reptile_id": "bearded_dragon",
+		"rarity": "ultra_rare",
+		"name_key": "variant.bearded_dragon.ultra_rare.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/bearded_dragon_portrait_ultra_rare.png",
+		"icon_path": "res://assets/art/reptiles/portraits/bearded_dragon_portrait_ultra_rare.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/bearded_dragon_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
+		"income_multiplier": 1.5,
+		"obtain_method": "future_drop"
+	},
+	{
 		"id": "corn_snake_common",
 		"reptile_id": "corn_snake",
 		"rarity": "common",
@@ -93,6 +117,30 @@
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/corn_snake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
 		"income_multiplier": 1.1,
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "corn_snake_exceptional",
+		"reptile_id": "corn_snake",
+		"rarity": "exceptional",
+		"name_key": "variant.corn_snake.exceptional.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/corn_snake_portrait_exceptional.png",
+		"icon_path": "res://assets/art/reptiles/portraits/corn_snake_portrait_exceptional.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/corn_snake_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
+		"income_multiplier": 1.25,
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "corn_snake_ultra_rare",
+		"reptile_id": "corn_snake",
+		"rarity": "ultra_rare",
+		"name_key": "variant.corn_snake.ultra_rare.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/corn_snake_portrait_ultra_rare.png",
+		"icon_path": "res://assets/art/reptiles/portraits/corn_snake_portrait_ultra_rare.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/corn_snake_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
+		"income_multiplier": 1.5,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -120,6 +168,30 @@
 		"obtain_method": "future_drop"
 	},
 	{
+		"id": "steppe_tortoise_exceptional",
+		"reptile_id": "steppe_tortoise",
+		"rarity": "exceptional",
+		"name_key": "variant.steppe_tortoise.exceptional.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/steppe_tortoise_portrait_exceptional.png",
+		"icon_path": "res://assets/art/reptiles/portraits/steppe_tortoise_portrait_exceptional.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/steppe_tortoise_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
+		"income_multiplier": 1.25,
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "steppe_tortoise_ultra_rare",
+		"reptile_id": "steppe_tortoise",
+		"rarity": "ultra_rare",
+		"name_key": "variant.steppe_tortoise.ultra_rare.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/steppe_tortoise_portrait_ultra_rare.png",
+		"icon_path": "res://assets/art/reptiles/portraits/steppe_tortoise_portrait_ultra_rare.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/steppe_tortoise_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
+		"income_multiplier": 1.5,
+		"obtain_method": "future_drop"
+	},
+	{
 		"id": "small_monitor_common",
 		"reptile_id": "small_monitor",
 		"rarity": "common",
@@ -130,6 +202,42 @@
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
 		"income_multiplier": 1.0,
 		"obtain_method": "default"
+	},
+	{
+		"id": "small_monitor_rare",
+		"reptile_id": "small_monitor",
+		"rarity": "rare",
+		"name_key": "variant.small_monitor.rare.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/small_monitor_portrait_rare.png",
+		"icon_path": "res://assets/art/reptiles/portraits/small_monitor_portrait_rare.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/small_monitor_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
+		"income_multiplier": 1.1,
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "small_monitor_exceptional",
+		"reptile_id": "small_monitor",
+		"rarity": "exceptional",
+		"name_key": "variant.small_monitor.exceptional.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/small_monitor_portrait_exceptional.png",
+		"icon_path": "res://assets/art/reptiles/portraits/small_monitor_portrait_exceptional.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/small_monitor_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
+		"income_multiplier": 1.25,
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "small_monitor_ultra_rare",
+		"reptile_id": "small_monitor",
+		"rarity": "ultra_rare",
+		"name_key": "variant.small_monitor.ultra_rare.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/small_monitor_portrait_ultra_rare.png",
+		"icon_path": "res://assets/art/reptiles/portraits/small_monitor_portrait_ultra_rare.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/small_monitor_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
+		"income_multiplier": 1.5,
+		"obtain_method": "future_drop"
 	},
 	{
 		"id": "bullsnake_common",

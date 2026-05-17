@@ -9,17 +9,20 @@ signal player_level_changed(level: int)
 signal player_level_up(levels: Array, reward_amount: float)
 
 const ECONOMY_PATH := "res://data/economy.json"
+const LEVEL_PROGRESSION_PATH := "res://data/level_progression.json"
 const INCOME_TICK_SECONDS := 60.0
 const MAX_OFFLINE_SECONDS := 14400
 const MIN_OFFLINE_SECONDS := 30
 
 var economy_data: Dictionary = {}
+var _level_progression: Dictionary = {}
 var income_elapsed_seconds: float = 0.0
 var income_timer: Timer
 
 
 func _ready() -> void:
 	load_economy_data()
+	_load_level_progression()
 	var save_loaded_callback := Callable(self, "update_player_level_from_xp")
 	if not GameState.save_loaded.is_connected(save_loaded_callback):
 		GameState.save_loaded.connect(save_loaded_callback)
@@ -86,17 +89,35 @@ func spend_currency(currency_id: String, amount: int) -> bool:
 	return true
 
 
+func _load_level_progression() -> void:
+	var file := FileAccess.open(LEVEL_PROGRESSION_PATH, FileAccess.READ)
+	if file == null:
+		push_warning("EconomySystem: level_progression.json not found, using defaults")
+		_level_progression = {"level_2_xp": 1000.0, "multiplier": 1.75}
+		return
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(parsed) == TYPE_DICTIONARY:
+		_level_progression = parsed as Dictionary
+	else:
+		push_warning("EconomySystem: level_progression.json malformed, using defaults")
+		_level_progression = {"level_2_xp": 1000.0, "multiplier": 1.75}
+
+
 func get_required_xp_for_level(level: int) -> int:
 	if level <= 1:
 		return 0
-	if level == 2:
-		return 500
-	if level == 3:
-		return 2000
-
-	var required: float = 2000.0
-	for _next_level in range(4, level + 1):
-		required = required + (required * 1.15)
+	var levels_val: Variant = _level_progression.get("levels", null)
+	if typeof(levels_val) == TYPE_DICTIONARY:
+		var levels_dict: Dictionary = levels_val as Dictionary
+		var key := str(level)
+		if levels_dict.has(key):
+			return int(levels_dict[key])
+	var base: float = float(_level_progression.get("level_2_xp", 1000.0))
+	var mult: float = float(_level_progression.get("multiplier", 1.75))
+	var required: float = base
+	for _i in range(3, level + 1):
+		required *= mult
 	return int(round(required))
 
 
