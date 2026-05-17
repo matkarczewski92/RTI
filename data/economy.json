@@ -8,6 +8,6 @@
 	],
 	"habitat_purchase_prices": {
 		"green_meadow": [0, 450, 800, 1200, 1800, 2600],
-		"dry_prairie": [0, 600, 1000, 1500, 2200]
+		"dry_prairie": [0, 600, 1000, 1500, 2200, 8000]
 	}
 }

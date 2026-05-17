@@ -41,10 +41,44 @@ const ITEMS: Array[Dictionary] = [
 ]
 
 var active_item_id: String = "biome"
+var _quest_badge: Control = null
 
 
 func _ready() -> void:
 	_build_layout()
+
+
+func update_quest_badge(has_claimable: bool) -> void:
+	if _quest_badge != null:
+		_quest_badge.visible = has_claimable
+
+
+func _make_quest_badge_dot() -> Control:
+	var badge: Control = Control.new()
+	badge.name = "QuestBadge"
+	badge.anchor_left = 0.55
+	badge.anchor_top = 0.12
+	badge.anchor_right = 0.55
+	badge.anchor_bottom = 0.12
+	badge.offset_right = 22
+	badge.offset_bottom = 22
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.visible = false
+
+	var circle: Panel = Panel.new()
+	circle.set_anchors_preset(Control.PRESET_FULL_RECT)
+	circle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.93, 0.10, 0.10, 1.0)
+	style.set_corner_radius_all(11)
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.55)
+	style.shadow_size = 4
+	style.border_color = Color(1.0, 1.0, 1.0, 0.85)
+	style.set_border_width_all(2)
+	circle.add_theme_stylebox_override("panel", style)
+	badge.add_child(circle)
+
+	return badge
 
 
 func _build_layout() -> void:
@@ -97,6 +131,10 @@ func _make_nav_item(item: Dictionary, index: int) -> Control:
 		set_active_item(pressed_item_id)
 		nav_pressed.emit(pressed_item_id)
 	)
+
+	if str(item.get("id", "")) == "quests":
+		_quest_badge = _make_quest_badge_dot()
+		button.add_child(_quest_badge)
 
 	if DEBUG_NAV:
 		var base_col: Color = _DEBUG_COLORS[index % _DEBUG_COLORS.size()]

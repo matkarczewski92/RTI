@@ -50,6 +50,25 @@ const SHOP_BUY_COMMON_BUTTON_PATH := SHOP_DESIGN_DIR + "button_buy_common.png"
 const SHOP_BUY_RARE_BUTTON_PATH := SHOP_DESIGN_DIR + "button_buy_rare.png"
 const SHOP_FOOD_ICON_PATH := "res://assets/art/ui/icons/menu/food_ico.png"
 const SHOP_WATER_ICON_PATH := "res://assets/art/ui/icons/menu/water_ico.png"
+const QUESTS_DESIGN_DIR := "res://assets/art/ui/quests_design/"
+const QUESTS_BG_PL_PATH := QUESTS_DESIGN_DIR + "quests_pl_background.png"
+const QUESTS_BG_EN_PATH := QUESTS_DESIGN_DIR + "quests_en_background.png"
+const QUESTS_CARD_BG_PATH := QUESTS_DESIGN_DIR + "single_quest_background.png"
+const QUESTS_CLAIM_PL_PATH := QUESTS_DESIGN_DIR + "claim_pl.png"
+const QUESTS_CLAIM_EN_PATH := QUESTS_DESIGN_DIR + "claim_en.png"
+const QUEST_CLOSE_ANCHOR_LEFT := 0.785
+const QUEST_CLOSE_ANCHOR_TOP := 0.045
+const QUEST_CLOSE_ANCHOR_RIGHT := 0.945
+const QUEST_CLOSE_ANCHOR_BOTTOM := 0.145
+const QUEST_SCROLL_LEFT_ANCHOR := 0.07
+const QUEST_SCROLL_TOP_ANCHOR := 0.13
+const QUEST_SCROLL_RIGHT_ANCHOR := 0.93
+const QUEST_SCROLL_BOTTOM_ANCHOR := 0.985
+const QUEST_CARD_MIN_HEIGHT := 168
+const QUEST_CLAIM_BTN_W := 140
+const QUEST_CLAIM_BTN_H := 58
+const QUEST_CARD_MARGIN := 14
+const QUEST_CARD_TEXT_INDENT := 12
 const REPTILE_MGMT_BACKGROUND_PATH := "res://assets/art/ui/reptile_mgm/background.png"
 const REPTILE_MGMT_CLOSE_PATH := "res://assets/art/ui/reptile_mgm/close.png"
 const REPTILE_MGMT_FEED_PATH := "res://assets/art/ui/reptile_mgm/feed.png"
@@ -465,6 +484,7 @@ func _add_bottom_nav() -> void:
 	if bottom_nav.has_signal("nav_pressed"):
 		bottom_nav.connect("nav_pressed", Callable(self, "_on_bottom_nav_pressed"))
 	add_child(bottom_nav)
+	call_deferred("_update_quest_badge")
 
 
 func _add_offline_income_popup() -> void:
@@ -2578,54 +2598,60 @@ func _show_quests_view() -> void:
 	quests_view.anchor_top = 0.0
 	quests_view.anchor_right = 1.0
 	quests_view.anchor_bottom = 1.0
-	quests_view.offset_top = TOP_BAR_HEIGHT + 10
-	quests_view.offset_bottom = -(BOTTOM_NAV_HEIGHT + 8)
+	quests_view.offset_top = TOP_BAR_HEIGHT + 2
+	quests_view.offset_bottom = -(BOTTOM_NAV_HEIGHT + 6)
 	add_child(quests_view)
 
-	var panel: PanelContainer = PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
-	quests_view.add_child(panel)
+	if not _quests_design_assets_available():
+		_show_quests_view_fallback_content(quests_view)
+		return
 
-	var margin: MarginContainer = MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_top", 16)
-	margin.add_theme_constant_override("margin_bottom", 16)
-	panel.add_child(margin)
-
-	var column: VBoxContainer = VBoxContainer.new()
-	column.add_theme_constant_override("separation", 12)
-	margin.add_child(column)
-
-	var header: HBoxContainer = HBoxContainer.new()
-	header.add_theme_constant_override("separation", 10)
-	column.add_child(header)
-
-	var title: Label = _make_popup_label(LocalizationSystem.tr_key("quests.title"), 24)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_apply_label_color(title, POPUP_TEXT_PRIMARY)
-	header.add_child(title)
+	var background: TextureRect = TextureRect.new()
+	background.name = "QuestsDesignBackground"
+	background.texture = AssetPaths.load_texture(_get_quests_background_path())
+	background.anchor_left = 0.0
+	background.anchor_top = 0.0
+	background.anchor_right = 1.0
+	background.anchor_bottom = 1.05
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_SCALE
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	quests_view.add_child(background)
 
 	var close_button: Button = Button.new()
-	close_button.text = LocalizationSystem.tr_key("ui.close")
-	close_button.custom_minimum_size = Vector2(96, 42)
+	close_button.name = "QuestsCloseHitbox"
+	close_button.text = ""
+	close_button.flat = true
+	close_button.anchor_left = QUEST_CLOSE_ANCHOR_LEFT
+	close_button.anchor_top = QUEST_CLOSE_ANCHOR_TOP
+	close_button.anchor_right = QUEST_CLOSE_ANCHOR_RIGHT
+	close_button.anchor_bottom = QUEST_CLOSE_ANCHOR_BOTTOM
+	close_button.focus_mode = Control.FOCUS_NONE
+	close_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	close_button.add_theme_stylebox_override("normal", _make_transparent_button_style())
+	close_button.add_theme_stylebox_override("hover", _make_transparent_button_style())
+	close_button.add_theme_stylebox_override("pressed", _make_transparent_button_style())
 	close_button.pressed.connect(_close_quests_view)
-	_apply_button_text_color(close_button, POPUP_TEXT_PRIMARY)
-	header.add_child(close_button)
+	quests_view.add_child(close_button)
 
 	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.name = "QuestsScroll"
+	scroll.anchor_left = QUEST_SCROLL_LEFT_ANCHOR
+	scroll.anchor_top = QUEST_SCROLL_TOP_ANCHOR
+	scroll.anchor_right = QUEST_SCROLL_RIGHT_ANCHOR
+	scroll.anchor_bottom = QUEST_SCROLL_BOTTOM_ANCHOR
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(scroll)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	quests_view.add_child(scroll)
 
 	var list: VBoxContainer = VBoxContainer.new()
+	list.name = "QuestsList"
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list.mouse_filter = Control.MOUSE_FILTER_PASS
-	list.add_theme_constant_override("separation", 10)
+	list.add_theme_constant_override("separation", 8)
 	scroll.add_child(list)
+	_make_scroll_safe(list)
 	_populate_quests_list(list)
 
 
@@ -2752,9 +2778,9 @@ func _show_upgrades_view() -> void:
 
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.name = "UpgradesScroll"
-	scroll.anchor_left = 0.088
-	scroll.anchor_top = 0.205
-	scroll.anchor_right = 0.907
+	scroll.anchor_left = 0.047
+	scroll.anchor_top = 0.15
+	scroll.anchor_right = 0.948
 	scroll.anchor_bottom = 0.955
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -2765,7 +2791,7 @@ func _show_upgrades_view() -> void:
 	list.name = "UpgradesList"
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list.mouse_filter = Control.MOUSE_FILTER_PASS
-	list.add_theme_constant_override("separation", 2)
+	list.add_theme_constant_override("separation", -16)
 	scroll.add_child(list)
 	_make_scroll_safe(list)
 	_populate_upgrades_list(list)
@@ -2873,8 +2899,10 @@ func _make_upgrade_card(upgrade: Dictionary) -> Control:
 	var next_cost: int = UpgradeSystem.get_upgrade_cost(upgrade_id)
 	var at_max: bool = level >= max_level
 
+	var can_afford: bool = at_max or EconomySystem.can_afford("repticash", next_cost)
+
 	var card: Control = Control.new()
-	card.custom_minimum_size = Vector2(0, 187)
+	card.custom_minimum_size = Vector2(0, 224)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var background: TextureRect = TextureRect.new()
@@ -2889,7 +2917,7 @@ func _make_upgrade_card(upgrade: Dictionary) -> Control:
 	var margin: MarginContainer = MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_right", 0)
 	margin.add_theme_constant_override("margin_top", 14)
 	margin.add_theme_constant_override("margin_bottom", 14)
 	card.add_child(margin)
@@ -2901,20 +2929,20 @@ func _make_upgrade_card(upgrade: Dictionary) -> Control:
 	margin.add_child(row)
 
 	var icon_column: Control = Control.new()
-	icon_column.custom_minimum_size = Vector2(162, 0)
+	icon_column.custom_minimum_size = Vector2(122, 0)
 	icon_column.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	icon_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	row.add_child(icon_column)
 
-	var icon_size := Vector2(153, 153)
+	var icon_size := Vector2(104, 104)
 	var icon: Control = _make_icon_or_fallback(str(upgrade.get("icon_path", "")), icon_size, "+")
 	icon.anchor_left = 0.5
 	icon.anchor_top = 0.5
 	icon.anchor_right = 0.5
 	icon.anchor_bottom = 0.5
-	icon.offset_left = -icon_size.x * 0.5
+	icon.offset_left = -icon_size.x * 0.5 + 9
 	icon.offset_top = -icon_size.y * 0.5 - icon_size.y * 0.05
-	icon.offset_right = icon_size.x * 0.5
+	icon.offset_right = icon_size.x * 0.5 + 9
 	icon.offset_bottom = icon_size.y * 0.5 - icon_size.y * 0.05
 	icon_column.add_child(icon)
 
@@ -2926,7 +2954,7 @@ func _make_upgrade_card(upgrade: Dictionary) -> Control:
 
 	var name_label: Label = Label.new()
 	name_label.text = LocalizationSystem.tr_key(str(upgrade.get("name_key", upgrade_id)))
-	name_label.clip_text = true
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_label.add_theme_font_size_override("font_size", 20)
 	name_label.add_theme_color_override("font_shadow_color", Color(1.0, 0.86, 0.48, 0.45))
 	name_label.add_theme_constant_override("shadow_offset_x", 1)
@@ -2960,6 +2988,11 @@ func _make_upgrade_card(upgrade: Dictionary) -> Control:
 		POPUP_TEXT_SUCCESS if level > 0 else POPUP_TEXT_SECONDARY
 	))
 
+	var effect_spacer: Control = Control.new()
+	effect_spacer.custom_minimum_size = Vector2(0, 6)
+	effect_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(effect_spacer)
+
 	if not at_max:
 		info.add_child(_make_upgrade_info_line(
 			UPGRADES_NEXT_ICON_PATH,
@@ -2974,17 +3007,22 @@ func _make_upgrade_card(upgrade: Dictionary) -> Control:
 		))
 
 	var action_area: VBoxContainer = VBoxContainer.new()
-	action_area.custom_minimum_size = Vector2(148, 0)
-	action_area.alignment = BoxContainer.ALIGNMENT_CENTER
+	action_area.custom_minimum_size = Vector2(220, 0)
+	action_area.alignment = BoxContainer.ALIGNMENT_BEGIN
 	action_area.add_theme_constant_override("separation", 2)
 	row.add_child(action_area)
+
+	var action_top_spacer: Control = Control.new()
+	action_top_spacer.custom_minimum_size = Vector2(0, 32)
+	action_top_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	action_area.add_child(action_top_spacer)
 
 	var price_text: String = "MAX" if at_max else _format_upgrade_cost_text(next_cost)
 	action_area.add_child(_make_upgrade_price_badge(price_text, at_max))
 
 	if at_max:
 		action_area.add_child(_make_upgrade_max_state_label())
-	else:
+	elif can_afford:
 		action_area.add_child(_make_upgrade_buy_texture_button(upgrade_id))
 
 	_make_scroll_safe(card)
@@ -3141,6 +3179,75 @@ func _get_shop_background_path() -> String:
 	return SHOP_BG_EN_PATH if GameState.get_language() == "en" else SHOP_BG_PL_PATH
 
 
+func _quests_design_assets_available() -> bool:
+	var paths: Array[String] = [
+		_get_quests_background_path(),
+		QUESTS_CARD_BG_PATH,
+		_get_quests_claim_button_path()
+	]
+	for path in paths:
+		if not ResourceLoader.exists(path):
+			push_warning("Quests design asset missing: " + path)
+			return false
+	return true
+
+
+func _get_quests_background_path() -> String:
+	return QUESTS_BG_EN_PATH if GameState.get_language() == "en" else QUESTS_BG_PL_PATH
+
+
+func _get_quests_claim_button_path() -> String:
+	return QUESTS_CLAIM_EN_PATH if GameState.get_language() == "en" else QUESTS_CLAIM_PL_PATH
+
+
+func _show_quests_view_fallback_content(parent: Control) -> void:
+	var panel: PanelContainer = PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
+	parent.add_child(panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	panel.add_child(margin)
+
+	var column: VBoxContainer = VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	margin.add_child(column)
+
+	var header: HBoxContainer = HBoxContainer.new()
+	header.add_theme_constant_override("separation", 10)
+	column.add_child(header)
+
+	var title: Label = _make_popup_label(LocalizationSystem.tr_key("quests.title"), 24)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_label_color(title, POPUP_TEXT_PRIMARY)
+	header.add_child(title)
+
+	var close_button: Button = Button.new()
+	close_button.text = LocalizationSystem.tr_key("ui.close")
+	close_button.custom_minimum_size = Vector2(96, 42)
+	close_button.pressed.connect(_close_quests_view)
+	_apply_button_text_color(close_button, POPUP_TEXT_PRIMARY)
+	header.add_child(close_button)
+
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(scroll)
+
+	var list: VBoxContainer = VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.mouse_filter = Control.MOUSE_FILTER_PASS
+	list.add_theme_constant_override("separation", 10)
+	scroll.add_child(list)
+	_populate_quests_list(list)
+
+
 func _make_shop_texture_background(path: String) -> TextureRect:
 	var bg: TextureRect = TextureRect.new()
 	bg.texture = AssetPaths.load_texture(path)
@@ -3273,9 +3380,8 @@ func _make_upgrade_info_line(icon_path: String, text: String, color: Color) -> C
 
 	var label: Label = Label.new()
 	label.text = text
-	label.clip_text = true
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 12)
 	_apply_label_color(label, color)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -3285,7 +3391,7 @@ func _make_upgrade_info_line(icon_path: String, text: String, color: Color) -> C
 
 func _make_upgrade_price_badge(text: String, at_max: bool) -> Control:
 	var badge: Control = Control.new()
-	badge.custom_minimum_size = Vector2(183, 42)
+	badge.custom_minimum_size = Vector2(220, 50)
 	badge.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
@@ -3304,7 +3410,7 @@ func _make_upgrade_price_badge(text: String, at_max: bool) -> Control:
 	label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_font_size_override("font_size", 12)
 	label.add_theme_color_override("font_color", Color(1.0, 0.96, 0.82, 1.0))
 	label.add_theme_color_override("font_shadow_color", Color(0.18, 0.08, 0.02, 0.95))
 	label.add_theme_constant_override("shadow_offset_x", 1)
@@ -3317,7 +3423,7 @@ func _make_upgrade_price_badge(text: String, at_max: bool) -> Control:
 func _make_upgrade_buy_texture_button(upgrade_id: String) -> TextureButton:
 	var button: TextureButton = TextureButton.new()
 	button.name = "UpgradeBuyButton"
-	button.custom_minimum_size = Vector2(146, 58)
+	button.custom_minimum_size = Vector2(175, 70)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.texture_normal = AssetPaths.load_texture(_get_upgrades_buy_button_path())
 	button.texture_hover = button.texture_normal
@@ -3583,25 +3689,44 @@ func _populate_quests_list(parent: VBoxContainer) -> void:
 
 
 func _make_quest_card(state: Dictionary) -> Control:
-	var card: PanelContainer = PanelContainer.new()
+	var card: Control = Control.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.custom_minimum_size = Vector2(0, 132)
-	card.add_theme_stylebox_override("panel", _make_card_style())
+	card.custom_minimum_size = Vector2(0, QUEST_CARD_MIN_HEIGHT)
+
+	var bg_tex: Texture2D = AssetPaths.load_texture(QUESTS_CARD_BG_PATH)
+	if bg_tex != null:
+		var background: TextureRect = TextureRect.new()
+		background.name = "QuestCardBg"
+		background.texture = bg_tex
+		background.set_anchors_preset(Control.PRESET_FULL_RECT)
+		background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		background.stretch_mode = TextureRect.STRETCH_SCALE
+		background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card.add_child(background)
+	else:
+		var bg_panel: PanelContainer = PanelContainer.new()
+		bg_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg_panel.add_theme_stylebox_override("panel", _make_card_style())
+		bg_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card.add_child(bg_panel)
 
 	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", QUEST_CARD_MARGIN)
+	margin.add_theme_constant_override("margin_right", QUEST_CARD_MARGIN)
+	margin.add_theme_constant_override("margin_top", QUEST_CARD_MARGIN)
+	margin.add_theme_constant_override("margin_bottom", QUEST_CARD_MARGIN)
 	card.add_child(margin)
 
 	var row: HBoxContainer = HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 12)
 	margin.add_child(row)
 
 	var info: VBoxContainer = VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	info.add_theme_constant_override("separation", 4)
 	row.add_child(info)
 
@@ -3610,45 +3735,71 @@ func _make_quest_card(state: Dictionary) -> Control:
 	title_label.clip_text = true
 	title_label.add_theme_font_size_override("font_size", 16)
 	_apply_label_color(title_label, POPUP_TEXT_PRIMARY)
-	info.add_child(title_label)
+	var title_wrap: MarginContainer = MarginContainer.new()
+	title_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_wrap.add_theme_constant_override("margin_left", QUEST_CARD_TEXT_INDENT)
+	title_wrap.add_child(title_label)
+	info.add_child(title_wrap)
 
 	var desc_label: Label = Label.new()
 	desc_label.text = LocalizationSystem.tr_key(str(state.get("description_key", "")))
 	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc_label.add_theme_font_size_override("font_size", 12)
 	_apply_label_color(desc_label, POPUP_TEXT_SECONDARY)
-	info.add_child(desc_label)
+	var desc_wrap: MarginContainer = MarginContainer.new()
+	desc_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	desc_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	desc_wrap.add_theme_constant_override("margin_left", QUEST_CARD_TEXT_INDENT)
+	desc_wrap.add_child(desc_label)
+	info.add_child(desc_wrap)
 
 	var current: int = int(state.get("current", 0))
 	var target: int = max(1, int(state.get("target", 1)))
 	var completed: bool = bool(state.get("completed", false))
 	var displayed_current: int = target if completed else current
+
 	var progress_label: Label = Label.new()
 	progress_label.text = LocalizationSystem.tr_key("quests.progress") + ": " + str(displayed_current) + " / " + str(target)
 	progress_label.add_theme_font_size_override("font_size", 12)
 	_apply_label_color(progress_label, POPUP_TEXT_ACCENT)
-	info.add_child(progress_label)
+	var progress_label_wrap: MarginContainer = MarginContainer.new()
+	progress_label_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	progress_label_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	progress_label_wrap.add_theme_constant_override("margin_left", QUEST_CARD_TEXT_INDENT)
+	progress_label_wrap.add_child(progress_label)
+	info.add_child(progress_label_wrap)
 
 	var progress_bar: ProgressBar = ProgressBar.new()
 	progress_bar.min_value = 0
 	progress_bar.max_value = target
 	progress_bar.value = displayed_current
 	progress_bar.show_percentage = false
-	progress_bar.custom_minimum_size = Vector2(0, 16)
+	progress_bar.custom_minimum_size = Vector2(0, 13)
 	progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if completed:
 		progress_bar.add_theme_stylebox_override("fill", _make_progress_fill_style(Color(0.18, 0.68, 0.22, 1.0)))
 		progress_bar.add_theme_stylebox_override("background", _make_progress_background_style(Color(0.13, 0.24, 0.12, 0.32)))
-	info.add_child(progress_bar)
+	var progress_bar_wrap: MarginContainer = MarginContainer.new()
+	progress_bar_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	progress_bar_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	progress_bar_wrap.add_theme_constant_override("margin_left", QUEST_CARD_TEXT_INDENT)
+	progress_bar_wrap.add_child(progress_bar)
+	info.add_child(progress_bar_wrap)
 
 	var reward_label: Label = Label.new()
 	reward_label.text = _format_quest_reward(state)
 	reward_label.add_theme_font_size_override("font_size", 12)
 	_apply_label_color(reward_label, POPUP_TEXT_SUCCESS)
-	info.add_child(reward_label)
+	var reward_label_wrap: MarginContainer = MarginContainer.new()
+	reward_label_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reward_label_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reward_label_wrap.add_theme_constant_override("margin_left", QUEST_CARD_TEXT_INDENT)
+	reward_label_wrap.add_child(reward_label)
+	info.add_child(reward_label_wrap)
 
 	var action_area: VBoxContainer = VBoxContainer.new()
-	action_area.custom_minimum_size = Vector2(112, 0)
+	action_area.custom_minimum_size = Vector2(QUEST_CLAIM_BTN_W + 8, 0)
 	action_area.alignment = BoxContainer.ALIGNMENT_CENTER
 	action_area.add_theme_constant_override("separation", 6)
 	row.add_child(action_area)
@@ -3663,11 +3814,30 @@ func _make_quest_card(state: Dictionary) -> Control:
 		status_label.text = LocalizationSystem.tr_key("quests.claimed")
 	elif bool(state.get("claimable", false)):
 		status_label.text = LocalizationSystem.tr_key("quests.completed")
-		var claim_button: Button = _make_owned_card_action_button("quests.claim")
-		claim_button.pressed.connect(func() -> void:
-			_on_quest_claim_pressed(str(state.get("id", "")))
-		)
-		action_area.add_child(claim_button)
+		var claim_tex: Texture2D = AssetPaths.load_texture(_get_quests_claim_button_path())
+		if claim_tex != null:
+			var claim_button: TextureButton = TextureButton.new()
+			claim_button.name = "ClaimButton"
+			claim_button.custom_minimum_size = Vector2(QUEST_CLAIM_BTN_W, QUEST_CLAIM_BTN_H)
+			claim_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			claim_button.texture_normal = claim_tex
+			claim_button.texture_hover = claim_tex
+			claim_button.texture_pressed = claim_tex
+			claim_button.texture_disabled = claim_tex
+			claim_button.ignore_texture_size = true
+			claim_button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+			claim_button.focus_mode = Control.FOCUS_NONE
+			claim_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+			claim_button.pressed.connect(func() -> void:
+				_on_quest_claim_pressed(str(state.get("id", "")))
+			)
+			action_area.add_child(claim_button)
+		else:
+			var claim_button: Button = _make_owned_card_action_button("quests.claim")
+			claim_button.pressed.connect(func() -> void:
+				_on_quest_claim_pressed(str(state.get("id", "")))
+			)
+			action_area.add_child(claim_button)
 	else:
 		status_label.text = LocalizationSystem.tr_key("quests.in_progress")
 
@@ -4153,6 +4323,16 @@ func _notify_biome_opened() -> void:
 
 func _on_quest_state_changed(_quest_id: String = "") -> void:
 	_refresh_next_step_widget()
+	_update_quest_badge()
+
+
+func _update_quest_badge() -> void:
+	var nav: Control = get_node_or_null("BottomNav")
+	if nav == null or not nav.has_method("update_quest_badge"):
+		return
+	var has_claimable: bool = has_node("/root/QuestSystem") and \
+		not QuestSystem.get_completed_unclaimed_quests().is_empty()
+	nav.update_quest_badge(has_claimable)
 
 
 func _try_shop_buy_reptile(reptile_id: String, rarity: String, sex: String) -> void:
@@ -4513,6 +4693,10 @@ func _show_level_up_popup(levels: Array, reward_amount: float) -> void:
 	_add_to_ui_modal_layer(level_up_modal)
 
 	var overlay: ColorRect = _make_modal_dim_overlay(0.46)
+	overlay.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
+			_close_level_up_modal()
+	)
 	level_up_modal.add_child(overlay)
 
 	var center: CenterContainer = CenterContainer.new()
