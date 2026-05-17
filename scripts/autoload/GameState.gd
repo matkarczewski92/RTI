@@ -122,6 +122,22 @@ func get_default_animal_instance(instance_id: String = "") -> Dictionary:
 	}
 
 
+func get_default_biome_resources() -> Dictionary:
+	var now: float = Time.get_unix_time_from_system()
+	var biome_default: Dictionary = {
+		"food_current": 100,
+		"food_max": 100,
+		"water_current": 100,
+		"water_max": 100,
+		"last_food_regen_timestamp": now,
+		"last_water_regen_timestamp": now
+	}
+	return {
+		"green_meadow": biome_default.duplicate(true),
+		"dry_prairie": biome_default.duplicate(true)
+	}
+
+
 func get_default_save_data() -> Dictionary:
 	var now: float = Time.get_unix_time_from_system()
 	var defaults: Dictionary = {
@@ -147,6 +163,7 @@ func get_default_save_data() -> Dictionary:
 		"water_regen_amount": 1,
 		"food_regen_interval_seconds": 600,
 		"water_regen_interval_seconds": 600,
+		"biome_resources": get_default_biome_resources(),
 		"language": "pl",
 		"settings": get_default_settings(),
 		"unlocked_biomes": [DEFAULT_BIOME_ID],
@@ -289,6 +306,7 @@ func normalize_save_data(data: Dictionary) -> Dictionary:
 	normalized["water_regen_interval_seconds"] = max(1, int(normalized.get("water_regen_interval_seconds", 600)))
 	normalized["last_food_regen_timestamp"] = _safe_timestamp(normalized.get("last_food_regen_timestamp", now), now, now)
 	normalized["last_water_regen_timestamp"] = _safe_timestamp(normalized.get("last_water_regen_timestamp", now), now, now)
+	normalized["biome_resources"] = _normalize_biome_resources(normalized.get("biome_resources", {}), now)
 
 	normalized["last_active_timestamp"] = _safe_timestamp(normalized.get("last_active_timestamp", now), now, now)
 	normalized["last_offline_income_at"] = _safe_timestamp(normalized.get("last_offline_income_at", normalized["last_active_timestamp"]), now, now)
@@ -342,6 +360,37 @@ func _normalize_incubation_containers(raw: Variant) -> Dictionary:
 		var val: Variant = src.get(key)
 		if typeof(val) == TYPE_DICTIONARY:
 			result[str(key)] = val
+	return result
+
+
+func _normalize_biome_resources(value: Variant, now: int) -> Dictionary:
+	var defaults: Dictionary = get_default_biome_resources()
+	var result: Dictionary = {}
+	for biome_id in defaults.keys():
+		var d: Dictionary = (defaults[biome_id] as Dictionary).duplicate(true)
+		d["last_food_regen_timestamp"] = now
+		d["last_water_regen_timestamp"] = now
+		result[biome_id] = d
+
+	if typeof(value) == TYPE_DICTIONARY:
+		var src: Dictionary = value as Dictionary
+		for biome_id_key in src.keys():
+			var biome_id: String = str(biome_id_key)
+			var biome_value: Variant = src.get(biome_id_key)
+			if typeof(biome_value) != TYPE_DICTIONARY:
+				continue
+			var incoming: Dictionary = biome_value as Dictionary
+			if not result.has(biome_id):
+				result[biome_id] = (defaults.get("green_meadow", {}) as Dictionary).duplicate(true)
+			var existing: Dictionary = result[biome_id]
+			existing["food_max"] = max(1, int(incoming.get("food_max", existing["food_max"])))
+			existing["water_max"] = max(1, int(incoming.get("water_max", existing["water_max"])))
+			existing["food_current"] = int(clamp(int(incoming.get("food_current", existing["food_current"])), 0, int(existing["food_max"])))
+			existing["water_current"] = int(clamp(int(incoming.get("water_current", existing["water_current"])), 0, int(existing["water_max"])))
+			existing["last_food_regen_timestamp"] = _safe_timestamp(incoming.get("last_food_regen_timestamp", now), now, now)
+			existing["last_water_regen_timestamp"] = _safe_timestamp(incoming.get("last_water_regen_timestamp", now), now, now)
+			result[biome_id] = existing
+
 	return result
 
 

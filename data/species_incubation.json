@@ -6,59 +6,81 @@
   },
   "species": {
     "leopard_gecko": {
+      "biome_id": "green_meadow",
       "incubation_time_hours": 12,
       "egg_name_pl": "Jaja gekona lamparciego",
-      "egg_name_en": "Leopard Gecko Eggs"
+      "egg_name_en": "Leopard Gecko Eggs",
+      "enabled_in_egg_shop": true
     },
     "bearded_dragon": {
+      "biome_id": "green_meadow",
       "incubation_time_hours": 18,
       "egg_name_pl": "Jaja agamy brodatej",
-      "egg_name_en": "Bearded Dragon Eggs"
+      "egg_name_en": "Bearded Dragon Eggs",
+      "enabled_in_egg_shop": true
     },
     "corn_snake": {
+      "biome_id": "green_meadow",
       "incubation_time_hours": 16,
       "egg_name_pl": "Jaja węża kukurydzianego",
-      "egg_name_en": "Corn Snake Eggs"
+      "egg_name_en": "Corn Snake Eggs",
+      "enabled_in_egg_shop": true
     },
     "steppe_tortoise": {
+      "biome_id": "green_meadow",
       "incubation_time_hours": 24,
       "egg_name_pl": "Jaja żółwia stepowego",
-      "egg_name_en": "Steppe Tortoise Eggs"
+      "egg_name_en": "Steppe Tortoise Eggs",
+      "enabled_in_egg_shop": true
     },
     "small_monitor": {
+      "biome_id": "green_meadow",
       "incubation_time_hours": 30,
       "egg_name_pl": "Jaja małego warany",
-      "egg_name_en": "Small Monitor Eggs"
+      "egg_name_en": "Small Monitor Eggs",
+      "enabled_in_egg_shop": true
     },
     "bullsnake": {
+      "biome_id": "dry_prairie",
       "incubation_time_hours": 20,
       "egg_name_pl": "Jaja węża byczego",
-      "egg_name_en": "Bullsnake Eggs"
+      "egg_name_en": "Bullsnake Eggs",
+      "enabled_in_egg_shop": true
     },
     "collared_lizard": {
+      "biome_id": "dry_prairie",
       "incubation_time_hours": 14,
       "egg_name_pl": "Jaja jaszczurki obrożnej",
-      "egg_name_en": "Collared Lizard Eggs"
+      "egg_name_en": "Collared Lizard Eggs",
+      "enabled_in_egg_shop": true
     },
     "western_earless_lizard": {
+      "biome_id": "dry_prairie",
       "incubation_time_hours": 12,
       "egg_name_pl": "Jaja jaszczurki bezuchej",
-      "egg_name_en": "Western Earless Lizard Eggs"
+      "egg_name_en": "Western Earless Lizard Eggs",
+      "enabled_in_egg_shop": true
     },
     "ornate_box_turtle": {
+      "biome_id": "dry_prairie",
       "incubation_time_hours": 28,
       "egg_name_pl": "Jaja żółwia ozdobnego",
-      "egg_name_en": "Ornate Box Turtle Eggs"
+      "egg_name_en": "Ornate Box Turtle Eggs",
+      "enabled_in_egg_shop": true
     },
     "western_hognose_snake": {
+      "biome_id": "dry_prairie",
       "incubation_time_hours": 22,
       "egg_name_pl": "Jaja węża ryjonosa",
-      "egg_name_en": "Western Hognose Snake Eggs"
+      "egg_name_en": "Western Hognose Snake Eggs",
+      "enabled_in_egg_shop": true
     },
     "prairie_rattlesnake": {
+      "biome_id": "dry_prairie",
       "incubation_time_hours": 36,
       "egg_name_pl": "Jaja grzechotnika preriowego",
-      "egg_name_en": "Prairie Rattlesnake Eggs"
+      "egg_name_en": "Prairie Rattlesnake Eggs",
+      "enabled_in_egg_shop": true
     }
   }
 }

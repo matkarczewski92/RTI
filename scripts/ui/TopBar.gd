@@ -11,6 +11,7 @@ const SETTINGS_BUTTON_SIZE_RATIO := Vector2(0.145, 0.45)
 const SETTINGS_BUTTON_CENTER_RATIO := Vector2(1.0 - 0.05 - SETTINGS_BUTTON_SIZE_RATIO.x * 0.5, 0.22)
 
 var art_path: String = ""
+var biome_id: String = "green_meadow"
 
 var cash_label: Label
 var xp_label: Label
@@ -87,8 +88,13 @@ func _refresh() -> void:
 	cash_label.text = _format_amount(float(GameState.get_value("repticash", 0)))
 	xp_label.text = _format_amount(float(GameState.get_value("xp", 0)))
 	level_label.text = str(GameState.get_value("level", 1))
-	food_label.text = str(int(GameState.get_value("food_current", 0))) + "/" + str(int(GameState.get_value("food_max", 100)))
-	water_label.text = str(int(GameState.get_value("water_current", 0))) + "/" + str(int(GameState.get_value("water_max", 100)))
+	if has_node("/root/ReptileSystem"):
+		var rs: Node = get_node("/root/ReptileSystem")
+		food_label.text = str(rs.call("get_biome_resource_current", biome_id, "food")) + "/" + str(rs.call("get_biome_resource_max", biome_id, "food"))
+		water_label.text = str(rs.call("get_biome_resource_current", biome_id, "water")) + "/" + str(rs.call("get_biome_resource_max", biome_id, "water"))
+	else:
+		food_label.text = str(int(GameState.get_value("food_current", 0))) + "/" + str(int(GameState.get_value("food_max", 100)))
+		water_label.text = str(int(GameState.get_value("water_current", 0))) + "/" + str(int(GameState.get_value("water_max", 100)))
 
 
 func _make_value_label(font_size: int, alignment: HorizontalAlignment) -> Label:

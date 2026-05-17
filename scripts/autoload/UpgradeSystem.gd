@@ -238,10 +238,27 @@ func _normalize_upgrade_definition(upgrade: Dictionary) -> Dictionary:
 	return normalized
 
 
-func get_action_cost_multiplier(action_id: String) -> float:
-	var upgrade_id: String = str(CARE_UPGRADE_ACTION_MAP.get(action_id, ""))
-	if upgrade_id.is_empty():
+func get_resource_storage_multiplier(resource_id: String) -> float:
+	var upgrade_id: String = resource_id + "_storage"
+	var level: int = get_upgrade_level(upgrade_id)
+	if level <= 0:
 		return 1.0
+	var base_percent: float = float(get_upgrade_definition(upgrade_id).get("effect_per_level", 50.0))
+	var multiplier: float = 1.0
+	for i in range(1, level + 1):
+		multiplier *= (1.0 + base_percent / (float(i) * 100.0))
+	return multiplier
+
+
+func get_action_cost_multiplier(action_id: String, biome_id: String = "") -> float:
+	var base_upgrade_id: String = str(CARE_UPGRADE_ACTION_MAP.get(action_id, ""))
+	if base_upgrade_id.is_empty():
+		return 1.0
+	var upgrade_id: String = base_upgrade_id
+	if not biome_id.is_empty() and (action_id == "feed" or action_id == "water"):
+		var biome_upgrade_id: String = base_upgrade_id + "_" + biome_id
+		if not get_upgrade_definition(biome_upgrade_id).is_empty():
+			upgrade_id = biome_upgrade_id
 	var level: int = get_upgrade_level(upgrade_id)
 	if level <= 0:
 		return 1.0

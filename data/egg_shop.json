@@ -1,4 +1,56 @@
 {
+  "species_based_offers_enabled": true,
+  "quality_order": ["standard", "improved", "rare", "elite"],
+  "qualities": {
+    "standard": {
+      "id": "standard",
+      "name_suffix_key": "egg_shop.quality_standard",
+      "price": 750,
+      "asset": "res://assets/art/incubator/eggs/shop_egg_common.png",
+      "drop_rates": {
+        "common": 60,
+        "rare": 30,
+        "ultra_rare": 7,
+        "exceptional": 3
+      }
+    },
+    "improved": {
+      "id": "improved",
+      "name_suffix_key": "egg_shop.quality_improved",
+      "price": 2000,
+      "asset": "res://assets/art/incubator/eggs/shop_egg_rare.png",
+      "drop_rates": {
+        "common": 40,
+        "rare": 40,
+        "ultra_rare": 15,
+        "exceptional": 5
+      }
+    },
+    "rare": {
+      "id": "rare",
+      "name_suffix_key": "egg_shop.quality_rare",
+      "price": 5000,
+      "asset": "res://assets/art/incubator/eggs/shop_egg_ultra_rare.png",
+      "drop_rates": {
+        "common": 25,
+        "rare": 40,
+        "ultra_rare": 25,
+        "exceptional": 10
+      }
+    },
+    "elite": {
+      "id": "elite",
+      "name_suffix_key": "egg_shop.quality_elite",
+      "price": 12000,
+      "asset": "res://assets/art/incubator/eggs/shop_egg_exceptional.png",
+      "drop_rates": {
+        "common": 10,
+        "rare": 30,
+        "ultra_rare": 40,
+        "exceptional": 20
+      }
+    }
+  },
   "offers": [
     {
       "id": "shop_egg_common",

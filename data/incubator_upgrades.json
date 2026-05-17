@@ -1,0 +1,42 @@
+[
+	{
+		"id": "incubator_faster_connection",
+		"name_key": "upgrade.incubator_faster_connection.name",
+		"description_key": "upgrade.incubator_faster_connection.desc",
+		"icon_path": "res://assets/art/incubator/upgrades/faster_connection.png",
+		"max_level": 5,
+		"prices": [2500, 7500, 20000, 50000, 120000],
+		"effect_per_level": 0.05,
+		"enabled": true
+	},
+	{
+		"id": "incubator_faster_incubation",
+		"name_key": "upgrade.incubator_faster_incubation.name",
+		"description_key": "upgrade.incubator_faster_incubation.desc",
+		"icon_path": "res://assets/art/incubator/upgrades/faster_incubation.png",
+		"max_level": 5,
+		"prices": [2500, 7500, 20000, 50000, 120000],
+		"effect_per_level": 0.05,
+		"enabled": true
+	},
+	{
+		"id": "incubator_humidity_longer",
+		"name_key": "upgrade.incubator_humidity_longer.name",
+		"description_key": "upgrade.incubator_humidity_longer.desc",
+		"icon_path": "res://assets/art/incubator/upgrades/humadity_longer.png",
+		"max_level": 5,
+		"prices": [2500, 7500, 20000, 50000, 120000],
+		"effect_per_level": 0.10,
+		"enabled": true
+	},
+	{
+		"id": "incubator_more_eggs",
+		"name_key": "upgrade.incubator_more_eggs.name",
+		"description_key": "upgrade.incubator_more_eggs.desc",
+		"icon_path": "res://assets/art/incubator/upgrades/more_eggs.png",
+		"max_level": 5,
+		"prices": [2500, 7500, 20000, 50000, 120000],
+		"effect_per_level": 1,
+		"enabled": true
+	}
+]

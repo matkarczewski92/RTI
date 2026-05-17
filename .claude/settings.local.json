@@ -8,7 +8,10 @@
       "Bash(Get-ChildItem \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\\\\data\\\\\" -Name)",
       "Bash(Get-ChildItem -Path \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\" -Recurse -ErrorAction SilentlyContinue)",
       "Bash(Select-Object -First 100)",
-      "Bash(Format-Table FullName)"
+      "Bash(Format-Table FullName)",
+      "Bash(python -c \"import sys; data=sys.stdin.read\\(\\); print\\(data[data.find\\('bearded'\\):data.find\\('bearded'\\)+2000]\\)\")",
+      "Bash(findstr /n \"bearded\")",
+      "Bash(python -c ' *)"
     ]
   }
 }

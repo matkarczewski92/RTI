@@ -2513,6 +2513,50 @@
 		"pl": "Brakuje wody.",
 		"en": "Not enough water."
 	},
+	"upgrade.food_storage.name": {
+		"pl": "Większy magazyn jedzenia",
+		"en": "Larger food storage"
+	},
+	"upgrade.food_storage.desc": {
+		"pl": "Zwiększa maksymalny zapas jedzenia.",
+		"en": "Increases the maximum food supply."
+	},
+	"upgrade.water_storage.name": {
+		"pl": "Większy limit wody",
+		"en": "Larger water limit"
+	},
+	"upgrade.water_storage.desc": {
+		"pl": "Zwiększa maksymalny limit wody.",
+		"en": "Increases the maximum water limit."
+	},
+	"ui.upgrade_food_max_effect": {
+		"pl": "Pojemność jedzenia: {value}",
+		"en": "Food capacity: {value}"
+	},
+	"ui.upgrade_water_max_effect": {
+		"pl": "Pojemność wody: {value}",
+		"en": "Water capacity: {value}"
+	},
+	"shop.resources": {
+		"pl": "Zasoby",
+		"en": "Resources"
+	},
+	"shop.buy_food": {
+		"pl": "Kup jedzenie",
+		"en": "Buy food"
+	},
+	"shop.buy_water": {
+		"pl": "Kup wodę",
+		"en": "Buy water"
+	},
+	"shop.resource_full": {
+		"pl": "Zapas pełny",
+		"en": "Supply full"
+	},
+	"shop.resource_amount": {
+		"pl": "+{amount}",
+		"en": "+{amount}"
+	},
 	"upgrade.better_food.name": {
 		"pl": "Lepsza karma",
 		"en": "Better food"
@@ -2528,6 +2572,38 @@
 	"upgrade.better_water.desc": {
 		"pl": "Zmniejsza zużycie wody podczas pojenia.",
 		"en": "Reduces water consumed when watering."
+	},
+	"upgrade.better_food_green_meadow.name": {
+		"pl": "Lepsza karma - Zielona łąka",
+		"en": "Better food - Green meadow"
+	},
+	"upgrade.better_food_green_meadow.desc": {
+		"pl": "Zmniejsza zużycie karmy w biomie Zielona łąka.",
+		"en": "Reduces food consumed in the Green meadow biome."
+	},
+	"upgrade.better_water_green_meadow.name": {
+		"pl": "Lepsza woda - Zielona łąka",
+		"en": "Better water - Green meadow"
+	},
+	"upgrade.better_water_green_meadow.desc": {
+		"pl": "Zmniejsza zużycie wody w biomie Zielona łąka.",
+		"en": "Reduces water consumed in the Green meadow biome."
+	},
+	"upgrade.better_food_dry_prairie.name": {
+		"pl": "Lepsza karma - Sucha preria",
+		"en": "Better food - Dry prairie"
+	},
+	"upgrade.better_food_dry_prairie.desc": {
+		"pl": "Zmniejsza zużycie karmy w biomie Sucha preria.",
+		"en": "Reduces food consumed in the Dry prairie biome."
+	},
+	"upgrade.better_water_dry_prairie.name": {
+		"pl": "Lepsza woda - Sucha preria",
+		"en": "Better water - Dry prairie"
+	},
+	"upgrade.better_water_dry_prairie.desc": {
+		"pl": "Zmniejsza zużycie wody w biomie Sucha preria.",
+		"en": "Reduces water consumed in the Dry prairie biome."
 	},
 	"upgrade.better_clean.name": {
 		"pl": "Lepsze czyszczenie",
@@ -2825,6 +2901,30 @@
 		"pl": "Brak dostępnych gatunków",
 		"en": "No species available"
 	},
+	"egg_shop.quality_standard": {
+		"pl": "Standardowe",
+		"en": "Standard"
+	},
+	"egg_shop.quality_improved": {
+		"pl": "Ulepszone",
+		"en": "Improved"
+	},
+	"egg_shop.quality_rare": {
+		"pl": "Rzadkie",
+		"en": "Rare"
+	},
+	"egg_shop.quality_elite": {
+		"pl": "Elitarne",
+		"en": "Elite"
+	},
+	"egg_shop.incubation_time": {
+		"pl": "Czas:",
+		"en": "Time:"
+	},
+	"egg_shop.locked_species": {
+		"pl": "Ten gatunek nie jest jeszcze dostępny.",
+		"en": "This species is not available yet."
+	},
 	"egg_shop.species_chosen": {
 		"pl": "Wylosowano: {species}",
 		"en": "Selected: {species}"
@@ -3005,5 +3105,19 @@
 	"achievement.exceptional_discovery.title": { "pl": "Wyjątkowe odkrycie", "en": "Exceptional Discovery" },
 	"achievement.exceptional_discovery.desc": { "pl": "Wykluć wyjątkowego gada z inkubatora.", "en": "Hatch an exceptional reptile from the incubator." },
 	"achievement.incubator_master.title": { "pl": "Mistrz inkubatora", "en": "Incubator Master" },
-	"achievement.incubator_master.desc": { "pl": "Wykluć łącznie 50 gadów z inkubatora.", "en": "Hatch a total of 50 reptiles from the incubator." }
+	"achievement.incubator_master.desc": { "pl": "Wykluć łącznie 50 gadów z inkubatora.", "en": "Hatch a total of 50 reptiles from the incubator." },
+	"upgrade.incubator_faster_connection.name": { "pl": "Szybsze łączenie", "en": "Faster Breeding" },
+	"upgrade.incubator_faster_connection.desc": { "pl": "Skraca czas łączenia o 5% za poziom (maks. -25%). Dotyczy nowych łączeń.", "en": "Reduces breeding time by 5% per level (max -25%). Applies to new pairings." },
+	"upgrade.incubator_faster_incubation.name": { "pl": "Szybsza inkubacja", "en": "Faster Incubation" },
+	"upgrade.incubator_faster_incubation.desc": { "pl": "Skraca czas inkubacji o 5% za poziom (maks. -25%, min. 3h). Dotyczy nowych inkubacji.", "en": "Reduces incubation time by 5% per level (max -25%, min 3h). Applies to new incubations." },
+	"upgrade.incubator_humidity_longer.name": { "pl": "Dłuższa wilgotność", "en": "Longer Humidity" },
+	"upgrade.incubator_humidity_longer.desc": { "pl": "Zmniejsza spadek wilgotności o 10% za poziom (maks. -50%).", "en": "Reduces humidity decay rate by 10% per level (max -50%)." },
+	"upgrade.incubator_more_eggs.name": { "pl": "Więcej jaj", "en": "More Eggs" },
+	"upgrade.incubator_more_eggs.desc": { "pl": "Zwiększa maksymalną liczbę jaj w komorze o 1 za poziom (do 15 łącznie).", "en": "Increases max eggs per container by 1 per level (up to 15 total)." },
+	"incubator.upgrades_title": { "pl": "Ulepszenia inkubatora", "en": "Incubator Upgrades" },
+	"ui.incubator_faster_connection_effect": { "pl": "Czas łączenia: -{value}%", "en": "Breeding time: -{value}%" },
+	"ui.incubator_faster_incubation_effect": { "pl": "Czas inkubacji: -{value}%", "en": "Incubation time: -{value}%" },
+	"ui.incubator_humidity_longer_effect": { "pl": "Spadek wilgotności: -{value}%", "en": "Humidity decay: -{value}%" },
+	"ui.incubator_more_eggs_effect": { "pl": "Maks. jaj: {value}", "en": "Max eggs: {value}" },
+	"upgrade.level_label": { "pl": "Poziom", "en": "Level" }
 }

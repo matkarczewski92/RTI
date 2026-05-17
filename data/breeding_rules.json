@@ -52,7 +52,7 @@
 			"common": 15, "rare": 40, "ultra_rare": 38, "exceptional": 7
 		},
 		"ultra_rare+exceptional": {
-			"common": 10, "rare": 25, "ultra_rare": 40, "exceptional": 25
+			"common": 15, "rare": 25, "ultra_rare": 45, "exceptional": 15
 		},
 		"exceptional+exceptional": {
 			"common": 10, "rare": 25, "ultra_rare": 40, "exceptional": 25

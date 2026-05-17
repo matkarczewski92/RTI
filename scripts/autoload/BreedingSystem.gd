@@ -27,12 +27,24 @@ func _load_rules() -> void:
 
 func get_fast_duration_seconds() -> int:
 	var hours: int = int(_rules.get("durations_hours", {}).get("fast", 24))
-	return hours * 3600
+	var base: int = hours * 3600
+	if has_node("/root/IncubatorUpgradeSystem"):
+		var sys: Node = get_node("/root/IncubatorUpgradeSystem")
+		if sys.has_method("get_breeding_time_multiplier"):
+			var mult: float = float(sys.call("get_breeding_time_multiplier"))
+			return max(43200, int(float(base) * mult))
+	return base
 
 
 func get_long_duration_seconds() -> int:
 	var hours: int = int(_rules.get("durations_hours", {}).get("long", 48))
-	return hours * 3600
+	var base: int = hours * 3600
+	if has_node("/root/IncubatorUpgradeSystem"):
+		var sys: Node = get_node("/root/IncubatorUpgradeSystem")
+		if sys.has_method("get_breeding_time_multiplier"):
+			var mult: float = float(sys.call("get_breeding_time_multiplier"))
+			return max(86400, int(float(base) * mult))
+	return base
 
 
 func get_cooldown_seconds() -> int:
@@ -277,6 +289,7 @@ func return_reptile_from_storage(instance_id: String) -> bool:
 		else:
 			new_list.append(entry)
 	if not found:
+		push_warning("BreedingSystem.return_reptile_from_storage: id not in storage: " + instance_id)
 		return false
 	storage["reptiles"] = new_list
 	GameState.set_value("incubator_storage", storage)
@@ -286,9 +299,16 @@ func return_reptile_from_storage(instance_id: String) -> bool:
 		var inst_value: Variant = instances.get(instance_id)
 		if typeof(inst_value) == TYPE_DICTIONARY:
 			var inst: Dictionary = inst_value as Dictionary
+			var src_rarity: String = str(inst.get("rarity", ""))
+			var src_variant: String = str(inst.get("variant_id", ""))
 			inst["habitat_id"] = null
 			instances[instance_id] = inst
 			GameState.set_value("owned_reptile_instances", instances)
+			print("[Wróć do puli] id=", instance_id, " src_rarity=", src_rarity, " src_variant=", src_variant, " final_rarity=", inst.get("rarity", ""), " final_variant=", inst.get("variant_id", ""))
+			if src_rarity != str(inst.get("rarity", "")):
+				push_error("BreedingSystem: rarity changed during pool transfer! " + src_rarity + " → " + str(inst.get("rarity", "")))
+			if src_variant != str(inst.get("variant_id", "")):
+				push_error("BreedingSystem: variant_id changed during pool transfer! " + src_variant + " → " + str(inst.get("variant_id", "")))
 
 	SaveSystem.save_game()
 	return true

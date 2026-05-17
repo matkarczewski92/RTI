@@ -11,6 +11,18 @@
 		"2": 10,
 		"3": 15
 	},
+	"shop": {
+		"buy_food": {
+			"price": 500,
+			"amount": 20,
+			"icon_path": "res://assets/art/ui/icons/menu/food.png"
+		},
+		"buy_water": {
+			"price": 500,
+			"amount": 20,
+			"icon_path": "res://assets/art/ui/icons/menu/water.png"
+		}
+	},
 	"actions": {
 		"feed": {
 			"stat": "hunger",
@@ -18,7 +30,9 @@
 			"resource": "food",
 			"resource_cost": 5,
 			"cooldown_seconds": 20,
-			"cost_upgrade_id": "better_food"
+			"cost_upgrade_id": "better_food",
+			"regen_interval_seconds": 600,
+			"regen_amount": 1
 		},
 		"water": {
 			"stat": "hydration",
@@ -26,7 +40,9 @@
 			"resource": "water",
 			"resource_cost": 5,
 			"cooldown_seconds": 20,
-			"cost_upgrade_id": "better_water"
+			"cost_upgrade_id": "better_water",
+			"regen_interval_seconds": 600,
+			"regen_amount": 1
 		},
 		"clean": {
 			"stat": "cleanliness",
@@ -37,7 +53,7 @@
 		},
 		"play": {
 			"stat": "happiness",
-			"increase_percent": 10,
+			"increase_percent": 20,
 			"resource": null,
 			"cooldown_seconds": 5,
 			"cost_upgrade_id": "better_play"

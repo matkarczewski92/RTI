@@ -531,12 +531,32 @@ func _execute_dev_command(command: String) -> String:
 			rs.call("apply_time_updates", false)
 		GameState.state_changed.emit()
 		return "Pairings skipped"
-	elif cmd == "skip_incubations":
+	elif cmd == "skip_incubations" or cmd == "skip_all_incubations":
 		var is_node: Node = get_node_or_null("/root/IncubationSystem")
 		if is_node != null and is_node.has_method("skip_all_incubations"):
 			is_node.call("skip_all_incubations")
+		SaveSystem.save_game()
 		GameState.state_changed.emit()
 		return "Incubations skipped"
+	elif cmd == "skip_all_connections":
+		var chambers_val: Variant = GameState.get_value("breeding_chambers", {})
+		if typeof(chambers_val) == TYPE_DICTIONARY:
+			var chambers: Dictionary = chambers_val as Dictionary
+			for ckey in chambers.keys():
+				var cv: Variant = chambers.get(ckey)
+				if typeof(cv) != TYPE_DICTIONARY:
+					continue
+				var cd: Dictionary = cv as Dictionary
+				if str(cd.get("state", "")) == "breeding":
+					cd["ends_at"] = 1
+					chambers[ckey] = cd
+			GameState.set_value("breeding_chambers", chambers)
+		var bs: Node = get_node_or_null("/root/BreedingSystem")
+		if bs != null and bs.has_method("tick_chambers"):
+			bs.call("tick_chambers")
+		SaveSystem.save_game()
+		GameState.state_changed.emit()
+		return "Connections skipped"
 	elif cmd.is_empty():
 		return ""
 	return "Unknown: " + cmd

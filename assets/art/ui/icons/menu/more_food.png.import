@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bouq5swdb0ho4"
-path="res://.godot/imported/rarity_icons_pack.png-8590dc29bfa1518b0b82d44729d974aa.ctex"
+uid="uid://dq5teyvb81t61"
+path="res://.godot/imported/more_food.png-a4a2fd9aac2513c2a2cce857eead6ea6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/ui/icons/rarity_icons_pack.png"
-dest_files=["res://.godot/imported/rarity_icons_pack.png-8590dc29bfa1518b0b82d44729d974aa.ctex"]
+source_file="res://assets/art/ui/icons/menu/more_food.png"
+dest_files=["res://.godot/imported/more_food.png-a4a2fd9aac2513c2a2cce857eead6ea6.ctex"]
 
 [params]
 

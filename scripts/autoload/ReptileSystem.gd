@@ -25,6 +25,9 @@ const WATER_XP_REWARD := 2
 const CLEAN_XP_REWARD := 3
 const PLAY_XP_REWARD := 0.1
 const HABITAT_TYPES: Array[String] = ["grass", "sand", "stone", "jungle"]
+const HABITAT_BIOMES: Array[String] = ["green_meadow", "dry_prairie"]
+const DEFAULT_RESOURCE_REGEN_INTERVAL := 600
+const DEFAULT_RESOURCE_REGEN_AMOUNT := 1
 const HABITAT_MAX_LEVEL := 3
 const HABITAT_UPGRADE_COST := 10000
 const HABITAT_BUILD_BASE_DURATIONS_SECONDS: Array[int] = [10, 60, 180]
@@ -501,19 +504,109 @@ func apply_time_updates(save_if_changed: bool = false) -> bool:
 	return changed
 
 
-func get_resource_current(resource_id: String) -> int:
+func get_resource_current(resource_id: String, biome_id: String = GameState.DEFAULT_BIOME_ID) -> int:
+	return get_biome_resource_current(biome_id, resource_id)
+
+
+func get_resource_max(resource_id: String, biome_id: String = GameState.DEFAULT_BIOME_ID) -> int:
+	return get_biome_resource_max(biome_id, resource_id)
+
+
+func get_biome_resource_current(biome_id: String, resource_id: String) -> int:
 	_update_global_resources(Time.get_unix_time_from_system())
-	if resource_id == "water":
-		return int(GameState.get_value("water_current", 0))
-
-	return int(GameState.get_value("food_current", 0))
+	var biome: Dictionary = _get_biome_resources(biome_id)
+	return int(biome.get(resource_id + "_current", 0))
 
 
-func get_resource_max(resource_id: String) -> int:
-	if resource_id == "water":
-		return int(GameState.get_value("water_max", 100))
+func get_biome_resource_max(biome_id: String, resource_id: String) -> int:
+	var biome: Dictionary = _get_biome_resources(biome_id)
+	var base_max: int = max(1, int(biome.get(resource_id + "_max", 100)))
+	return _apply_storage_multiplier(resource_id, base_max)
 
-	return int(GameState.get_value("food_max", 100))
+
+func get_shop_config(resource_id: String) -> Dictionary:
+	var shop_value: Variant = _care_actions_config.get("shop", {})
+	if typeof(shop_value) != TYPE_DICTIONARY:
+		return {}
+	var shop: Dictionary = shop_value as Dictionary
+	var item_value: Variant = shop.get("buy_" + resource_id, {})
+	if typeof(item_value) != TYPE_DICTIONARY:
+		return {}
+	return item_value as Dictionary
+
+
+func buy_resource(biome_id: String, resource_id: String) -> Dictionary:
+	_update_global_resources(Time.get_unix_time_from_system())
+	var shop_config_value: Variant = _care_actions_config.get("shop", {})
+	if typeof(shop_config_value) != TYPE_DICTIONARY:
+		return {"success": false, "message_key": "ui.feature_later"}
+	var shop_config: Dictionary = shop_config_value as Dictionary
+	var item_key: String = "buy_" + resource_id
+	var item_value: Variant = shop_config.get(item_key, {})
+	if typeof(item_value) != TYPE_DICTIONARY:
+		return {"success": false, "message_key": "ui.feature_later"}
+	var item: Dictionary = item_value as Dictionary
+	var price: int = int(item.get("price", 0))
+	var amount: int = int(item.get("amount", 0))
+	if price <= 0 or amount <= 0:
+		return {"success": false, "message_key": "ui.feature_later"}
+	var effective_max: int = get_biome_resource_max(biome_id, resource_id)
+	var current: int = get_biome_resource_current(biome_id, resource_id)
+	if current >= effective_max:
+		return {"success": false, "message_key": "shop.resource_full"}
+	if not EconomySystem.can_afford("repticash", price):
+		return {"success": false, "message_key": "ui.not_enough_rs"}
+	EconomySystem.spend_currency("repticash", price)
+	_set_biome_resource(biome_id, resource_id, min(current + amount, effective_max))
+	SaveSystem.save_game()
+	return {"success": true, "amount": amount, "resource": resource_id}
+
+
+func _apply_storage_multiplier(resource_id: String, base_max: int) -> int:
+	if not has_node("/root/UpgradeSystem"):
+		return base_max
+	var upgrade_system: Node = get_node("/root/UpgradeSystem")
+	if not upgrade_system.has_method("get_resource_storage_multiplier"):
+		return base_max
+	var mult: float = float(upgrade_system.call("get_resource_storage_multiplier", resource_id))
+	return max(1, int(round(float(base_max) * mult)))
+
+
+func _get_biome_resources(biome_id: String) -> Dictionary:
+	var br_value: Variant = GameState.get_value("biome_resources", {})
+	if typeof(br_value) != TYPE_DICTIONARY:
+		return {}
+	var br: Dictionary = br_value as Dictionary
+	var biome_value: Variant = br.get(biome_id, {})
+	if typeof(biome_value) != TYPE_DICTIONARY:
+		return {}
+	return biome_value as Dictionary
+
+
+func _set_biome_resource(biome_id: String, resource_id: String, value: int) -> void:
+	var br_value: Variant = GameState.get_value("biome_resources", {})
+	var br: Dictionary = {}
+	if typeof(br_value) == TYPE_DICTIONARY:
+		br = (br_value as Dictionary).duplicate(true)
+	var biome: Dictionary = {}
+	var biome_value: Variant = br.get(biome_id, {})
+	if typeof(biome_value) == TYPE_DICTIONARY:
+		biome = (biome_value as Dictionary).duplicate(true)
+	var maximum: int = max(1, int(biome.get(resource_id + "_max", 100)))
+	biome[resource_id + "_current"] = int(clamp(value, 0, maximum))
+	br[biome_id] = biome
+	GameState.set_value("biome_resources", br)
+
+
+func _get_biome_id_for_instance(instance: Dictionary) -> String:
+	var habitat_id: String = _id_or_empty(instance.get("habitat_id", null))
+	if habitat_id.is_empty():
+		return GameState.DEFAULT_BIOME_ID
+	var habitats: Dictionary = _get_habitats_state()
+	var habitat_value: Variant = habitats.get(habitat_id, {})
+	if typeof(habitat_value) != TYPE_DICTIONARY:
+		return GameState.DEFAULT_BIOME_ID
+	return str((habitat_value as Dictionary).get("biome_id", GameState.DEFAULT_BIOME_ID))
 
 
 func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
@@ -538,12 +631,13 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 	var message_key: String = ""
 	var xp_reward: float = 0.0
 	var money_reward: float = 0.0
+	var biome_id: String = _get_biome_id_for_instance(instance)
 	match action_id:
 		"feed":
 			var feed_cost: int = _get_habitat_resource_cost(instance, "feed")
-			if int(GameState.get_value("food_current", 0)) < feed_cost:
+			if get_biome_resource_current(biome_id, "food") < feed_cost:
 				return {"success": false, "message_key": "care.not_enough_food"}
-			_set_global_resource("food", int(GameState.get_value("food_current", 0)) - feed_cost)
+			_set_biome_resource(biome_id, "food", get_biome_resource_current(biome_id, "food") - feed_cost)
 			instance["hunger"] = _clamp_percent(float(instance.get("hunger", 100)) + _get_action_stat_gain("feed", FEED_SATIETY_GAIN))
 			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + CARE_SMALL_HAPPINESS_GAIN)
 			instance["last_feed_timestamp"] = now
@@ -552,9 +646,9 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 			message_key = "ui.feed_success_xp"
 		"water":
 			var water_cost: int = _get_habitat_resource_cost(instance, "water")
-			if int(GameState.get_value("water_current", 0)) < water_cost:
+			if get_biome_resource_current(biome_id, "water") < water_cost:
 				return {"success": false, "message_key": "care.not_enough_water"}
-			_set_global_resource("water", int(GameState.get_value("water_current", 0)) - water_cost)
+			_set_biome_resource(biome_id, "water", get_biome_resource_current(biome_id, "water") - water_cost)
 			instance["hydration"] = _clamp_percent(float(instance.get("hydration", 100)) + _get_action_stat_gain("water", WATER_HYDRATION_GAIN))
 			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + CARE_SMALL_HAPPINESS_GAIN)
 			instance["last_water_timestamp"] = now
@@ -608,15 +702,16 @@ func apply_worker_care_effect(instance_id: String, worker_type: String, threshol
 		return false
 
 	var now: int = Time.get_unix_time_from_system()
+	var worker_biome_id: String = _get_biome_id_for_instance(instance)
 	var changed := false
 	match worker_type:
 		"food":
 			if float(instance.get("hunger", 100)) >= threshold:
 				return false
 			var food_cost: int = _get_habitat_resource_cost(instance, "feed")
-			if int(GameState.get_value("food_current", 0)) < food_cost:
+			if get_biome_resource_current(worker_biome_id, "food") < food_cost:
 				return false
-			_set_global_resource("food", int(GameState.get_value("food_current", 0)) - food_cost)
+			_set_biome_resource(worker_biome_id, "food", get_biome_resource_current(worker_biome_id, "food") - food_cost)
 			instance["hunger"] = _clamp_percent(float(instance.get("hunger", 100)) + effect_value)
 			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + CARE_SMALL_HAPPINESS_GAIN)
 			instance["last_feed_timestamp"] = now
@@ -626,9 +721,9 @@ func apply_worker_care_effect(instance_id: String, worker_type: String, threshol
 			if float(instance.get("hydration", 100)) >= threshold:
 				return false
 			var water_cost: int = _get_habitat_resource_cost(instance, "water")
-			if int(GameState.get_value("water_current", 0)) < water_cost:
+			if get_biome_resource_current(worker_biome_id, "water") < water_cost:
 				return false
-			_set_global_resource("water", int(GameState.get_value("water_current", 0)) - water_cost)
+			_set_biome_resource(worker_biome_id, "water", get_biome_resource_current(worker_biome_id, "water") - water_cost)
 			instance["hydration"] = _clamp_percent(float(instance.get("hydration", 100)) + effect_value)
 			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + CARE_SMALL_HAPPINESS_GAIN)
 			instance["last_water_timestamp"] = now
@@ -1422,32 +1517,43 @@ func _ensure_game_state_int(key: String, fallback: int, minimum: int, maximum: i
 
 
 func _update_global_resources(now: int) -> bool:
+	var br_value: Variant = GameState.get_value("biome_resources", {})
+	if typeof(br_value) != TYPE_DICTIONARY:
+		return false
+	var br: Dictionary = (br_value as Dictionary).duplicate(true)
 	var changed: bool = false
-	changed = _regenerate_resource("food", now) or changed
-	changed = _regenerate_resource("water", now) or changed
+	for biome_id in HABITAT_BIOMES:
+		var biome_value: Variant = br.get(biome_id, {})
+		if typeof(biome_value) != TYPE_DICTIONARY:
+			continue
+		var biome: Dictionary = (biome_value as Dictionary).duplicate(true)
+		for resource_id in ["food", "water"]:
+			var eff_max: int = _apply_storage_multiplier(resource_id, max(1, int((biome as Dictionary).get(resource_id + "_max", 100))))
+			if _regenerate_biome_resource_in_place(biome, resource_id, now, eff_max):
+				changed = true
+		br[biome_id] = biome
+	if changed:
+		GameState.set_value("biome_resources", br)
 	return changed
 
 
-func _regenerate_resource(resource_id: String, now: int) -> bool:
-	var current_key: String = resource_id + "_current"
-	var max_key: String = resource_id + "_max"
+func _regenerate_biome_resource_in_place(biome: Dictionary, resource_id: String, now: int, effective_max: int = -1) -> bool:
+	var current: int = int(biome.get(resource_id + "_current", 0))
+	var maximum: int = effective_max if effective_max > 0 else max(1, int(biome.get(resource_id + "_max", 100)))
 	var timestamp_key: String = "last_" + resource_id + "_regen_timestamp"
-	var amount_key: String = resource_id + "_regen_amount"
-	var interval_key: String = resource_id + "_regen_interval_seconds"
-	var current: int = int(GameState.get_value(current_key, 0))
-	var maximum: int = max(1, int(GameState.get_value(max_key, 100)))
-	var amount: int = max(1, int(GameState.get_value(amount_key, 1)))
-	var interval: int = max(1, int(GameState.get_value(interval_key, 600)))
-	var last_timestamp: int = _timestamp_from_value(GameState.get_value(timestamp_key, now))
-	var changed: bool = false
+	var last_timestamp: int = _timestamp_from_value(biome.get(timestamp_key, now))
+	var action_id: String = "feed" if resource_id == "food" else "water"
+	var action_config: Dictionary = _get_care_action_config(action_id)
+	var amount: int = max(1, int(action_config.get("regen_amount", DEFAULT_RESOURCE_REGEN_AMOUNT)))
+	var interval: int = max(1, int(action_config.get("regen_interval_seconds", DEFAULT_RESOURCE_REGEN_INTERVAL)))
 
 	if last_timestamp <= 0:
-		GameState.set_value(timestamp_key, now)
+		biome[timestamp_key] = now
 		return true
 
 	if current >= maximum:
 		if last_timestamp != now:
-			GameState.set_value(timestamp_key, now)
+			biome[timestamp_key] = now
 			return true
 		return false
 
@@ -1461,13 +1567,13 @@ func _regenerate_resource(resource_id: String, now: int) -> bool:
 	if new_current >= maximum:
 		new_timestamp = now
 
+	var changed: bool = false
 	if new_current != current:
-		GameState.set_value(current_key, new_current)
+		biome[resource_id + "_current"] = new_current
 		changed = true
 	if new_timestamp != last_timestamp:
-		GameState.set_value(timestamp_key, new_timestamp)
+		biome[timestamp_key] = new_timestamp
 		changed = true
-
 	return changed
 
 
@@ -1731,6 +1837,7 @@ func _get_action_stat_gain(action_id: String, fallback: float) -> float:
 func _get_habitat_resource_cost(instance: Dictionary, action_id: String) -> int:
 	var resource_id: String = "food" if action_id == "feed" else "water"
 	var action_config: Dictionary = _get_care_action_config(action_id)
+	var biome_id: String = _get_biome_id_for_instance(instance)
 
 	var base_cost: float
 	if action_config.has("resource_cost"):
@@ -1749,14 +1856,14 @@ func _get_habitat_resource_cost(instance: Dictionary, action_id: String) -> int:
 		if typeof(level_costs_value) == TYPE_DICTIONARY:
 			cost_percent = int((level_costs_value as Dictionary).get(str(habitat_level), 5))
 
-		var resource_max: int = get_resource_max(resource_id)
+		var resource_max: int = get_biome_resource_max(biome_id, resource_id)
 		base_cost = float(resource_max) * float(cost_percent) / 100.0
 
 	var cost_multiplier: float = 1.0
 	if has_node("/root/UpgradeSystem"):
 		var upgrade_system: Node = get_node("/root/UpgradeSystem")
 		if upgrade_system.has_method("get_action_cost_multiplier"):
-			cost_multiplier = float(upgrade_system.call("get_action_cost_multiplier", action_id))
+			cost_multiplier = float(upgrade_system.call("get_action_cost_multiplier", action_id, biome_id))
 
 	return max(1, roundi(base_cost * cost_multiplier))
 

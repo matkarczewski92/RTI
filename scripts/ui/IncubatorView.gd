@@ -5,6 +5,7 @@ signal biome_map_requested
 const AssetPaths := preload("res://scripts/helpers/AssetPaths.gd")
 const TOP_BAR_SCENE := preload("res://scenes/ui/TopBar.tscn")
 const BOTTOM_NAV_SCENE := preload("res://scenes/ui/BottomNav.tscn")
+const SETTINGS_MODAL_SCRIPT := preload("res://scripts/ui/SettingsModal.gd")
 
 const BACKGROUND_PATH := "res://assets/art/biomes/incubator_background.png"
 const TOP_BAR_ART_PATH := "res://assets/art/ui/top_bar_incubation.png"
@@ -65,7 +66,11 @@ var _incubation_panel_available_ids: Array = []
 
 # Egg shop
 var _egg_shop_overlay: Control
+var _egg_shop_content: VBoxContainer
 var _hatch_results_overlay: Control
+
+var _settings_modal: Control
+var _upgrades_overlay: Control
 
 
 func _ready() -> void:
@@ -141,6 +146,7 @@ func _build_layout() -> void:
 	_add_incubation_panel()
 	_add_egg_shop_overlay()
 	_add_hatch_results_overlay()
+	_add_upgrades_overlay()
 	_add_toast()
 
 
@@ -169,6 +175,7 @@ func _rebuild_layout() -> void:
 	_incubation_panel_available_ids = []
 	_egg_shop_overlay = null
 	_hatch_results_overlay = null
+	_upgrades_overlay = null
 	_build_layout()
 
 
@@ -199,7 +206,25 @@ func _add_top_bar() -> void:
 		top_bar.art_path = TOP_BAR_ART_PATH
 	top_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	top_bar.offset_bottom = TOP_BAR_HEIGHT
+	if top_bar.has_signal("settings_pressed"):
+		top_bar.connect("settings_pressed", Callable(self, "_show_settings_screen"))
 	add_child(top_bar)
+
+
+func _show_settings_screen() -> void:
+	if _settings_modal != null and is_instance_valid(_settings_modal):
+		_settings_modal.move_to_front()
+		return
+	_settings_modal = SETTINGS_MODAL_SCRIPT.new() as Control
+	_settings_modal.name = "SettingsModal"
+	_settings_modal.z_index = 220
+	_settings_modal.connect("closed", func() -> void:
+		_settings_modal = null
+	)
+	_settings_modal.connect("reset_completed", func() -> void:
+		_settings_modal = null
+	)
+	add_child(_settings_modal)
 
 
 func _add_bottom_nav() -> void:
@@ -670,7 +695,7 @@ func _make_storage_reptile_row(entry: Dictionary) -> Control:
 				display_name = cn
 			else:
 				var rd: Dictionary = ReptileSystem.get_reptile(str(inst.get("reptile_id", "")))
-				display_name = str(rd.get("name_key", instance_id))
+				display_name = LocalizationSystem.tr_key(str(rd.get("name_key", instance_id)))
 
 	var lbl := Label.new()
 	lbl.text = display_name + ((" (" + rarity_text + ")") if not rarity_text.is_empty() else "")
@@ -700,7 +725,7 @@ func _make_storage_egg_row(entry: Dictionary) -> Control:
 	var rarity: String = str(entry.get("rarity", "common"))
 	var reptile_id: String = str(entry.get("reptile_id", ""))
 	var rd: Dictionary = ReptileSystem.get_reptile(reptile_id)
-	var species_name: String = str(rd.get("name_key", reptile_id))
+	var species_name: String = LocalizationSystem.tr_key(str(rd.get("name_key", reptile_id)))
 	var lbl := Label.new()
 	lbl.text = species_name + " — " + _localized_rarity(rarity)
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1176,6 +1201,10 @@ func _on_nav_pressed(item_id: String) -> void:
 			if _egg_shop_overlay != null:
 				_populate_egg_shop()
 				_egg_shop_overlay.visible = true
+		"upgrades":
+			if _upgrades_overlay != null:
+				_populate_upgrades_overlay()
+				_upgrades_overlay.visible = true
 		_:
 			_show_toast("incubator.coming_soon", "This feature will be added in a later stage.")
 
@@ -1716,6 +1745,7 @@ func _add_egg_shop_overlay() -> void:
 	content.add_theme_constant_override("separation", 10)
 	scroll.add_child(content)
 	_make_scroll_safe(content)
+	_egg_shop_content = content
 
 	var close_row := HBoxContainer.new()
 	close_row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -1732,110 +1762,176 @@ func _add_egg_shop_overlay() -> void:
 
 
 func _populate_egg_shop() -> void:
-	if _egg_shop_overlay == null:
+	if _egg_shop_overlay == null or _egg_shop_content == null:
 		return
-	var content: VBoxContainer = _egg_shop_overlay.get_node_or_null("ESPanel/ESScroll/ESContent") as VBoxContainer
-	if content == null:
-		return
+	var content: VBoxContainer = _egg_shop_content
 	for child in content.get_children():
 		content.remove_child(child)
 		child.queue_free()
 
-	var offers: Array = IncubationSystem.get_shop_offers()
-	if offers.is_empty():
+	var available: Array = IncubationSystem.get_available_species_for_shop()
+	var qualities: Dictionary = IncubationSystem.get_species_shop_qualities()
+	var quality_order: Array = IncubationSystem.get_quality_order()
+
+	if available.is_empty() or qualities.is_empty():
 		var lbl := Label.new()
-		lbl.text = "—"
+		lbl.text = _localized_text("egg_shop.no_species_available", "No species available")
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		content.add_child(lbl)
 		return
 
-	for offer_val in offers:
-		if typeof(offer_val) == TYPE_DICTIONARY:
-			content.add_child(_make_egg_shop_offer_card(offer_val as Dictionary))
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_child(grid)
+
+	for species_val in available:
+		if typeof(species_val) != TYPE_DICTIONARY:
+			continue
+		var species: Dictionary = species_val as Dictionary
+		for qid in quality_order:
+			if not qualities.has(qid):
+				continue
+			grid.add_child(_make_species_quality_card(species, qid, qualities[qid] as Dictionary))
+
+	_make_scroll_safe(grid)
 
 
-func _make_egg_shop_offer_card(offer: Dictionary) -> Control:
+func _make_species_quality_card(species: Dictionary, quality_id: String, qdef: Dictionary) -> Control:
+	var lang: String = LocalizationSystem.get_language()
+	var species_id: String = str(species.get("species_id", ""))
+	var egg_name: String = str(species.get("egg_name_" + lang, str(species.get("egg_name_en", species_id))))
+	var quality_label: String = _localized_text(str(qdef.get("name_suffix_key", "")), quality_id.capitalize())
+	var price: int = int(qdef.get("price", 0))
+	var inc_hours: int = int(species.get("incubation_time_hours", 24))
+	var rates: Dictionary = {}
+	var rates_val: Variant = qdef.get("drop_rates", {})
+	if typeof(rates_val) == TYPE_DICTIONARY:
+		rates = rates_val as Dictionary
+
+	var badge_color: Color
+	match quality_id:
+		"standard": badge_color = Color(0.45, 0.45, 0.45, 0.95)
+		"improved":  badge_color = Color(0.20, 0.42, 0.88, 0.95)
+		"rare":      badge_color = Color(0.56, 0.15, 0.85, 0.95)
+		"elite":     badge_color = Color(0.85, 0.62, 0.08, 0.95)
+		_:           badge_color = Color(0.45, 0.45, 0.45, 0.95)
+
 	var card := PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var cs := StyleBoxFlat.new()
-	cs.bg_color = Color(0.14, 0.10, 0.06, 0.80)
-	cs.border_color = Color(0.60, 0.45, 0.22, 0.75)
+	cs.bg_color = Color(0.12, 0.09, 0.05, 0.90)
+	cs.border_color = badge_color
 	cs.set_border_width_all(2)
-	cs.set_corner_radius_all(8)
-	cs.content_margin_left = 10
-	cs.content_margin_right = 10
-	cs.content_margin_top = 10
-	cs.content_margin_bottom = 10
+	cs.set_corner_radius_all(10)
+	cs.content_margin_left = 8
+	cs.content_margin_right = 8
+	cs.content_margin_top = 8
+	cs.content_margin_bottom = 8
 	card.add_theme_stylebox_override("panel", cs)
 
-	var hbox := HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 10)
-	card.add_child(hbox)
+	var vbox := VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_theme_constant_override("separation", 4)
+	card.add_child(vbox)
 
-	# Offer icon
+	var icon_row := HBoxContainer.new()
+	icon_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_child(icon_row)
+
 	var icon := TextureRect.new()
-	icon.custom_minimum_size = Vector2(70, 70)
+	icon.custom_minimum_size = Vector2(64, 64)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var asset_path: String = str(offer.get("asset", ""))
+	var asset_path: String = str(qdef.get("asset", ""))
 	if not asset_path.is_empty():
 		icon.texture = AssetPaths.load_texture(asset_path)
-	hbox.add_child(icon)
+	icon_row.add_child(icon)
 
-	# Info column
-	var info := VBoxContainer.new()
-	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 4)
-	hbox.add_child(info)
-
-	var name_key: String = str(offer.get("name_key", ""))
-	var offer_name: String = _localized_text(name_key, name_key)
 	var name_lbl := Label.new()
-	name_lbl.text = offer_name
-	name_lbl.add_theme_font_size_override("font_size", 15)
+	name_lbl.text = egg_name
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_lbl.add_theme_font_size_override("font_size", 11)
 	name_lbl.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	info.add_child(name_lbl)
+	vbox.add_child(name_lbl)
 
-	var price: int = int(offer.get("price", 0))
+	var badge_row := HBoxContainer.new()
+	badge_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_child(badge_row)
+
+	var badge := PanelContainer.new()
+	var bs := StyleBoxFlat.new()
+	bs.bg_color = badge_color
+	bs.set_corner_radius_all(6)
+	bs.content_margin_left = 6
+	bs.content_margin_right = 6
+	bs.content_margin_top = 2
+	bs.content_margin_bottom = 2
+	badge.add_theme_stylebox_override("panel", bs)
+	badge_row.add_child(badge)
+	var badge_lbl := Label.new()
+	badge_lbl.text = quality_label
+	badge_lbl.add_theme_font_size_override("font_size", 10)
+	badge_lbl.add_theme_color_override("font_color", Color.WHITE)
+	badge_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_child(badge_lbl)
+
+	var time_lbl := Label.new()
+	time_lbl.text = _localized_text("egg_shop.incubation_time", "Time:") + " " + str(inc_hours) + "h"
+	time_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	time_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	time_lbl.add_theme_font_size_override("font_size", 10)
+	time_lbl.add_theme_color_override("font_color", Color(0.68, 0.63, 0.50, 0.85))
+	time_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(time_lbl)
+
 	var price_lbl := Label.new()
-	price_lbl.text = _localized_text("egg_shop.price_label", "Price:") + "  " + str(price) + " R$"
-	price_lbl.add_theme_font_size_override("font_size", 12)
-	price_lbl.add_theme_color_override("font_color", Color(0.80, 0.74, 0.55, 0.95))
+	price_lbl.text = str(price) + " R$"
+	price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	price_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	price_lbl.add_theme_font_size_override("font_size", 13)
+	price_lbl.add_theme_color_override("font_color", Color(0.95, 0.83, 0.38, 1.0))
 	price_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	info.add_child(price_lbl)
+	vbox.add_child(price_lbl)
 
-	var rates_val: Variant = offer.get("drop_rates", {})
-	if typeof(rates_val) == TYPE_DICTIONARY:
-		var rates: Dictionary = rates_val as Dictionary
-		var odds_text: String = _localized_text("egg_shop.odds", "Odds:") + "  "
-		odds_text += "C:" + str(int(round(float(rates.get("common", 0))))) + "%  "
-		odds_text += "R:" + str(int(round(float(rates.get("rare", 0))))) + "%  "
-		odds_text += "UR:" + str(int(round(float(rates.get("ultra_rare", 0))))) + "%  "
-		odds_text += "E:" + str(int(round(float(rates.get("exceptional", 0))))) + "%"
-		var odds_lbl := Label.new()
-		odds_lbl.text = odds_text
-		odds_lbl.add_theme_font_size_override("font_size", 11)
-		odds_lbl.add_theme_color_override("font_color", Color(0.60, 0.55, 0.45, 0.85))
-		odds_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		info.add_child(odds_lbl)
+	var c_pct: String = str(int(round(float(rates.get("common", 0)))))
+	var r_pct: String = str(int(round(float(rates.get("rare", 0)))))
+	var ur_pct: String = str(int(round(float(rates.get("ultra_rare", 0)))))
+	var e_pct: String = str(int(round(float(rates.get("exceptional", 0)))))
+	var odds_lbl := Label.new()
+	odds_lbl.text = "C:" + c_pct + "% R:" + r_pct + "%\nUR:" + ur_pct + "% E:" + e_pct + "%"
+	odds_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	odds_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	odds_lbl.add_theme_font_size_override("font_size", 10)
+	odds_lbl.add_theme_color_override("font_color", Color(0.60, 0.55, 0.45, 0.85))
+	odds_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(odds_lbl)
 
 	var buy_btn := Button.new()
 	buy_btn.text = _localized_text("egg_shop.buy", "Buy")
 	buy_btn.focus_mode = Control.FOCUS_NONE
-	buy_btn.custom_minimum_size = Vector2(0, 36)
+	buy_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	buy_btn.custom_minimum_size = Vector2(0, 32)
 	buy_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var offer_id: String = str(offer.get("id", ""))
+	var sid: String = species_id
+	var qid: String = quality_id
 	buy_btn.pressed.connect(func() -> void:
-		var result: Dictionary = IncubationSystem.buy_egg(offer_id)
+		buy_btn.disabled = true
+		var result: Dictionary = IncubationSystem.buy_species_egg(sid, qid)
+		buy_btn.disabled = false
 		if bool(result.get("success", false)):
 			_show_toast("egg_shop.purchased", "Egg purchased!")
 		else:
 			_show_toast(str(result.get("error_key", "")), "Error.")
 	)
-	info.add_child(buy_btn)
+	vbox.add_child(buy_btn)
 
 	return card
 
@@ -2065,6 +2161,258 @@ func _make_hatch_result_card(r: Dictionary, _lang: String) -> Control:
 		info.add_child(disc_lbl)
 
 	return card
+
+
+# ─── Incubator upgrades overlay ────────────────────────────────────────
+
+func _add_upgrades_overlay() -> void:
+	_upgrades_overlay = Control.new()
+	_upgrades_overlay.name = "UpgradesOverlay"
+	_upgrades_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_upgrades_overlay.visible = false
+	_upgrades_overlay.z_index = 125
+	add_child(_upgrades_overlay)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.65)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_upgrades_overlay.add_child(dim)
+
+	var panel := PanelContainer.new()
+	panel.name = "UPPanel"
+	panel.anchor_left = 0.03
+	panel.anchor_top = 0.06
+	panel.anchor_right = 0.97
+	panel.anchor_bottom = 0.95
+	var ps := StyleBoxFlat.new()
+	ps.bg_color = Color(0.10, 0.07, 0.04, 0.97)
+	ps.border_color = Color(0.70, 0.52, 0.25, 0.95)
+	ps.set_border_width_all(3)
+	ps.set_corner_radius_all(16)
+	ps.content_margin_left = 14
+	ps.content_margin_right = 14
+	ps.content_margin_top = 14
+	ps.content_margin_bottom = 14
+	panel.add_theme_stylebox_override("panel", ps)
+	_upgrades_overlay.add_child(panel)
+
+	var outer := VBoxContainer.new()
+	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer.add_theme_constant_override("separation", 10)
+	panel.add_child(outer)
+
+	var title := Label.new()
+	title.text = _localized_text("incubator.upgrades_title", "Incubator Upgrades")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
+	outer.add_child(title)
+
+	var sep := HSeparator.new()
+	sep.add_theme_color_override("color", Color(0.55, 0.40, 0.20, 0.70))
+	outer.add_child(sep)
+
+	var scroll := ScrollContainer.new()
+	scroll.name = "UPScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	outer.add_child(scroll)
+
+	var content := VBoxContainer.new()
+	content.name = "UPContent"
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", 10)
+	scroll.add_child(content)
+	_make_scroll_safe(content)
+
+	var close_row := HBoxContainer.new()
+	close_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	close_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.add_child(close_row)
+
+	var close_btn := Button.new()
+	close_btn.text = _localized_text("button.back", "Back")
+	close_btn.focus_mode = Control.FOCUS_NONE
+	close_btn.custom_minimum_size = Vector2(130, 42)
+	close_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	close_btn.pressed.connect(func() -> void: _upgrades_overlay.visible = false)
+	close_row.add_child(close_btn)
+
+
+func _populate_upgrades_overlay() -> void:
+	if _upgrades_overlay == null:
+		return
+	var content: VBoxContainer = _upgrades_overlay.get_node_or_null(
+		"UPPanel/UPScroll/UPContent") as VBoxContainer
+	if content == null:
+		return
+	for child in content.get_children():
+		content.remove_child(child)
+		child.queue_free()
+
+	if not has_node("/root/IncubatorUpgradeSystem"):
+		var lbl := Label.new()
+		lbl.text = "IncubatorUpgradeSystem not available."
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		content.add_child(lbl)
+		return
+
+	var sys: Node = get_node("/root/IncubatorUpgradeSystem")
+	if not sys.has_method("get_upgrade_definitions"):
+		return
+	var defs: Array = sys.call("get_upgrade_definitions") as Array
+	for def_val in defs:
+		if typeof(def_val) == TYPE_DICTIONARY:
+			content.add_child(_make_incubator_upgrade_card(def_val as Dictionary))
+	_make_scroll_safe(content)
+
+
+func _make_incubator_upgrade_card(upgrade: Dictionary) -> Control:
+	var upgrade_id: String = str(upgrade.get("id", ""))
+	var sys: Node = get_node("/root/IncubatorUpgradeSystem")
+	var level: int = int(sys.call("get_level", upgrade_id))
+	var max_level: int = int(upgrade.get("max_level", 5))
+	var cost: int = int(sys.call("get_cost", upgrade_id))
+	var is_maxed: bool = level >= max_level
+
+	var card := PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var cs := StyleBoxFlat.new()
+	cs.bg_color = Color(0.13, 0.09, 0.06, 0.88)
+	cs.border_color = Color(0.30, 0.75, 0.35, 0.80) if is_maxed else Color(0.60, 0.45, 0.22, 0.75)
+	cs.set_border_width_all(2)
+	cs.set_corner_radius_all(10)
+	cs.content_margin_left = 10
+	cs.content_margin_right = 10
+	cs.content_margin_top = 10
+	cs.content_margin_bottom = 10
+	card.add_theme_stylebox_override("panel", cs)
+
+	var main_vbox := VBoxContainer.new()
+	main_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_vbox.add_theme_constant_override("separation", 6)
+	card.add_child(main_vbox)
+
+	var top_row := HBoxContainer.new()
+	top_row.add_theme_constant_override("separation", 10)
+	main_vbox.add_child(top_row)
+
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = Vector2(52, 52)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var icon_path: String = str(upgrade.get("icon_path", ""))
+	if not icon_path.is_empty():
+		icon.texture = AssetPaths.load_texture(icon_path)
+	top_row.add_child(icon)
+
+	var name_desc_vbox := VBoxContainer.new()
+	name_desc_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_desc_vbox.add_theme_constant_override("separation", 3)
+	top_row.add_child(name_desc_vbox)
+
+	var name_lbl := Label.new()
+	name_lbl.text = _localized_text(str(upgrade.get("name_key", "")), upgrade_id)
+	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_lbl.add_theme_font_size_override("font_size", 14)
+	name_lbl.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
+	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_desc_vbox.add_child(name_lbl)
+
+	var desc_lbl := Label.new()
+	desc_lbl.text = _localized_text(str(upgrade.get("description_key", "")), "")
+	desc_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	desc_lbl.add_theme_font_size_override("font_size", 11)
+	desc_lbl.add_theme_color_override("font_color", Color(0.68, 0.62, 0.50, 0.85))
+	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_desc_vbox.add_child(desc_lbl)
+
+	var level_lbl := Label.new()
+	level_lbl.text = _localized_text("upgrade.level_label", "Level") + ": " + str(level) + "/" + str(max_level)
+	level_lbl.add_theme_font_size_override("font_size", 12)
+	level_lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.60, 1.0))
+	level_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	main_vbox.add_child(level_lbl)
+
+	var effect_text: String = _get_incubator_upgrade_effect_text(upgrade_id, level, upgrade)
+	if not effect_text.is_empty():
+		var effect_lbl := Label.new()
+		effect_lbl.text = effect_text
+		effect_lbl.add_theme_font_size_override("font_size", 13)
+		effect_lbl.add_theme_color_override("font_color", Color(0.55, 0.88, 0.55, 1.0))
+		effect_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		main_vbox.add_child(effect_lbl)
+
+	var buy_row := HBoxContainer.new()
+	buy_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_vbox.add_child(buy_row)
+
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	buy_row.add_child(spacer)
+
+	if is_maxed:
+		var max_lbl := Label.new()
+		max_lbl.text = _localized_text("ui.upgrade_max", "MAX")
+		max_lbl.add_theme_font_size_override("font_size", 13)
+		max_lbl.add_theme_color_override("font_color", Color(0.30, 0.90, 0.40, 1.0))
+		max_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		buy_row.add_child(max_lbl)
+	else:
+		var cost_lbl := Label.new()
+		cost_lbl.text = str(cost) + " R$"
+		cost_lbl.add_theme_font_size_override("font_size", 13)
+		cost_lbl.add_theme_color_override("font_color", Color(0.95, 0.83, 0.38, 1.0))
+		cost_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		buy_row.add_child(cost_lbl)
+
+		var can_afford: bool = EconomySystem.can_afford("repticash", cost)
+		var buy_btn := Button.new()
+		buy_btn.text = _localized_text("button.buy", "Kup")
+		buy_btn.focus_mode = Control.FOCUS_NONE
+		buy_btn.disabled = not can_afford
+		buy_btn.custom_minimum_size = Vector2(70, 32)
+		buy_btn.add_theme_font_size_override("font_size", 12)
+		buy_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		var uid: String = upgrade_id
+		buy_btn.pressed.connect(func() -> void:
+			var result: Dictionary = (get_node("/root/IncubatorUpgradeSystem") as Node).call("buy", uid) as Dictionary
+			if bool(result.get("success", false)):
+				_populate_upgrades_overlay()
+			else:
+				_show_toast(str(result.get("message_key", "")), "Error.")
+		)
+		buy_row.add_child(buy_btn)
+
+	return card
+
+
+func _get_incubator_upgrade_effect_text(upgrade_id: String, level: int, upgrade: Dictionary) -> String:
+	if level <= 0:
+		return ""
+	var effect_per_level: float = float(upgrade.get("effect_per_level", 0.0))
+	match upgrade_id:
+		"incubator_faster_connection":
+			var pct: int = int(round(float(level) * effect_per_level * 100.0))
+			return _localized_text("ui.incubator_faster_connection_effect", "Breeding time: -{value}%").replace("{value}", str(pct))
+		"incubator_faster_incubation":
+			var pct: int = int(round(float(level) * effect_per_level * 100.0))
+			return _localized_text("ui.incubator_faster_incubation_effect", "Incubation time: -{value}%").replace("{value}", str(pct))
+		"incubator_humidity_longer":
+			var pct: int = int(round(float(level) * effect_per_level * 100.0))
+			return _localized_text("ui.incubator_humidity_longer_effect", "Humidity decay: -{value}%").replace("{value}", str(pct))
+		"incubator_more_eggs":
+			var current_max: int = IncubationSystem.get_max_eggs_per_container()
+			return _localized_text("ui.incubator_more_eggs_effect", "Max eggs: {value}").replace("{value}", str(current_max))
+	return ""
 
 
 # ─── Language change ────────────────────────────────────────────────────

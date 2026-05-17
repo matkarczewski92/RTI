@@ -348,6 +348,8 @@ func _add_top_bar() -> void:
 	var top_bar_art: String = str(_biome_config.get("top_bar_path", ""))
 	if not top_bar_art.is_empty() and top_bar.has_method("set") and "art_path" in top_bar:
 		top_bar.art_path = top_bar_art
+	if "biome_id" in top_bar:
+		top_bar.biome_id = biome_id
 	top_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	top_bar.offset_bottom = TOP_BAR_HEIGHT
 	if top_bar.has_signal("settings_pressed"):
@@ -1113,10 +1115,12 @@ func _make_assignable_reptile_card(instance: Dictionary, habitat_id: String) -> 
 	var rarity_row: HBoxContainer = HBoxContainer.new()
 	rarity_row.add_theme_constant_override("separation", 6)
 	info.add_child(rarity_row)
-	rarity_row.add_child(_make_rarity_icon(str(variant.get("rarity_icon_path", "")), RARITY_ICON_SIZE))
+	var display_rarity: String = str(instance.get("rarity", str(variant.get("rarity", "common"))))
+	var rarity_icon_path: String = ReptileSystem.RARITY_ICON_PATHS.get(display_rarity, str(variant.get("rarity_icon_path", "")))
+	rarity_row.add_child(_make_rarity_icon(rarity_icon_path, RARITY_ICON_SIZE))
 
 	var rarity: Label = Label.new()
-	rarity.text = LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(str(variant.get("rarity", "common"))))
+	rarity.text = LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(display_rarity))
 	rarity.clip_text = true
 	rarity.add_theme_font_size_override("font_size", 12)
 	_apply_label_color(rarity, POPUP_TEXT_ACCENT)
@@ -1157,6 +1161,87 @@ func _make_assignable_reptile_card(instance: Dictionary, habitat_id: String) -> 
 		_place_owned_reptile(str(instance.get("instance_id", "")), habitat_id)
 	)
 	action_area.add_child(button)
+
+	return card
+
+
+func _make_resource_buy_card(resource_id: String) -> Control:
+	var icon_path: String = FOOD_ICON_PATH if resource_id == "food" else WATER_ICON_PATH
+	var label_key: String = "shop.buy_food" if resource_id == "food" else "shop.buy_water"
+
+	var shop_cfg: Dictionary = {}
+	if has_node("/root/ReptileSystem"):
+		var rs: Node = get_node("/root/ReptileSystem")
+		if rs.has_method("get_shop_config"):
+			shop_cfg = rs.call("get_shop_config", resource_id)
+
+	var price: int = int(shop_cfg.get("price", 50))
+	var amount: int = int(shop_cfg.get("amount", 20))
+	var current: int = 0
+	var max_val: int = 100
+	if has_node("/root/ReptileSystem"):
+		var rs: Node = get_node("/root/ReptileSystem")
+		current = int(rs.call("get_biome_resource_current", biome_id, resource_id))
+		max_val = int(rs.call("get_biome_resource_max", biome_id, resource_id))
+
+	var is_full: bool = current >= max_val
+
+	var card: PanelContainer = PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.add_theme_stylebox_override("panel", _make_card_style())
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	card.add_child(margin)
+
+	var col: VBoxContainer = VBoxContainer.new()
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_theme_constant_override("separation", 6)
+	margin.add_child(col)
+
+	var icon: Control = _make_icon_or_fallback(icon_path, Vector2(48, 48), resource_id[0].to_upper())
+	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	col.add_child(icon)
+
+	var name_lbl: Label = _make_popup_label(LocalizationSystem.tr_key(label_key), 13)
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_label_color(name_lbl, POPUP_TEXT_PRIMARY)
+	col.add_child(name_lbl)
+
+	var level_lbl: Label = _make_popup_label(str(current) + "/" + str(max_val), 12)
+	level_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_label_color(level_lbl, POPUP_TEXT_ACCENT)
+	col.add_child(level_lbl)
+
+	var amount_lbl: Label = _make_popup_label(LocalizationSystem.tr_key("shop.resource_amount").replace("{amount}", str(amount)), 12)
+	amount_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_label_color(amount_lbl, POPUP_TEXT_SUCCESS)
+	col.add_child(amount_lbl)
+
+	var cost_lbl: Label = _make_popup_label(LocalizationSystem.tr_key("currency.repticash") + " " + str(price), 12)
+	cost_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_label_color(cost_lbl, POPUP_TEXT_ACCENT)
+	col.add_child(cost_lbl)
+
+	var btn: Button = Button.new()
+	btn.text = LocalizationSystem.tr_key("shop.resource_full") if is_full else LocalizationSystem.tr_key("ui.upgrade_buy")
+	btn.disabled = is_full
+	btn.custom_minimum_size = Vector2(0, 38)
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.mouse_default_cursor_shape = Control.CURSOR_ARROW if btn.disabled else Control.CURSOR_POINTING_HAND
+	btn.add_theme_stylebox_override("disabled", _make_button_style(Color(0.45, 0.45, 0.42, 0.75)))
+	btn.pressed.connect(func() -> void:
+		var result: Dictionary = ReptileSystem.buy_resource(biome_id, resource_id)
+		if not bool(result.get("success", false)):
+			_show_message_popup(str(result.get("message_key", "ui.not_enough_rs")))
+			return
+		_show_shop_view()
+	)
+	_apply_button_text_color(btn, POPUP_TEXT_PRIMARY)
+	col.add_child(btn)
 
 	return card
 
@@ -1398,7 +1483,8 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 
 	var species_name: String = LocalizationSystem.tr_key(str(reptile.get("name_key", "ui.reptile_management_placeholder")))
 	var variant_name: String = LocalizationSystem.tr_key(str(variant.get("name_key", "ui.variant")))
-	var rarity_name: String = LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(str(variant.get("rarity", "common"))))
+	var mgmt_rarity: String = str(instance.get("rarity", str(variant.get("rarity", "common"))))
+	var rarity_name: String = LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(mgmt_rarity))
 	var sex_name: String = _get_localized_sex(str(instance.get("sex", "male")))
 	var status_key: String = "animals.status.assigned" if is_assigned else "animals.status.free"
 	var habitat_name: String = _get_habitat_display_name(str(instance.get("habitat_id", ""))) if is_assigned else "-"
@@ -1833,6 +1919,17 @@ func _show_shop_view() -> void:
 	close_button.pressed.connect(_close_shop_view)
 	_apply_button_text_color(close_button, POPUP_TEXT_PRIMARY)
 	header.add_child(close_button)
+
+	var res_section: Label = _make_popup_label(LocalizationSystem.tr_key("shop.resources"), 17)
+	res_section.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_apply_label_color(res_section, POPUP_TEXT_ACCENT)
+	column.add_child(res_section)
+
+	var res_row: HBoxContainer = HBoxContainer.new()
+	res_row.add_theme_constant_override("separation", 10)
+	column.add_child(res_row)
+	res_row.add_child(_make_resource_buy_card("food"))
+	res_row.add_child(_make_resource_buy_card("water"))
 
 	var section: Label = _make_popup_label(LocalizationSystem.tr_key("shop.reptiles"), 17)
 	section.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -2320,6 +2417,20 @@ func _format_upgrade_effect(upgrade: Dictionary, level: int) -> String:
 		"water_cost_reduction":
 			var water_pct: int = min(50, int(round(float(level) * per_level * 100.0)))
 			return LocalizationSystem.tr_key("ui.upgrade_water_cost_reduction_effect").replace("{value}", str(water_pct) + "%")
+		"food_max_increase":
+			var food_max: int = 0
+			if has_node("/root/ReptileSystem") and level > 0:
+				food_max = ReptileSystem.get_biome_resource_max(biome_id, "food")
+			else:
+				food_max = 100
+			return LocalizationSystem.tr_key("ui.upgrade_food_max_effect").replace("{value}", str(food_max))
+		"water_max_increase":
+			var water_max: int = 0
+			if has_node("/root/ReptileSystem") and level > 0:
+				water_max = ReptileSystem.get_biome_resource_max(biome_id, "water")
+			else:
+				water_max = 100
+			return LocalizationSystem.tr_key("ui.upgrade_water_max_effect").replace("{value}", str(water_max))
 		"clean_cooldown_reduction":
 			var clean_pct: int = min(50, int(round(float(level) * per_level * 100.0)))
 			return LocalizationSystem.tr_key("ui.upgrade_clean_cooldown_reduction_effect").replace("{value}", str(clean_pct) + "%")
@@ -2691,7 +2802,9 @@ func _make_owned_reptile_card(instance: Dictionary) -> Control:
 	_apply_label_color(variant_label, POPUP_TEXT_SECONDARY)
 	info.add_child(variant_label)
 
-	var rarity_row: HBoxContainer = _make_icon_text_row(str(variant.get("rarity_icon_path", "")), LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(str(variant.get("rarity", "common")))), 28)
+	var owned_rarity: String = str(instance.get("rarity", str(variant.get("rarity", "common"))))
+	var owned_rarity_icon: String = ReptileSystem.RARITY_ICON_PATHS.get(owned_rarity, str(variant.get("rarity_icon_path", "")))
+	var rarity_row: HBoxContainer = _make_icon_text_row(owned_rarity_icon, LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(owned_rarity)), 28)
 	info.add_child(rarity_row)
 
 	var sex_icon_path: String = FEMALE_ICON_PATH if str(instance.get("sex", "male")) == "female" else MALE_ICON_PATH
