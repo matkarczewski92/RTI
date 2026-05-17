@@ -49,6 +49,14 @@ func migrate_save_state() -> bool:
 	if typeof(GameState.get_value("claimed_quests", null)) != TYPE_ARRAY:
 		GameState.set_value("claimed_quests", [])
 		changed = true
+	var counters_value: Variant = GameState.get_value("quest_event_counters", {})
+	var counters: Dictionary = counters_value as Dictionary if typeof(counters_value) == TYPE_DICTIONARY else {}
+	for counter_id in _get_required_counter_ids():
+		if not counters.has(counter_id):
+			counters[counter_id] = 0
+			changed = true
+	if changed:
+		GameState.set_value("quest_event_counters", counters)
 
 	if changed:
 		SaveSystem.save_game()
@@ -207,6 +215,54 @@ func notify_event(event_type: String, payload: Dictionary = {}) -> void:
 			_increment_counter("variant_discovered", 1)
 		"offline_income_claimed":
 			_increment_counter("offline_income_claimed", 1)
+		"incubator_entered":
+			_set_counter_at_least("incubator_entered_total", 1)
+		"incubator_egg_obtained":
+			var egg_amount: int = max(1, int(payload.get("amount", 1)))
+			_increment_counter("incubator_eggs_obtained_total", egg_amount)
+			if str(payload.get("source", "")) == "shop":
+				_increment_counter("incubator_shop_eggs_bought_total", egg_amount)
+		"incubator_breeding_started":
+			_increment_counter("incubator_pairings_started_total", 1)
+		"incubator_breeding_collected":
+			var egg_count: int = max(0, int(payload.get("egg_count", 0)))
+			if bool(payload.get("is_long", false)):
+				_set_counter_at_least("incubator_long_pairing_collected_total", 1)
+			if bool(payload.get("succeeded", false)) and egg_count > 0:
+				_increment_counter("incubator_successful_pairings_total", 1)
+				if egg_count >= 3:
+					_set_counter_at_least("incubator_clutch_3_plus_total", 1)
+				if egg_count == 5:
+					_set_counter_at_least("incubator_clutch_5_total", 1)
+		"incubator_eggs_loaded":
+			if int(payload.get("egg_count", 0)) == 10:
+				_set_counter_at_least("incubator_loaded_10_eggs_container_total", 1)
+		"incubator_incubation_started":
+			_increment_counter("incubator_incubations_started_total", 1)
+			var running_count: int = int(payload.get("running_count", 0))
+			if running_count >= 3:
+				_set_counter_at_least("incubator_run_3_containers_total", 1)
+			if running_count >= 6:
+				_set_counter_at_least("incubator_run_6_containers_total", 1)
+		"incubator_container_watered":
+			_increment_counter("incubator_water_actions_total", 1)
+			if str(payload.get("previous_state", "")) == "running" and float(payload.get("previous_humidity_percent", 0.0)) >= 50.0:
+				_set_counter_at_least("incubator_water_before_pause_total", 1)
+			if str(payload.get("previous_state", "")) == "paused_low_humidity" and str(payload.get("new_state", "")) == "running":
+				_set_counter_at_least("incubator_resume_paused_incubation_total", 1)
+		"incubator_hatched":
+			var hatch_count: int = max(0, int(payload.get("count", 0)))
+			_increment_counter("incubator_hatches_total", hatch_count)
+			var rarities_value: Variant = payload.get("rarities", [])
+			var rarities: Array = rarities_value as Array if typeof(rarities_value) == TYPE_ARRAY else []
+			for rarity_value in rarities:
+				match str(rarity_value):
+					"rare":
+						_set_counter_at_least("incubator_hatch_rare_total", 1)
+					"ultra_rare":
+						_set_counter_at_least("incubator_hatch_ultra_rare_total", 1)
+					"exceptional":
+						_set_counter_at_least("incubator_hatch_exceptional_total", 1)
 		_:
 			pass
 	_mark_new_completions()
@@ -312,6 +368,8 @@ func _calculate_progress(quest: Dictionary) -> Dictionary:
 			current = _get_claimed_quests_count()
 		"workers_hired_count":
 			current = _get_workers_hired_count()
+		"event_counter_at_least":
+			current = _get_counter(requirement_target)
 		_:
 			push_warning("Unknown quest requirement type: " + requirement_type)
 			current = 0
@@ -343,11 +401,43 @@ func _increment_counter(counter_id: String, amount: int) -> void:
 	GameState.set_value("quest_event_counters", counters)
 
 
+func _set_counter_at_least(counter_id: String, value: int) -> void:
+	if counter_id.ends_with(":"):
+		return
+	var counters: Dictionary = GameState.get_value("quest_event_counters", {}) as Dictionary
+	counters[counter_id] = max(int(counters.get(counter_id, 0)), value)
+	GameState.set_value("quest_event_counters", counters)
+
+
 func _get_counter(counter_id: String) -> int:
 	var counters_value: Variant = GameState.get_value("quest_event_counters", {})
 	if typeof(counters_value) != TYPE_DICTIONARY:
 		return 0
 	return int((counters_value as Dictionary).get(counter_id, 0))
+
+
+func _get_required_counter_ids() -> Array[String]:
+	return [
+		"incubator_entered_total",
+		"incubator_eggs_obtained_total",
+		"incubator_shop_eggs_bought_total",
+		"incubator_pairings_started_total",
+		"incubator_long_pairing_collected_total",
+		"incubator_successful_pairings_total",
+		"incubator_clutch_3_plus_total",
+		"incubator_clutch_5_total",
+		"incubator_loaded_10_eggs_container_total",
+		"incubator_incubations_started_total",
+		"incubator_run_3_containers_total",
+		"incubator_run_6_containers_total",
+		"incubator_water_actions_total",
+		"incubator_water_before_pause_total",
+		"incubator_resume_paused_incubation_total",
+		"incubator_hatches_total",
+		"incubator_hatch_rare_total",
+		"incubator_hatch_ultra_rare_total",
+		"incubator_hatch_exceptional_total"
+	]
 
 
 func _get_quest(quest_id: String) -> Dictionary:

@@ -55,6 +55,7 @@ func _ready() -> void:
 func _initialize_runtime_state() -> void:
 	migrate_save_state()
 	apply_time_updates(true)
+	sync_discovered_variants_from_owned_reptiles()
 
 
 func load_data() -> void:
@@ -105,7 +106,10 @@ func get_reptile_purchase_price(reptile_id: String) -> int:
 
 
 func get_shop_variant_for_rarity(reptile_id: String, rarity: String) -> Dictionary:
-	return get_variant_for_reptile_rarity(reptile_id, rarity)
+	var normalized_rarity: String = normalize_rarity(rarity)
+	if normalized_rarity == "common":
+		return get_variant_for_reptile(reptile_id, get_default_variant_id(reptile_id))
+	return _find_explicit_variant_for_reptile_rarity(reptile_id, normalized_rarity)
 
 
 func get_variant_for_reptile_rarity(reptile_id: String, rarity: String) -> Dictionary:
@@ -113,6 +117,18 @@ func get_variant_for_reptile_rarity(reptile_id: String, rarity: String) -> Dicti
 	if normalized_rarity == "common":
 		return get_variant_for_reptile(reptile_id, get_default_variant_id(reptile_id))
 
+	var explicit_variant: Dictionary = _find_explicit_variant_for_reptile_rarity(reptile_id, normalized_rarity)
+	if not explicit_variant.is_empty():
+		return explicit_variant
+
+	if not get_reptile(reptile_id).is_empty():
+		return _make_rarity_fallback_variant(reptile_id, normalized_rarity)
+
+	return {}
+
+
+func _find_explicit_variant_for_reptile_rarity(reptile_id: String, rarity: String) -> Dictionary:
+	var normalized_rarity: String = normalize_rarity(rarity)
 	for variant_value in variants:
 		if typeof(variant_value) != TYPE_DICTIONARY:
 			continue
@@ -193,6 +209,70 @@ func get_variant_for_reptile(reptile_id: String, variant_id: String = "") -> Dic
 		return variant
 
 	return get_variant(get_default_variant_id(reptile_id))
+
+
+func sync_discovered_variants_from_owned_reptiles() -> Dictionary:
+	var instances: Dictionary = get_owned_reptile_instances()
+	var discovered_value: Variant = GameState.get_value("discovered_variants", {})
+	var discovered: Dictionary = {}
+	if typeof(discovered_value) == TYPE_DICTIONARY:
+		discovered = discovered_value as Dictionary
+
+	var changed: bool = false
+	var instances_changed: bool = false
+	var counters_changed: bool = false
+	var newly_discovered: Array[String] = []
+
+	for instance_id in instances.keys():
+		var instance_value: Variant = instances.get(instance_id)
+		if typeof(instance_value) != TYPE_DICTIONARY:
+			continue
+
+		var instance: Dictionary = _normalize_owned_instance(instance_value as Dictionary)
+		var reptile_id: String = str(instance.get("reptile_id", instance.get("species_id", "")))
+		if reptile_id.is_empty() or get_reptile(reptile_id).is_empty():
+			continue
+
+		var variant_id: String = str(instance.get("variant_id", ""))
+		var variant: Dictionary = get_variant_for_reptile(reptile_id, variant_id)
+		var rarity: String = normalize_rarity(str(instance.get("rarity", variant.get("rarity", "common"))))
+		if rarity == "common" and not variant.is_empty():
+			rarity = normalize_rarity(str(variant.get("rarity", rarity)))
+
+		var canonical_variant: Dictionary = get_variant_for_reptile_rarity(reptile_id, rarity)
+		var canonical_variant_id: String = str(canonical_variant.get("id", ""))
+		if not canonical_variant_id.is_empty():
+			variant_id = canonical_variant_id
+			if str(instance.get("variant_id", "")) != canonical_variant_id:
+				instance["variant_id"] = canonical_variant_id
+				instances[instance_id] = instance
+				instances_changed = true
+		elif not variant_id.is_empty():
+			variant_id = str(variant.get("id", variant_id))
+
+		for discovered_variant_id in [variant_id, canonical_variant_id]:
+			var normalized_variant_id: String = str(discovered_variant_id)
+			if normalized_variant_id.is_empty():
+				continue
+			if not bool(discovered.get(normalized_variant_id, false)):
+				discovered[normalized_variant_id] = true
+				newly_discovered.append(normalized_variant_id)
+				changed = true
+
+	if changed:
+		GameState.set_value("discovered_variants", discovered)
+	if instances_changed:
+		GameState.set_value("owned_reptile_instances", instances)
+	counters_changed = _sync_incubator_hatch_progress_counters(instances)
+	if changed or instances_changed or counters_changed:
+		SaveSystem.save_game()
+
+	_notify_achievement_progress_changed()
+	return {
+		"changed": changed or instances_changed or counters_changed,
+		"newly_discovered": newly_discovered,
+		"discovered_count": discovered.size()
+	}
 
 
 func get_owned_animal_variant(instance: Dictionary) -> Dictionary:
@@ -1736,17 +1816,103 @@ func _normalize_variant(variant: Dictionary) -> Dictionary:
 
 
 func _make_fallback_variant(variant_id: String) -> Dictionary:
-	var reptile_id: String = variant_id
-	if reptile_id.ends_with("_common"):
-		reptile_id = reptile_id.substr(0, reptile_id.length() - 7)
+	for rarity in ["ultra_rare", "exceptional", "rare", "common", "shadow"]:
+		var suffix: String = "_" + rarity
+		if variant_id.ends_with(suffix):
+			var reptile_id: String = variant_id.substr(0, variant_id.length() - suffix.length())
+			return _make_rarity_fallback_variant(reptile_id, rarity)
+
+	return _make_rarity_fallback_variant(variant_id, "common")
+
+
+func _make_rarity_fallback_variant(reptile_id: String, rarity: String) -> Dictionary:
+	var normalized_rarity: String = normalize_rarity(rarity)
+	var source_variant: Dictionary = {}
+	for source_rarity in [normalized_rarity, "rare", "common"]:
+		for variant_value in variants:
+			if typeof(variant_value) != TYPE_DICTIONARY:
+				continue
+			var candidate: Dictionary = variant_value as Dictionary
+			if str(candidate.get("reptile_id", "")) == reptile_id and normalize_rarity(str(candidate.get("rarity", "common"))) == str(source_rarity):
+				source_variant = _normalize_variant(candidate)
+				break
+		if not source_variant.is_empty():
+			break
+
+	var reptile: Dictionary = get_reptile(reptile_id)
 	return _normalize_variant({
-		"id": variant_id,
+		"id": reptile_id + "_" + normalized_rarity,
 		"reptile_id": reptile_id,
-		"rarity": "common",
-		"name_key": "variant." + reptile_id + ".common.name",
-		"income_multiplier": 1.0,
+		"rarity": normalized_rarity,
+		"name_key": get_rarity_label_key(normalized_rarity),
+		"portrait_path": str(source_variant.get("portrait_path", reptile.get("portrait_path", ""))),
+		"icon_path": str(source_variant.get("icon_path", source_variant.get("portrait_path", reptile.get("icon_path", "")))),
+		"gallery_shadow_path": str(source_variant.get("gallery_shadow_path", "res://assets/art/reptiles/gallery/" + reptile_id + "_shadow.png")),
+		"rarity_icon_path": get_rarity_icon_path(normalized_rarity),
+		"income_multiplier": _get_default_income_multiplier(normalized_rarity),
 		"obtain_method": "fallback"
 	})
+
+
+func _sync_incubator_hatch_progress_counters(instances: Dictionary) -> bool:
+	var total_hatches: int = 0
+	var has_rare: bool = false
+	var has_ultra_rare: bool = false
+	var has_exceptional: bool = false
+
+	for instance_id in instances.keys():
+		var instance_value: Variant = instances.get(instance_id)
+		if typeof(instance_value) != TYPE_DICTIONARY:
+			continue
+		var instance: Dictionary = instance_value as Dictionary
+		var source: String = str(instance.get("source", ""))
+		var source_egg_id: String = _id_or_empty(instance.get("source_egg_id", null))
+		if source != "incubation" and source_egg_id.is_empty() and not str(instance_id).begins_with("hatch_"):
+			continue
+
+		total_hatches += 1
+		var reptile_id: String = str(instance.get("reptile_id", instance.get("species_id", "")))
+		var variant_id: String = str(instance.get("variant_id", ""))
+		var variant: Dictionary = get_variant_for_reptile(reptile_id, variant_id)
+		var rarity: String = normalize_rarity(str(instance.get("rarity", variant.get("rarity", "common"))))
+		if rarity == "common" and not variant.is_empty():
+			rarity = normalize_rarity(str(variant.get("rarity", rarity)))
+		match rarity:
+			"rare":
+				has_rare = true
+			"ultra_rare":
+				has_ultra_rare = true
+			"exceptional":
+				has_exceptional = true
+
+	var counters_value: Variant = GameState.get_value("quest_event_counters", {})
+	var counters: Dictionary = counters_value as Dictionary if typeof(counters_value) == TYPE_DICTIONARY else {}
+	var changed: bool = false
+	changed = _set_counter_at_least_in_dictionary(counters, "incubator_hatches_total", total_hatches) or changed
+	changed = _set_counter_at_least_in_dictionary(counters, "incubator:total_hatches", total_hatches) or changed
+	if has_rare:
+		changed = _set_counter_at_least_in_dictionary(counters, "incubator_hatch_rare_total", 1) or changed
+		changed = _set_counter_at_least_in_dictionary(counters, "incubator:rare_hatches", 1) or changed
+	if has_ultra_rare:
+		changed = _set_counter_at_least_in_dictionary(counters, "incubator_hatch_ultra_rare_total", 1) or changed
+		changed = _set_counter_at_least_in_dictionary(counters, "incubator:ultra_rare_hatches", 1) or changed
+	if has_exceptional:
+		changed = _set_counter_at_least_in_dictionary(counters, "incubator_hatch_exceptional_total", 1) or changed
+		changed = _set_counter_at_least_in_dictionary(counters, "incubator:exceptional_hatches", 1) or changed
+
+	if changed:
+		GameState.set_value("quest_event_counters", counters)
+	return changed
+
+
+func _set_counter_at_least_in_dictionary(counters: Dictionary, counter_id: String, value: int) -> bool:
+	if value <= 0:
+		return false
+	var current: int = int(counters.get(counter_id, 0))
+	if current >= value:
+		return false
+	counters[counter_id] = value
+	return true
 
 
 func _first_existing_path(paths: Array) -> String:

@@ -71,3 +71,5 @@ func _show_incubator() -> void:
 		(incubator_view as Control).set_anchors_preset(Control.PRESET_FULL_RECT)
 	if incubator_view.has_signal("biome_map_requested"):
 		incubator_view.connect("biome_map_requested", Callable(self, "_show_biome_map"))
+	if has_node("/root/QuestSystem") and QuestSystem.has_method("notify_event"):
+		QuestSystem.notify_event("incubator_entered", {})

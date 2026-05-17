@@ -2463,11 +2463,11 @@
 	"variant.ornate_box_turtle.exceptional.name": { "pl": "Żółw Skrzynkowy Ozdobny", "en": "Ornate Box Turtle" },
 	"variant.ornate_box_turtle.ultra_rare.name": { "pl": "Żółw Skrzynkowy Ozdobny", "en": "Ornate Box Turtle" },
 	"variant.ornate_box_turtle.shadow.name": { "pl": "Żółw Skrzynkowy Ozdobny", "en": "Ornate Box Turtle" },
-	"variant.western_hognose_snake.common.name": { "pl": "Wąż Świnski Zachodni", "en": "Western Hognose Snake" },
-	"variant.western_hognose_snake.rare.name": { "pl": "Wąż Świnski Zachodni ", "en": "Western Hognose Snake" },
-	"variant.western_hognose_snake.exceptional.name": { "pl": "Wąż Świnski Zachodni", "en": "Western Hognose Snake" },
-	"variant.western_hognose_snake.ultra_rare.name": { "pl": "Wąż Świnski Zachodni", "en": "Western Hognose Snake" },
-	"variant.western_hognose_snake.shadow.name": { "pl": "Wąż Świnski Zachodni", "en": "Western Hognose Snake" },
+	"variant.western_hognose_snake.common.name": { "pl": "Heterodon Zachodni", "en": "Western Hognose Snake" },
+	"variant.western_hognose_snake.rare.name": { "pl": "Heterodon Zachodni ", "en": "Western Hognose Snake" },
+	"variant.western_hognose_snake.exceptional.name": { "pl": "Heterodon Zachodni", "en": "Western Hognose Snake" },
+	"variant.western_hognose_snake.ultra_rare.name": { "pl": "Heterodon Zachodni", "en": "Western Hognose Snake" },
+	"variant.western_hognose_snake.shadow.name": { "pl": "Heterodon Zachodni", "en": "Western Hognose Snake" },
 	"variant.prairie_rattlesnake.common.name": { "pl": "Grzechotnik Preriowy", "en": "Prairie Rattlesnake" },
 	"variant.prairie_rattlesnake.rare.name": { "pl": "Grzechotnik Preriowy ", "en": "Prairie Rattlesnake" },
 	"variant.prairie_rattlesnake.exceptional.name": { "pl": "Grzechotnik Preriowy", "en": "Prairie Rattlesnake" },
@@ -2821,6 +2821,206 @@
 		"pl": "Samica",
 		"en": "Female"
 	},
+	"incubator_storage_title": {
+		"pl": "Schowek",
+		"en": "Storage"
+	},
+	"incubator_storage_eggs": {
+		"pl": "Jaja w schowku",
+		"en": "Eggs in Storage"
+	},
+	"incubator_storage_reptiles": {
+		"pl": "Gady w schowku",
+		"en": "Reptiles in Storage"
+	},
+	"incubator_storage_empty": {
+		"pl": "Schowek jest pusty.",
+		"en": "Storage is empty."
+	},
+	"incubator_storage_no_eggs": {
+		"pl": "Brak jaj w schowku.",
+		"en": "No eggs in storage."
+	},
+	"incubator_storage_no_reptiles": {
+		"pl": "Brak gadów w schowku.",
+		"en": "No reptiles in storage."
+	},
+	"incubator_storage_details": {
+		"pl": "Szczegóły",
+		"en": "Details"
+	},
+	"incubator_storage_return_to_pool": {
+		"pl": "Wróć do puli",
+		"en": "Return to Pool"
+	},
+	"incubator_storage_source_shop": {
+		"pl": "Sklep",
+		"en": "Shop"
+	},
+	"incubator_storage_source_breeding": {
+		"pl": "Łączenie",
+		"en": "Breeding"
+	},
+	"incubator_storage_source_incubation": {
+		"pl": "Inkubacja",
+		"en": "Incubation"
+	},
+	"incubator_storage_source_unknown": {
+		"pl": "Nieznane",
+		"en": "Unknown"
+	},
+	"incubator_storage_source_mixed": {
+		"pl": "Mieszane",
+		"en": "Mixed"
+	},
+	"incubator_egg_select_species": {
+		"pl": "Wybierz gatunek jaj",
+		"en": "Select Egg Species"
+	},
+	"incubator_egg_select_count": {
+		"pl": "Wybierz liczbę jaj",
+		"en": "Select Egg Count"
+	},
+	"incubator_egg_select": {
+		"pl": "Wybierz",
+		"en": "Select"
+	},
+	"incubator_egg_available": {
+		"pl": "Dostępne: {count}",
+		"en": "Available: {count}"
+	},
+	"incubator_egg_incubation_time": {
+		"pl": "Czas inkubacji: {time}",
+		"en": "Incubation time: {time}"
+	},
+	"incubator_egg_place_in_container": {
+		"pl": "Włóż do pojemnika",
+		"en": "Place in Container"
+	},
+	"incubator_egg_count": {
+		"pl": "Liczba jaj",
+		"en": "Egg Count"
+	},
+	"incubator_egg_count_value": {
+		"pl": "Jaja: {count}",
+		"en": "Eggs: {count}"
+	},
+	"incubator_egg_species": {
+		"pl": "Gatunek: {name}",
+		"en": "Species: {name}"
+	},
+	"incubator_egg_max": {
+		"pl": "Maksymalnie: {count}",
+		"en": "Max: {count}"
+	},
+	"incubator_egg_back": {
+		"pl": "Wróć",
+		"en": "Back"
+	},
+	"incubator_egg_cancel": {
+		"pl": "Anuluj",
+		"en": "Cancel"
+	},
+	"incubator_egg_start_incubation": {
+		"pl": "Rozpocznij inkubację",
+		"en": "Start Incubation"
+	},
+	"incubator_egg_cancel_and_return": {
+		"pl": "Anuluj i zwróć jaja",
+		"en": "Cancel and return eggs"
+	},
+	"incubator_egg_only_one_species": {
+		"pl": "W jednym pojemniku mogą być tylko jaja jednego gatunku.",
+		"en": "Only eggs of one species can be placed in one container."
+	},
+	"incubator_egg_not_enough": {
+		"pl": "Brak wystarczającej liczby jaj.",
+		"en": "Not enough eggs."
+	},
+	"incubator_breeding_select_species": {
+		"pl": "Wybierz gatunek",
+		"en": "Select Species"
+	},
+	"incubator_breeding_select_pair": {
+		"pl": "Wybierz parę",
+		"en": "Select Pair"
+	},
+	"incubator_breeding_females": {
+		"pl": "Samice",
+		"en": "Females"
+	},
+	"incubator_breeding_males": {
+		"pl": "Samce",
+		"en": "Males"
+	},
+	"incubator_breeding_available_females": {
+		"pl": "Samice: {count}",
+		"en": "Females: {count}"
+	},
+	"incubator_breeding_available_males": {
+		"pl": "Samce: {count}",
+		"en": "Males: {count}"
+	},
+	"incubator_breeding_available_pairs": {
+		"pl": "Pary: {count}",
+		"en": "Pairs: {count}"
+	},
+	"incubator_breeding_select": {
+		"pl": "Wybierz",
+		"en": "Select"
+	},
+	"incubator_breeding_back": {
+		"pl": "Wróć",
+		"en": "Back"
+	},
+	"incubator_breeding_cancel": {
+		"pl": "Anuluj",
+		"en": "Cancel"
+	},
+	"incubator_breeding_start": {
+		"pl": "Połącz",
+		"en": "Start Breeding"
+	},
+	"incubator_breeding_predicted_results": {
+		"pl": "Przewidywane wyniki",
+		"en": "Predicted Results"
+	},
+	"incubator_breeding_odds": {
+		"pl": "Szanse",
+		"en": "Odds"
+	},
+	"incubator_breeding_success_chance": {
+		"pl": "Szansa powodzenia",
+		"en": "Success chance"
+	},
+	"incubator_breeding_failure_risk": {
+		"pl": "Ryzyko niepowodzenia",
+		"en": "Failure risk"
+	},
+	"incubator_breeding_egg_count_range": {
+		"pl": "Liczba jaj: 1-5",
+		"en": "Egg count: 1-5"
+	},
+	"incubator_breeding_fast_24h": {
+		"pl": "Szybkie łączenie - 24h",
+		"en": "Fast Breeding - 24h"
+	},
+	"incubator_breeding_long_48h": {
+		"pl": "Dłuższe łączenie - 48h",
+		"en": "Long Breeding - 48h"
+	},
+	"incubator_breeding_long_bonus": {
+		"pl": "Dłuższe łączenie zwiększa szanse na Ultra Rare i Exceptional.",
+		"en": "Long Breeding increases the chance for Ultra Rare and Exceptional."
+	},
+	"incubator_breeding_no_pairs": {
+		"pl": "Brak dostępnych par do łączenia.",
+		"en": "No available pairs for breeding."
+	},
+	"incubator_breeding_select_female_and_male": {
+		"pl": "Wybierz jedną samicę i jednego samca.",
+		"en": "Select one female and one male."
+	},
 	"incubator.drop_rates": {
 		"pl": "Szanse na rzadkość:",
 		"en": "Drop rates:"
@@ -3119,5 +3319,54 @@
 	"ui.incubator_faster_incubation_effect": { "pl": "Czas inkubacji: -{value}%", "en": "Incubation time: -{value}%" },
 	"ui.incubator_humidity_longer_effect": { "pl": "Spadek wilgotności: -{value}%", "en": "Humidity decay: -{value}%" },
 	"ui.incubator_more_eggs_effect": { "pl": "Maks. jaj: {value}", "en": "Max eggs: {value}" },
+	"task_category_incubator_name": { "pl": "Inkubator", "en": "Incubator" },
+	"task_incubator_enter_first_time_name": { "pl": "Pierwszy krok do Inkubatora", "en": "First Step into the Incubator" },
+	"task_incubator_enter_first_time_desc": { "pl": "Wejdź do biomu Inkubatora po jego odblokowaniu.", "en": "Enter the Incubator biome after unlocking it." },
+	"task_incubator_obtain_first_egg_name": { "pl": "Pierwsze jajo", "en": "First Egg" },
+	"task_incubator_obtain_first_egg_desc": { "pl": "Zdobądź swoje pierwsze jajo z dowolnego źródła.", "en": "Obtain your first egg from any source." },
+	"task_incubator_buy_first_egg_name": { "pl": "Pierwszy zakup jaj", "en": "First Egg Purchase" },
+	"task_incubator_buy_first_egg_desc": { "pl": "Kup pierwsze jajo w sklepie z jajami.", "en": "Buy your first egg from the Egg Shop." },
+	"task_incubator_buy_5_eggs_name": { "pl": "Klient sklepu z jajami", "en": "Egg Shop Customer" },
+	"task_incubator_buy_5_eggs_desc": { "pl": "Kup łącznie 5 jaj w sklepie z jajami.", "en": "Buy a total of 5 eggs from the Egg Shop." },
+	"task_incubator_buy_25_eggs_name": { "pl": "Inwestor jajeczny", "en": "Egg Investor" },
+	"task_incubator_buy_25_eggs_desc": { "pl": "Kup łącznie 25 jaj w sklepie z jajami.", "en": "Buy a total of 25 eggs from the Egg Shop." },
+	"task_incubator_start_first_pairing_name": { "pl": "Pierwsze łączenie", "en": "First Pairing" },
+	"task_incubator_start_first_pairing_desc": { "pl": "Rozpocznij pierwsze łączenie dwóch gadów.", "en": "Start your first reptile pairing." },
+	"task_incubator_complete_successful_pairing_name": { "pl": "Udane połączenie", "en": "Successful Pairing" },
+	"task_incubator_complete_successful_pairing_desc": { "pl": "Zakończ pierwsze udane łączenie, które dało jaja.", "en": "Complete your first successful pairing that produced eggs." },
+	"task_incubator_complete_long_pairing_name": { "pl": "Cierpliwy hodowca", "en": "Patient Breeder" },
+	"task_incubator_complete_long_pairing_desc": { "pl": "Zakończ łączenie trwające 48 godzin.", "en": "Complete a 48-hour pairing." },
+	"task_incubator_successful_pairings_5_name": { "pl": "Hodowlana rutyna", "en": "Breeding Routine" },
+	"task_incubator_successful_pairings_5_desc": { "pl": "Zakończ 5 udanych łączeń.", "en": "Complete 5 successful pairings." },
+	"task_incubator_successful_pairings_25_name": { "pl": "Specjalista od łączenia", "en": "Breeding Specialist" },
+	"task_incubator_successful_pairings_25_desc": { "pl": "Zakończ 25 udanych łączeń.", "en": "Complete 25 successful pairings." },
+	"task_incubator_collect_3_eggs_from_pairing_name": { "pl": "Mały lęg", "en": "Small Clutch" },
+	"task_incubator_collect_3_eggs_from_pairing_desc": { "pl": "Zbierz przynajmniej 3 jaja z jednego udanego łączenia.", "en": "Collect at least 3 eggs from one successful pairing." },
+	"task_incubator_collect_5_eggs_from_pairing_name": { "pl": "Perfekcyjny lęg", "en": "Perfect Clutch" },
+	"task_incubator_collect_5_eggs_from_pairing_desc": { "pl": "Zbierz 5 jaj z jednego udanego łączenia.", "en": "Collect 5 eggs from one successful pairing." },
+	"task_incubator_start_first_incubation_name": { "pl": "Pierwsza inkubacja", "en": "First Incubation" },
+	"task_incubator_start_first_incubation_desc": { "pl": "Rozpocznij pierwszą inkubację jaj.", "en": "Start your first egg incubation." },
+	"task_incubator_load_10_eggs_container_name": { "pl": "Pełny pojemnik", "en": "Full Container" },
+	"task_incubator_load_10_eggs_container_desc": { "pl": "Umieść 10 jaj w jednym pojemniku inkubacyjnym.", "en": "Place 10 eggs in one incubation container." },
+	"task_incubator_run_3_containers_name": { "pl": "Trzy aktywne pojemniki", "en": "Three Active Containers" },
+	"task_incubator_run_3_containers_desc": { "pl": "Prowadź inkubację jednocześnie w 3 pojemnikach.", "en": "Run incubation in 3 containers at the same time." },
+	"task_incubator_run_6_containers_name": { "pl": "Pełny Inkubator", "en": "Full Incubator" },
+	"task_incubator_run_6_containers_desc": { "pl": "Prowadź inkubację jednocześnie we wszystkich 6 pojemnikach.", "en": "Run incubation in all 6 containers at the same time." },
+	"task_incubator_water_before_pause_name": { "pl": "Wilgotność pod kontrolą", "en": "Humidity Under Control" },
+	"task_incubator_water_before_pause_desc": { "pl": "Nawodnij pojemnik, zanim inkubacja zostanie wstrzymana.", "en": "Water a container before incubation gets paused." },
+	"task_incubator_resume_paused_incubation_name": { "pl": "Uratowane jaja", "en": "Eggs Saved" },
+	"task_incubator_resume_paused_incubation_desc": { "pl": "Wznów inkubację po spadku wilgotności poniżej 50%.", "en": "Resume incubation after humidity drops below 50%." },
+	"task_incubator_water_25_times_name": { "pl": "Uważny opiekun", "en": "Careful Keeper" },
+	"task_incubator_water_25_times_desc": { "pl": "Nawodnij pojemniki inkubacyjne 25 razy.", "en": "Water incubation containers 25 times." },
+	"task_incubator_first_hatch_task_name": { "pl": "Pierwsze wyklucie", "en": "First Hatch" },
+	"task_incubator_first_hatch_task_desc": { "pl": "Wykluj pierwszego gada z jaja.", "en": "Hatch your first reptile from an egg." },
+	"task_incubator_hatch_rare_name": { "pl": "Rzadkie wyklucie", "en": "Rare Hatch" },
+	"task_incubator_hatch_rare_desc": { "pl": "Wykluj gada rzadkości Rare.", "en": "Hatch a Rare reptile." },
+	"task_incubator_hatch_ultra_rare_name": { "pl": "Ultra rzadki wynik", "en": "Ultra Rare Result" },
+	"task_incubator_hatch_ultra_rare_desc": { "pl": "Wykluj gada rzadkości Ultra Rare.", "en": "Hatch an Ultra Rare reptile." },
+	"task_incubator_hatch_exceptional_name": { "pl": "Wyjątkowy wynik", "en": "Exceptional Result" },
+	"task_incubator_hatch_exceptional_desc": { "pl": "Wykluj gada rzadkości Exceptional.", "en": "Hatch an Exceptional reptile." },
+	"task_incubator_hatch_50_reptiles_name": { "pl": "Mistrz Inkubatora", "en": "Incubator Master" },
+	"task_incubator_hatch_50_reptiles_desc": { "pl": "Wykluj łącznie 50 gadów z jaj.", "en": "Hatch a total of 50 reptiles from eggs." },
 	"upgrade.level_label": { "pl": "Poziom", "en": "Level" }
 }

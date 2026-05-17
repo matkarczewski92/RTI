@@ -52,6 +52,11 @@ var _selected_instance_a: String = ""
 var _selected_instance_b: String = ""
 var _select_reptile_id_filter: String = ""
 var _select_sex_filter: String = ""
+var _select_species_id: String = ""
+var _selected_female_id: String = ""
+var _selected_male_id: String = ""
+var _select_is_long: bool = false
+var _select_start_in_progress: bool = false
 
 # Incubation panel
 var _incubation_panel: Control
@@ -63,17 +68,20 @@ var _incubation_panel_step: int = 0   # 0 = species list, 1 = count pick
 var _incubation_panel_species: String = ""
 var _incubation_panel_count: int = 1
 var _incubation_panel_available_ids: Array = []
+var _incubation_load_in_progress: bool = false
 
 # Egg shop
 var _egg_shop_overlay: Control
 var _egg_shop_content: VBoxContainer
 var _hatch_results_overlay: Control
+var _quests_overlay: Control
 
 var _settings_modal: Control
 var _upgrades_overlay: Control
 
 
 func _ready() -> void:
+	ReptileSystem.sync_discovered_variants_from_owned_reptiles()
 	_load_config()
 	_load_incubator_layout()
 	_build_layout()
@@ -147,6 +155,7 @@ func _build_layout() -> void:
 	_add_egg_shop_overlay()
 	_add_hatch_results_overlay()
 	_add_upgrades_overlay()
+	_add_quests_overlay()
 	_add_toast()
 
 
@@ -162,6 +171,11 @@ func _rebuild_layout() -> void:
 	_toast_label = null
 	_toast_timer = null
 	_select_step = 0
+	_select_species_id = ""
+	_selected_female_id = ""
+	_selected_male_id = ""
+	_select_is_long = false
+	_select_start_in_progress = false
 	_breeding_slot_nodes = {}
 	_incubation_slot_nodes = {}
 	_incubation_panel = null
@@ -173,8 +187,10 @@ func _rebuild_layout() -> void:
 	_incubation_panel_species = ""
 	_incubation_panel_count = 1
 	_incubation_panel_available_ids = []
+	_incubation_load_in_progress = false
 	_egg_shop_overlay = null
 	_hatch_results_overlay = null
+	_quests_overlay = null
 	_upgrades_overlay = null
 	_build_layout()
 
@@ -584,7 +600,7 @@ func _add_storage_overlay() -> void:
 	panel.add_child(outer)
 
 	var title := Label.new()
-	title.text = _localized_text("incubator.storage", "Storage")
+	title.text = _localized_text("incubator_storage_title", "Storage")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_font_size_override("font_size", 24)
@@ -616,7 +632,7 @@ func _add_storage_overlay() -> void:
 	outer.add_child(close_row)
 
 	var close_btn := Button.new()
-	close_btn.text = _localized_text("button.back", "Back")
+	close_btn.text = _localized_text("incubator_egg_back", "Back")
 	close_btn.focus_mode = Control.FOCUS_NONE
 	close_btn.custom_minimum_size = Vector2(140, 44)
 	close_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -631,47 +647,43 @@ func _populate_storage_overlay() -> void:
 		"StoragePanel/StorageOuter/StorageScroll/StorageContent") as VBoxContainer
 	if content == null:
 		return
-	for child in content.get_children():
-		child.queue_free()
+	_clear_vbox(content)
 
 	var storage: Dictionary = BreedingSystem.get_storage()
 	var reptiles: Array = storage.get("reptiles", []) as Array
-	var eggs: Array = storage.get("eggs", []) as Array
+	var hatchlings: Array = storage.get("hatchlings", []) as Array
+	for hatchling_value in hatchlings:
+		if typeof(hatchling_value) == TYPE_DICTIONARY:
+			reptiles.append(hatchling_value)
+	var eggs: Array = IncubationSystem.get_available_storage_eggs()
 
 	if reptiles.size() == 0 and eggs.size() == 0:
-		var empty_lbl := Label.new()
-		empty_lbl.text = _localized_text("incubator.storage_empty", "Storage is empty.")
-		empty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		empty_lbl.add_theme_font_size_override("font_size", 16)
-		empty_lbl.add_theme_color_override("font_color", Color(0.65, 0.60, 0.50, 1.0))
-		empty_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		content.add_child(empty_lbl)
+		content.add_child(_make_storage_empty_label(_localized_text("incubator_storage_empty", "Storage is empty.")))
 		return
 
-	if reptiles.size() > 0:
-		_add_storage_header(content, "storage.reptiles_header", "Reptiles in Storage")
+	_add_storage_header(content, "incubator_storage_eggs", "Eggs in Storage")
+	var egg_groups: Array = _get_egg_group_summaries(eggs)
+	if egg_groups.is_empty():
+		content.add_child(_make_storage_empty_label(_localized_text("incubator_storage_no_eggs", "No eggs in storage.")))
+	else:
+		for group_value in egg_groups:
+			if typeof(group_value) == TYPE_DICTIONARY:
+				content.add_child(_make_storage_egg_group_card(group_value as Dictionary))
+
+	_add_storage_header(content, "incubator_storage_reptiles", "Reptiles in Storage")
+	if reptiles.is_empty():
+		content.add_child(_make_storage_empty_label(_localized_text("incubator_storage_no_reptiles", "No reptiles in storage.")))
+	else:
 		for entry in reptiles:
 			if typeof(entry) == TYPE_DICTIONARY:
-				content.add_child(_make_storage_reptile_row(entry as Dictionary))
-
-	if eggs.size() > 0:
-		var available_eggs: Array = []
-		for entry in eggs:
-			if typeof(entry) == TYPE_DICTIONARY:
-				var e: Dictionary = entry as Dictionary
-				if not bool(e.get("in_container", false)):
-					available_eggs.append(e)
-		if available_eggs.size() > 0:
-			_add_storage_header(content, "storage.eggs_header", "Eggs in Storage")
-			for entry in available_eggs:
-				content.add_child(_make_storage_egg_row(entry as Dictionary))
+				content.add_child(_make_storage_reptile_card(entry as Dictionary))
 
 
 func _add_storage_header(parent: VBoxContainer, key: String, fallback: String) -> void:
 	var lbl := Label.new()
 	lbl.text = _localized_text(key, fallback)
-	lbl.add_theme_font_size_override("font_size", 15)
-	lbl.add_theme_color_override("font_color", Color(0.85, 0.75, 0.50, 1.0))
+	lbl.add_theme_font_size_override("font_size", 18)
+	lbl.add_theme_color_override("font_color", Color(0.95, 0.83, 0.38, 1.0))
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(lbl)
 
@@ -737,6 +749,244 @@ func _make_storage_egg_row(entry: Dictionary) -> Control:
 
 
 # ─── Reptile selection overlay ─────────────────────────────────────────
+
+func _make_storage_reptile_card(entry: Dictionary) -> Control:
+	var instance_id: String = str(entry.get("instance_id", ""))
+	var instances: Dictionary = ReptileSystem.get_owned_reptile_instances()
+	var instance_value: Variant = instances.get(instance_id, null)
+	if typeof(instance_value) != TYPE_DICTIONARY:
+		return _make_storage_empty_label(instance_id)
+
+	var inst: Dictionary = (instance_value as Dictionary).duplicate(true)
+	var rarity: String = str(inst.get("rarity", "common"))
+	var card := PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.add_theme_stylebox_override("panel", _make_breeding_card_style(false, false))
+
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 10)
+	card.add_child(row)
+	row.add_child(_make_breeding_portrait(_get_instance_portrait_path(inst), Vector2(74, 74)))
+
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_theme_constant_override("separation", 3)
+	row.add_child(info)
+
+	var name_lbl := Label.new()
+	name_lbl.text = _localized_species_name(str(inst.get("reptile_id", ""))) + " - " + _get_variant_display_name(inst)
+	name_lbl.clip_text = true
+	name_lbl.add_theme_font_size_override("font_size", 14)
+	name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
+	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(name_lbl)
+
+	var meta_lbl := Label.new()
+	var sex_text: String = _localized_text("sex." + str(inst.get("sex", "male")), str(inst.get("sex", "male")))
+	meta_lbl.text = _localized_rarity(rarity) + " | " + sex_text + " | " + _localized_storage_source(str(entry.get("source", inst.get("source", ""))))
+	meta_lbl.add_theme_font_size_override("font_size", 12)
+	meta_lbl.add_theme_color_override("font_color", _rarity_color(rarity))
+	meta_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(meta_lbl)
+
+	var cooldown: int = BreedingSystem.get_cooldown_remaining_seconds(inst)
+	if cooldown > 0:
+		var cooldown_lbl := Label.new()
+		cooldown_lbl.text = _localized_text("incubator.cooldown_label", "Cooldown") + ": " + _format_countdown(cooldown)
+		cooldown_lbl.add_theme_font_size_override("font_size", 11)
+		cooldown_lbl.add_theme_color_override("font_color", Color(1.0, 0.80, 0.35, 0.95))
+		cooldown_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info.add_child(cooldown_lbl)
+
+	var btn := Button.new()
+	btn.text = _localized_text("incubator_storage_return_to_pool", "Return to Pool")
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.custom_minimum_size = Vector2(120, 42)
+	btn.add_theme_font_size_override("font_size", 11)
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	btn.pressed.connect(func() -> void:
+		BreedingSystem.return_reptile_from_storage(instance_id)
+		_populate_storage_overlay()
+	)
+	row.add_child(btn)
+	return card
+
+
+func _make_storage_egg_group_card(group: Dictionary) -> Control:
+	var card := PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.add_theme_stylebox_override("panel", _make_breeding_card_style(false, false))
+
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 10)
+	card.add_child(row)
+	row.add_child(_make_breeding_portrait(str(group.get("visual_asset", EGG_PATH)), Vector2(72, 72)))
+
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_theme_constant_override("separation", 4)
+	row.add_child(info)
+
+	var name_lbl := Label.new()
+	name_lbl.text = str(group.get("egg_name", ""))
+	name_lbl.clip_text = true
+	name_lbl.add_theme_font_size_override("font_size", 15)
+	name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
+	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(name_lbl)
+
+	var lines: Array[String] = [
+		_localized_text("incubator_egg_count_value", "Eggs: {count}").replace("{count}", str(int(group.get("count", 0)))) if bool(group.get("loaded", false)) else _localized_text("incubator_egg_available", "Available: {count}").replace("{count}", str(int(group.get("count", 0)))),
+		_localized_text("incubator_egg_incubation_time", "Incubation time: {time}").replace("{time}", _format_hours(int(group.get("incubation_time_hours", 0))))
+	]
+	var source_counts_value: Variant = group.get("source_counts", {})
+	var has_source_counts: bool = typeof(source_counts_value) == TYPE_DICTIONARY and not (source_counts_value as Dictionary).is_empty()
+	if not bool(group.get("loaded", false)) or has_source_counts:
+		lines.append(_format_source_summary(group.get("source_counts", {})))
+	for line in lines:
+		var lbl := Label.new()
+		lbl.text = str(line)
+		lbl.add_theme_font_size_override("font_size", 12)
+		lbl.add_theme_color_override("font_color", Color(0.78, 0.71, 0.58, 0.95))
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info.add_child(lbl)
+
+	var details_btn := Button.new()
+	details_btn.text = _localized_text("incubator_storage_details", "Details")
+	details_btn.focus_mode = Control.FOCUS_NONE
+	details_btn.custom_minimum_size = Vector2(104, 40)
+	details_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	details_btn.pressed.connect(func() -> void:
+		_show_toast_raw(str(group.get("egg_name", "")) + " | " + _format_source_summary(group.get("source_counts", {})))
+	)
+	row.add_child(details_btn)
+	return card
+
+
+func _make_egg_select_group_card(group: Dictionary) -> Control:
+	var card := PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.add_theme_stylebox_override("panel", _make_breeding_card_style(false, false))
+
+	var body := VBoxContainer.new()
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 7)
+	card.add_child(body)
+
+	var top_row := HBoxContainer.new()
+	top_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_row.add_theme_constant_override("separation", 9)
+	body.add_child(top_row)
+	top_row.add_child(_make_breeding_portrait(str(group.get("visual_asset", EGG_PATH)), Vector2(66, 66)))
+
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_theme_constant_override("separation", 3)
+	top_row.add_child(info)
+
+	var name_lbl := Label.new()
+	name_lbl.text = str(group.get("egg_name", ""))
+	name_lbl.clip_text = true
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_lbl.add_theme_font_size_override("font_size", 14)
+	name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
+	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(name_lbl)
+
+	var count_lbl := Label.new()
+	count_lbl.text = _localized_text("incubator_egg_available", "Available: {count}").replace("{count}", str(int(group.get("count", 0))))
+	count_lbl.add_theme_font_size_override("font_size", 12)
+	count_lbl.add_theme_color_override("font_color", Color(0.82, 0.77, 0.62, 1.0))
+	count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(count_lbl)
+
+	var time_lbl := Label.new()
+	time_lbl.text = _localized_text("incubator_egg_incubation_time", "Incubation time: {time}").replace("{time}", _format_hours(int(group.get("incubation_time_hours", 0))))
+	time_lbl.add_theme_font_size_override("font_size", 12)
+	time_lbl.add_theme_color_override("font_color", Color(0.72, 0.66, 0.54, 1.0))
+	time_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(time_lbl)
+
+	var source_lbl := Label.new()
+	source_lbl.text = _format_source_summary(group.get("source_counts", {}))
+	source_lbl.clip_text = true
+	source_lbl.add_theme_font_size_override("font_size", 11)
+	source_lbl.add_theme_color_override("font_color", Color(0.72, 0.66, 0.54, 0.95))
+	source_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.add_child(source_lbl)
+
+	var select_btn := Button.new()
+	select_btn.text = _localized_text("incubator_egg_select", "Select")
+	select_btn.focus_mode = Control.FOCUS_NONE
+	select_btn.custom_minimum_size = Vector2(0, 40)
+	select_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	select_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	select_btn.pressed.connect(func() -> void:
+		_incubation_panel_species = str(group.get("species_id", ""))
+		_incubation_panel_available_ids = group.get("egg_ids", []) as Array
+		_incubation_panel_count = 1
+		_incubation_panel_step = 1
+		_populate_incubation_panel()
+	)
+	body.add_child(select_btn)
+	return card
+
+
+func _make_selected_egg_header(group: Dictionary) -> Control:
+	var card := PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.add_theme_stylebox_override("panel", _make_breeding_card_style(true, false))
+
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 12)
+	card.add_child(row)
+	row.add_child(_make_breeding_portrait(str(group.get("visual_asset", EGG_PATH)), Vector2(78, 78)))
+
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_theme_constant_override("separation", 4)
+	row.add_child(info)
+
+	var name_lbl := Label.new()
+	name_lbl.text = str(group.get("egg_name", ""))
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_lbl.add_theme_font_size_override("font_size", 16)
+	name_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.50, 1.0))
+	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(name_lbl)
+
+	var lines: Array[String] = [
+		_localized_text("incubator_egg_count_value", "Eggs: {count}").replace("{count}", str(int(group.get("count", 0)))) if bool(group.get("loaded", false)) else _localized_text("incubator_egg_available", "Available: {count}").replace("{count}", str(int(group.get("count", 0)))),
+		_localized_text("incubator_egg_incubation_time", "Incubation time: {time}").replace("{time}", _format_hours(int(group.get("incubation_time_hours", 0))))
+	]
+	var source_counts_value: Variant = group.get("source_counts", {})
+	var has_source_counts: bool = typeof(source_counts_value) == TYPE_DICTIONARY and not (source_counts_value as Dictionary).is_empty()
+	if not bool(group.get("loaded", false)) or has_source_counts:
+		lines.append(_format_source_summary(group.get("source_counts", {})))
+	for line in lines:
+		var lbl := Label.new()
+		lbl.text = str(line)
+		lbl.add_theme_font_size_override("font_size", 12)
+		lbl.add_theme_color_override("font_color", Color(0.82, 0.77, 0.62, 1.0))
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info.add_child(lbl)
+
+	return card
+
+
+func _make_storage_empty_label(text: String) -> Label:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_color_override("font_color", Color(0.65, 0.60, 0.50, 1.0))
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return lbl
+
 
 func _add_select_overlay() -> void:
 	_select_overlay = Control.new()
@@ -805,6 +1055,7 @@ func _add_select_overlay() -> void:
 	_make_scroll_safe(list)
 
 	var cancel_row := HBoxContainer.new()
+	cancel_row.name = "SelectCancelRow"
 	cancel_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	cancel_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	outer.add_child(cancel_row)
@@ -829,7 +1080,13 @@ func _show_select_step_1(chamber_index: int) -> void:
 	_selected_instance_b = ""
 	_select_reptile_id_filter = ""
 	_select_sex_filter = ""
-	_populate_select_list_step1()
+	_select_species_id = ""
+	_selected_female_id = ""
+	_selected_male_id = ""
+	_select_is_long = false
+	_select_start_in_progress = false
+	_set_select_cancel_visible(true)
+	_populate_species_select_step()
 	_select_overlay.visible = true
 
 
@@ -843,6 +1100,411 @@ func _get_select_title() -> Label:
 	if _select_overlay == null:
 		return null
 	return _select_overlay.get_node_or_null("SelectPanel/SelectOuter/SelectTitle") as Label
+
+
+func _get_select_cancel_button() -> Button:
+	if _select_overlay == null:
+		return null
+	return _select_overlay.get_node_or_null("SelectPanel/SelectOuter/SelectCancelRow/SelectCancel") as Button
+
+
+func _set_select_cancel_visible(visible: bool) -> void:
+	var cancel_button := _get_select_cancel_button()
+	if cancel_button != null:
+		cancel_button.visible = visible
+
+
+func _populate_species_select_step() -> void:
+	_select_step = 1
+	_set_select_cancel_visible(true)
+	var title := _get_select_title()
+	if title != null:
+		title.text = _localized_text("incubator_breeding_select_species", "Select Species")
+	var list := _get_select_list()
+	if list == null:
+		return
+	_clear_select_list(list)
+
+	var groups: Array = _get_species_breeding_groups()
+	if groups.is_empty():
+		_add_list_empty(list, "incubator_breeding_no_pairs", "No available pairs for breeding.")
+		return
+
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	list.add_child(grid)
+
+	for group_value in groups:
+		if typeof(group_value) == TYPE_DICTIONARY:
+			grid.add_child(_make_species_group_card(group_value as Dictionary))
+	_make_scroll_safe(grid)
+
+
+func _show_pair_selection(species_id: String) -> void:
+	_select_species_id = species_id
+	_selected_female_id = ""
+	_selected_male_id = ""
+	_selected_instance_a = ""
+	_selected_instance_b = ""
+	_select_is_long = false
+	_select_start_in_progress = false
+	_select_step = 2
+	_populate_pair_selection_step()
+
+
+func _populate_pair_selection_step() -> void:
+	_set_select_cancel_visible(false)
+	var title := _get_select_title()
+	if title != null:
+		title.text = _localized_text("incubator_breeding_select_pair", "Select Pair")
+	var list := _get_select_list()
+	if list == null:
+		return
+	_clear_select_list(list)
+
+	var females: Array = _get_available_instances_for_species_and_sex(_select_species_id, "female")
+	var males: Array = _get_available_instances_for_species_and_sex(_select_species_id, "male")
+	if females.is_empty() or males.is_empty():
+		_add_list_empty(list, "incubator_breeding_no_pairs", "No available pairs for breeding.")
+		list.add_child(_make_pair_action_row(false))
+		return
+
+	list.add_child(_make_pair_species_header(_select_species_id))
+	var columns := HBoxContainer.new()
+	columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	columns.add_theme_constant_override("separation", 10)
+	list.add_child(columns)
+	columns.add_child(_make_parent_column("incubator_breeding_females", "Females", females, "female"))
+	columns.add_child(_make_parent_column("incubator_breeding_males", "Males", males, "male"))
+	list.add_child(_make_prediction_panel())
+	list.add_child(_make_duration_selector())
+	list.add_child(_make_pair_action_row(_has_selected_valid_pair()))
+	_make_scroll_safe(list)
+
+
+func _clear_select_list(list: VBoxContainer) -> void:
+	for child in list.get_children():
+		child.queue_free()
+
+
+func _make_species_group_card(group: Dictionary) -> Control:
+	var species_id: String = str(group.get("species_id", ""))
+	var card := PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.custom_minimum_size = Vector2(0, 174)
+	card.add_theme_stylebox_override("panel", _make_breeding_card_style(false, false))
+
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 10)
+	card.add_child(row)
+	row.add_child(_make_breeding_portrait(str(group.get("portrait_path", "")), Vector2(82, 82)))
+
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_theme_constant_override("separation", 4)
+	row.add_child(info)
+
+	var name_lbl := Label.new()
+	name_lbl.text = _localized_species_name(species_id)
+	name_lbl.clip_text = true
+	name_lbl.add_theme_font_size_override("font_size", 16)
+	name_lbl.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
+	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(name_lbl)
+
+	for line in [
+		_localized_text("incubator_breeding_available_females", "Females: {count}").replace("{count}", str(int(group.get("female_count", 0)))),
+		_localized_text("incubator_breeding_available_males", "Males: {count}").replace("{count}", str(int(group.get("male_count", 0)))),
+		_localized_text("incubator_breeding_available_pairs", "Pairs: {count}").replace("{count}", str(int(group.get("pair_count", 0))))
+	]:
+		var lbl := Label.new()
+		lbl.text = str(line)
+		lbl.add_theme_font_size_override("font_size", 12)
+		lbl.add_theme_color_override("font_color", Color(0.78, 0.71, 0.58, 0.95))
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info.add_child(lbl)
+
+	var btn := Button.new()
+	btn.text = _localized_text("incubator_breeding_select", "Select")
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.custom_minimum_size = Vector2(0, 36)
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	btn.pressed.connect(func() -> void: _show_pair_selection(species_id))
+	info.add_child(btn)
+	return card
+
+
+func _make_pair_species_header(species_id: String) -> Control:
+	var header := PanelContainer.new()
+	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_theme_stylebox_override("panel", _make_breeding_card_style(false, false))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	header.add_child(row)
+	row.add_child(_make_breeding_portrait(_get_species_portrait_path(species_id, _get_available_instances()), Vector2(74, 74)))
+
+	var label := Label.new()
+	label.text = _localized_species_name(species_id)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(label)
+	return header
+
+
+func _make_parent_column(title_key: String, fallback: String, instances: Array, sex: String) -> Control:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _make_breeding_card_style(false, false))
+	var column := VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.add_theme_constant_override("separation", 6)
+	panel.add_child(column)
+
+	var title := Label.new()
+	title.text = _localized_text(title_key, fallback)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 15)
+	title.add_theme_color_override("font_color", Color(0.95, 0.83, 0.38, 1.0))
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(title)
+
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 268)
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	column.add_child(scroll)
+
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 6)
+	scroll.add_child(list)
+	for inst_value in instances:
+		if typeof(inst_value) == TYPE_DICTIONARY:
+			list.add_child(_make_parent_card(inst_value as Dictionary, sex))
+	_make_scroll_safe(list)
+	return panel
+
+
+func _make_parent_card(inst: Dictionary, sex: String) -> Control:
+	var instance_id: String = str(inst.get("instance_id", ""))
+	var selected: bool = instance_id == (_selected_female_id if sex == "female" else _selected_male_id)
+	var rarity: String = str(inst.get("rarity", "common"))
+	var btn := Button.new()
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.custom_minimum_size = Vector2(0, 108)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	btn.add_theme_stylebox_override("normal", _make_breeding_card_style(selected, false))
+	btn.add_theme_stylebox_override("hover", _make_breeding_card_style(selected, true))
+	btn.add_theme_stylebox_override("pressed", _make_breeding_card_style(true, true))
+	btn.pressed.connect(func() -> void:
+		if sex == "female":
+			_selected_female_id = instance_id
+		else:
+			_selected_male_id = instance_id
+		_update_selected_pair_ids()
+		_populate_pair_selection_step()
+	)
+
+	var row := HBoxContainer.new()
+	row.set_anchors_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 8
+	row.offset_top = 8
+	row.offset_right = -8
+	row.offset_bottom = -8
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 8)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn.add_child(row)
+	row.add_child(_make_breeding_portrait(_get_instance_portrait_path(inst), Vector2(58, 58)))
+
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.alignment = BoxContainer.ALIGNMENT_CENTER
+	info.add_theme_constant_override("separation", 3)
+	info.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(info)
+
+	var name_lbl := Label.new()
+	name_lbl.text = _get_reptile_card_name(inst)
+	name_lbl.clip_text = true
+	name_lbl.add_theme_font_size_override("font_size", 12)
+	name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
+	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(name_lbl)
+
+	var rarity_lbl := Label.new()
+	rarity_lbl.text = _get_variant_display_name(inst) + " - " + _localized_rarity(rarity)
+	rarity_lbl.clip_text = true
+	rarity_lbl.add_theme_font_size_override("font_size", 11)
+	rarity_lbl.add_theme_color_override("font_color", _rarity_color(rarity))
+	rarity_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(rarity_lbl)
+
+	var sex_lbl := Label.new()
+	sex_lbl.text = _localized_text("sex." + sex, sex)
+	sex_lbl.add_theme_font_size_override("font_size", 10)
+	sex_lbl.add_theme_color_override("font_color", Color(0.76, 0.70, 0.58, 0.95))
+	sex_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(sex_lbl)
+	return btn
+
+
+func _make_prediction_panel() -> Control:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _make_breeding_card_style(false, false))
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 6)
+	panel.add_child(column)
+
+	var title := Label.new()
+	title.text = _localized_text("incubator_breeding_predicted_results", "Predicted Results")
+	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(title)
+
+	if not _has_selected_valid_pair():
+		var hint := Label.new()
+		hint.text = _localized_text("incubator_breeding_select_female_and_male", "Select one female and one male.")
+		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		hint.add_theme_font_size_override("font_size", 12)
+		hint.add_theme_color_override("font_color", Color(0.74, 0.68, 0.56, 0.95))
+		hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		column.add_child(hint)
+		return panel
+
+	var prediction: Dictionary = BreedingSystem.get_predicted_breeding_odds(
+		_get_instance_by_id(_selected_female_id),
+		_get_instance_by_id(_selected_male_id),
+		_select_is_long
+	)
+	var rates: Dictionary = prediction.get("rates", {}) as Dictionary
+	var odds := Label.new()
+	odds.text = _localized_text("incubator_breeding_odds", "Odds") + ": " + _format_rates(rates)
+	odds.add_theme_font_size_override("font_size", 12)
+	odds.add_theme_color_override("font_color", Color(0.82, 0.76, 0.62, 1.0))
+	odds.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(odds)
+
+	var success := Label.new()
+	success.text = _localized_text("incubator_breeding_success_chance", "Success chance") + ": " + str(int(prediction.get("success_chance", 0))) + "%  |  " + _localized_text("incubator_breeding_failure_risk", "Failure risk") + ": " + str(int(prediction.get("failure_risk", 0))) + "%"
+	success.add_theme_font_size_override("font_size", 12)
+	success.add_theme_color_override("font_color", Color(0.66, 0.90, 0.58, 1.0))
+	success.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(success)
+
+	var eggs := Label.new()
+	eggs.text = _localized_text("incubator_breeding_egg_count_range", "Egg count: 1-5")
+	eggs.add_theme_font_size_override("font_size", 12)
+	eggs.add_theme_color_override("font_color", Color(0.82, 0.76, 0.62, 1.0))
+	eggs.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(eggs)
+	return panel
+
+
+func _make_duration_selector() -> Control:
+	var box := VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", 5)
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 8)
+	row.add_child(_make_duration_toggle(false))
+	row.add_child(_make_duration_toggle(true))
+	box.add_child(row)
+	var note := Label.new()
+	note.text = _localized_text("incubator_breeding_long_bonus", "Long Breeding increases the chance for Ultra Rare and Exceptional.")
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.add_theme_font_size_override("font_size", 11)
+	note.add_theme_color_override("font_color", Color(0.74, 0.68, 0.56, 0.95))
+	note.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(note)
+	return box
+
+
+func _make_duration_toggle(is_long: bool) -> Button:
+	var btn := Button.new()
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.custom_minimum_size = Vector2(0, 54)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.toggle_mode = true
+	btn.button_pressed = _select_is_long == is_long
+	btn.text = _localized_text("incubator_breeding_long_48h" if is_long else "incubator_breeding_fast_24h", "Long Breeding - 48h" if is_long else "Fast Breeding - 24h")
+	btn.add_theme_font_size_override("font_size", 12)
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	btn.pressed.connect(func() -> void:
+		_select_is_long = is_long
+		_populate_pair_selection_step()
+	)
+	return btn
+
+
+func _make_pair_action_row(can_start: bool) -> Control:
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 8)
+	var back := Button.new()
+	back.text = _localized_text("incubator_breeding_back", "Back")
+	back.custom_minimum_size = Vector2(110, 44)
+	back.focus_mode = Control.FOCUS_NONE
+	back.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	back.pressed.connect(func() -> void: _populate_species_select_step())
+	row.add_child(back)
+
+	var cancel := Button.new()
+	cancel.text = _localized_text("incubator_breeding_cancel", "Cancel")
+	cancel.custom_minimum_size = Vector2(110, 44)
+	cancel.focus_mode = Control.FOCUS_NONE
+	cancel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	cancel.pressed.connect(_cancel_select_overlay)
+	row.add_child(cancel)
+
+	var start := Button.new()
+	start.text = _localized_text("incubator_breeding_start", "Start Breeding")
+	start.custom_minimum_size = Vector2(150, 44)
+	start.focus_mode = Control.FOCUS_NONE
+	start.disabled = not can_start or _select_start_in_progress
+	start.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	start.pressed.connect(_confirm_selected_pair)
+	row.add_child(start)
+	return row
+
+
+func _confirm_selected_pair() -> void:
+	if _select_start_in_progress:
+		return
+	if not _has_selected_valid_pair():
+		_show_toast("incubator_breeding_select_female_and_male", "Select one female and one male.")
+		return
+	_select_start_in_progress = true
+	_update_selected_pair_ids()
+	var result: Dictionary = BreedingSystem.start_breeding(
+		_select_chamber_index, _selected_female_id, _selected_male_id, _select_is_long)
+	if bool(result.get("success", false)):
+		_cancel_select_overlay()
+		_refresh_all_slots()
+	else:
+		_select_start_in_progress = false
+		_show_toast(str(result.get("error_key", "")), "Error starting breeding.")
+		_populate_pair_selection_step()
+
+
+func _cancel_select_overlay() -> void:
+	_select_step = 0
+	_select_start_in_progress = false
+	if _select_overlay != null:
+		_select_overlay.visible = false
 
 
 func _populate_select_list_step1() -> void:
@@ -1012,8 +1674,7 @@ func _make_reptile_row(inst: Dictionary, on_press: Callable) -> Control:
 	var sex: String = str(inst.get("sex", "male"))
 	var custom_name: String = str(inst.get("custom_name", ""))
 	var reptile_id: String = str(inst.get("reptile_id", ""))
-	var rd: Dictionary = ReptileSystem.get_reptile(reptile_id)
-	var species: String = str(rd.get("name_key", reptile_id))
+	var species: String = _localized_species_name(reptile_id)
 	var display: String = custom_name if not custom_name.is_empty() else species
 	var sex_lbl: String = _localized_text("incubator.sex_male", "M") if sex == "male" else _localized_text("incubator.sex_female", "F")
 
@@ -1038,39 +1699,216 @@ func _make_reptile_row(inst: Dictionary, on_press: Callable) -> Control:
 # ─── Query helpers ─────────────────────────────────────────────────────
 
 func _get_available_instances() -> Array:
-	var result: Array = []
-	var instances: Dictionary = ReptileSystem.get_owned_reptile_instances()
-	for iid in instances.keys():
-		var v: Variant = instances.get(iid)
-		if typeof(v) != TYPE_DICTIONARY:
-			continue
-		var inst: Dictionary = v as Dictionary
-		if BreedingSystem.is_instance_available_for_breeding(inst):
-			result.append(inst)
-	return result
+	return BreedingSystem.get_available_breeding_reptiles()
 
 
 func _get_compatible_instances(exclude_id: String, reptile_id_filter: String, sex_filter: String) -> Array:
 	var result: Array = []
-	var instances: Dictionary = ReptileSystem.get_owned_reptile_instances()
-	for iid in instances.keys():
-		if iid == exclude_id:
+	for inst_value in _get_available_instances():
+		if typeof(inst_value) != TYPE_DICTIONARY:
 			continue
-		var v: Variant = instances.get(iid)
-		if typeof(v) != TYPE_DICTIONARY:
+		var inst: Dictionary = inst_value as Dictionary
+		if str(inst.get("instance_id", "")) == exclude_id:
 			continue
-		var inst: Dictionary = v as Dictionary
 		if str(inst.get("reptile_id", "")) != reptile_id_filter:
 			continue
 		if str(inst.get("sex", "")) != sex_filter:
-			continue
-		if not BreedingSystem.is_instance_available_for_breeding(inst):
 			continue
 		result.append(inst)
 	return result
 
 
+func _get_species_breeding_groups() -> Array:
+	var grouped: Dictionary = {}
+	for inst_value in _get_available_instances():
+		if typeof(inst_value) != TYPE_DICTIONARY:
+			continue
+		var inst: Dictionary = inst_value as Dictionary
+		var species_id: String = str(inst.get("reptile_id", ""))
+		if species_id.is_empty():
+			continue
+		if not grouped.has(species_id):
+			grouped[species_id] = {"species_id": species_id, "females": [], "males": []}
+		var species_group: Dictionary = grouped[species_id] as Dictionary
+		match str(inst.get("sex", "")):
+			"female":
+				(species_group.get("females", []) as Array).append(inst)
+			"male":
+				(species_group.get("males", []) as Array).append(inst)
+
+	var result: Array = []
+	for species_id in grouped.keys():
+		var group: Dictionary = grouped[species_id] as Dictionary
+		var females: Array = group.get("females", []) as Array
+		var males: Array = group.get("males", []) as Array
+		if females.is_empty() or males.is_empty():
+			continue
+		result.append({
+			"species_id": str(species_id),
+			"female_count": females.size(),
+			"male_count": males.size(),
+			"pair_count": min(females.size(), males.size()),
+			"portrait_path": _get_species_portrait_path(str(species_id), females + males)
+		})
+
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return _localized_species_name(str(a.get("species_id", ""))) < _localized_species_name(str(b.get("species_id", "")))
+	)
+	return result
+
+
+func _get_available_instances_for_species_and_sex(species_id: String, sex: String) -> Array:
+	var result: Array = []
+	for inst_value in _get_available_instances():
+		if typeof(inst_value) != TYPE_DICTIONARY:
+			continue
+		var inst: Dictionary = inst_value as Dictionary
+		if str(inst.get("reptile_id", "")) == species_id and str(inst.get("sex", "")) == sex:
+			result.append(inst)
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return _get_reptile_card_name(a) < _get_reptile_card_name(b)
+	)
+	return result
+
+
+func _get_instance_by_id(instance_id: String) -> Dictionary:
+	var instances: Dictionary = ReptileSystem.get_owned_reptile_instances()
+	var value: Variant = instances.get(instance_id, null)
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var instance: Dictionary = (value as Dictionary).duplicate(true)
+	if str(instance.get("instance_id", "")).is_empty():
+		instance["instance_id"] = instance_id
+	return instance
+
+
+func _has_selected_valid_pair() -> bool:
+	if _selected_female_id.is_empty() or _selected_male_id.is_empty():
+		return false
+	var female: Dictionary = _get_instance_by_id(_selected_female_id)
+	var male: Dictionary = _get_instance_by_id(_selected_male_id)
+	if female.is_empty() or male.is_empty():
+		return false
+	var pair_check: Dictionary = BreedingSystem.can_pair(female, male)
+	return bool(pair_check.get("ok", false))
+
+
+func _update_selected_pair_ids() -> void:
+	_selected_instance_a = _selected_female_id
+	_selected_instance_b = _selected_male_id
+
+
 # ─── Tick ──────────────────────────────────────────────────────────────
+
+func _get_egg_group_summaries(eggs: Array) -> Array:
+	var grouped: Dictionary = {}
+	for egg_value in eggs:
+		if typeof(egg_value) != TYPE_DICTIONARY:
+			continue
+		var egg: Dictionary = egg_value as Dictionary
+		var species_id: String = _get_egg_species_id(egg)
+		if species_id.is_empty():
+			continue
+		if not grouped.has(species_id):
+			grouped[species_id] = []
+		(grouped[species_id] as Array).append(egg)
+
+	var result: Array = []
+	for species_id in grouped.keys():
+		var group_eggs: Array = grouped[species_id] as Array
+		if group_eggs.is_empty():
+			continue
+		var first_egg: Dictionary = group_eggs[0] as Dictionary
+		var ids: Array = []
+		var source_counts: Dictionary = {}
+		for egg_value in group_eggs:
+			if typeof(egg_value) != TYPE_DICTIONARY:
+				continue
+			var egg: Dictionary = egg_value as Dictionary
+			var egg_id: String = str(egg.get("egg_id", egg.get("egg_instance_id", "")))
+			if not egg_id.is_empty():
+				ids.append(egg_id)
+			var source: String = str(egg.get("source", "unknown"))
+			source_counts[source] = int(source_counts.get(source, 0)) + 1
+		result.append({
+			"species_id": str(species_id),
+			"egg_name": _get_egg_display_name(str(species_id), first_egg),
+			"count": group_eggs.size(),
+			"egg_ids": ids,
+			"incubation_time_hours": int(first_egg.get("incubation_time_hours", IncubationSystem.get_incubation_time_hours(str(species_id)))),
+			"visual_asset": _get_egg_visual_asset(first_egg),
+			"source_counts": source_counts
+		})
+
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return str(a.get("egg_name", "")) < str(b.get("egg_name", ""))
+	)
+	return result
+
+
+func _get_current_egg_group_summary() -> Dictionary:
+	if _incubation_panel_species.is_empty():
+		return {}
+	var groups: Array = _get_egg_group_summaries(IncubationSystem.get_available_storage_eggs())
+	for group_value in groups:
+		if typeof(group_value) != TYPE_DICTIONARY:
+			continue
+		var group: Dictionary = group_value as Dictionary
+		if str(group.get("species_id", "")) == _incubation_panel_species:
+			return group
+	return {}
+
+
+func _get_egg_species_id(egg: Dictionary) -> String:
+	return str(egg.get("reptile_id", egg.get("species_id", ""))).strip_edges()
+
+
+func _get_egg_display_name(species_id: String, egg: Dictionary = {}) -> String:
+	var language: String = GameState.get_language()
+	var egg_name: String = str(egg.get("egg_name_" + language, ""))
+	if not egg_name.is_empty():
+		return egg_name
+	egg_name = IncubationSystem.get_egg_name(species_id, language)
+	if not egg_name.is_empty() and egg_name != species_id:
+		return egg_name
+	return _localized_species_name(species_id)
+
+
+func _get_egg_visual_asset(egg: Dictionary) -> String:
+	for key in ["visual_asset", "visual_asset_variant", "asset"]:
+		var path: String = str(egg.get(key, ""))
+		if not path.is_empty() and ResourceLoader.exists(path):
+			return path
+	return EGG_PATH
+
+
+func _format_source_summary(source_counts_value: Variant) -> String:
+	var source_counts: Dictionary = source_counts_value as Dictionary if typeof(source_counts_value) == TYPE_DICTIONARY else {}
+	if source_counts.is_empty():
+		return _localized_text("incubator_storage_source_unknown", "Source: Unknown")
+	var pieces: Array[String] = []
+	for source in source_counts.keys():
+		pieces.append(_localized_storage_source(str(source)) + ": " + str(int(source_counts.get(source, 0))))
+	if pieces.size() == 1:
+		return pieces[0]
+	return _localized_text("incubator_storage_source_mixed", "Mixed") + " | " + _join_plain_text(pieces, " | ")
+
+
+func _localized_storage_source(source: String) -> String:
+	match source:
+		"shop":
+			return _localized_text("incubator_storage_source_shop", "Shop")
+		"breeding":
+			return _localized_text("incubator_storage_source_breeding", "Breeding")
+		"incubation":
+			return _localized_text("incubator_storage_source_incubation", "Incubation")
+		_:
+			return _localized_text("incubator_storage_source_unknown", "Unknown")
+
+
+func _format_hours(hours: int) -> String:
+	return str(max(0, hours)) + "h"
+
 
 func _on_tick() -> void:
 	_refresh_all_slots()
@@ -1176,6 +2014,116 @@ func _rarity_color(rarity: String) -> Color:
 			return Color(0.85, 0.82, 0.78, 1.0)
 
 
+func _make_breeding_card_style(selected: bool, hover: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	if selected:
+		style.bg_color = Color(0.24, 0.18, 0.08, 0.96)
+		style.border_color = Color(0.95, 0.74, 0.24, 1.0)
+	elif hover:
+		style.bg_color = Color(0.18, 0.12, 0.07, 0.92)
+		style.border_color = Color(0.72, 0.52, 0.24, 0.95)
+	else:
+		style.bg_color = Color(0.13, 0.09, 0.06, 0.88)
+		style.border_color = Color(0.55, 0.40, 0.20, 0.75)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.content_margin_left = 10
+	style.content_margin_right = 10
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	return style
+
+
+func _make_breeding_portrait(path: String, size: Vector2) -> TextureRect:
+	var portrait := TextureRect.new()
+	portrait.custom_minimum_size = size
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var resolved_path: String = path
+	if resolved_path.is_empty() or not ResourceLoader.exists(resolved_path):
+		resolved_path = PLUS_ICON_PATH
+	portrait.texture = AssetPaths.load_texture(resolved_path)
+	return portrait
+
+
+func _get_species_portrait_path(species_id: String, instances: Array = []) -> String:
+	var reptile: Dictionary = ReptileSystem.get_reptile(species_id)
+	for key in ["portrait_path", "icon_path"]:
+		var path: String = str(reptile.get(key, ""))
+		if not path.is_empty() and ResourceLoader.exists(path):
+			return path
+	for inst_value in instances:
+		if typeof(inst_value) != TYPE_DICTIONARY:
+			continue
+		var inst: Dictionary = inst_value as Dictionary
+		if str(inst.get("reptile_id", "")) != species_id:
+			continue
+		var path: String = _get_instance_portrait_path(inst)
+		if not path.is_empty() and ResourceLoader.exists(path):
+			return path
+	return PLUS_ICON_PATH
+
+
+func _get_instance_portrait_path(inst: Dictionary) -> String:
+	var variant_id: String = str(inst.get("variant_id", ""))
+	var variant: Dictionary = ReptileSystem.get_variant(variant_id)
+	for key in ["portrait_path", "icon_path"]:
+		var path: String = str(variant.get(key, ""))
+		if not path.is_empty() and ResourceLoader.exists(path):
+			return path
+	var species_id: String = str(inst.get("reptile_id", ""))
+	return _get_species_portrait_path(species_id)
+
+
+func _localized_species_name(species_id: String) -> String:
+	var reptile: Dictionary = ReptileSystem.get_reptile(species_id)
+	var name_key: String = str(reptile.get("name_key", ""))
+	var fallback: String = _humanize_id(species_id)
+	var localized: String = _localized_text(name_key, fallback)
+	if localized == fallback and not name_key.is_empty():
+		push_warning("Missing species localization: " + name_key)
+	return localized
+
+
+func _get_reptile_card_name(inst: Dictionary) -> String:
+	var custom_name: String = str(inst.get("custom_name", ""))
+	if not custom_name.is_empty():
+		return custom_name
+	return _localized_species_name(str(inst.get("reptile_id", "")))
+
+
+func _get_variant_display_name(inst: Dictionary) -> String:
+	var variant: Dictionary = ReptileSystem.get_variant(str(inst.get("variant_id", "")))
+	var name_key: String = str(variant.get("name_key", ""))
+	var fallback: String = _localized_rarity(str(inst.get("rarity", variant.get("rarity", "common"))))
+	var localized: String = _localized_text(name_key, fallback)
+	if localized == fallback and not name_key.is_empty():
+		push_warning("Missing variant localization: " + name_key)
+	return localized
+
+
+func _format_rates(rates: Dictionary) -> String:
+	var pieces: Array[String] = []
+	for rarity in ["common", "rare", "ultra_rare", "exceptional"]:
+		pieces.append(_localized_rarity(rarity) + " " + str(int(round(float(rates.get(rarity, 0.0))))) + "%")
+	return _join_plain_text(pieces, " | ")
+
+
+func _join_plain_text(pieces: Array[String], separator: String) -> String:
+	var text: String = ""
+	for piece in pieces:
+		if text.is_empty():
+			text = piece
+		else:
+			text += separator + piece
+	return text
+
+
+func _humanize_id(value: String) -> String:
+	return value.replace("_", " ").capitalize()
+
+
 func _localized_text(key: String, fallback: String) -> String:
 	if key.is_empty():
 		return fallback
@@ -1205,6 +2153,10 @@ func _on_nav_pressed(item_id: String) -> void:
 			if _upgrades_overlay != null:
 				_populate_upgrades_overlay()
 				_upgrades_overlay.visible = true
+		"quests":
+			if _quests_overlay != null:
+				_populate_quests_overlay()
+				_quests_overlay.visible = true
 		_:
 			_show_toast("incubator.coming_soon", "This feature will be added in a later stage.")
 
@@ -1299,6 +2251,7 @@ func _show_incubation_panel(index: int) -> void:
 	_incubation_panel_species = ""
 	_incubation_panel_count = 1
 	_incubation_panel_available_ids = []
+	_incubation_load_in_progress = false
 	_populate_incubation_panel()
 	if _incubation_panel != null:
 		_incubation_panel.visible = true
@@ -1318,7 +2271,7 @@ func _populate_incubation_panel() -> void:
 
 	match state:
 		"empty":
-			_incubation_panel_title.text = _localized_text("incubation.select_species", "Select species")
+			_incubation_panel_title.text = _localized_text("incubator_egg_select_species", "Select Egg Species") if _incubation_panel_step == 0 else _localized_text("incubator_egg_select_count", "Select Egg Count")
 			if _incubation_panel_step == 0:
 				_ip_show_species_select()
 			else:
@@ -1341,52 +2294,49 @@ func _populate_incubation_panel() -> void:
 
 
 func _ip_show_species_select() -> void:
-	var by_species: Dictionary = IncubationSystem.get_eggs_by_species()
-	if by_species.is_empty():
+	var groups: Array = _get_egg_group_summaries(IncubationSystem.get_available_storage_eggs())
+	if groups.is_empty():
 		_incubation_panel_content.add_child(_make_ip_info_label(
-			_localized_text("incubation.no_eggs_in_storage", "No eggs in storage.")
+			_localized_text("incubator_storage_no_eggs", "No eggs in storage.")
 		))
 		return
 
-	var lang: String = GameState.get_language()
-	for species_id in by_species.keys():
-		var eggs: Array = by_species[species_id] as Array
-		var count: int = eggs.size()
-		var egg_name: String = IncubationSystem.get_egg_name(species_id, lang)
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	_incubation_panel_content.add_child(grid)
 
-		var btn := Button.new()
-		btn.text = egg_name + "  (" + str(count) + ")"
-		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.focus_mode = Control.FOCUS_NONE
-		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		btn.add_theme_font_size_override("font_size", 14)
-		var sid_capture: String = species_id
-		var ids: Array = []
-		for ev in eggs:
-			if typeof(ev) == TYPE_DICTIONARY:
-				ids.append(str((ev as Dictionary).get("egg_id", "")))
-		btn.pressed.connect(func() -> void:
-			_incubation_panel_species = sid_capture
-			_incubation_panel_available_ids = ids
-			_incubation_panel_count = 1
-			_incubation_panel_step = 1
-			_populate_incubation_panel()
-		)
-		_incubation_panel_content.add_child(btn)
+	for group_value in groups:
+		if typeof(group_value) == TYPE_DICTIONARY:
+			grid.add_child(_make_egg_select_group_card(group_value as Dictionary))
+	_make_scroll_safe(grid)
 
 
 func _ip_show_count_select() -> void:
-	var lang: String = GameState.get_language()
-	var egg_name: String = IncubationSystem.get_egg_name(_incubation_panel_species, lang)
+	var group: Dictionary = _get_current_egg_group_summary()
+	if group.is_empty():
+		_incubation_panel_step = 0
+		_ip_show_species_select()
+		return
+
+	_incubation_panel_available_ids = group.get("egg_ids", []) as Array
+	var egg_name: String = str(group.get("egg_name", _get_egg_display_name(_incubation_panel_species)))
 	var max_count: int = mini(IncubationSystem.get_max_eggs_per_container(), _incubation_panel_available_ids.size())
+	if max_count < 1:
+		_incubation_panel_step = 0
+		_ip_show_species_select()
+		return
 	_incubation_panel_count = clampi(_incubation_panel_count, 1, max_count)
 
-	_incubation_panel_content.add_child(_make_ip_info_label(egg_name))
-
-	var avail_lbl := _make_ip_info_label(
-		_localized_text("incubation.available_count", "Available: {count}").replace("{count}", str(_incubation_panel_available_ids.size()))
-	)
-	_incubation_panel_content.add_child(avail_lbl)
+	_incubation_panel_content.add_child(_make_selected_egg_header(group))
+	_incubation_panel_content.add_child(_make_ip_info_label(
+		_localized_text("incubator_egg_available", "Available: {count}").replace("{count}", str(_incubation_panel_available_ids.size()))
+	))
+	_incubation_panel_content.add_child(_make_ip_info_label(
+		_localized_text("incubator_egg_max", "Max: {count}").replace("{count}", str(IncubationSystem.get_max_eggs_per_container()))
+	))
 
 	var count_row := HBoxContainer.new()
 	count_row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -1406,10 +2356,10 @@ func _ip_show_count_select() -> void:
 	count_row.add_child(minus_btn)
 
 	var count_lbl := Label.new()
-	count_lbl.text = str(_incubation_panel_count)
+	count_lbl.text = _localized_text("incubator_egg_count", "Egg Count") + "\n" + str(_incubation_panel_count)
 	count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	count_lbl.custom_minimum_size = Vector2(48, 0)
-	count_lbl.add_theme_font_size_override("font_size", 22)
+	count_lbl.custom_minimum_size = Vector2(120, 0)
+	count_lbl.add_theme_font_size_override("font_size", 18)
 	count_lbl.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	count_row.add_child(count_lbl)
@@ -1426,9 +2376,8 @@ func _ip_show_count_select() -> void:
 	)
 	count_row.add_child(plus_btn)
 
-	var time_h: int = IncubationSystem.get_incubation_time_hours(_incubation_panel_species)
 	_incubation_panel_content.add_child(_make_ip_info_label(
-		_localized_text("incubation.incubation_time", "Incubation time: {h}h").replace("{h}", str(time_h))
+		_localized_text("incubator_egg_incubation_time", "Incubation time: {time}").replace("{time}", _format_hours(int(group.get("incubation_time_hours", 0))))
 	))
 
 	if _incubation_panel_count >= 8:
@@ -1448,7 +2397,7 @@ func _ip_show_count_select() -> void:
 	_incubation_panel_content.add_child(btn_row)
 
 	var back_btn := Button.new()
-	back_btn.text = _localized_text("button.back", "Back")
+	back_btn.text = _localized_text("incubator_egg_back", "Back")
 	back_btn.focus_mode = Control.FOCUS_NONE
 	back_btn.custom_minimum_size = Vector2(100, 40)
 	back_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -1458,37 +2407,67 @@ func _ip_show_count_select() -> void:
 	)
 	btn_row.add_child(back_btn)
 
+	var cancel_btn := Button.new()
+	cancel_btn.text = _localized_text("incubator_egg_cancel", "Cancel")
+	cancel_btn.focus_mode = Control.FOCUS_NONE
+	cancel_btn.custom_minimum_size = Vector2(100, 40)
+	cancel_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	cancel_btn.pressed.connect(func() -> void:
+		_incubation_load_in_progress = false
+		_incubation_panel.visible = false
+		_incubation_panel_idx = -1
+	)
+	btn_row.add_child(cancel_btn)
+
 	var confirm_btn := Button.new()
-	confirm_btn.text = _localized_text("incubation.start", "Start Incubation")
+	confirm_btn.text = _localized_text("incubator_egg_place_in_container", "Place in Container")
 	confirm_btn.focus_mode = Control.FOCUS_NONE
 	confirm_btn.custom_minimum_size = Vector2(160, 40)
+	confirm_btn.disabled = _incubation_load_in_progress
 	confirm_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var ids_slice: Array = _incubation_panel_available_ids.slice(0, _incubation_panel_count)
 	var sid: String = _incubation_panel_species
 	var cidx: int = _incubation_panel_idx
 	confirm_btn.pressed.connect(func() -> void:
+		if _incubation_load_in_progress:
+			return
+		_incubation_load_in_progress = true
 		var result: Dictionary = IncubationSystem.load_eggs_into_container(cidx, ids_slice, sid)
 		if bool(result.get("success", false)):
+			_incubation_load_in_progress = false
 			_incubation_panel_step = 0
 			_populate_incubation_panel()
 			_refresh_all_slots()
 		else:
+			_incubation_load_in_progress = false
 			_show_toast(str(result.get("error_key", "")), "Error.")
+			_populate_incubation_panel()
 	)
 	btn_row.add_child(confirm_btn)
 
 
 func _ip_show_loaded(container: Dictionary) -> void:
-	var lang: String = GameState.get_language()
 	var species_id: String = str(container.get("species_id", ""))
-	var egg_name: String = IncubationSystem.get_egg_name(species_id, lang)
+	var egg_name: String = _get_egg_display_name(species_id)
 	var count: int = int(container.get("egg_count", 0))
 	var time_h: int = int(container.get("incubation_time_hours", 0))
 
-	_incubation_panel_content.add_child(_make_ip_info_label(egg_name, Color(0.95, 0.88, 0.68, 1.0)))
-	_incubation_panel_content.add_child(_make_ip_info_label(str(count) + " jaj"))
+	_incubation_panel_content.add_child(_make_selected_egg_header({
+		"egg_name": egg_name,
+		"count": count,
+		"incubation_time_hours": time_h,
+		"visual_asset": EGG_PATH,
+		"source_counts": {},
+		"loaded": true
+	}))
 	_incubation_panel_content.add_child(_make_ip_info_label(
-		_localized_text("incubation.incubation_time", "Incubation time: {h}h").replace("{h}", str(time_h))
+		_localized_text("incubator_egg_species", "Species: {name}").replace("{name}", egg_name)
+	))
+	_incubation_panel_content.add_child(_make_ip_info_label(
+		_localized_text("incubator_egg_count_value", "Eggs: {count}").replace("{count}", str(count))
+	))
+	_incubation_panel_content.add_child(_make_ip_info_label(
+		_localized_text("incubator_egg_incubation_time", "Incubation time: {time}").replace("{time}", _format_hours(time_h))
 	))
 
 	var sp := Control.new()
@@ -1497,7 +2476,7 @@ func _ip_show_loaded(container: Dictionary) -> void:
 	_incubation_panel_content.add_child(sp)
 
 	var start_btn := _make_ip_action_btn(
-		_localized_text("incubation.start", "Start Incubation"),
+		_localized_text("incubator_egg_start_incubation", "Start Incubation"),
 		func() -> void:
 			var result: Dictionary = IncubationSystem.start_incubation(_incubation_panel_idx)
 			if bool(result.get("success", false)):
@@ -1509,7 +2488,7 @@ func _ip_show_loaded(container: Dictionary) -> void:
 	_incubation_panel_content.add_child(start_btn)
 
 	var cancel_btn := _make_ip_action_btn(
-		_localized_text("incubation.cancel_and_return", "Cancel and return eggs"),
+		_localized_text("incubator_egg_cancel_and_return", "Cancel and return eggs"),
 		func() -> void:
 			IncubationSystem.cancel_loaded_container(_incubation_panel_idx)
 			_incubation_panel.visible = false
@@ -2198,6 +3177,7 @@ func _add_upgrades_overlay() -> void:
 	_upgrades_overlay.add_child(panel)
 
 	var outer := VBoxContainer.new()
+	outer.name = "UPOuter"
 	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	outer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	outer.add_theme_constant_override("separation", 10)
@@ -2247,7 +3227,7 @@ func _populate_upgrades_overlay() -> void:
 	if _upgrades_overlay == null:
 		return
 	var content: VBoxContainer = _upgrades_overlay.get_node_or_null(
-		"UPPanel/UPScroll/UPContent") as VBoxContainer
+		"UPPanel/UPOuter/UPScroll/UPContent") as VBoxContainer
 	if content == null:
 		return
 	for child in content.get_children():
@@ -2416,6 +3396,269 @@ func _get_incubator_upgrade_effect_text(upgrade_id: String, level: int, upgrade:
 
 
 # ─── Language change ────────────────────────────────────────────────────
+
+func _add_quests_overlay() -> void:
+	_quests_overlay = Control.new()
+	_quests_overlay.name = "QuestsOverlay"
+	_quests_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_quests_overlay.visible = false
+	_quests_overlay.z_index = 126
+	add_child(_quests_overlay)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.65)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_quests_overlay.add_child(dim)
+
+	var panel := PanelContainer.new()
+	panel.name = "QPanel"
+	panel.anchor_left = 0.03
+	panel.anchor_top = 0.06
+	panel.anchor_right = 0.97
+	panel.anchor_bottom = 0.95
+	var ps := StyleBoxFlat.new()
+	ps.bg_color = Color(0.10, 0.07, 0.04, 0.97)
+	ps.border_color = Color(0.70, 0.52, 0.25, 0.95)
+	ps.set_border_width_all(3)
+	ps.set_corner_radius_all(16)
+	ps.content_margin_left = 14
+	ps.content_margin_right = 14
+	ps.content_margin_top = 14
+	ps.content_margin_bottom = 14
+	panel.add_theme_stylebox_override("panel", ps)
+	_quests_overlay.add_child(panel)
+
+	var outer := VBoxContainer.new()
+	outer.name = "QOuter"
+	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer.add_theme_constant_override("separation", 10)
+	panel.add_child(outer)
+
+	var title := Label.new()
+	title.text = _localized_text("task_category_incubator_name", "Incubator") + " - " + _localized_text("quests.title", "Quests")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
+	outer.add_child(title)
+
+	var sep := HSeparator.new()
+	sep.add_theme_color_override("color", Color(0.55, 0.40, 0.20, 0.70))
+	outer.add_child(sep)
+
+	var scroll := ScrollContainer.new()
+	scroll.name = "QScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	outer.add_child(scroll)
+
+	var content := VBoxContainer.new()
+	content.name = "QContent"
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", 10)
+	scroll.add_child(content)
+	_make_scroll_safe(content)
+
+	var close_row := HBoxContainer.new()
+	close_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	close_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.add_child(close_row)
+
+	var close_btn := Button.new()
+	close_btn.text = _localized_text("button.back", "Back")
+	close_btn.focus_mode = Control.FOCUS_NONE
+	close_btn.custom_minimum_size = Vector2(130, 42)
+	close_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	close_btn.pressed.connect(func() -> void: _quests_overlay.visible = false)
+	close_row.add_child(close_btn)
+
+
+func _populate_quests_overlay() -> void:
+	if _quests_overlay == null:
+		return
+	var content: VBoxContainer = _quests_overlay.get_node_or_null(
+		"QPanel/QOuter/QScroll/QContent") as VBoxContainer
+	if content == null:
+		return
+	for child in content.get_children():
+		content.remove_child(child)
+		child.queue_free()
+
+	if not has_node("/root/QuestSystem"):
+		content.add_child(_make_quest_empty_label(_localized_text("quests.no_quests", "No active quests")))
+		return
+
+	var states: Array = QuestSystem.get_all_quests(false)
+	var added := false
+	for state_value in states:
+		if typeof(state_value) != TYPE_DICTIONARY:
+			continue
+		var state: Dictionary = state_value as Dictionary
+		if str(state.get("category", "")) != "incubator_tasks":
+			continue
+		if not bool(state.get("is_active", true)) and not bool(state.get("claimed", false)):
+			continue
+		content.add_child(_make_incubator_quest_card(state))
+		added = true
+
+	if not added:
+		content.add_child(_make_quest_empty_label(_localized_text("quests.no_quests", "No active quests")))
+	_make_scroll_safe(content)
+
+
+func _make_quest_empty_label(text: String) -> Label:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.add_theme_font_size_override("font_size", 15)
+	lbl.add_theme_color_override("font_color", Color(0.76, 0.70, 0.58, 0.95))
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return lbl
+
+
+func _make_incubator_quest_card(state: Dictionary) -> Control:
+	var card := PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var cs := StyleBoxFlat.new()
+	var completed: bool = bool(state.get("completed", false))
+	var claimed: bool = bool(state.get("claimed", false))
+	var claimable: bool = bool(state.get("claimable", false))
+	cs.bg_color = Color(0.13, 0.09, 0.06, 0.90)
+	cs.border_color = Color(0.30, 0.75, 0.35, 0.85) if completed else Color(0.60, 0.45, 0.22, 0.75)
+	cs.set_border_width_all(2)
+	cs.set_corner_radius_all(10)
+	cs.content_margin_left = 10
+	cs.content_margin_right = 10
+	cs.content_margin_top = 10
+	cs.content_margin_bottom = 10
+	card.add_theme_stylebox_override("panel", cs)
+
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 10)
+	card.add_child(row)
+
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_theme_constant_override("separation", 5)
+	row.add_child(info)
+
+	var title := Label.new()
+	title.text = _localized_text(str(state.get("title_key", "")), str(state.get("id", "")))
+	title.clip_text = true
+	title.add_theme_font_size_override("font_size", 15)
+	title.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(title)
+
+	var desc := Label.new()
+	desc.text = _localized_text(str(state.get("description_key", "")), "")
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.add_theme_font_size_override("font_size", 11)
+	desc.add_theme_color_override("font_color", Color(0.68, 0.62, 0.50, 0.88))
+	desc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(desc)
+
+	var current: int = int(state.get("current", 0))
+	var target: int = max(1, int(state.get("target", 1)))
+	var displayed_current: int = target if completed else current
+	var progress := Label.new()
+	progress.text = _localized_text("quests.progress", "Progress") + ": " + str(displayed_current) + "/" + str(target)
+	progress.add_theme_font_size_override("font_size", 12)
+	progress.add_theme_color_override("font_color", Color(0.95, 0.83, 0.38, 1.0))
+	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(progress)
+
+	var reward := Label.new()
+	reward.text = _format_quest_reward_text(state)
+	reward.add_theme_font_size_override("font_size", 12)
+	reward.add_theme_color_override("font_color", Color(0.55, 0.88, 0.55, 1.0))
+	reward.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(reward)
+
+	var action_col := VBoxContainer.new()
+	action_col.custom_minimum_size = Vector2(104, 0)
+	action_col.alignment = BoxContainer.ALIGNMENT_CENTER
+	action_col.add_theme_constant_override("separation", 6)
+	row.add_child(action_col)
+
+	var status := Label.new()
+	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	status.add_theme_font_size_override("font_size", 12)
+	status.add_theme_color_override("font_color", Color(0.78, 0.72, 0.60, 1.0))
+	status.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	action_col.add_child(status)
+
+	if claimed:
+		status.text = _localized_text("quests.claimed", "Claimed")
+	elif claimable:
+		status.text = _localized_text("quests.completed", "Completed")
+		var claim_btn := Button.new()
+		claim_btn.text = _localized_text("quests.claim", "Claim")
+		claim_btn.focus_mode = Control.FOCUS_NONE
+		claim_btn.custom_minimum_size = Vector2(96, 34)
+		claim_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		var quest_id: String = str(state.get("id", ""))
+		claim_btn.pressed.connect(func() -> void:
+			_claim_incubator_quest(quest_id)
+		)
+		action_col.add_child(claim_btn)
+	else:
+		status.text = _localized_text("quests.in_progress", "In progress")
+
+	return card
+
+
+func _claim_incubator_quest(quest_id: String) -> void:
+	var result: Dictionary = QuestSystem.claim_quest_reward(quest_id)
+	if not bool(result.get("success", false)):
+		_show_toast(str(result.get("message_key", "quests.in_progress")), "In progress")
+		return
+	_populate_quests_overlay()
+	_show_toast_raw(_format_quest_claim_text(result))
+
+
+func _format_quest_reward_text(state: Dictionary) -> String:
+	var pieces: Array[String] = []
+	var reward_amount: float = float(state.get("reward_amount", 0.0))
+	if reward_amount > 0.0:
+		pieces.append(_localized_text("currency.repticash", "R$") + " " + _format_reward_amount(reward_amount))
+	var reward_xp: float = float(state.get("reward_xp", 0.0))
+	if reward_xp > 0.0:
+		pieces.append(_format_reward_amount(reward_xp) + " XP")
+	return _localized_text("quests.reward", "Reward") + ": " + _join_reward_pieces(pieces, " + ")
+
+
+func _format_quest_claim_text(result: Dictionary) -> String:
+	var pieces: Array[String] = []
+	var reward_amount: float = float(result.get("reward_amount", 0.0))
+	if reward_amount > 0.0:
+		pieces.append("+" + _localized_text("currency.repticash", "R$") + " " + _format_reward_amount(reward_amount))
+	var reward_xp: float = float(result.get("reward_xp", 0.0))
+	if reward_xp > 0.0:
+		pieces.append("+" + _format_reward_amount(reward_xp) + " XP")
+	return _join_reward_pieces(pieces, "  ")
+
+
+func _format_reward_amount(value: float) -> String:
+	if is_equal_approx(value, round(value)):
+		return str(int(round(value)))
+	return str(snappedf(value, 0.01))
+
+
+func _join_reward_pieces(pieces: Array[String], separator: String) -> String:
+	var text := ""
+	for piece in pieces:
+		if text.is_empty():
+			text = piece
+		else:
+			text += separator + piece
+	return text
+
 
 func _on_language_changed(_language: String) -> void:
 	_rebuild_layout()

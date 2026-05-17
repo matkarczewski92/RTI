@@ -114,6 +114,7 @@ func _ready() -> void:
 	_load_biome_layout()
 	ReptileSystem.migrate_save_state()
 	ReptileSystem.apply_time_updates(true)
+	ReptileSystem.sync_discovered_variants_from_owned_reptiles()
 	habitat_data = _load_habitats()
 	_build_layout()
 	_setup_care_update_timer()
@@ -1970,6 +1971,7 @@ func _show_animals_view(tab_id: String = "owned") -> void:
 	_close_management_modal()
 	_close_reptile_selection_modal()
 	_close_habitat_purchase_modal()
+	ReptileSystem.sync_discovered_variants_from_owned_reptiles()
 
 	animals_view = Control.new()
 	animals_view.name = "AnimalsView"

@@ -74,6 +74,32 @@ func is_instance_available_for_breeding(instance: Dictionary) -> bool:
 	return true
 
 
+func get_available_breeding_reptiles() -> Array:
+	var result: Array = []
+	var instances: Dictionary = ReptileSystem.get_owned_reptile_instances()
+	for instance_id in instances.keys():
+		var instance_value: Variant = instances.get(instance_id)
+		if typeof(instance_value) != TYPE_DICTIONARY:
+			continue
+
+		var instance: Dictionary = (instance_value as Dictionary).duplicate(true)
+		var reptile_id: String = str(instance.get("reptile_id", instance.get("species_id", ""))).strip_edges()
+		var sex: String = str(instance.get("sex", "")).strip_edges()
+		if reptile_id.is_empty() or ReptileSystem.get_reptile(reptile_id).is_empty():
+			continue
+		if sex != "female" and sex != "male":
+			continue
+		if not is_instance_available_for_breeding(instance):
+			continue
+		if str(instance.get("instance_id", "")).is_empty():
+			instance["instance_id"] = str(instance_id)
+		instance["reptile_id"] = reptile_id
+		instance["species_id"] = reptile_id
+		instance["sex"] = sex
+		result.append(instance)
+	return result
+
+
 func can_pair(instance_a: Dictionary, instance_b: Dictionary) -> Dictionary:
 	if str(instance_a.get("reptile_id", "")) != str(instance_b.get("reptile_id", "")):
 		return {"ok": false, "error_key": "incubator.error_wrong_species"}
@@ -99,6 +125,20 @@ func get_drop_rates(rarity_a: String, rarity_b: String, is_long: bool) -> Dictio
 		return base
 
 	return _apply_long_modifier(base, pair_key)
+
+
+func get_predicted_breeding_odds(instance_a: Dictionary, instance_b: Dictionary, is_long: bool) -> Dictionary:
+	var rarity_a: String = str(instance_a.get("rarity", "common"))
+	var rarity_b: String = str(instance_b.get("rarity", "common"))
+	var rates: Dictionary = get_drop_rates(rarity_a, rarity_b, is_long)
+	var failure_risk: int = _get_fail_chance(_avg_condition(instance_a, instance_b))
+	return {
+		"rates": rates,
+		"success_chance": max(0, 100 - failure_risk),
+		"failure_risk": failure_risk,
+		"egg_count_min": 1,
+		"egg_count_max": 5
+	}
 
 
 func roll_egg_rarity(rates: Dictionary) -> String:
@@ -191,6 +231,10 @@ func start_breeding(
 	_set_instance_breeding(instance_id_b, instance_id_a, instances)
 	GameState.set_value("owned_reptile_instances", instances)
 	SaveSystem.save_game()
+	_notify_quest_event("incubator_breeding_started", {
+		"chamber_index": chamber_index,
+		"is_long": is_long
+	})
 
 	return {"success": true}
 
@@ -242,6 +286,13 @@ func collect_breeding(chamber_index: int) -> Dictionary:
 		counters["incubator:successful_pairings"] = int(counters.get("incubator:successful_pairings", 0)) + 1
 		GameState.set_value("quest_event_counters", counters)
 		AchievementSystem.notify_progress_changed()
+		_notify_quest_event("incubator_egg_obtained", {"amount": eggs_data.size(), "source": "breeding"})
+	_notify_quest_event("incubator_breeding_collected", {
+		"chamber_index": chamber_index,
+		"succeeded": will_succeed,
+		"egg_count": eggs_data.size() if will_succeed else 0,
+		"is_long": bool(chamber.get("is_long", false))
+	})
 
 	return {
 		"success": true,
@@ -427,3 +478,10 @@ func _get_fail_chance(condition: float) -> int:
 
 func _create_egg_id() -> String:
 	return "egg_" + str(Time.get_unix_time_from_system()) + "_" + str(randi() % 100000)
+
+
+func _notify_quest_event(event_type: String, payload: Dictionary = {}) -> void:
+	if has_node("/root/QuestSystem"):
+		var quest_system: Node = get_node("/root/QuestSystem")
+		if quest_system.has_method("notify_event"):
+			quest_system.call("notify_event", event_type, payload)

@@ -28,7 +28,27 @@ func get_default_quest_state() -> Dictionary:
 	return {
 		"quests": {},
 		"quest_progress": {},
-		"quest_event_counters": {},
+		"quest_event_counters": {
+			"incubator_entered_total": 0,
+			"incubator_eggs_obtained_total": 0,
+			"incubator_shop_eggs_bought_total": 0,
+			"incubator_pairings_started_total": 0,
+			"incubator_long_pairing_collected_total": 0,
+			"incubator_successful_pairings_total": 0,
+			"incubator_clutch_3_plus_total": 0,
+			"incubator_clutch_5_total": 0,
+			"incubator_loaded_10_eggs_container_total": 0,
+			"incubator_incubations_started_total": 0,
+			"incubator_run_3_containers_total": 0,
+			"incubator_run_6_containers_total": 0,
+			"incubator_water_actions_total": 0,
+			"incubator_water_before_pause_total": 0,
+			"incubator_resume_paused_incubation_total": 0,
+			"incubator_hatches_total": 0,
+			"incubator_hatch_rare_total": 0,
+			"incubator_hatch_ultra_rare_total": 0,
+			"incubator_hatch_exceptional_total": 0
+		},
 		"completed_quests": [],
 		"claimed_quests": []
 	}

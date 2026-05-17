@@ -204,6 +204,7 @@ func buy_species_egg(species_id: String, quality_id: String) -> Dictionary:
 	SaveSystem.save_game()
 	_inc_counter("incubator:total_eggs", 1)
 	AchievementSystem.notify_progress_changed()
+	_notify_quest_event("incubator_egg_obtained", {"amount": 1, "source": "shop"})
 	return {"success": true, "species_id": species_id, "quality_id": quality_id, "egg_id": str(egg.get("egg_id", ""))}
 
 
@@ -288,7 +289,7 @@ func load_eggs_into_container(container_index: int, egg_ids: Array, species_id: 
 		if typeof(egg_val) != TYPE_DICTIONARY:
 			continue
 		var egg: Dictionary = egg_val as Dictionary
-		var eid: String = str(egg.get("egg_id", ""))
+		var eid: String = _egg_id(egg)
 		if not eid.is_empty() and not bool(egg.get("in_container", false)):
 			available_by_id[eid] = egg
 
@@ -297,7 +298,7 @@ func load_eggs_into_container(container_index: int, egg_ids: Array, species_id: 
 		if not available_by_id.has(eid):
 			return {"success": false, "error_key": "incubation.no_eggs_in_storage"}
 		var egg: Dictionary = available_by_id[eid] as Dictionary
-		if str(egg.get("reptile_id", "")) != species_id:
+		if _egg_species_id(egg) != species_id:
 			return {"success": false, "error_key": "incubation.error_one_species"}
 
 	for i in range(stored_eggs.size()):
@@ -305,7 +306,7 @@ func load_eggs_into_container(container_index: int, egg_ids: Array, species_id: 
 		if typeof(egg_val) != TYPE_DICTIONARY:
 			continue
 		var egg: Dictionary = (egg_val as Dictionary).duplicate(true)
-		var eid: String = str(egg.get("egg_id", ""))
+		var eid: String = _egg_id(egg)
 		var ids_str: Array = []
 		for v in egg_ids:
 			ids_str.append(str(v))
@@ -332,6 +333,10 @@ func load_eggs_into_container(container_index: int, egg_ids: Array, species_id: 
 	if egg_ids.size() >= get_max_eggs_per_container():
 		_inc_counter("incubator:full_chamber_loads", 1)
 		AchievementSystem.notify_progress_changed()
+	_notify_quest_event("incubator_eggs_loaded", {
+		"container_index": container_index,
+		"egg_count": egg_ids.size()
+	})
 	return {"success": true}
 
 
@@ -388,6 +393,11 @@ func start_incubation(container_index: int) -> Dictionary:
 	containers[key] = container
 	_write_containers(containers)
 	SaveSystem.save_game()
+	_notify_quest_event("incubator_incubation_started", {
+		"container_index": container_index,
+		"egg_count": egg_count,
+		"running_count": _get_running_container_count(containers)
+	})
 	return {"success": true}
 
 
@@ -419,6 +429,12 @@ func water_container(container_index: int) -> Dictionary:
 	elif pre_water_state == "running" and pre_water_humidity >= pause_below:
 		_inc_counter("incubator:proactive_waters", 1)
 		AchievementSystem.notify_progress_changed()
+	_notify_quest_event("incubator_container_watered", {
+		"container_index": container_index,
+		"previous_state": pre_water_state,
+		"previous_humidity_percent": pre_water_humidity,
+		"new_state": str(container.get("state", ""))
+	})
 	return {"success": true}
 
 
@@ -486,6 +502,7 @@ func buy_egg(offer_id: String) -> Dictionary:
 	SaveSystem.save_game()
 	_inc_counter("incubator:total_eggs", 1)
 	AchievementSystem.notify_progress_changed()
+	_notify_quest_event("incubator_egg_obtained", {"amount": 1, "source": "shop"})
 	return {"success": true, "species_id": species_id, "egg_id": str(egg.get("egg_id", ""))}
 
 
@@ -511,7 +528,7 @@ func get_eggs_by_species() -> Dictionary:
 		if typeof(egg_val) != TYPE_DICTIONARY:
 			continue
 		var egg: Dictionary = egg_val as Dictionary
-		var sid: String = str(egg.get("reptile_id", ""))
+		var sid: String = _egg_species_id(egg)
 		if sid.is_empty():
 			continue
 		if not groups.has(sid):
@@ -658,6 +675,14 @@ func _write_storage(storage: Dictionary) -> void:
 	GameState.set_value("incubator_storage", storage)
 
 
+func _egg_id(egg: Dictionary) -> String:
+	return str(egg.get("egg_id", egg.get("egg_instance_id", "")))
+
+
+func _egg_species_id(egg: Dictionary) -> String:
+	return str(egg.get("reptile_id", egg.get("species_id", ""))).strip_edges()
+
+
 func _destroy_eggs_in_container(container: Dictionary) -> void:
 	var ids: Array = container.get("egg_instance_ids", []) as Array
 	if ids.is_empty():
@@ -672,7 +697,7 @@ func _destroy_eggs_in_container(container: Dictionary) -> void:
 		if typeof(egg_val) != TYPE_DICTIONARY:
 			continue
 		var egg: Dictionary = egg_val as Dictionary
-		if not ids_str.has(str(egg.get("egg_id", ""))):
+		if not ids_str.has(_egg_id(egg)):
 			new_eggs.append(egg)
 	storage["eggs"] = new_eggs
 	_write_storage(storage)
@@ -692,7 +717,7 @@ func _return_eggs_to_available(container: Dictionary) -> void:
 		if typeof(egg_val) != TYPE_DICTIONARY:
 			continue
 		var egg: Dictionary = (egg_val as Dictionary).duplicate(true)
-		if ids_str.has(str(egg.get("egg_id", ""))):
+		if ids_str.has(_egg_id(egg)):
 			egg["in_container"] = false
 			egg["container_index"] = -1
 			all_eggs[i] = egg
@@ -768,7 +793,7 @@ func hatch_batch(container_index: int) -> Dictionary:
 		if typeof(egg_val) != TYPE_DICTIONARY:
 			continue
 		var egg: Dictionary = egg_val as Dictionary
-		egg_map[str(egg.get("egg_id", ""))] = egg
+		egg_map[_egg_id(egg)] = egg
 
 	var hatch_results: Array = []
 	var new_instances: Array = []
@@ -813,7 +838,7 @@ func hatch_batch(container_index: int) -> Dictionary:
 		if not parent_b.is_empty():
 			instance["parent_b_id"] = parent_b
 		new_instances.append(instance)
-		var is_new: bool = not _is_variant_discovered(variant_id)
+		var is_new: bool = not ReptileSystem.is_variant_discovered(variant_id)
 		hatch_results.append({
 			"instance_id": instance_id,
 			"species_id": species_id,
@@ -837,7 +862,7 @@ func hatch_batch(container_index: int) -> Dictionary:
 
 	for result_val in hatch_results:
 		if typeof(result_val) == TYPE_DICTIONARY:
-			_mark_variant_discovered(str((result_val as Dictionary).get("variant_id", "")))
+			ReptileSystem.mark_variant_discovered(str((result_val as Dictionary).get("variant_id", "")))
 
 	storage = _read_storage()
 	all_eggs = storage.get("eggs", []) as Array
@@ -849,7 +874,7 @@ func hatch_batch(container_index: int) -> Dictionary:
 		if typeof(egg_val) != TYPE_DICTIONARY:
 			continue
 		var egg: Dictionary = egg_val as Dictionary
-		if not consumed_ids.has(str(egg.get("egg_id", ""))):
+		if not consumed_ids.has(_egg_id(egg)):
 			remaining_eggs.append(egg)
 	storage["eggs"] = remaining_eggs
 	var storage_reptiles: Array = storage.get("reptiles", []) as Array
@@ -872,6 +897,16 @@ func hatch_batch(container_index: int) -> Dictionary:
 				"ultra_rare": _inc_counter("incubator:ultra_rare_hatches", 1)
 				"exceptional": _inc_counter("incubator:exceptional_hatches", 1)
 	AchievementSystem.notify_progress_changed()
+	var rarities: Array = []
+	for result_val in hatch_results:
+		if typeof(result_val) == TYPE_DICTIONARY:
+			rarities.append(str((result_val as Dictionary).get("rarity", "")))
+	_notify_quest_event("incubator_hatched", {
+		"container_index": container_index,
+		"count": new_instances.size(),
+		"rarities": rarities
+	})
+	ReptileSystem.sync_discovered_variants_from_owned_reptiles()
 	return {"success": true, "results": hatch_results}
 
 
@@ -977,3 +1012,20 @@ func _inc_counter(counter_id: String, amount: int) -> void:
 	var counters: Dictionary = counters_val as Dictionary if typeof(counters_val) == TYPE_DICTIONARY else {}
 	counters[counter_id] = int(counters.get(counter_id, 0)) + amount
 	GameState.set_value("quest_event_counters", counters)
+
+
+func _get_running_container_count(containers: Dictionary) -> int:
+	var count := 0
+	for container_value in containers.values():
+		if typeof(container_value) != TYPE_DICTIONARY:
+			continue
+		if str((container_value as Dictionary).get("state", "")) == "running":
+			count += 1
+	return count
+
+
+func _notify_quest_event(event_type: String, payload: Dictionary = {}) -> void:
+	if has_node("/root/QuestSystem"):
+		var quest_system: Node = get_node("/root/QuestSystem")
+		if quest_system.has_method("notify_event"):
+			quest_system.call("notify_event", event_type, payload)
