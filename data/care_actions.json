@@ -23,6 +23,20 @@
 			"icon_path": "res://assets/art/ui/icons/menu/water.png"
 		}
 	},
+	"decay": {
+		"happiness_interval_seconds": 30,
+		"hunger_interval_seconds": 30,
+		"hydration_interval_seconds": 30,
+		"cleanliness_interval_seconds": 30,
+		"amount_per_interval": 1.0
+	},
+	"decay_offline": {
+		"happiness_interval_seconds": 300,
+		"hunger_interval_seconds": 440,
+		"hydration_interval_seconds": 440,
+		"cleanliness_interval_seconds": 600,
+		"amount_per_interval": 1.0
+	},
 	"actions": {
 		"feed": {
 			"stat": "hunger",
@@ -31,7 +45,8 @@
 			"resource_cost": 5,
 			"cooldown_seconds": 20,
 			"cost_upgrade_id": "better_food",
-			"regen_interval_seconds": 600,
+			"regen_interval_seconds": 100,
+			"regen_interval_seconds_offline": 600,
 			"regen_amount": 1
 		},
 		"water": {
@@ -41,7 +56,8 @@
 			"resource_cost": 5,
 			"cooldown_seconds": 20,
 			"cost_upgrade_id": "better_water",
-			"regen_interval_seconds": 600,
+			"regen_interval_seconds": 100,
+			"regen_interval_seconds_offline": 600,
 			"regen_amount": 1
 		},
 		"clean": {

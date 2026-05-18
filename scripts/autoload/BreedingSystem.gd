@@ -131,11 +131,15 @@ func get_predicted_breeding_odds(instance_a: Dictionary, instance_b: Dictionary,
 	var rarity_a: String = str(instance_a.get("rarity", "common"))
 	var rarity_b: String = str(instance_b.get("rarity", "common"))
 	var rates: Dictionary = get_drop_rates(rarity_a, rarity_b, is_long)
-	var failure_risk: int = _get_fail_chance(_avg_condition(instance_a, instance_b))
+	var base_failure_risk: int = _get_fail_chance(_avg_condition(instance_a, instance_b))
+	var level_failure_reduction: float = ReptileSystem.get_reptile_breeding_failure_reduction(instance_a, instance_b)
+	var failure_risk: float = ReptileSystem.get_adjusted_breeding_failure_chance(base_failure_risk, instance_a, instance_b)
 	return {
 		"rates": rates,
-		"success_chance": max(0, 100 - failure_risk),
+		"success_chance": max(0.0, 100.0 - failure_risk),
 		"failure_risk": failure_risk,
+		"base_failure_risk": base_failure_risk,
+		"level_failure_reduction": level_failure_reduction,
 		"egg_count_min": 1,
 		"egg_count_max": 5
 	}
@@ -164,7 +168,7 @@ func roll_egg_count() -> int:
 
 func roll_success(instance_a: Dictionary, instance_b: Dictionary) -> bool:
 	var avg_condition: float = _avg_condition(instance_a, instance_b)
-	var fail_chance: int = _get_fail_chance(avg_condition)
+	var fail_chance: float = ReptileSystem.get_adjusted_breeding_failure_chance(_get_fail_chance(avg_condition), instance_a, instance_b)
 	return randf() * 100.0 >= float(fail_chance)
 
 
@@ -187,8 +191,8 @@ func start_breeding(
 	if typeof(inst_a_value) != TYPE_DICTIONARY or typeof(inst_b_value) != TYPE_DICTIONARY:
 		return {"success": false, "error_key": "ui.reptile_unavailable"}
 
-	var inst_a: Dictionary = inst_a_value as Dictionary
-	var inst_b: Dictionary = inst_b_value as Dictionary
+	var inst_a: Dictionary = ReptileSystem.migrate_reptile_level_fields(inst_a_value as Dictionary)
+	var inst_b: Dictionary = ReptileSystem.migrate_reptile_level_fields(inst_b_value as Dictionary)
 	var pair_check: Dictionary = can_pair(inst_a, inst_b)
 	if not bool(pair_check.get("ok", false)):
 		return {"success": false, "error_key": str(pair_check.get("error_key", ""))}
@@ -199,7 +203,10 @@ func start_breeding(
 	var rarity_a: String = str(inst_a.get("rarity", "common"))
 	var rarity_b: String = str(inst_b.get("rarity", "common"))
 	var rates: Dictionary = get_drop_rates(rarity_a, rarity_b, is_long)
-	var will_succeed: bool = roll_success(inst_a, inst_b)
+	var base_failure_chance: int = _get_fail_chance(_avg_condition(inst_a, inst_b))
+	var level_failure_reduction: float = ReptileSystem.get_reptile_breeding_failure_reduction(inst_a, inst_b)
+	var final_failure_chance: float = ReptileSystem.get_adjusted_breeding_failure_chance(base_failure_chance, inst_a, inst_b)
+	var will_succeed: bool = randf() * 100.0 >= final_failure_chance
 	var egg_count: int = roll_egg_count() if will_succeed else 0
 
 	var eggs_data: Array = []
@@ -208,6 +215,8 @@ func start_breeding(
 			"egg_id": _create_egg_id(),
 			"reptile_id": str(inst_a.get("reptile_id", "")),
 			"rarity": roll_egg_rarity(rates),
+			"parent_a_id": instance_id_a,
+			"parent_b_id": instance_id_b,
 			"created_at": now
 		})
 
@@ -222,11 +231,17 @@ func start_breeding(
 		"started_at": now,
 		"ends_at": now + duration,
 		"will_succeed": will_succeed,
+		"base_failure_chance": base_failure_chance,
+		"level_failure_reduction": level_failure_reduction,
+		"final_failure_chance": final_failure_chance,
+		"success_chance": max(0.0, 100.0 - final_failure_chance),
 		"eggs": eggs_data
 	}
 	chambers[chamber_key] = chamber
 	GameState.set_value("breeding_chambers", chambers)
 
+	ReptileSystem._grant_reptile_xp_in_instances(instances, instance_id_a, ReptileSystem.get_reptile_xp_reward("breeding_started"), "breeding_started")
+	ReptileSystem._grant_reptile_xp_in_instances(instances, instance_id_b, ReptileSystem.get_reptile_xp_reward("breeding_started"), "breeding_started")
 	_set_instance_breeding(instance_id_a, instance_id_b, instances)
 	_set_instance_breeding(instance_id_b, instance_id_a, instances)
 	GameState.set_value("owned_reptile_instances", instances)
@@ -265,6 +280,14 @@ func collect_breeding(chamber_index: int) -> Dictionary:
 
 	_return_instance_from_breeding(instance_id_a, cooldown_until, instances)
 	_return_instance_from_breeding(instance_id_b, cooldown_until, instances)
+	var result_reward_key: String = "breeding_success" if will_succeed and eggs_data.size() > 0 else "breeding_failed"
+	var result_reward: int = ReptileSystem.get_reptile_xp_reward(result_reward_key)
+	ReptileSystem._grant_reptile_xp_in_instances(instances, instance_id_a, result_reward, result_reward_key)
+	ReptileSystem._grant_reptile_xp_in_instances(instances, instance_id_b, result_reward, result_reward_key)
+	if bool(chamber.get("is_long", false)):
+		var long_bonus: int = ReptileSystem.get_reptile_xp_reward("breeding_long_48h_bonus")
+		ReptileSystem._grant_reptile_xp_in_instances(instances, instance_id_a, long_bonus, "breeding_long_48h_bonus")
+		ReptileSystem._grant_reptile_xp_in_instances(instances, instance_id_b, long_bonus, "breeding_long_48h_bonus")
 	GameState.set_value("owned_reptile_instances", instances)
 
 	if will_succeed and eggs_data.size() > 0:

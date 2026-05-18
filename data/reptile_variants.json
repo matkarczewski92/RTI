@@ -240,6 +240,54 @@
 		"obtain_method": "future_drop"
 	},
 	{
+		"id": "chameleon_common",
+		"reptile_id": "chameleon",
+		"rarity": "common",
+		"name_key": "variant.chameleon.common.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/chameleon_common.png",
+		"icon_path": "res://assets/art/reptiles/portraits/chameleon_common.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/chameleon_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
+		"income_multiplier": 1.0,
+		"obtain_method": "default"
+	},
+	{
+		"id": "chameleon_rare",
+		"reptile_id": "chameleon",
+		"rarity": "rare",
+		"name_key": "variant.chameleon.rare.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/chameleon_rare.png",
+		"icon_path": "res://assets/art/reptiles/portraits/chameleon_rare.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/chameleon_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
+		"income_multiplier": 1.1,
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "chameleon_exceptional",
+		"reptile_id": "chameleon",
+		"rarity": "exceptional",
+		"name_key": "variant.chameleon.exceptional.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/chameleon_exceptional.png",
+		"icon_path": "res://assets/art/reptiles/portraits/chameleon_exceptional.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/chameleon_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
+		"income_multiplier": 1.25,
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "chameleon_ultra_rare",
+		"reptile_id": "chameleon",
+		"rarity": "ultra_rare",
+		"name_key": "variant.chameleon.ultra_rare.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/chameleon_ultra_rare.png",
+		"icon_path": "res://assets/art/reptiles/portraits/chameleon_ultra_rare.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/chameleon_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
+		"income_multiplier": 1.5,
+		"obtain_method": "future_drop"
+	},
+	{
 		"id": "bullsnake_common",
 		"reptile_id": "bullsnake",
 		"rarity": "common",

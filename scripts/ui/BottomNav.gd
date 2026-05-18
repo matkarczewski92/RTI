@@ -5,7 +5,7 @@ signal nav_pressed(item_id: String)
 const AssetPaths := preload("res://scripts/helpers/AssetPaths.gd")
 
 const BOTTOM_MENU_ART_PATH := "res://assets/art/ui/bottom_menu.png"
-const BOTTOM_NAV_HEIGHT := 172.0
+const BOTTOM_NAV_HEIGHT := 226.157092875
 
 # Ustaw na true żeby zobaczyć kolorowe nakładki z numerami przycisków.
 # Wyłącz (false) po potwierdzeniu, że kliknięcia trafiają poprawnie.
@@ -60,8 +60,8 @@ func _make_quest_badge_dot() -> Control:
 	badge.anchor_top = 0.12
 	badge.anchor_right = 0.55
 	badge.anchor_bottom = 0.12
-	badge.offset_right = 22
-	badge.offset_bottom = 22
+	badge.offset_right = 26.4
+	badge.offset_bottom = 26.4
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	badge.visible = false
 
@@ -70,7 +70,7 @@ func _make_quest_badge_dot() -> Control:
 	circle.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = Color(0.93, 0.10, 0.10, 1.0)
-	style.set_corner_radius_all(11)
+	style.set_corner_radius_all(13)
 	style.shadow_color = Color(0.0, 0.0, 0.0, 0.55)
 	style.shadow_size = 4
 	style.border_color = Color(1.0, 1.0, 1.0, 0.85)

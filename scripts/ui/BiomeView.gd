@@ -3,6 +3,7 @@ extends Control
 signal biome_map_requested
 
 const AssetPaths := preload("res://scripts/helpers/AssetPaths.gd")
+const LayoutScale := preload("res://scripts/helpers/LayoutScale.gd")
 
 const TOP_BAR_SCENE := preload("res://scenes/ui/TopBar.tscn")
 const BOTTOM_NAV_SCENE := preload("res://scenes/ui/BottomNav.tscn")
@@ -32,44 +33,176 @@ const ALERT_ICON_PATH := "res://assets/art/ui/icons/menu/alert.png"
 const WORKERS_ICON_PATH := "res://assets/art/ui/icons/menu/emp_team.png"
 const UPGRADE_BUTTON_ICON_PATH := "res://assets/art/ui/icons/menu/upgrade_button.png"
 const UPGRADES_DESIGN_DIR := "res://assets/art/ui/upgrades_design/"
-const UPGRADES_BG_PL_PATH := UPGRADES_DESIGN_DIR + "upgrades_tab_pl_background-Photoroom.png"
-const UPGRADES_BG_EN_PATH := UPGRADES_DESIGN_DIR + "upgrades_tab_en_background-Photoroom.png"
-const UPGRADES_ROW_BG_PATH := UPGRADES_DESIGN_DIR + "single_upgade_background-Photoroom.png"
-const UPGRADES_PRICE_BADGE_PATH := UPGRADES_DESIGN_DIR + "price-Photoroom.png"
-const UPGRADES_BUY_PL_PATH := UPGRADES_DESIGN_DIR + "buy_button_pl-Photoroom.png"
-const UPGRADES_BUY_EN_PATH := UPGRADES_DESIGN_DIR + "buy_button_en-Photoroom.png"
-const UPGRADES_LEVEL_ICON_PATH := UPGRADES_DESIGN_DIR + "upgrade_lvl-Photoroom.png"
-const UPGRADES_CURRENT_ICON_PATH := UPGRADES_DESIGN_DIR + "actual-Photoroom.png"
-const UPGRADES_NEXT_ICON_PATH := UPGRADES_DESIGN_DIR + "next_lvl-Photoroom.png"
+const UPGRADES_BG_PATH          := UPGRADES_DESIGN_DIR + "background.png"
+const UPGRADES_TITLE_PL_PATH    := UPGRADES_DESIGN_DIR + "upgrades_pl.png"
+const UPGRADES_TITLE_EN_PATH    := UPGRADES_DESIGN_DIR + "upgrades_en.png"
+const UPGRADES_ROW_BG_PATH      := UPGRADES_DESIGN_DIR + "single_quest_background.png"
+const UPGRADES_PRICE_BADGE_PATH := UPGRADES_DESIGN_DIR + "price.png"
+const UPGRADES_BUY_PL_PATH      := UPGRADES_DESIGN_DIR + "buy_button_pl.png"
+const UPGRADES_BUY_EN_PATH      := UPGRADES_DESIGN_DIR + "buy_button_en.png"
+const UPGRADES_LEVEL_ICON_PATH  := UPGRADES_DESIGN_DIR + "upgrade_lvl.png"
+const UPGRADES_CURRENT_ICON_PATH := UPGRADES_DESIGN_DIR + "actual.png"
+const UPGRADES_NEXT_ICON_PATH   := UPGRADES_DESIGN_DIR + "next_lvl.png"
+
+# Przycisk zamknięcia
+const UPGRADE_CLOSE_ANCHOR_LEFT   := 0.785
+const UPGRADE_CLOSE_ANCHOR_TOP    := 0.052
+const UPGRADE_CLOSE_ANCHOR_RIGHT  := 0.945
+const UPGRADE_CLOSE_ANCHOR_BOTTOM := 0.160
+
+# Grafika tytułu (upgrades_pl / upgrades_en) — −35% z zachowaniem środka
+const UPGRADE_TITLE_ANCHOR_LEFT   := 0.316
+const UPGRADE_TITLE_ANCHOR_TOP    := 0.026
+const UPGRADE_TITLE_ANCHOR_RIGHT  := 0.719
+const UPGRADE_TITLE_ANCHOR_BOTTOM := 0.116
+
+# Obszar scrolla z listą ulepszeń — kafelki −15% szerokości
+const UPGRADES_VIEW_EXTRA_H_FRAC   := 0.10   # o tyle % wyższe tło Ulepszeń
+const UPGRADE_SCROLL_LEFT_ANCHOR   := 0.115
+const UPGRADE_SCROLL_TOP_ANCHOR    := 0.15
+const UPGRADE_SCROLL_RIGHT_ANCHOR  := 0.880
+const UPGRADE_SCROLL_BOTTOM_ANCHOR := 0.955
+
+# Kafelek pojedynczego ulepszenia
+const UPGRADE_CARD_MIN_HEIGHT  := 405  # minimalna wysokość kafelka (+10%)
+const UPGRADE_INFO_ICON_SIZE   := 33   # rozmiar ikon przy wierszach info
+const UPGRADE_ACTION_TOP_SPACER := 68  # odstęp górny przed badge/button (przesuwa w dół)
+const UPGRADE_CARD_MARGIN_LEFT := 18   # lewy margines wewnętrzny (px)
+const UPGRADE_CARD_MARGIN_V    := 14   # górny/dolny margines wewnętrzny (px)
+const UPGRADE_CARD_CONTENT_V_EXTRA := 50  # dodatkowy margines góra/dół — zawartość o ~15% niższa, tło bez zmian
+const UPGRADE_CARD_ROW_SEP     := 8   # odstęp elementów w wierszu (px)
+const UPGRADE_LIST_SEPARATION  := -16  # odstęp między kafelkami (ujemny = nakładanie)
+
+# Kolumna ikony ulepszenia
+const UPGRADE_ICON_COLUMN_W := 140  # szerokość kolumny ikony (px)
+const UPGRADE_ICON_SIZE     := 136  # rozmiar ikony ulepszenia (px)
+
+# Rozmiary tekstu w kafelku (pt)
+const UPGRADE_TEXT_NAME_SIZE := 32
+const UPGRADE_TEXT_DESC_SIZE := 22
+const UPGRADE_TEXT_INFO_SIZE := 22
+
+# Kolumna akcji (cena + przycisk)
+const UPGRADE_ACTION_COLUMN_W    := 332  # szerokość kolumny akcji (+20% badge)
+const UPGRADE_ACTION_LEFT_MARGIN := -180   # przesunięcie badge/button w prawo (~5%)
+const UPGRADE_PRICE_BADGE_W      := 332  # szerokość plakietki ceny (+20%)
+const UPGRADE_PRICE_BADGE_H   := 88   # wysokość plakietki ceny (px)
+const UPGRADE_PRICE_TEXT_SIZE := 24
+const UPGRADE_BUY_BTN_W       := 205  # szerokość przycisku Kup (+10%)
+const UPGRADE_BUY_BTN_H       := 88   # wysokość przycisku Kup (px)
 const SHOP_DESIGN_DIR := "res://assets/art/ui/shop_design/"
 const SHOP_BG_PL_PATH := SHOP_DESIGN_DIR + "shop_pl_background.png"
 const SHOP_BG_EN_PATH := SHOP_DESIGN_DIR + "shop_en_background.png"
 const SHOP_RESOURCE_CARD_BG_PATH := SHOP_DESIGN_DIR + "wate_and_food_background.png"
 const SHOP_REPTILE_ROW_BG_PATH := SHOP_DESIGN_DIR + "animals_background.png"
+const SHOP_TITLE_PL_PATH := SHOP_DESIGN_DIR + "title_pl.png"
+const SHOP_TITLE_EN_PATH := SHOP_DESIGN_DIR + "title_en.png"
 const SHOP_BUY_COMMON_BUTTON_PATH := SHOP_DESIGN_DIR + "button_buy_common.png"
 const SHOP_BUY_RARE_BUTTON_PATH := SHOP_DESIGN_DIR + "button_buy_rare.png"
 const SHOP_FOOD_ICON_PATH := "res://assets/art/ui/icons/menu/food_ico.png"
 const SHOP_WATER_ICON_PATH := "res://assets/art/ui/icons/menu/water_ico.png"
+const SHOP_REPTILE_CARD_HEIGHT := 333
+const SHOP_REPTILE_TEXT_BONUS := 10
+const SHOP_REPTILE_PORTRAIT_SIZE := Vector2(246, 246)
+const SHOP_REPTILE_HABITAT_ICON_SIZE := Vector2(98, 98)
+const SHOP_REPTILE_RARITY_ICON_SIZE := Vector2(24, 24)
+const SHOP_REPTILE_DROPDOWN_SIZE := Vector2(175, 54)
+const SHOP_REPTILE_BUY_BUTTON_SIZE := Vector2(213, 75)
+const SHOP_REPTILE_BUTTON_TEXT_BONUS := 8
 const QUESTS_DESIGN_DIR := "res://assets/art/ui/quests_design/"
-const QUESTS_BG_PL_PATH := QUESTS_DESIGN_DIR + "quests_pl_background.png"
-const QUESTS_BG_EN_PATH := QUESTS_DESIGN_DIR + "quests_en_background.png"
-const QUESTS_CARD_BG_PATH := QUESTS_DESIGN_DIR + "single_quest_background.png"
+const QUESTS_BG_PATH       := QUESTS_DESIGN_DIR + "background.png"
+const QUESTS_TITLE_PL_PATH := QUESTS_DESIGN_DIR + "tasks_pl.png"
+const QUESTS_TITLE_EN_PATH := QUESTS_DESIGN_DIR + "tasks_en.png"
+const QUESTS_CARD_BG_PATH  := QUESTS_DESIGN_DIR + "single_quest_background.png"
 const QUESTS_CLAIM_PL_PATH := QUESTS_DESIGN_DIR + "claim_pl.png"
 const QUESTS_CLAIM_EN_PATH := QUESTS_DESIGN_DIR + "claim_en.png"
-const QUEST_CLOSE_ANCHOR_LEFT := 0.785
-const QUEST_CLOSE_ANCHOR_TOP := 0.045
-const QUEST_CLOSE_ANCHOR_RIGHT := 0.945
+
+# Przycisk zamknięcia (ułamek rozmiaru widoku)
+const QUEST_CLOSE_ANCHOR_LEFT   := 0.785
+const QUEST_CLOSE_ANCHOR_TOP    := 0.045
+const QUEST_CLOSE_ANCHOR_RIGHT  := 0.945
 const QUEST_CLOSE_ANCHOR_BOTTOM := 0.145
-const QUEST_SCROLL_LEFT_ANCHOR := 0.07
-const QUEST_SCROLL_TOP_ANCHOR := 0.13
-const QUEST_SCROLL_RIGHT_ANCHOR := 0.93
+
+# Grafika tytułu (tasks_pl / tasks_en)
+const QUEST_TITLE_ANCHOR_LEFT   := 0.310
+const QUEST_TITLE_ANCHOR_TOP    := 0.030
+const QUEST_TITLE_ANCHOR_RIGHT  := 0.713
+const QUEST_TITLE_ANCHOR_BOTTOM := 0.120
+
+# Obszar scrolla z listą questów
+const QUEST_SCROLL_LEFT_ANCHOR   := 0.113
+const QUEST_SCROLL_TOP_ANCHOR    := 0.14
+const QUEST_SCROLL_RIGHT_ANCHOR  := 0.887
 const QUEST_SCROLL_BOTTOM_ANCHOR := 0.985
-const QUEST_CARD_MIN_HEIGHT := 168
-const QUEST_CLAIM_BTN_W := 140
-const QUEST_CLAIM_BTN_H := 58
-const QUEST_CARD_MARGIN := 14
-const QUEST_CARD_TEXT_INDENT := 12
-const REPTILE_MGMT_BACKGROUND_PATH := "res://assets/art/ui/reptile_mgm/background.png"
+
+# Kafelek pojedynczego questa
+const QUEST_CARD_MIN_HEIGHT    := 268  # minimalna wysokość kafelka (px)
+const QUEST_CARD_MARGIN        := 14   # wewnętrzny margines kafelka z każdej strony (px)
+const QUEST_CARD_TEXT_INDENT   := 12   # wcięcie tekstów po lewej (px)
+const QUEST_CARD_ROW_SEP       := 12   # odstęp między kolumną info a akcją (px)
+const QUEST_LIST_SEPARATION    := 8    # odstęp między kafelkami questów (px)
+
+# Rozmiary tekstu wewnątrz kafelka (pt)
+const QUEST_TEXT_TITLE_SIZE    := 29
+const QUEST_TEXT_DESC_SIZE     := 24
+const QUEST_TEXT_PROGRESS_SIZE := 24
+const QUEST_TEXT_REWARD_SIZE   := 24
+const QUEST_TEXT_STATUS_SIZE   := 24
+
+# Rozmiar przycisku Odbierz
+const QUEST_CLAIM_BTN_W := 190
+const QUEST_CLAIM_BTN_H := 80
+
+# Progressbar questa
+const QUEST_PROGRESS_BAR_HEIGHT      := 20   # wysokość paska (+50% z 13px)
+const QUEST_PROGRESS_BAR_WIDTH_RATIO := 0.80 # szerokość paska (0.80 = -20%)
+const QUEST_ACTION_RIGHT_PADDING     := 18   # przesunięcie przycisku w lewo (≈5% karty)
+const ANIMALS_DESIGN_DIR := "res://assets/art/ui/animals_design/"
+const ANIMALS_BG_PATH := ANIMALS_DESIGN_DIR + "background.png"
+const ANIMALS_SINGLE_CARD_BG_PATH := ANIMALS_DESIGN_DIR + "single_background.png"
+const ANIMALS_REF_SIZE := Vector2(911, 1672)
+# Animals screen layout knobs in background.png reference pixels. Adjust these to fine tune the design overlay.
+const ANIMALS_TITLE_RECT := Rect2(280, 77, 367, 151)
+const ANIMALS_OWNED_TAB_RECT := Rect2(32, 337, 260, 96)
+const ANIMALS_GALLERY_TAB_RECT := Rect2(327, 337, 260, 96)
+const ANIMALS_ACHIEVEMENTS_TAB_RECT := Rect2(625, 337, 260, 96)
+const ANIMALS_CLOSE_BUTTON_RECT := Rect2(780, 130, 118, 118)
+const ANIMALS_CONTENT_AREA_RECT := Rect2(74, 496, 820, 1144)
+const ANIMALS_PANEL_TOP_GAP := 0.0
+const ANIMALS_PANEL_BOTTOM_GAP := 0.0
+const ANIMALS_WINDOW_EXTRA_W := 1.15  # szerokość okna bez zmiany zawartości (+15%)
+const ANIMALS_WINDOW_EXTRA_H := 1.05  # wysokość okna bez zmiany zawartości (+5%)
+const ANIMALS_CONTENT_X_OFFSET := 0.05  # przesunięcie zawartości w prawo (% szer. okna)
+const ANIMALS_TITLE_X_EXTRA    := 0.00  # dodatkowe przesunięcie tytułu w prawo
+const ANIMALS_TABS_X_EXTRA     := 0.00  # dodatkowe przesunięcie zakładek w prawo
+const ANIMALS_TAB_RAISE_RATIO := 0.57
+const ANIMALS_TAB_GRAPHIC_SCALE := 0.80
+const ANIMALS_ACTIVE_TAB_UNDERLINE_COLOR := Color(1.0, 0.78, 0.16, 1.0)
+const ANIMALS_ACTIVE_TAB_UNDERLINE_WIDTH_RATIO := 0.46
+const ANIMALS_ACTIVE_TAB_UNDERLINE_HEIGHT_RATIO := 0.035
+const ANIMALS_ACTIVE_TAB_UNDERLINE_Y_RATIO := 0.70
+const ANIMALS_CARD_SCALE := 1.32
+const ANIMALS_CARD_BACKGROUND_WIDTH_SCALE := 1.045
+const ANIMALS_CARD_BACKGROUND_HEIGHT_SCALE := 2.355
+const ANIMALS_CARD_LIST_SEPARATION := 18
+const ANIMALS_GALLERY_LIST_SEPARATION := 18
+const ANIMALS_ACHIEVEMENTS_LIST_SEPARATION := 18
+const ANIMALS_GALLERY_SLOT_BACKGROUND_HEIGHT_SCALE := 1.0
+const ANIMALS_ACHIEVEMENT_CARD_BACKGROUND_HEIGHT_SCALE := 1.10
+const ANIMALS_CARD_ACTION_LEFT_SHIFT_RATIO := 0.10
+const ANIMALS_CARD_IMAGE_SCALE := 1.70
+const ANIMALS_CARD_TEXT_SCALE := 1.25
+const ANIMALS_RARITY_ICON_SCALE := 1.50
+const ANIMALS_GALLERY_CONTENT_SCALE := 0.7975
+const ANIMALS_GALLERY_SCROLL_WIDTH_SCALE := 1.0
+const REPTILE_MGMT_LEGACY_BACKGROUND_PATH := "res://assets/art/ui/reptile_mgm/background.png"
+const REPTILE_MGMT_FRAME_PATH := "res://assets/art/ui/reptile_mgm/reptile_mgm_background.png"
+const REPTILE_MGMT_TITLE_PL_PATH := "res://assets/art/ui/reptile_mgm/title_pl.png"
+const REPTILE_MGMT_TITLE_EN_PATH := "res://assets/art/ui/reptile_mgm/title_en.png"
+const REPTILE_MGMT_SAND_BG_PATH := "res://assets/art/ui/reptile_mgm/sand_background.png"
+const REPTILE_MGMT_STONE_BG_PATH := "res://assets/art/ui/reptile_mgm/stone_background.png"
+const REPTILE_MGMT_GRASS_BG_PATH := "res://assets/art/ui/reptile_mgm/grass_background.png"
+const REPTILE_MGMT_JUNGLE_BG_PATH := "res://assets/art/ui/reptile_mgm/jungle_background.png"
 const REPTILE_MGMT_CLOSE_PATH := "res://assets/art/ui/reptile_mgm/close.png"
 const REPTILE_MGMT_FEED_PATH := "res://assets/art/ui/reptile_mgm/feed.png"
 const REPTILE_MGMT_WATER_PATH := "res://assets/art/ui/reptile_mgm/water.png"
@@ -77,27 +210,47 @@ const REPTILE_MGMT_CLEAN_PATH := "res://assets/art/ui/reptile_mgm/clean.png"
 const REPTILE_MGMT_PLAY_PATH := "res://assets/art/ui/reptile_mgm/play.png"
 const REPTILE_MGMT_EXPORT_PATH := "res://assets/art/ui/reptile_mgm/export.png"
 const REPTILE_MGMT_UPGRADE_PATH := "res://assets/art/ui/reptile_mgm/upgrade.png"
+const HABITAT_OPTIONS_BG_PATH := "res://assets/art/ui/reptile_mgm/habitats_options_background.png"
+const HABITAT_OPTIONS_REFERENCE_SIZE := Vector2(983, 1417)
+const HABITAT_OPTIONS_WINDOW_SCALE := 0.665
+const HABITAT_OPTIONS_CENTER_OFFSET := Vector2.ZERO
+const HABITAT_OPTIONS_TITLE_CENTER := Vector2(491.5, 145.0)
+const HABITAT_OPTIONS_TITLE_SIZE := Vector2(500.0, 88.0)
+const HABITAT_OPTIONS_SUBTITLE_CENTER := Vector2(491.5, 230.0)
+const HABITAT_OPTIONS_SUBTITLE_SIZE := Vector2(520.0, 58.0)
+const HABITAT_OPTIONS_ROW_BUTTON_START_Y := 392.0
+const HABITAT_OPTIONS_ROW_STEP_Y := 266.0
+const HABITAT_OPTIONS_ROW_NAME_X := 563.0
+const HABITAT_OPTIONS_ROW_PRICE_X := 550.0
+const HABITAT_OPTIONS_ROW_NAME_Y_OFFSET := -34.0
+const HABITAT_OPTIONS_ROW_PRICE_Y_OFFSET := 42.0
+const HABITAT_OPTIONS_ROW_TEXT_SIZE := Vector2(340.0, 62.0)
+const HABITAT_OPTIONS_BUY_BUTTON_CENTER_X := 785.0
+const HABITAT_OPTIONS_BUY_BUTTON_SIZE := Vector2(230.0, 108.0)
+const HABITAT_OPTIONS_CANCEL_CENTER := Vector2(491.5, 1366.0)
+const HABITAT_OPTIONS_CANCEL_SIZE := Vector2(690.0, 84.0)
 const HABITAT_IN_PROGRESS_PATH := "res://assets/art/habitats/in_progress.png"
 const HABITATS_PATH := "res://data/habitats.json"
 const BIOME_HABITAT_LAYOUTS_PATH := "res://data/biome_habitat_layouts.json"
-const LAYOUT_REF_W := 720.0
-const LAYOUT_REF_H := 1280.0
+const LAYOUT_REF_W := 1080.0
+const LAYOUT_REF_H := 1920.0
 
 var biome_id: String = "green_meadow"
 var _biome_config: Dictionary = {}
 var _biome_layout_slots: Array = []
 var _biome_workers_config: Dictionary = {}
+var _layout_reference_size := Vector2(LAYOUT_REF_W, LAYOUT_REF_H)
 const STATE_NOT_PURCHASED := "not_purchased"
 const STATE_PURCHASED_EMPTY := "purchased_empty"
 const STATE_OCCUPIED := "occupied"
-const TOP_BAR_HEIGHT := 84
-const BOTTOM_NAV_HEIGHT := 172
+const TOP_BAR_HEIGHT := 150.722775
+const BOTTOM_NAV_HEIGHT := 226.157092875
 const UI_MODAL_CANVAS_LAYER := 100
 const BIOMES_DATA_PATH := "res://data/biomes.json"
 const EXP_BAR_PATH := "res://assets/art/ui/exp_progressbar.png"
 const BIOME_BAR_PATH := "res://assets/art/ui/biome_progressbar.png"
-const PROGRESS_BAR_ROW_HEIGHT := 27
-const PROGRESS_BARS_HEIGHT := PROGRESS_BAR_ROW_HEIGHT * 2 + 16
+const PROGRESS_BAR_ROW_HEIGHT := 81
+const PROGRESS_BARS_HEIGHT := PROGRESS_BAR_ROW_HEIGHT * 2 + 32
 const POPUP_TEXT_PRIMARY := Color(0.14, 0.10, 0.07, 1.0)
 const POPUP_TEXT_SECONDARY := Color(0.28, 0.22, 0.15, 1.0)
 const POPUP_TEXT_ACCENT := Color(0.35, 0.24, 0.08, 1.0)
@@ -106,12 +259,134 @@ const BUTTON_TEXT_COLOR := Color(1.0, 0.98, 0.90, 1.0)
 const RARITY_ICON_SIZE := Vector2(32, 32)
 const MANAGEMENT_PORTRAIT_SIZE := Vector2(520, 520)
 const REPTILE_MGMT_REFERENCE_SIZE := Vector2(941, 1672)
+const REPTILE_MGMT_HABITAT_BG_CENTER := Vector2(480.5, 400.0)
+const REPTILE_MGMT_HABITAT_BG_SIZE := Vector2(878.0, 610.0)
+const REPTILE_MGMT_FRAME_CENTER := Vector2(470.5, 836.0)
+const REPTILE_MGMT_WINDOW_SCALE := 0.90
+const REPTILE_MGMT_TITLE_CENTER := Vector2(490.5, 60.0)
+const REPTILE_MGMT_TITLE_SIZE := Vector2(335.0, 75.0)
+const REPTILE_MGMT_CLOSE_CENTER := Vector2(860.0, 103.0)
+const REPTILE_MGMT_CLOSE_SIZE := Vector2(124.0, 128.0)
+const REPTILE_MGMT_LVL_TEXT_CENTER := Vector2(140.0, 95.0)
+const REPTILE_MGMT_LVL_VALUE_CENTER := Vector2(136.0, 130.0)
+const REPTILE_MGMT_XP_BAR_CENTER := Vector2(318.0, 156.0)
+const REPTILE_MGMT_XP_BAR_SIZE := Vector2(192.0, 28.0)
+const REPTILE_MGMT_XP_TEXT_SIZE := Vector2(174.0, 28.0)
+const REPTILE_MGMT_NAME_CENTER := Vector2(230.0, 265.0)
+const REPTILE_MGMT_NAME_SIZE := Vector2(300.0, 60.0)
+const REPTILE_MGMT_EDIT_CENTER := Vector2(420.0, 218.0)
+const REPTILE_MGMT_EDIT_SIZE := Vector2(72.0, 72.0)
+const REPTILE_MGMT_INFO_ROW_START_Y := 312.0
+const REPTILE_MGMT_INFO_ROW_STEP := 48.0
+const REPTILE_MGMT_INFO_LABEL_CENTER_X := 199.0
+const REPTILE_MGMT_INFO_VALUE_CENTER_X := 356.0
+const REPTILE_MGMT_INFO_BONUS_CENTER := Vector2(266.0, 602.0)
+const REPTILE_MGMT_EXPORT_CENTER := Vector2(335.0, 1605.0)
+const REPTILE_MGMT_EXPORT_SIZE := Vector2(290.0*1.5, 44.0*1.5)
+const REPTILE_MGMT_PORTRAIT_CENTER := Vector2(682.0, 440.0)
+const REPTILE_MGMT_PORTRAIT_SIZE := Vector2(470.0, 470.0)
+const REPTILE_MGMT_NEEDS_TITLE_CENTER := Vector2(254.0, 704.0)
+const REPTILE_MGMT_INCOME_TITLE_CENTER := Vector2(681.0, 704.0)
+const REPTILE_MGMT_SECTION_TITLE_SIZE := Vector2(310.0, 52.0)
+const REPTILE_MGMT_NEED_ROW_START_Y := 764.0
+const REPTILE_MGMT_NEED_ROW_STEP := 85.0
+const REPTILE_MGMT_INCOME_ROW_START_Y := 775.0
+const REPTILE_MGMT_INCOME_ROW_STEP := 48.0
+const REPTILE_MGMT_ACTIONS_TITLE_CENTER := Vector2(470.5, 1152.0)
+const REPTILE_MGMT_ACTIONS_TITLE_SIZE := Vector2(300.0, 46.0)
+const REPTILE_MGMT_FEEDBACK_CENTER := Vector2(470.5, 1206.0)
+const REPTILE_MGMT_FEEDBACK_SIZE := Vector2(760.0, 36.0)
+const REPTILE_MGMT_CARE_BUTTON_SIZE := Vector2(160.0, 160.0)
+const REPTILE_MGMT_FEED_CENTER := Vector2(165.0, 1248.0)
+const REPTILE_MGMT_WATER_CENTER := Vector2(370.0, 1248.0)
+const REPTILE_MGMT_CLEAN_CENTER := Vector2(585.0, 1248.0)
+const REPTILE_MGMT_PLAY_CENTER := Vector2(795.0, 1248.0)
+const REPTILE_MGMT_UPGRADE_TITLE_CENTER := Vector2(470.5, 1384.0)
+const REPTILE_MGMT_UPGRADE_TITLE_SIZE := Vector2(480.0, 48.0)
+const REPTILE_MGMT_HABITAT_LEVEL_LABEL_CENTER := Vector2(174.0, 1440.0)
+const REPTILE_MGMT_HABITAT_CURRENT_LEVEL_CENTER := Vector2(116.0, 1508.0)
+const REPTILE_MGMT_HABITAT_NEXT_LEVEL_CENTER := Vector2(243.0, 1508.0)
+const REPTILE_MGMT_HABITAT_ARROW_CENTER := Vector2(182.0, 1507.0)
+const REPTILE_MGMT_UPGRADE_COST_LABEL_CENTER := Vector2(370.0, 1440.0)
+const REPTILE_MGMT_UPGRADE_COST_VALUE_CENTER := Vector2(370.0, 1548.0)
+const REPTILE_MGMT_UPGRADE_TIME_LABEL_CENTER := Vector2(533.0, 1440.0)
+const REPTILE_MGMT_UPGRADE_TIME_VALUE_CENTER := Vector2(531.0, 1548.0)
+const REPTILE_MGMT_HABITAT_BONUS_LABEL_CENTER := Vector2(756.0, 1440.0)
+const REPTILE_MGMT_HABITAT_BONUS_VALUE_CENTER := Vector2(756.0, 1475.0)
+const REPTILE_MGMT_UPGRADE_BUTTON_CENTER := Vector2(757.0, 1570.0)
+const REPTILE_MGMT_UPGRADE_BUTTON_SIZE := Vector2(252.0, 92.0)
 const DISCOVERY_PORTRAIT_SIZE := Vector2(132, 132)
 const DISCOVERY_RARITY_ICON_SIZE := Vector2(112, 112)
+const DISCOVERY_POPUP_BG_PATH := "res://assets/art/ui/reptile_mgm/discovery_new.png"
+const DISCOVERY_POPUP_REF_SIZE := Vector2(983, 1417)
+const DISCOVERY_POPUP_WINDOW_SCALE := 0.665
+const DISCOVERY_POPUP_ICON_CENTER := Vector2(491.5, 215.0)
+const DISCOVERY_POPUP_ICON_REF_SIZE := Vector2(310.0, 310.0)
+const DISCOVERY_POPUP_TITLE_CENTER := Vector2(491.5, 375.0)
+const DISCOVERY_POPUP_TITLE_REF_SIZE := Vector2(720.0, 70.0)
+const DISCOVERY_POPUP_PORTRAIT_CENTER := Vector2(491.5, 660.0)
+const DISCOVERY_POPUP_PORTRAIT_REF_SIZE := Vector2(475.0, 475.0)
+const DISCOVERY_POPUP_DETAIL_CENTER_X := 491.5
+const DISCOVERY_POPUP_DETAIL_REF_SIZE := Vector2(700.0, 58.0)
+const DISCOVERY_POPUP_SPECIES_Y := 924.0
+const DISCOVERY_POPUP_VARIANT_Y := 999.0
+const DISCOVERY_POPUP_SEX_Y := 1074.0
+const DISCOVERY_POPUP_RARITY_Y := 1148.0
+const DISCOVERY_POPUP_OK_CENTER := Vector2(491.5, 1371.0)
+const DISCOVERY_POPUP_OK_REF_SIZE := Vector2(675.0, 100.0)
+const NAME_POPUP_BG_PATH := "res://assets/art/ui/small_design/name_change_background.png"
+const NAME_POPUP_REF_SIZE := Vector2(900, 660)
+const NAME_POPUP_WINDOW_SCALE := 0.70
+const NAME_POPUP_TITLE_CENTER := Vector2(450.0, 88.0)
+const NAME_POPUP_TITLE_REF_SIZE := Vector2(760.0, 85.0)
+const NAME_POPUP_TITLE_FONT_SIZE := 38
+const NAME_POPUP_PORTRAIT_CENTER := Vector2(158.0, 205.0)
+const NAME_POPUP_PORTRAIT_SIZE := Vector2(200.0*1.55, 210.0*1.55)
+const NAME_POPUP_PORTRAIT_REF_SIZE := NAME_POPUP_PORTRAIT_SIZE
+const NAME_POPUP_SPECIES_CENTER := Vector2(540.0, 215.0)
+const NAME_POPUP_SPECIES_REF_SIZE := Vector2(490.0, 70.0)
+const NAME_POPUP_SPECIES_FONT_SIZE := 30
+const NAME_POPUP_PROMPT_CENTER := Vector2(450.0, 350.0)
+const NAME_POPUP_PROMPT_REF_SIZE := Vector2(760.0, 65.0)
+const NAME_POPUP_PROMPT_FONT_SIZE := 30
+const NAME_POPUP_INPUT_CENTER := Vector2(460.0, 430.0)
+const NAME_POPUP_INPUT_REF_SIZE := Vector2(740.0, 72.0)
+const NAME_POPUP_INPUT_FONT_SIZE := 28
+const NAME_POPUP_CANCEL_CENTER := Vector2(240.0, 544.0)
+const NAME_POPUP_CANCEL_REF_SIZE := Vector2(320.0, 84.0)
+const NAME_POPUP_CANCEL_FONT_SIZE := 32
+const NAME_POPUP_SAVE_CENTER := Vector2(655.0, 544.0)
+const NAME_POPUP_SAVE_REF_SIZE := Vector2(320.0, 84.0)
+const NAME_POPUP_SAVE_FONT_SIZE := 32
+const NAME_POPUP_VALIDATION_FONT_SIZE := 16
+const MGMT_POPUP_BG_PATH := "res://assets/art/ui/small_design/build_habitat.png"
+const MGMT_POPUP_REF_SIZE := Vector2(1058.0, 1260.0)
+const MGMT_POPUP_WINDOW_SCALE := 0.82
+const MGMT_POPUP_TITLE_CENTER := Vector2(525.0, 85.0)
+const MGMT_POPUP_TITLE_REF_SIZE := Vector2(830.0, 115.0)
+const MGMT_POPUP_TITLE_FONT_SIZE := 48
+const MGMT_POPUP_CLOSE_CENTER := Vector2(975.0, 68.0)
+const MGMT_POPUP_CLOSE_REF_SIZE := Vector2(108.0, 108.0)
+const MGMT_POPUP_PREVIEW_CENTER := Vector2(255.0, 460.0)
+const MGMT_POPUP_PREVIEW_REF_SIZE := Vector2(430.0, 430.0)
+const MGMT_POPUP_ROW1_CENTER := Vector2(665.0, 250.0)
+const MGMT_POPUP_ROW2_CENTER := Vector2(665.0, 345.0)
+const MGMT_POPUP_ROW3_CENTER := Vector2(665.0, 435.0)
+const MGMT_POPUP_ROW4_CENTER := Vector2(665.0, 525.0)
+const MGMT_POPUP_ROW5_CENTER := Vector2(665.0, 615.0)
+const MGMT_POPUP_ROW_LABEL_SIZE := Vector2(280.0, 100.0)
+const MGMT_POPUP_ROW_VALUE_X := 918.0
+const MGMT_POPUP_ROW_VALUE_SIZE := Vector2(190.0, 100.0)
+const MGMT_POPUP_ROW_FONT_SIZE := 26
+const MGMT_POPUP_BTN1_CENTER := Vector2(559.0, 790.0)
+const MGMT_POPUP_BTN2_CENTER := Vector2(555.0, 943.0)
+const MGMT_POPUP_BTN3_CENTER := Vector2(559.0, 1099.0)
+const MGMT_POPUP_BTN_SIZE := Vector2(910.0, 112.0)
+const MGMT_POPUP_BTN_FONT_SIZE := 40
 const LOGO_SIZE := Vector2(150, 112)
 const NAME_MAX_LENGTH := 16
-const GALLERY_REPTILE_IDS := ["leopard_gecko", "bearded_dragon", "corn_snake", "steppe_tortoise", "small_monitor", "bullsnake", "collared_lizard", "western_earless_lizard", "ornate_box_turtle", "western_hognose_snake", "prairie_rattlesnake"]
-const GALLERY_RARITIES := ["common", "rare", "exceptional", "ultra_rare"]
+const GALLERY_REPTILE_IDS := ["leopard_gecko", "bearded_dragon", "corn_snake", "steppe_tortoise", "small_monitor", "chameleon", "bullsnake", "collared_lizard", "western_earless_lizard", "ornate_box_turtle", "western_hognose_snake", "prairie_rattlesnake"]
+const GALLERY_RARITIES := ["common", "rare", "ultra_rare", "exceptional",]
 
 var habitat_data: Array = []
 var habitat_slots: Dictionary = {}
@@ -158,7 +433,7 @@ func _ready() -> void:
 	_load_biome_config()
 	_load_biome_layout()
 	ReptileSystem.migrate_save_state()
-	ReptileSystem.apply_time_updates(true)
+	ReptileSystem.apply_time_updates(true, true)
 	ReptileSystem.sync_discovered_variants_from_owned_reptiles()
 	habitat_data = _load_habitats()
 	_build_layout()
@@ -177,6 +452,8 @@ func _ready() -> void:
 		WorkerSystem.workers_changed.connect(_on_workers_changed)
 	if has_node("/root/UpgradeSystem") and UpgradeSystem.has_signal("upgrades_changed"):
 		UpgradeSystem.upgrades_changed.connect(_on_upgrades_changed)
+	if ReptileSystem.has_signal("reptile_leveled_up") and not ReptileSystem.reptile_leveled_up.is_connected(_on_reptile_leveled_up):
+		ReptileSystem.reptile_leveled_up.connect(_on_reptile_leveled_up)
 	if not GameState.language_changed.is_connected(_on_language_changed):
 		GameState.language_changed.connect(_on_language_changed)
 	GameState.state_changed.connect(_refresh_habitat_slots)
@@ -205,6 +482,8 @@ func _load_biome_config() -> void:
 
 func _load_biome_layout() -> void:
 	_biome_layout_slots = []
+	_biome_workers_config = {}
+	_layout_reference_size = Vector2(LAYOUT_REF_W, LAYOUT_REF_H)
 	var file := FileAccess.open(BIOME_HABITAT_LAYOUTS_PATH, FileAccess.READ)
 	if file == null:
 		push_warning("BiomeView: biome_habitat_layouts.json not found, using fallback layout.")
@@ -216,6 +495,7 @@ func _load_biome_layout() -> void:
 		push_warning("BiomeView: biome_habitat_layouts.json malformed, using fallback layout.")
 		_biome_layout_slots = _get_fallback_layout()
 		return
+	_layout_reference_size = _get_layout_reference_resolution(data as Dictionary)
 	var layouts: Variant = (data as Dictionary).get("layouts", null)
 	if layouts == null or typeof(layouts) != TYPE_DICTIONARY:
 		push_warning("BiomeView: no 'layouts' key in biome_habitat_layouts.json, using fallback.")
@@ -241,13 +521,36 @@ func _load_biome_layout() -> void:
 
 func _get_fallback_layout() -> Array:
 	return [
-		{"slot_id": biome_id + "_slot_1", "x": 200, "y": 320},
-		{"slot_id": biome_id + "_slot_2", "x": 520, "y": 380},
-		{"slot_id": biome_id + "_slot_3", "x": 200, "y": 530},
-		{"slot_id": biome_id + "_slot_4", "x": 520, "y": 600},
-		{"slot_id": biome_id + "_slot_5", "x": 200, "y": 750},
-		{"slot_id": biome_id + "_slot_6", "x": 520, "y": 820},
+		{"slot_id": biome_id + "_slot_1", "x": 300, "y": 480},
+		{"slot_id": biome_id + "_slot_2", "x": 780, "y": 570},
+		{"slot_id": biome_id + "_slot_3", "x": 300, "y": 795},
+		{"slot_id": biome_id + "_slot_4", "x": 780, "y": 900},
+		{"slot_id": biome_id + "_slot_5", "x": 300, "y": 1125},
+		{"slot_id": biome_id + "_slot_6", "x": 780, "y": 1230},
 	]
+
+
+func _get_layout_reference_resolution(data: Dictionary) -> Vector2:
+	var ref_value: Variant = data.get("reference_resolution", {})
+	if typeof(ref_value) != TYPE_DICTIONARY:
+		return Vector2(LAYOUT_REF_W, LAYOUT_REF_H)
+
+	var ref: Dictionary = ref_value as Dictionary
+	var width: float = max(1.0, float(ref.get("width", LAYOUT_REF_W)))
+	var height: float = max(1.0, float(ref.get("height", LAYOUT_REF_H)))
+	return Vector2(width, height)
+
+
+func _get_layout_runtime_scale() -> float:
+	return LayoutScale.viewport_scale(get_viewport_rect().size, _layout_reference_size)
+
+
+func _get_background_cover_scale() -> float:
+	return LayoutScale.cover_scale(get_viewport_rect().size, _layout_reference_size)
+
+
+func _get_background_cover_origin(scale: float) -> Vector2:
+	return LayoutScale.cover_origin(get_viewport_rect().size, scale, _layout_reference_size)
 
 
 func _rebuild_layout() -> void:
@@ -343,6 +646,21 @@ func _on_player_level_changed_for_bars(_level: int) -> void:
 	_refresh_progress_bars()
 
 
+func _on_reptile_leveled_up(instance_id: String, reptile_id: String, new_level: int) -> void:
+	var instances: Dictionary = ReptileSystem.get_owned_reptile_instances()
+	var instance_value: Variant = instances.get(instance_id, {})
+	var instance: Dictionary = {}
+	if typeof(instance_value) == TYPE_DICTIONARY:
+		instance = instance_value as Dictionary
+	var reptile: Dictionary = ReptileSystem.get_reptile(reptile_id)
+	var species_name: String = _get_reptile_display_name(instance, reptile) if not instance.is_empty() else LocalizationSystem.tr_key(str(reptile.get("name_key", reptile_id)))
+	var text: String = LocalizationSystem.tr_key("reptile_level_up_toast")
+	text = text.replace("{species_name}", species_name).replace("{level}", str(new_level))
+	_show_toast_raw(text)
+	if management_modal != null and current_management_instance_id == instance_id:
+		_show_management_for_instance_id(instance_id, false)
+
+
 func _on_workers_changed() -> void:
 	_refresh_habitat_slots()
 	if management_modal != null and not current_management_instance_id.is_empty():
@@ -436,21 +754,27 @@ func _add_top_logo() -> void:
 
 func _add_workers_shortcut() -> void:
 	var wb := _biome_workers_config
-	var wb_xr := float(wb.get("x_from_right", 600))
-	var wb_yb := float(wb.get("y_from_bottom", 290))
-	var wb_w := float(wb.get("width", 212))
-	var wb_h := float(wb.get("height", 212))
+	var cover_scale := _get_background_cover_scale()
+	var cover_origin := _get_background_cover_origin(cover_scale)
+	var wb_xr := float(wb.get("x_from_right", 900))
+	var wb_yb := float(wb.get("y_from_bottom", 435))
+	var wb_w := float(wb.get("width", 318)) * cover_scale
+	var wb_h := float(wb.get("height", 318)) * cover_scale
+	var wb_icon_w := float(wb.get("icon_width", wb.get("width", 318))) * cover_scale
+	var wb_icon_h := float(wb.get("icon_height", wb.get("height", 318))) * cover_scale
+	var center := cover_origin + Vector2(_layout_reference_size.x - wb_xr, _layout_reference_size.y - wb_yb) * cover_scale
 
 	var button: Button = Button.new()
 	button.name = "WorkersShortcut"
-	button.anchor_left = 1.0
-	button.anchor_top = 1.0
-	button.anchor_right = 1.0
-	button.anchor_bottom = 1.0
-	button.offset_left = -(wb_xr + wb_w * 0.5)
-	button.offset_top = -(wb_yb + wb_h * 0.5)
-	button.offset_right = -(wb_xr - wb_w * 0.5)
-	button.offset_bottom = -(wb_yb - wb_h * 0.5)
+	button.anchor_left = 0.0
+	button.anchor_top = 0.0
+	button.anchor_right = 0.0
+	button.anchor_bottom = 0.0
+	button.offset_left = center.x - wb_w * 0.5
+	button.offset_top = center.y - wb_h * 0.5
+	button.offset_right = center.x + wb_w * 0.5
+	button.offset_bottom = center.y + wb_h * 0.5
+	button.custom_minimum_size = Vector2(wb_w, wb_h)
 	button.text = ""
 	button.flat = true
 	button.focus_mode = Control.FOCUS_NONE
@@ -466,7 +790,7 @@ func _add_workers_shortcut() -> void:
 	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(content)
 
-	var icon: TextureRect = _make_fixed_texture(WORKERS_ICON_PATH, Vector2(178, 178))
+	var icon: TextureRect = _make_fixed_texture(WORKERS_ICON_PATH, Vector2(wb_icon_w, wb_icon_h))
 	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	content.add_child(icon)
@@ -595,8 +919,8 @@ func _add_progress_bars_widget() -> void:
 	progress_bars_widget.anchor_top = 0.0
 	progress_bars_widget.anchor_right = 0.90
 	progress_bars_widget.anchor_bottom = 0.0
-	progress_bars_widget.offset_top = TOP_BAR_HEIGHT + 40
-	progress_bars_widget.offset_bottom = TOP_BAR_HEIGHT + PROGRESS_BARS_HEIGHT -50
+	progress_bars_widget.offset_top = TOP_BAR_HEIGHT + 4
+	progress_bars_widget.offset_bottom = TOP_BAR_HEIGHT + PROGRESS_BARS_HEIGHT
 	progress_bars_widget.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(progress_bars_widget)
 
@@ -605,13 +929,13 @@ func _add_progress_bars_widget() -> void:
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_theme_constant_override("margin_left", 12)
 	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_top", 4)
-	margin.add_theme_constant_override("margin_bottom", 4)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_bottom", 8)
 	progress_bars_widget.add_child(margin)
 
 	var column := VBoxContainer.new()
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_theme_constant_override("separation", 8)
+	column.add_theme_constant_override("separation", 16)
 	margin.add_child(column)
 
 	var xp_art := _make_art_progress_bar(EXP_BAR_PATH, Color(0.25, 0.55, 1.0, 0.80))
@@ -651,12 +975,12 @@ func _make_art_progress_bar(texture_path: String, fill_color: Color) -> Dictiona
 	bar.anchor_right = 0.94
 	bar.anchor_top = 0.0
 	bar.anchor_bottom = 1.0
-	bar.offset_top = 8
-	bar.offset_bottom = -8
+	bar.offset_top = 20
+	bar.offset_bottom = -20
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var fill_style := StyleBoxFlat.new()
 	fill_style.bg_color = fill_color
-	fill_style.set_corner_radius_all(4)
+	fill_style.set_corner_radius_all(8)
 	bar.add_theme_stylebox_override("fill", fill_style)
 	bar.add_theme_stylebox_override("background", StyleBoxEmpty.new())
 	outer.add_child(bar)
@@ -665,11 +989,11 @@ func _make_art_progress_bar(texture_path: String, fill_color: Color) -> Dictiona
 	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 12)
+	lbl.add_theme_font_size_override("font_size", 28)
 	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 	lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.90))
-	lbl.add_theme_constant_override("shadow_offset_x", 1)
-	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.add_theme_constant_override("shadow_offset_x", 2)
+	lbl.add_theme_constant_override("shadow_offset_y", 3)
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	outer.add_child(lbl)
 
@@ -680,10 +1004,12 @@ func _refresh_progress_bars() -> void:
 	if xp_progress_bar == null or xp_progress_label == null:
 		return
 
-	var current_level: int = max(1, int(GameState.get_value("level", 1)))
 	var total_xp: float = float(GameState.get_value("xp", 0))
-	var xp_for_current: float = float(EconomySystem.get_required_xp_for_level(current_level))
-	var xp_for_next: float = float(EconomySystem.get_required_xp_for_level(current_level + 1))
+	var effective_level: int = 1
+	while total_xp >= float(EconomySystem.get_required_xp_for_level(effective_level + 1)):
+		effective_level += 1
+	var xp_for_current: float = float(EconomySystem.get_required_xp_for_level(effective_level))
+	var xp_for_next: float = float(EconomySystem.get_required_xp_for_level(effective_level + 1))
 	var xp_in_level: int = max(0, int(total_xp - xp_for_current))
 	var xp_needed: int = max(1, int(xp_for_next - xp_for_current))
 	var xp_ratio: float = clamp(float(xp_in_level) / float(xp_needed), 0.0, 1.0)
@@ -692,9 +1018,10 @@ func _refresh_progress_bars() -> void:
 		LocalizationSystem.tr_key("ui.xp_to_next_level")
 			.replace("{current}", str(xp_in_level))
 			.replace("{needed}", str(xp_needed))
-			.replace("{next}", str(current_level + 1))
+			.replace("{next}", str(effective_level + 1))
 	)
 
+	var current_level: int = max(1, int(GameState.get_value("level", 1)))
 	if biome_unlock_bar_row == null:
 		return
 
@@ -748,15 +1075,15 @@ func _get_next_biome_unlock_data() -> Dictionary:
 
 
 func _add_habitat_slots(parent: Control) -> void:
-	var default_slot_w := 260.0
-	var default_slot_h := 220.0
-	var default_empty_w := 130.0
-	var default_empty_h := 130.0
-	var default_purchased_w := 273.0
-	var default_purchased_h := 273.0
-
-	var play_area_ref_top := float(TOP_BAR_HEIGHT + PROGRESS_BAR_ROW_HEIGHT * 2 + 16 + 4)
-	var play_area_ref_h := LAYOUT_REF_H - play_area_ref_top - float(BOTTOM_NAV_HEIGHT + 18)
+	var default_slot_w := 390.0
+	var default_slot_h := 330.0
+	var default_empty_w := 195.0
+	var default_empty_h := 195.0
+	var default_purchased_w := 409.5
+	var default_purchased_h := 409.5
+	var cover_scale := _get_background_cover_scale()
+	var cover_origin := _get_background_cover_origin(cover_scale)
+	var play_area_screen_top := float(TOP_BAR_HEIGHT + PROGRESS_BARS_HEIGHT + 4)
 
 	var count: int = min(habitat_data.size(), _biome_layout_slots.size())
 	for index in count:
@@ -767,18 +1094,17 @@ func _add_habitat_slots(parent: Control) -> void:
 			continue
 		var slot_data: Dictionary = slot_def as Dictionary
 
-		var x_ref := float(slot_data.get("x", 360))
-		var y_ref := float(slot_data.get("y", 640))
-		var anchor_x := x_ref / LAYOUT_REF_W
-		var anchor_y := (y_ref - play_area_ref_top) / play_area_ref_h
+		var x_ref := float(slot_data.get("x", _layout_reference_size.x * 0.5))
+		var y_ref := float(slot_data.get("y", _layout_reference_size.y * 0.5))
+		var slot_center := cover_origin + Vector2(x_ref, y_ref) * cover_scale - Vector2(0.0, play_area_screen_top)
 		var slot_scale := float(slot_data.get("scale", 1.0))
 
-		var slot_w := float(slot_data.get("slot_width",  default_slot_w * slot_scale))
-		var slot_h := float(slot_data.get("slot_height", default_slot_h * slot_scale))
-		var empty_w := float(slot_data.get("empty_width",  default_empty_w * slot_scale))
-		var empty_h := float(slot_data.get("empty_height", default_empty_h * slot_scale))
-		var purchased_w := float(slot_data.get("purchased_width",  default_purchased_w * slot_scale))
-		var purchased_h := float(slot_data.get("purchased_height", default_purchased_h * slot_scale))
+		var slot_w := float(slot_data.get("slot_width",  default_slot_w * slot_scale)) * cover_scale
+		var slot_h := float(slot_data.get("slot_height", default_slot_h * slot_scale)) * cover_scale
+		var empty_w := float(slot_data.get("empty_width",  default_empty_w * slot_scale)) * cover_scale
+		var empty_h := float(slot_data.get("empty_height", default_empty_h * slot_scale)) * cover_scale
+		var purchased_w := float(slot_data.get("purchased_width",  default_purchased_w * slot_scale)) * cover_scale
+		var purchased_h := float(slot_data.get("purchased_height", default_purchased_h * slot_scale)) * cover_scale
 
 		var slot_size     := Vector2(slot_w, slot_h)
 		var empty_size    := Vector2(empty_w, empty_h)
@@ -787,11 +1113,11 @@ func _add_habitat_slots(parent: Control) -> void:
 		var empty_offset := Vector2(
 			float(slot_data.get("empty_offset_x", 0)),
 			float(slot_data.get("empty_offset_y", 0))
-		)
+		) * cover_scale
 		var purchased_offset := Vector2(
 			float(slot_data.get("purchased_offset_x", 0)),
-			float(slot_data.get("purchased_offset_y", -14))
-		)
+			float(slot_data.get("purchased_offset_y", -21))
+		) * cover_scale
 
 		var slot: Control = HABITAT_SLOT_SCENE.instantiate() as Control
 		var habitat_id: String = str(habitat.get("id", ""))
@@ -801,14 +1127,14 @@ func _add_habitat_slots(parent: Control) -> void:
 		slot.name = "HabitatSlot" + str(slot_index)
 		if slot_data.has("z_index"):
 			slot.z_index = int(slot_data.get("z_index", 0))
-		slot.anchor_left = anchor_x
-		slot.anchor_top = anchor_y
-		slot.anchor_right = anchor_x
-		slot.anchor_bottom = anchor_y
-		slot.offset_left = -slot_size.x * 0.5
-		slot.offset_top = -slot_size.y * 0.5
-		slot.offset_right = slot_size.x * 0.5
-		slot.offset_bottom = slot_size.y * 0.5
+		slot.anchor_left = 0.0
+		slot.anchor_top = 0.0
+		slot.anchor_right = 0.0
+		slot.anchor_bottom = 0.0
+		slot.offset_left = slot_center.x - slot_size.x * 0.5
+		slot.offset_top = slot_center.y - slot_size.y * 0.5
+		slot.offset_right = slot_center.x + slot_size.x * 0.5
+		slot.offset_bottom = slot_center.y + slot_size.y * 0.5
 		slot.call("set_visual_tuning", empty_size, purchased_size, empty_offset, purchased_offset)
 		slot.call("setup", habitat_id, slot_index, state)
 		if slot.has_method("set_empty_texture"):
@@ -839,6 +1165,58 @@ func _on_habitat_pressed(habitat_id: String) -> void:
 
 
 func _show_purchase_popup(habitat: Dictionary) -> void:
+	_close_habitat_purchase_modal()
+
+	var background_texture: Texture2D = AssetPaths.load_texture(HABITAT_OPTIONS_BG_PATH)
+	if background_texture == null:
+		push_warning("BiomeView: missing habitat options background: " + HABITAT_OPTIONS_BG_PATH)
+		_show_legacy_purchase_popup(habitat)
+		return
+
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var reference_scale: float = min(viewport_size.x / HABITAT_OPTIONS_REFERENCE_SIZE.x, viewport_size.y / HABITAT_OPTIONS_REFERENCE_SIZE.y) * HABITAT_OPTIONS_WINDOW_SCALE
+	var reference_origin: Vector2 = (viewport_size - HABITAT_OPTIONS_REFERENCE_SIZE * reference_scale) * 0.5 + HABITAT_OPTIONS_CENTER_OFFSET * reference_scale
+	var habitat_id: String = str(habitat.get("id", ""))
+	var slot_index: int = int(habitat.get("slot_index", 0))
+	var purchase_cost: int = EconomySystem.get_next_habitat_price(biome_id, habitat_data.size())
+
+	habitat_purchase_modal = Control.new()
+	habitat_purchase_modal.name = "HabitatPurchaseModal"
+	habitat_purchase_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
+	habitat_purchase_modal.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(habitat_purchase_modal)
+
+	var overlay: ColorRect = ColorRect.new()
+	overlay.name = "DimOverlay"
+	overlay.color = Color(0.04, 0.05, 0.04, 0.62)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	habitat_purchase_modal.add_child(overlay)
+
+	var background: TextureRect = TextureRect.new()
+	background.name = "HabitatOptionsBackground"
+	background.texture = background_texture
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_SCALE
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	habitat_purchase_modal.add_child(background)
+	_position_reference_control(background, HABITAT_OPTIONS_REFERENCE_SIZE * 0.5, HABITAT_OPTIONS_REFERENCE_SIZE, reference_origin, reference_scale)
+
+	_add_habitat_options_label(habitat_purchase_modal, LocalizationSystem.tr_key("habitat.title"), HABITAT_OPTIONS_TITLE_CENTER, HABITAT_OPTIONS_TITLE_SIZE, 64, POPUP_TEXT_ACCENT, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, true)
+	_add_habitat_options_label(habitat_purchase_modal, LocalizationSystem.tr_key("habitat.choose_type"), HABITAT_OPTIONS_SUBTITLE_CENTER, HABITAT_OPTIONS_SUBTITLE_SIZE, 34, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, false)
+
+	if purchase_cost < 0:
+		_add_habitat_options_label(habitat_purchase_modal, LocalizationSystem.tr_key("ui.all_habitats_purchased"), Vector2(491.5, 720.0), Vector2(720.0, 120.0), 30, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, false)
+	else:
+		var row_index: int = 0
+		for habitat_type in _get_habitat_options_order():
+			_add_habitat_option_row(habitat_purchase_modal, habitat_id, slot_index, habitat_type, purchase_cost, row_index, reference_origin, reference_scale)
+			row_index += 1
+
+	_add_habitat_options_button(habitat_purchase_modal, LocalizationSystem.tr_key("ui.cancel"), HABITAT_OPTIONS_CANCEL_CENTER, HABITAT_OPTIONS_CANCEL_SIZE, 38, Callable(self, "_close_habitat_purchase_modal"), reference_origin, reference_scale)
+
+
+func _show_legacy_purchase_popup(habitat: Dictionary) -> void:
 	_close_habitat_purchase_modal()
 
 	var habitat_id: String = str(habitat.get("id", ""))
@@ -906,6 +1284,66 @@ func _show_purchase_popup(habitat: Dictionary) -> void:
 	column.add_child(_make_popup_button("ui.cancel", func() -> void:
 		_close_habitat_purchase_modal()
 	))
+
+
+func _get_habitat_options_order() -> Array[String]:
+	var preferred_order: Array[String] = ["grass", "sand", "stone", "jungle"]
+	var available: Array[String] = ReptileSystem.get_habitat_types()
+	var result: Array[String] = []
+	for habitat_type in preferred_order:
+		if available.has(habitat_type):
+			result.append(habitat_type)
+	for habitat_type in available:
+		if not result.has(habitat_type):
+			result.append(habitat_type)
+	return result
+
+
+func _add_habitat_option_row(parent: Control, habitat_id: String, slot_index: int, habitat_type: String, purchase_cost: int, row_index: int, origin: Vector2, scale: float) -> void:
+	var row_button_y: float = HABITAT_OPTIONS_ROW_BUTTON_START_Y + HABITAT_OPTIONS_ROW_STEP_Y * float(row_index)
+	var localized_name: String = LocalizationSystem.tr_key(ReptileSystem.get_habitat_type_label_key(habitat_type))
+	var price_text: String = LocalizationSystem.tr_key("currency.repticash") + " " + str(purchase_cost)
+
+	_add_habitat_options_label(parent, localized_name, Vector2(HABITAT_OPTIONS_ROW_NAME_X, row_button_y + HABITAT_OPTIONS_ROW_NAME_Y_OFFSET), HABITAT_OPTIONS_ROW_TEXT_SIZE, 39, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_LEFT, origin, scale, true)
+	_add_habitat_options_label(parent, price_text, Vector2(HABITAT_OPTIONS_ROW_PRICE_X, row_button_y + HABITAT_OPTIONS_ROW_PRICE_Y_OFFSET), HABITAT_OPTIONS_ROW_TEXT_SIZE, 36, POPUP_TEXT_SUCCESS, HORIZONTAL_ALIGNMENT_LEFT, origin, scale, false)
+
+	var buy_callable: Callable = Callable(self, "_on_habitat_option_buy_pressed").bind(habitat_id, slot_index, habitat_type)
+	_add_habitat_options_button(parent, LocalizationSystem.tr_key("ui.buy"), Vector2(HABITAT_OPTIONS_BUY_BUTTON_CENTER_X, row_button_y), HABITAT_OPTIONS_BUY_BUTTON_SIZE, 42, buy_callable, origin, scale)
+
+
+func _add_habitat_options_label(parent: Control, text: String, reference_center: Vector2, reference_size: Vector2, base_font_size: int, color: Color, alignment: HorizontalAlignment, origin: Vector2, scale: float, with_shadow: bool) -> Label:
+	var label: Label = _make_reference_label(text, base_font_size, color, alignment, scale)
+	label.clip_text = false
+	if with_shadow:
+		label.add_theme_color_override("font_shadow_color", Color(0.10, 0.06, 0.02, 0.85))
+		label.add_theme_constant_override("shadow_offset_x", max(1, int(round(2.0 * scale))))
+		label.add_theme_constant_override("shadow_offset_y", max(1, int(round(3.0 * scale))))
+	parent.add_child(label)
+	_position_reference_control(label, reference_center, reference_size, origin, scale)
+	return label
+
+
+func _add_habitat_options_button(parent: Control, text: String, reference_center: Vector2, reference_size: Vector2, base_font_size: int, pressed_callable: Callable, origin: Vector2, scale: float) -> Button:
+	var button: Button = _make_reference_hitbox_button(pressed_callable)
+	button.tooltip_text = text
+	parent.add_child(button)
+	_position_reference_control(button, reference_center, reference_size, origin, scale)
+
+	var label: Label = _make_reference_label(text, base_font_size, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	label.add_theme_color_override("font_shadow_color", Color(0.08, 0.08, 0.08, 0.90))
+	label.add_theme_constant_override("shadow_offset_y", max(1, int(round(3.0 * scale))))
+	button.add_child(label)
+	return button
+
+
+func _on_habitat_option_buy_pressed(habitat_id: String, slot_index: int, habitat_type: String) -> void:
+	if habitat_purchase_modal == null:
+		return
+	var current_state: Dictionary = _get_saved_habitat_state(habitat_id)
+	if bool(current_state.get("purchased", false)):
+		return
+	_try_purchase_habitat(habitat_id, slot_index, habitat_type)
 
 
 func _make_habitat_type_purchase_card(habitat_id: String, slot_index: int, habitat_type: String, purchase_cost: int) -> Control:
@@ -1174,13 +1612,6 @@ func _make_assignable_reptile_card(instance: Dictionary, habitat_id: String) -> 
 	_apply_label_color(species_label, POPUP_TEXT_SECONDARY)
 	info.add_child(species_label)
 
-	var variant_label: Label = Label.new()
-	variant_label.text = LocalizationSystem.tr_key("ui.variant") + ": " + LocalizationSystem.tr_key(str(variant.get("name_key", "ui.variant")))
-	variant_label.clip_text = true
-	variant_label.add_theme_font_size_override("font_size", 12)
-	_apply_label_color(variant_label, POPUP_TEXT_SECONDARY)
-	info.add_child(variant_label)
-
 	var rarity_row: HBoxContainer = HBoxContainer.new()
 	rarity_row.add_theme_constant_override("separation", 6)
 	info.add_child(rarity_row)
@@ -1263,11 +1694,11 @@ func _make_resource_buy_card(resource_id: String) -> Control:
 
 	card.add_child(_make_shop_texture_background(SHOP_RESOURCE_CARD_BG_PATH))
 
-	var icon: Control = _make_icon_or_fallback(icon_path, Vector2(82, 82), resource_id[0].to_upper())
-	_position_shop_control(icon, Vector2(0.50, 0.255), Vector2(82, 82))
+	var icon: Control = _make_icon_or_fallback(icon_path, Vector2(107, 107), resource_id[0].to_upper())
+	_position_shop_control(icon, Vector2(0.50, 0.255), Vector2(107, 107))
 	card.add_child(icon)
 
-	var name_lbl: Label = _make_popup_label(LocalizationSystem.tr_key(label_key).to_upper(), 19)
+	var name_lbl: Label = _make_popup_label(LocalizationSystem.tr_key(label_key).to_upper(), 23)
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.0))
@@ -1277,7 +1708,7 @@ func _make_resource_buy_card(resource_id: String) -> Control:
 	_position_shop_control(name_lbl, Vector2(0.50, 0.500), Vector2(230, 36))
 	card.add_child(name_lbl)
 
-	var level_lbl: Label = _make_popup_label(str(current) + "/" + str(max_val), 23)
+	var level_lbl: Label = _make_popup_label(str(current) + "/" + str(max_val), 25)
 	level_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	level_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	level_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
@@ -1291,20 +1722,22 @@ func _make_resource_buy_card(resource_id: String) -> Control:
 	_position_shop_control(amount_cost_row, Vector2(0.50, 0.705), Vector2(270, 34))
 	card.add_child(amount_cost_row)
 
-	var amount_lbl: Label = _make_popup_label(LocalizationSystem.tr_key("shop.resource_amount").replace("{amount}", str(amount)), 24)
+	var amount_lbl: Label = _make_popup_label(LocalizationSystem.tr_key("shop.resource_amount").replace("{amount}", str(amount)), 27)
 	amount_lbl.custom_minimum_size = Vector2(82, 34)
 	amount_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	amount_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	amount_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_apply_label_color(amount_lbl, POPUP_TEXT_SUCCESS)
+	_make_label_visually_bold(amount_lbl)
 	amount_cost_row.add_child(amount_lbl)
 
-	var cost_lbl: Label = _make_popup_label(LocalizationSystem.tr_key("currency.repticash") + " " + str(price), 20)
+	var cost_lbl: Label = _make_popup_label(LocalizationSystem.tr_key("currency.repticash") + " " + str(price), 23)
 	cost_lbl.custom_minimum_size = Vector2(126, 34)
 	cost_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	cost_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_apply_label_color(cost_lbl, POPUP_TEXT_ACCENT)
+	_make_label_visually_bold(cost_lbl)
 	amount_cost_row.add_child(cost_lbl)
 
 	var btn: Button = Button.new()
@@ -1325,7 +1758,7 @@ func _make_resource_buy_card(resource_id: String) -> Control:
 		_show_shop_view()
 	)
 	_apply_button_text_color(btn, BUTTON_TEXT_COLOR if not is_full else Color(0.88, 0.84, 0.72, 0.75))
-	_position_shop_control(btn, Vector2(0.50, 0.880), Vector2(198, 54))
+	_position_shop_control(btn, Vector2(0.50, 0.870), Vector2(198, 54))
 	card.add_child(btn)
 
 	return card
@@ -1414,52 +1847,51 @@ func _make_resource_buy_card_fallback(resource_id: String) -> Control:
 
 func _make_shop_reptile_card(reptile: Dictionary) -> Control:
 	var card: Control = Control.new()
-	card.custom_minimum_size = Vector2(0, 136)
+	card.custom_minimum_size = Vector2(0, SHOP_REPTILE_CARD_HEIGHT)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 
-	var row_bg: TextureRect = _make_shop_texture_background(SHOP_REPTILE_ROW_BG_PATH)
-	row_bg.anchor_left = 0.05
-	row_bg.anchor_top = 0.05
-	row_bg.anchor_right = 0.95
-	row_bg.anchor_bottom = 0.95
+	var row_bg: TextureRect = _make_shop_texture_background(QUESTS_CARD_BG_PATH)
+	row_bg.anchor_left = 0.054
+	row_bg.anchor_top = 0.03
+	row_bg.anchor_right = 0.946
+	row_bg.anchor_bottom = 0.97
 	card.add_child(row_bg)
 
 	var reptile_id: String = str(reptile.get("id", ""))
 	var variant: Dictionary = ReptileSystem.get_variant_for_reptile(reptile_id, str(reptile.get("default_variant_id", "")))
 
-	var portrait: TextureRect = _make_fixed_texture(_get_variant_image_path(reptile, variant, true), Vector2(96, 96))
-	_position_shop_control(portrait, Vector2(0.165, 0.485), Vector2(164, 164))
+	var portrait: TextureRect = _make_fixed_texture(_get_variant_image_path(reptile, variant, true), Vector2(144, 144))
+	_position_shop_control(portrait, Vector2(0.175, 0.500), SHOP_REPTILE_PORTRAIT_SIZE)
 	card.add_child(portrait)
 
 	var name_label: Label = Label.new()
 	name_label.text = LocalizationSystem.tr_key(str(reptile.get("name_key", reptile_id))).to_upper()
 	name_label.clip_text = true
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	name_label.add_theme_font_size_override("font_size", 15)
+	name_label.add_theme_font_size_override("font_size", 15 + SHOP_REPTILE_TEXT_BONUS)
 	_apply_label_color(name_label, POPUP_TEXT_PRIMARY)
-	_position_shop_control(name_label, Vector2(0.490, 0.225), Vector2(236, 34))
+	_position_shop_control(name_label, Vector2(0.515, 0.250), Vector2(430, 46))
 	card.add_child(name_label)
 
 	var income: Control = _make_shop_reptile_income_row(reptile_id, float(reptile.get("base_income_per_minute", 0.0)))
-	_position_shop_control(income, Vector2(0.540, 0.405), Vector2(310, 24))
+	_position_shop_control(income, Vector2(0.515, 0.445), Vector2(430, 92))
 	card.add_child(income)
 
 	var preferred_type: String = ReptileSystem.get_reptile_preferred_habitat_type(reptile_id)
 	var habitat_text := ""
 	if not preferred_type.is_empty():
-		var habitat_icon: TextureRect = _make_fixed_texture(_get_shop_habitat_icon_path(preferred_type), Vector2(32, 32))
-		_position_shop_control(habitat_icon, Vector2(0.604, 0.720), Vector2(65, 65))
-		card.add_child(habitat_icon)
 		habitat_text = LocalizationSystem.tr_key("habitat.best_type") + ": " + LocalizationSystem.tr_key(ReptileSystem.get_habitat_type_label_key(preferred_type))
 
 	var habitat_hint: Label = Label.new()
 	habitat_hint.text = habitat_text
 	habitat_hint.clip_text = true
+	habitat_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	habitat_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	habitat_hint.add_theme_font_size_override("font_size", 10)
+	habitat_hint.add_theme_font_size_override("font_size", 10 + SHOP_REPTILE_TEXT_BONUS)
 	_apply_label_color(habitat_hint, POPUP_TEXT_SECONDARY)
-	_position_shop_control(habitat_hint, Vector2(0.490, 0.545), Vector2(250, 24))
+	_position_shop_control(habitat_hint, Vector2(0.515, 0.605), Vector2(430, 38))
 	card.add_child(habitat_hint)
 
 	var sex_selector: OptionButton = OptionButton.new()
@@ -1470,16 +1902,16 @@ func _make_shop_reptile_card(reptile: Dictionary) -> Control:
 	sex_selector.add_theme_stylebox_override("pressed", _make_button_style(Color(0.16, 0.08, 0.04, 0.96)))
 	sex_selector.add_theme_color_override("font_color", BUTTON_TEXT_COLOR)
 	sex_selector.add_theme_color_override("font_hover_color", BUTTON_TEXT_COLOR)
-	sex_selector.add_theme_font_size_override("font_size", 12)
-	_position_shop_control(sex_selector, Vector2(0.380, 0.735), Vector2(110, 29))
+	sex_selector.add_theme_font_size_override("font_size", 12 + SHOP_REPTILE_TEXT_BONUS)
+	_position_shop_control(sex_selector, Vector2(0.365, 0.740), SHOP_REPTILE_DROPDOWN_SIZE)
 	card.add_child(sex_selector)
 
 	var common_button: Control = _make_shop_variant_texture_button(reptile_id, "common", sex_selector)
-	_position_shop_control(common_button, Vector2(0.825, 0.320), Vector2(135, 44))
+	_position_shop_control(common_button, Vector2(0.785, 0.4005), SHOP_REPTILE_BUY_BUTTON_SIZE)
 	card.add_child(common_button)
 
 	var rare_button: Control = _make_shop_variant_texture_button(reptile_id, "rare", sex_selector)
-	_position_shop_control(rare_button, Vector2(0.825, 0.690), Vector2(135, 44))
+	_position_shop_control(rare_button, Vector2(0.785, 0.6595), SHOP_REPTILE_BUY_BUTTON_SIZE)
 	card.add_child(rare_button)
 
 	_make_scroll_safe(card)
@@ -1594,14 +2026,14 @@ func _make_shop_variant_texture_button(reptile_id: String, rarity: String, sex_s
 
 	var label: Label = Label.new()
 	label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	label.offset_left = 42
-	label.offset_right = -7
-	label.offset_top = 4
-	label.offset_bottom = -4
+	label.offset_left = 52
+	label.offset_right = -8
+	label.offset_top = 6
+	label.offset_bottom = -6
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_font_size_override("font_size", 12 + SHOP_REPTILE_BUTTON_TEXT_BONUS)
 	label.add_theme_color_override("font_color", BUTTON_TEXT_COLOR)
 	label.add_theme_color_override("font_shadow_color", Color(0.08, 0.05, 0.01, 0.90))
 	label.add_theme_constant_override("shadow_offset_x", 1)
@@ -1735,63 +2167,86 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 	management_modal.add_child(panel_layer)
 
 	var viewport_size: Vector2 = get_viewport_rect().size
-	var reference_scale: float = min(viewport_size.x / REPTILE_MGMT_REFERENCE_SIZE.x, viewport_size.y / REPTILE_MGMT_REFERENCE_SIZE.y)
+	var reference_scale: float = min(viewport_size.x / REPTILE_MGMT_REFERENCE_SIZE.x, viewport_size.y / REPTILE_MGMT_REFERENCE_SIZE.y) * REPTILE_MGMT_WINDOW_SCALE
 	var reference_origin: Vector2 = (viewport_size - REPTILE_MGMT_REFERENCE_SIZE * reference_scale) * 0.5
 
+	var habitat_background: TextureRect = TextureRect.new()
+	habitat_background.name = "HabitatPortraitBackground"
+	var habitat_background_path: String = _get_reptile_management_background_path(instance)
+	habitat_background.texture = AssetPaths.load_texture(habitat_background_path)
+	if habitat_background.texture == null and habitat_background_path != REPTILE_MGMT_GRASS_BG_PATH:
+		habitat_background.texture = AssetPaths.load_texture(REPTILE_MGMT_GRASS_BG_PATH)
+	habitat_background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	habitat_background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	habitat_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel_layer.add_child(habitat_background)
+	_position_reference_control(habitat_background, REPTILE_MGMT_HABITAT_BG_CENTER, REPTILE_MGMT_HABITAT_BG_SIZE, reference_origin, reference_scale)
+
 	var panel_background: TextureRect = TextureRect.new()
-	panel_background.name = "ParchmentPanel"
-	panel_background.texture = AssetPaths.load_texture(REPTILE_MGMT_BACKGROUND_PATH)
+	panel_background.name = "ReptileManagementFrame"
+	panel_background.texture = AssetPaths.load_texture(REPTILE_MGMT_FRAME_PATH)
+	if panel_background.texture == null:
+		panel_background.texture = AssetPaths.load_texture(REPTILE_MGMT_LEGACY_BACKGROUND_PATH)
 	panel_background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	panel_background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	panel_background.stretch_mode = TextureRect.STRETCH_SCALE
 	panel_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel_layer.add_child(panel_background)
-	_position_reference_control(panel_background, Vector2(470.5, 836.0), REPTILE_MGMT_REFERENCE_SIZE, reference_origin, reference_scale)
+	_position_reference_control(panel_background, REPTILE_MGMT_FRAME_CENTER, REPTILE_MGMT_REFERENCE_SIZE, reference_origin, reference_scale)
 
-	var title_label: Label = _make_reference_label(LocalizationSystem.tr_key("management.reptile").to_upper(), 40, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, reference_scale)
-	title_label.add_theme_color_override("font_shadow_color", Color(0.18, 0.10, 0.04, 0.95))
-	title_label.add_theme_constant_override("shadow_offset_x", max(1, int(round(3.0 * reference_scale))))
-	title_label.add_theme_constant_override("shadow_offset_y", max(1, int(round(4.0 * reference_scale))))
-	panel_layer.add_child(title_label)
-	_position_reference_control(title_label, Vector2(485, 167), Vector2(620, 78), reference_origin, reference_scale)
+	var title_art: TextureRect = TextureRect.new()
+	title_art.name = "TitleArt"
+	title_art.texture = AssetPaths.load_texture(_get_reptile_management_title_path())
+	title_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	title_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	title_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if title_art.texture != null:
+		panel_layer.add_child(title_art)
+		_position_reference_control(title_art, REPTILE_MGMT_TITLE_CENTER, REPTILE_MGMT_TITLE_SIZE, reference_origin, reference_scale)
+	else:
+		var title_label: Label = _make_reference_label(LocalizationSystem.tr_key("management.reptile").to_upper(), 40, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, reference_scale)
+		title_label.add_theme_color_override("font_shadow_color", Color(0.18, 0.10, 0.04, 0.95))
+		title_label.add_theme_constant_override("shadow_offset_x", max(1, int(round(3.0 * reference_scale))))
+		title_label.add_theme_constant_override("shadow_offset_y", max(1, int(round(4.0 * reference_scale))))
+		panel_layer.add_child(title_label)
+		_position_reference_control(title_label, REPTILE_MGMT_TITLE_CENTER, REPTILE_MGMT_TITLE_SIZE, reference_origin, reference_scale)
 
-	var close_button: TextureButton = _make_reference_texture_button(REPTILE_MGMT_CLOSE_PATH, Callable(self, "_close_management_modal"))
+	var close_button: Button = _make_reference_hitbox_button(Callable(self, "_close_management_modal"))
 	panel_layer.add_child(close_button)
-	_position_reference_control(close_button, Vector2(880, 190), Vector2(124, 128), reference_origin, reference_scale)
+	_position_reference_control(close_button, REPTILE_MGMT_CLOSE_CENTER, REPTILE_MGMT_CLOSE_SIZE, reference_origin, reference_scale)
 
 	var name_label: Label = _make_reference_label(_get_reptile_display_name(instance, reptile), 40, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_LEFT, reference_scale)
 	name_label.clip_text = true
 	panel_layer.add_child(name_label)
-	_position_reference_control(name_label, Vector2(232, 300), Vector2(270, 68), reference_origin, reference_scale)
+	_position_reference_control(name_label, REPTILE_MGMT_NAME_CENTER, REPTILE_MGMT_NAME_SIZE, reference_origin, reference_scale)
 
 	var edit_button: Button = _make_edit_icon_button(str(instance.get("instance_id", "")))
-	edit_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.38, 0.70, 0.22, 1.0)))
-	edit_button.add_theme_stylebox_override("hover", _make_button_style(Color(0.46, 0.80, 0.28, 1.0)))
-	edit_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.30, 0.58, 0.17, 1.0)))
 	panel_layer.add_child(edit_button)
-	_position_reference_control(edit_button, Vector2(425, 300), Vector2(62, 62), reference_origin, reference_scale)
+	_position_reference_control(edit_button, REPTILE_MGMT_EDIT_CENTER, REPTILE_MGMT_EDIT_SIZE, reference_origin, reference_scale)
 
 	var species_name: String = LocalizationSystem.tr_key(str(reptile.get("name_key", "ui.reptile_management_placeholder")))
-	var variant_name: String = LocalizationSystem.tr_key(str(variant.get("name_key", "ui.variant")))
 	var mgmt_rarity: String = str(instance.get("rarity", str(variant.get("rarity", "common"))))
 	var rarity_name: String = LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(mgmt_rarity))
 	var sex_name: String = _get_localized_sex(str(instance.get("sex", "male")))
 	var status_key: String = "animals.status.assigned" if is_assigned else "animals.status.free"
 	var habitat_name: String = _get_habitat_display_name(str(instance.get("habitat_id", ""))) if is_assigned else "-"
-	var preferred_type: String = ReptileSystem.get_reptile_preferred_habitat_type(str(instance.get("reptile_id", "")))
-	var best_habitat_name: String = LocalizationSystem.tr_key(ReptileSystem.get_habitat_type_label_key(preferred_type)) if not preferred_type.is_empty() else "-"
+	var habitat_type: String = _get_reptile_management_habitat_type(instance)
+	var habitat_type_name: String = LocalizationSystem.tr_key(ReptileSystem.get_habitat_type_label_key(habitat_type)) if not habitat_type.is_empty() else "-"
 	var info_rows: Array = [
 		{"key": "reptile.species", "value": species_name},
-		{"key": "reptile.variant", "value": variant_name},
 		{"key": "reptile.rarity", "value": rarity_name},
 		{"key": "reptile.sex", "value": sex_name},
 		{"key": "reptile.status", "value": LocalizationSystem.tr_key(status_key)},
 		{"key": "reptile.habitat", "value": habitat_name},
-		{"key": "nav.biome", "value": best_habitat_name}
+		{"key": "nav.biome", "value": habitat_type_name}
 	]
-	var info_y: float = 380.0
+	var info_y: float = REPTILE_MGMT_INFO_ROW_START_Y
 	for row_data in info_rows:
 		_add_management_info_row(panel_layer, str(row_data.get("key", "")), str(row_data.get("value", "")), info_y, reference_origin, reference_scale)
-		info_y += 52.0
+		info_y += REPTILE_MGMT_INFO_ROW_STEP
+	_add_management_level_bonus_row(panel_layer, instance, reference_origin, reference_scale)
+	if is_assigned:
+		_add_management_export_button(panel_layer, str(instance.get("habitat_id", "")), reference_origin, reference_scale)
+	_add_management_reptile_level_block(panel_layer, instance, reference_origin, reference_scale)
 
 	var portrait: TextureRect = TextureRect.new()
 	portrait.name = "ReptilePortrait"
@@ -1800,51 +2255,53 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel_layer.add_child(portrait)
-	_position_reference_control(portrait, Vector2(690, 522), Vector2(430, 430), reference_origin, reference_scale)
+	_position_reference_control(portrait, REPTILE_MGMT_PORTRAIT_CENTER, REPTILE_MGMT_PORTRAIT_SIZE, reference_origin, reference_scale)
 
 	var needs_title: Label = _make_reference_label(LocalizationSystem.tr_key("management.needs").to_upper(), 30, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, reference_scale)
 	needs_title.add_theme_color_override("font_shadow_color", Color(0.10, 0.20, 0.06, 0.85))
 	needs_title.add_theme_constant_override("shadow_offset_x", max(1, int(round(2.0 * reference_scale))))
 	needs_title.add_theme_constant_override("shadow_offset_y", max(1, int(round(3.0 * reference_scale))))
 	panel_layer.add_child(needs_title)
-	_position_reference_control(needs_title, Vector2(253, 790), Vector2(190, 42), reference_origin, reference_scale)
+	_position_reference_control(needs_title, REPTILE_MGMT_NEEDS_TITLE_CENTER, REPTILE_MGMT_SECTION_TITLE_SIZE, reference_origin, reference_scale)
 
 	var income_title: Label = _make_reference_label(LocalizationSystem.tr_key("management.income").to_upper(), 30, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, reference_scale)
 	income_title.add_theme_color_override("font_shadow_color", Color(0.10, 0.20, 0.06, 0.85))
 	income_title.add_theme_constant_override("shadow_offset_x", max(1, int(round(2.0 * reference_scale))))
 	income_title.add_theme_constant_override("shadow_offset_y", max(1, int(round(3.0 * reference_scale))))
 	panel_layer.add_child(income_title)
-	_position_reference_control(income_title, Vector2(660, 790), Vector2(190, 42), reference_origin, reference_scale)
+	_position_reference_control(income_title, REPTILE_MGMT_INCOME_TITLE_CENTER, REPTILE_MGMT_SECTION_TITLE_SIZE, reference_origin, reference_scale)
 
 	var happiness: int = _get_percent_state(instance, "happiness", 100)
 	var satiety: int = _get_percent_state(instance, "hunger", 100)
 	var hydration: int = _get_percent_state(instance, "hydration", 100)
 	var cleanliness: int = _get_percent_state(instance, "cleanliness", 100)
-	_add_management_need_row(panel_layer, "care.happiness", happiness, Color(0.31, 0.76, 0.08, 1.0), 878.0, reference_origin, reference_scale)
-	_add_management_need_row(panel_layer, "care.hunger", satiety, Color(0.38, 0.84, 0.10, 1.0), 965.0, reference_origin, reference_scale)
-	_add_management_need_row(panel_layer, "care.hydration", hydration, Color(0.04, 0.64, 0.95, 1.0), 1053.0, reference_origin, reference_scale)
-	_add_management_need_row(panel_layer, "care.cleanliness", cleanliness, Color(0.98, 0.65, 0.08, 1.0), 1138.0, reference_origin, reference_scale)
+	_add_management_need_row(panel_layer, "care.happiness", happiness, Color(0.31, 0.76, 0.08, 1.0), REPTILE_MGMT_NEED_ROW_START_Y, reference_origin, reference_scale)
+	_add_management_need_row(panel_layer, "care.hunger", satiety, Color(0.38, 0.84, 0.10, 1.0), REPTILE_MGMT_NEED_ROW_START_Y + REPTILE_MGMT_NEED_ROW_STEP, reference_origin, reference_scale)
+	_add_management_need_row(panel_layer, "care.hydration", hydration, Color(0.04, 0.64, 0.95, 1.0), REPTILE_MGMT_NEED_ROW_START_Y + REPTILE_MGMT_NEED_ROW_STEP * 2.0, reference_origin, reference_scale)
+	_add_management_need_row(panel_layer, "care.cleanliness", cleanliness, Color(0.98, 0.65, 0.08, 1.0), REPTILE_MGMT_NEED_ROW_START_Y + REPTILE_MGMT_NEED_ROW_STEP * 3.0, reference_origin, reference_scale)
 
 	var base_income: float = ReptileSystem.get_base_reptile_income(str(instance.get("reptile_id", "")))
 	var happiness_multiplier: float = ReptileSystem.get_happiness_multiplier(instance.get("happiness", 100))
 	var variant_multiplier: float = ReptileSystem.get_variant_income_multiplier(variant)
 	var habitat_multiplier: float = ReptileSystem.get_habitat_match_multiplier(instance)
 	var habitat_level_multiplier: float = ReptileSystem.get_habitat_level_income_multiplier(instance)
+	var reptile_level_multiplier: float = ReptileSystem.get_reptile_income_level_multiplier(instance)
 	var effective_income: float = ReptileSystem.get_effective_animal_income_per_min(instance)
 	var income_rows: Array = [
 		{"key": "management.base_income", "value": _format_repticash_per_min(base_income), "final": false},
 		{"key": "management.happiness_multiplier", "value": _format_multiplier(happiness_multiplier), "final": false},
-		{"key": "management.variant_multiplier", "value": _format_multiplier(variant_multiplier), "final": false},
+		{"key": "management.rarity_multiplier", "value": _format_multiplier(variant_multiplier), "final": false},
 		{"key": "management.habitat_multiplier", "value": _format_multiplier(habitat_multiplier), "final": false},
 		{"key": "management.habitat_level_bonus", "value": _format_multiplier(habitat_level_multiplier), "final": false},
-		{"key": "management.effective_income", "value": _format_decimal(effective_income), "final": true}
+		{"key": "management.reptile_level_bonus", "value": _format_multiplier(reptile_level_multiplier), "final": false},
+		{"key": "management.effective_income", "value": _format_repticash_per_min(effective_income), "final": true}
 	]
-	var income_y: float = 842.0
+	var income_y: float = REPTILE_MGMT_INCOME_ROW_START_Y
 	for income_data in income_rows:
 		_add_management_income_row(panel_layer, str(income_data.get("key", "")), str(income_data.get("value", "")), bool(income_data.get("final", false)), income_y, reference_origin, reference_scale)
-		income_y += 57.0
-		if bool(income_data.get("final", false)):
-			income_y += 12.0
+		income_y += REPTILE_MGMT_INCOME_ROW_STEP
+
+	_add_management_section_title(panel_layer, "management.actions", REPTILE_MGMT_ACTIONS_TITLE_CENTER, REPTILE_MGMT_ACTIONS_TITLE_SIZE, reference_origin, reference_scale)
 
 	var care_hint_key: String = current_management_feedback_key
 	if care_hint_key.is_empty() and not is_assigned:
@@ -1854,21 +2311,54 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 		var feedback_label: Label = _make_reference_label(care_hint_text, 18, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_CENTER, reference_scale)
 		feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		panel_layer.add_child(feedback_label)
-		_position_reference_control(feedback_label, Vector2(470, 1218), Vector2(760, 42), reference_origin, reference_scale)
+		_position_reference_control(feedback_label, REPTILE_MGMT_FEEDBACK_CENTER, REPTILE_MGMT_FEEDBACK_SIZE, reference_origin, reference_scale)
 
-	_add_management_care_button(panel_layer, "feed", "care.feed", REPTILE_MGMT_FEED_PATH, instance, is_assigned, Vector2(168, 1302), reference_origin, reference_scale)
-	_add_management_care_button(panel_layer, "water", "care.water", REPTILE_MGMT_WATER_PATH, instance, is_assigned, Vector2(370, 1302), reference_origin, reference_scale)
-	_add_management_care_button(panel_layer, "clean", "care.clean", REPTILE_MGMT_CLEAN_PATH, instance, is_assigned, Vector2(570, 1302), reference_origin, reference_scale)
-	_add_management_care_button(panel_layer, "play", "care.play", REPTILE_MGMT_PLAY_PATH, instance, is_assigned, Vector2(770, 1302), reference_origin, reference_scale)
+	_add_management_care_button(panel_layer, "feed", "care.feed", REPTILE_MGMT_FEED_PATH, instance, is_assigned, REPTILE_MGMT_FEED_CENTER, reference_origin, reference_scale)
+	_add_management_care_button(panel_layer, "water", "care.water", REPTILE_MGMT_WATER_PATH, instance, is_assigned, REPTILE_MGMT_WATER_CENTER, reference_origin, reference_scale)
+	_add_management_care_button(panel_layer, "clean", "care.clean", REPTILE_MGMT_CLEAN_PATH, instance, is_assigned, REPTILE_MGMT_CLEAN_CENTER, reference_origin, reference_scale)
+	_add_management_care_button(panel_layer, "play", "care.play", REPTILE_MGMT_PLAY_PATH, instance, is_assigned, REPTILE_MGMT_PLAY_CENTER, reference_origin, reference_scale)
 
-	if is_assigned:
-		var move_out_button: TextureButton = _make_management_wide_button(REPTILE_MGMT_EXPORT_PATH, "habitat.remove_reptile", Callable(self, "_confirm_remove_reptile").bind(str(instance.get("habitat_id", ""))), reference_scale)
-		panel_layer.add_child(move_out_button)
-		_position_reference_control(move_out_button, Vector2(470, 1456), Vector2(711, 86), reference_origin, reference_scale)
+	_add_management_habitat_upgrade_panel(panel_layer, instance, reference_origin, reference_scale)
 
-		var upgrade_hint_button: TextureButton = _make_management_wide_button(REPTILE_MGMT_UPGRADE_PATH, "habitat.upgrade", Callable(self, "_show_upgrade_blocked_popup"), reference_scale)
-		panel_layer.add_child(upgrade_hint_button)
-		_position_reference_control(upgrade_hint_button, Vector2(470, 1581), Vector2(711, 86), reference_origin, reference_scale)
+
+func _get_reptile_management_title_path() -> String:
+	return REPTILE_MGMT_TITLE_EN_PATH if LocalizationSystem.get_language() == "en" else REPTILE_MGMT_TITLE_PL_PATH
+
+
+func _get_reptile_management_habitat_type(instance: Dictionary) -> String:
+	var habitat_id: String = _id_or_empty(instance.get("habitat_id", null))
+	if not habitat_id.is_empty():
+		var habitat: Dictionary = _get_saved_habitat_state(habitat_id)
+		if not habitat.is_empty():
+			return ReptileSystem.normalize_habitat_type(str(habitat.get("habitat_type", "grass")))
+
+	var preferred_type: String = ReptileSystem.get_reptile_preferred_habitat_type(str(instance.get("reptile_id", "")))
+	if not preferred_type.is_empty():
+		return ReptileSystem.normalize_habitat_type(preferred_type)
+
+	return "grass"
+
+
+func _get_reptile_management_background_path(instance: Dictionary) -> String:
+	match _get_reptile_management_habitat_type(instance):
+		"sand":
+			return REPTILE_MGMT_SAND_BG_PATH
+		"stone":
+			return REPTILE_MGMT_STONE_BG_PATH
+		"jungle":
+			return REPTILE_MGMT_JUNGLE_BG_PATH
+		_:
+			return REPTILE_MGMT_GRASS_BG_PATH
+
+
+func _get_habitat_level_multiplier_for_level(level: int) -> float:
+	match ReptileSystem.normalize_habitat_level(level):
+		2:
+			return 1.25
+		3:
+			return 1.50
+		_:
+			return 1.0
 
 
 func _position_reference_control(control: Control, reference_center: Vector2, reference_size: Vector2, origin: Vector2, scale: float) -> void:
@@ -1905,64 +2395,158 @@ func _make_reference_texture_button(texture_path: String, pressed_callable: Call
 	return button
 
 
+func _make_reference_hitbox_button(pressed_callable: Callable) -> Button:
+	var button: Button = Button.new()
+	button.text = ""
+	button.flat = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var empty_style: StyleBoxEmpty = StyleBoxEmpty.new()
+	button.add_theme_stylebox_override("normal", empty_style)
+	button.add_theme_stylebox_override("hover", empty_style)
+	button.add_theme_stylebox_override("pressed", empty_style)
+	button.add_theme_stylebox_override("disabled", empty_style)
+	button.pressed.connect(pressed_callable)
+	return button
+
+
+func _add_management_section_title(parent: Control, label_key: String, reference_center: Vector2, reference_size: Vector2, origin: Vector2, scale: float) -> void:
+	var title: Label = _make_reference_label(LocalizationSystem.tr_key(label_key).to_upper(), 30, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	title.add_theme_color_override("font_shadow_color", Color(0.10, 0.20, 0.06, 0.85))
+	title.add_theme_constant_override("shadow_offset_x", max(1, int(round(2.0 * scale))))
+	title.add_theme_constant_override("shadow_offset_y", max(1, int(round(3.0 * scale))))
+	parent.add_child(title)
+	_position_reference_control(title, reference_center, reference_size, origin, scale)
+
+
 func _add_management_info_row(parent: Control, label_key: String, value: String, reference_y: float, origin: Vector2, scale: float) -> void:
 	var label: Label = _make_reference_label(LocalizationSystem.tr_key(label_key) + ":", 18, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_LEFT, scale)
 	label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	label.clip_text = false
 	parent.add_child(label)
-	_position_reference_control(label, Vector2(205, reference_y), Vector2(145, 30), origin, scale)
+	_position_reference_control(label, Vector2(REPTILE_MGMT_INFO_LABEL_CENTER_X, reference_y), Vector2(150, 30), origin, scale)
 
 	var value_label: Label = _make_reference_label(value, 18, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_LEFT, scale)
 	value_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	value_label.clip_text = false
 	parent.add_child(value_label)
-	_position_reference_control(value_label, Vector2(393, reference_y), Vector2(190, 30), origin, scale)
+	_position_reference_control(value_label, Vector2(REPTILE_MGMT_INFO_VALUE_CENTER_X, reference_y), Vector2(220, 30), origin, scale)
+
+
+func _add_management_level_bonus_row(parent: Control, instance: Dictionary, origin: Vector2, scale: float) -> void:
+	var income_bonus_percent: int = ReptileSystem.get_reptile_income_level_bonus_percent(instance)
+	var bonus_text: String = LocalizationSystem.tr_key("management.level_bonus") + ": +" + str(income_bonus_percent) + "%"
+	var bonus_label: Label = _make_reference_label(bonus_text, 18, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	bonus_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	bonus_label.clip_text = false
+	parent.add_child(bonus_label)
+	_position_reference_control(bonus_label, REPTILE_MGMT_INFO_BONUS_CENTER, Vector2(310, 34), origin, scale)
+
+
+func _add_management_export_button(parent: Control, habitat_id: String, origin: Vector2, scale: float) -> void:
+	if habitat_id.is_empty():
+		return
+
+	var button: TextureButton = _make_reference_texture_button(REPTILE_MGMT_EXPORT_PATH, Callable(self, "_confirm_remove_reptile").bind(habitat_id))
+	button.stretch_mode = TextureButton.STRETCH_SCALE
+	button.tooltip_text = LocalizationSystem.tr_key("habitat.remove_reptile")
+	parent.add_child(button)
+	_position_reference_control(button, REPTILE_MGMT_EXPORT_CENTER, REPTILE_MGMT_EXPORT_SIZE, origin, scale)
+
+	var label: Label = _make_reference_label(LocalizationSystem.tr_key("habitat.storage_short"), 24, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	label.add_theme_color_override("font_shadow_color", Color(0.14, 0.08, 0.03, 0.90))
+	label.add_theme_constant_override("shadow_offset_y", max(1, int(round(2.0 * scale))))
+	label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	label.offset_left = 78.0 * scale
+	label.offset_right = -12.0 * scale
+	label.offset_top = 2.0 * scale
+	label.offset_bottom = -2.0 * scale
+	button.add_child(label)
+
+
+func _add_management_reptile_level_block(parent: Control, instance: Dictionary, origin: Vector2, scale: float) -> void:
+	var level: int = ReptileSystem.get_reptile_level(instance)
+	var max_level: int = ReptileSystem.get_reptile_max_level()
+	var current_xp: int = ReptileSystem.get_reptile_xp(instance)
+	var required_xp: int = ReptileSystem.get_xp_to_next_reptile_level(level)
+
+	var level_label: Label = _make_reference_label("LVL", 24, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	level_label.add_theme_color_override("font_shadow_color", Color(0.10, 0.07, 0.02, 0.90))
+	level_label.add_theme_constant_override("shadow_offset_y", max(1, int(round(2.0 * scale))))
+	parent.add_child(level_label)
+	_position_reference_control(level_label, REPTILE_MGMT_LVL_TEXT_CENTER, Vector2(90, 30), origin, scale)
+
+	var level_value: Label = _make_reference_label(str(level), 56, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	level_value.add_theme_color_override("font_shadow_color", Color(0.10, 0.07, 0.02, 0.95))
+	level_value.add_theme_constant_override("shadow_offset_y", max(1, int(round(3.0 * scale))))
+	parent.add_child(level_value)
+	_position_reference_control(level_value, REPTILE_MGMT_LVL_VALUE_CENTER, Vector2(100, 62), origin, scale)
+
+	var progress: ProgressBar = ProgressBar.new()
+	progress.min_value = 0
+	progress.max_value = max(1, required_xp)
+	progress.value = 0 if level >= max_level else current_xp
+	progress.show_percentage = false
+	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	progress.add_theme_stylebox_override("background", _make_progress_background_style(Color(0.03, 0.08, 0.03, 0.22)))
+	progress.add_theme_stylebox_override("fill", _make_progress_fill_style(Color(0.37, 0.78, 0.12, 0.92)))
+	parent.add_child(progress)
+	_position_reference_control(progress, REPTILE_MGMT_XP_BAR_CENTER, REPTILE_MGMT_XP_BAR_SIZE, origin, scale)
+
+	var xp_text: String = LocalizationSystem.tr_key("reptile_max_level") if level >= max_level else LocalizationSystem.tr_key("reptile_xp_label").replace("{current}", str(current_xp)).replace("{required}", str(required_xp))
+	var xp_label: Label = _make_reference_label(xp_text, 17, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	xp_label.add_theme_color_override("font_shadow_color", Color(0.02, 0.04, 0.02, 0.90))
+	xp_label.add_theme_constant_override("shadow_offset_y", max(1, int(round(2.0 * scale))))
+	xp_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	xp_label.clip_text = false
+	parent.add_child(xp_label)
+	_position_reference_control(xp_label, REPTILE_MGMT_XP_BAR_CENTER, REPTILE_MGMT_XP_TEXT_SIZE, origin, scale)
 
 
 func _add_management_need_row(parent: Control, label_key: String, value: int, fill_color: Color, reference_y: float, origin: Vector2, scale: float) -> void:
 	var label: Label = _make_reference_label(LocalizationSystem.tr_key(label_key), 22, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_LEFT, scale)
 	parent.add_child(label)
-	_position_reference_control(label, Vector2(230, reference_y - 22.0), Vector2(154, 34), origin, scale)
+	_position_reference_control(label, Vector2(222, reference_y), Vector2(170, 34), origin, scale)
 
 	var progress: ProgressBar = ProgressBar.new()
 	progress.min_value = 0
 	progress.max_value = 100
 	progress.value = value
 	progress.show_percentage = false
+	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	progress.add_theme_stylebox_override("background", _make_progress_background_style(Color(0.86, 0.72, 0.43, 0.35)))
 	progress.add_theme_stylebox_override("fill", _make_progress_fill_style(fill_color))
 	parent.add_child(progress)
-	_position_reference_control(progress, Vector2(262, reference_y + 13.0), Vector2(225, 24), origin, scale)
+	_position_reference_control(progress, Vector2(278, reference_y + 38.0), Vector2(210, 24), origin, scale)
 
 	var value_label: Label = _make_reference_label(str(value) + "%", 22, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_RIGHT, scale)
 	parent.add_child(value_label)
-	_position_reference_control(value_label, Vector2(410, reference_y + 13.0), Vector2(58, 32), origin, scale)
+	_position_reference_control(value_label, Vector2(410, reference_y + 38.0), Vector2(58, 32), origin, scale)
 
 
 func _add_management_income_row(parent: Control, label_key: String, value: String, is_final: bool, reference_y: float, origin: Vector2, scale: float) -> void:
 	var color: Color = POPUP_TEXT_PRIMARY if is_final else POPUP_TEXT_SECONDARY
 	var value_color: Color = POPUP_TEXT_SUCCESS if is_final else POPUP_TEXT_SECONDARY
 	var font_size: int = 23 if is_final else 18
-	var row_offset: Vector2 = Vector2(28.0, 28.0) if is_final else Vector2(18.0, 7.0)
-	var row_y: float = reference_y + row_offset.y
+	var row_y: float = reference_y
 
 	var label: Label = _make_reference_label(LocalizationSystem.tr_key(label_key) + ":", font_size, color, HORIZONTAL_ALIGNMENT_LEFT, scale)
 	parent.add_child(label)
-	_position_reference_control(label, Vector2(622 + row_offset.x, row_y), Vector2(222, 34), origin, scale)
+	_position_reference_control(label, Vector2(657, row_y), Vector2(245, 34), origin, scale)
 
 	var value_label: Label = _make_reference_label(value, font_size, value_color, HORIZONTAL_ALIGNMENT_RIGHT, scale)
 	parent.add_child(value_label)
-	_position_reference_control(value_label, Vector2(770 + row_offset.x, row_y), Vector2(154, 34), origin, scale)
+	_position_reference_control(value_label, Vector2(821, row_y), Vector2(160, 34), origin, scale)
 
 
-func _add_management_care_button(parent: Control, action_id: String, label_key: String, texture_path: String, instance: Dictionary, is_assigned: bool, reference_center: Vector2, origin: Vector2, scale: float) -> void:
+func _add_management_care_button(parent: Control, action_id: String, label_key: String, _texture_path: String, instance: Dictionary, is_assigned: bool, reference_center: Vector2, origin: Vector2, scale: float) -> void:
 	var remaining: int = ReptileSystem.get_care_cooldown_remaining(instance, action_id)
-	var button: TextureButton = _make_reference_texture_button(texture_path, Callable(self, "_on_care_action_pressed").bind(action_id))
+	var button: Button = _make_reference_hitbox_button(Callable(self, "_on_care_action_pressed").bind(action_id))
 	button.disabled = not is_assigned or remaining > 0
 	button.modulate = Color(1.0, 1.0, 1.0, 0.48) if button.disabled else Color.WHITE
 	button.mouse_default_cursor_shape = Control.CURSOR_ARROW if button.disabled else Control.CURSOR_POINTING_HAND
 	parent.add_child(button)
-	_position_reference_control(button, reference_center, Vector2(178, 178), origin, scale)
+	_position_reference_control(button, reference_center, REPTILE_MGMT_CARE_BUTTON_SIZE, origin, scale)
 
 	var label_text: String = _format_cooldown(remaining) if remaining > 0 else LocalizationSystem.tr_key(label_key).to_upper()
 	var label: Label = _make_reference_label(label_text, 22, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, scale)
@@ -1970,7 +2554,97 @@ func _add_management_care_button(parent: Control, action_id: String, label_key: 
 	label.add_theme_constant_override("shadow_offset_x", max(1, int(round(2.0 * scale))))
 	label.add_theme_constant_override("shadow_offset_y", max(1, int(round(3.0 * scale))))
 	button.add_child(label)
-	_position_reference_control(label, Vector2(89, 143), Vector2(148, 36), Vector2.ZERO, scale)
+	_position_reference_control(label, Vector2(80, 132), Vector2(140, 34), Vector2.ZERO, scale)
+
+
+func _add_management_habitat_upgrade_panel(parent: Control, instance: Dictionary, origin: Vector2, scale: float) -> void:
+	_add_management_section_title(parent, "management.habitat_upgrade", REPTILE_MGMT_UPGRADE_TITLE_CENTER, REPTILE_MGMT_UPGRADE_TITLE_SIZE, origin, scale)
+
+	var habitat_id: String = _id_or_empty(instance.get("habitat_id", null))
+	var habitat: Dictionary = _get_saved_habitat_state(habitat_id) if not habitat_id.is_empty() else {}
+	var has_habitat: bool = not habitat.is_empty() and bool(habitat.get("purchased", false))
+	var current_level: int = ReptileSystem.normalize_habitat_level(habitat.get("habitat_level", 1)) if has_habitat else 1
+	var max_level: int = ReptileSystem.get_habitat_max_level()
+	var is_building: bool = bool(habitat.get("is_building", false)) if has_habitat else false
+	var is_upgrading: bool = bool(habitat.get("is_upgrading", false)) if has_habitat else false
+	var has_next_level: bool = has_habitat and current_level < max_level and not is_building
+	var next_level: int = ReptileSystem.normalize_habitat_level(habitat.get("upgrade_target_level", current_level + 1)) if is_upgrading else ReptileSystem.normalize_habitat_level(current_level + 1)
+
+	var habitat_label: Label = _make_reference_label(LocalizationSystem.tr_key("management.habitat_level"), 20, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	parent.add_child(habitat_label)
+	_position_reference_control(habitat_label, REPTILE_MGMT_HABITAT_LEVEL_LABEL_CENTER, Vector2(180, 28), origin, scale)
+
+	var current_level_label: Label = _make_reference_label(str(current_level) if has_habitat else "-", 42, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	current_level_label.add_theme_color_override("font_shadow_color", Color(0.08, 0.12, 0.04, 0.92))
+	current_level_label.add_theme_constant_override("shadow_offset_y", max(1, int(round(3.0 * scale))))
+	parent.add_child(current_level_label)
+	_position_reference_control(current_level_label, REPTILE_MGMT_HABITAT_CURRENT_LEVEL_CENTER, Vector2(70, 58), origin, scale)
+
+	var arrow_label: Label = _make_reference_label("->", 34, POPUP_TEXT_SUCCESS, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	parent.add_child(arrow_label)
+	_position_reference_control(arrow_label, REPTILE_MGMT_HABITAT_ARROW_CENTER, Vector2(52, 42), origin, scale)
+
+	var next_text: String = str(next_level) if has_next_level else "-"
+	var next_level_label: Label = _make_reference_label(next_text, 42, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	next_level_label.add_theme_color_override("font_shadow_color", Color(0.08, 0.12, 0.04, 0.92))
+	next_level_label.add_theme_constant_override("shadow_offset_y", max(1, int(round(3.0 * scale))))
+	parent.add_child(next_level_label)
+	_position_reference_control(next_level_label, REPTILE_MGMT_HABITAT_NEXT_LEVEL_CENTER, Vector2(70, 58), origin, scale)
+
+	var cost_label: Label = _make_reference_label(LocalizationSystem.tr_key("shop.cost") + ":", 20, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	parent.add_child(cost_label)
+	_position_reference_control(cost_label, REPTILE_MGMT_UPGRADE_COST_LABEL_CENTER, Vector2(140, 28), origin, scale)
+
+	var cost_text: String = LocalizationSystem.tr_key("currency.repticash") + " " + str(ReptileSystem.get_habitat_upgrade_cost()) if has_next_level and not is_upgrading else "-"
+	var cost_value: Label = _make_reference_label(cost_text, 24, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	cost_value.autowrap_mode = TextServer.AUTOWRAP_OFF
+	parent.add_child(cost_value)
+	_position_reference_control(cost_value, REPTILE_MGMT_UPGRADE_COST_VALUE_CENTER, Vector2(150, 42), origin, scale)
+
+	var time_label: Label = _make_reference_label(LocalizationSystem.tr_key("management.time") + ":", 20, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	parent.add_child(time_label)
+	_position_reference_control(time_label, REPTILE_MGMT_UPGRADE_TIME_LABEL_CENTER, Vector2(130, 28), origin, scale)
+
+	var time_text: String = "-"
+	if is_upgrading:
+		time_text = _format_duration_compact(ReptileSystem.get_habitat_upgrade_remaining_seconds(habitat_id))
+	elif has_next_level:
+		time_text = _format_duration_compact(ReptileSystem.get_habitat_upgrade_duration_seconds(current_level))
+	var time_value: Label = _make_reference_label(time_text, 24, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	parent.add_child(time_value)
+	_position_reference_control(time_value, REPTILE_MGMT_UPGRADE_TIME_VALUE_CENTER, Vector2(130, 42), origin, scale)
+
+	var bonus_label: Label = _make_reference_label(LocalizationSystem.tr_key("management.habitat_bonus"), 20, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	parent.add_child(bonus_label)
+	_position_reference_control(bonus_label, REPTILE_MGMT_HABITAT_BONUS_LABEL_CENTER, Vector2(210, 28), origin, scale)
+
+	var current_bonus: String = _format_multiplier(_get_habitat_level_multiplier_for_level(current_level))
+	var next_bonus: String = _format_multiplier(_get_habitat_level_multiplier_for_level(next_level)) if has_next_level else LocalizationSystem.tr_key("habitat.max_level")
+	var bonus_value_text: String = current_bonus + " -> " + next_bonus if has_next_level else next_bonus
+	if not has_habitat:
+		bonus_value_text = "-"
+	var bonus_value: Label = _make_reference_label(bonus_value_text, 24, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	parent.add_child(bonus_value)
+	_position_reference_control(bonus_value, REPTILE_MGMT_HABITAT_BONUS_VALUE_CENTER, Vector2(230, 42), origin, scale)
+
+	var can_upgrade: bool = has_next_level and not is_upgrading
+	var upgrade_button: Button = _make_reference_hitbox_button(Callable(self, "_confirm_habitat_upgrade").bind(habitat_id))
+	upgrade_button.disabled = not can_upgrade
+	upgrade_button.modulate = Color(1.0, 1.0, 1.0, 0.48) if upgrade_button.disabled else Color.WHITE
+	upgrade_button.mouse_default_cursor_shape = Control.CURSOR_ARROW if upgrade_button.disabled else Control.CURSOR_POINTING_HAND
+	parent.add_child(upgrade_button)
+	_position_reference_control(upgrade_button, REPTILE_MGMT_UPGRADE_BUTTON_CENTER, REPTILE_MGMT_UPGRADE_BUTTON_SIZE, origin, scale)
+
+	var upgrade_text: String = LocalizationSystem.tr_key("habitat.upgrade_confirm_button").to_upper()
+	if is_upgrading:
+		upgrade_text = LocalizationSystem.tr_key("habitat.upgrade_in_progress").to_upper()
+	elif not has_next_level:
+		upgrade_text = "MAX" if has_habitat else "-"
+	var upgrade_label: Label = _make_reference_label(upgrade_text, 25, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, scale)
+	upgrade_label.add_theme_color_override("font_shadow_color", Color(0.08, 0.14, 0.04, 0.90))
+	upgrade_label.add_theme_constant_override("shadow_offset_y", max(1, int(round(3.0 * scale))))
+	upgrade_button.add_child(upgrade_label)
+	_position_reference_control(upgrade_label, Vector2(160, 46), Vector2(165, 42), Vector2.ZERO, scale)
 
 
 func _make_management_wide_button(texture_path: String, label_key: String, pressed_callable: Callable, scale: float) -> TextureButton:
@@ -2007,6 +2681,132 @@ func _show_habitat_management_popup(habitat_id: String) -> void:
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	management_modal.add_child(overlay)
 
+	var background_texture: Texture2D = AssetPaths.load_texture(MGMT_POPUP_BG_PATH)
+	if background_texture == null:
+		push_warning("BiomeView: missing habitat management background: " + MGMT_POPUP_BG_PATH)
+		_build_habitat_mgmt_popup_legacy(habitat_id, habitat)
+		return
+
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var reference_scale: float = min(viewport_size.x / MGMT_POPUP_REF_SIZE.x, viewport_size.y / MGMT_POPUP_REF_SIZE.y) * MGMT_POPUP_WINDOW_SCALE
+	var reference_origin: Vector2 = (viewport_size - MGMT_POPUP_REF_SIZE * reference_scale) * 0.5
+
+	var background: TextureRect = TextureRect.new()
+	background.texture = background_texture
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_SCALE
+	background.mouse_filter = Control.MOUSE_FILTER_STOP
+	management_modal.add_child(background)
+	_position_reference_control(background, MGMT_POPUP_REF_SIZE * 0.5, MGMT_POPUP_REF_SIZE, reference_origin, reference_scale)
+
+	var title_lbl: Label = _add_habitat_options_label(management_modal, LocalizationSystem.tr_key("habitat.management"),
+		MGMT_POPUP_TITLE_CENTER, MGMT_POPUP_TITLE_REF_SIZE, MGMT_POPUP_TITLE_FONT_SIZE,
+		Color(0.85, 0.65, 0.10, 1.0), HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, false)
+	_make_label_visually_bold(title_lbl)
+
+	var close_btn: Button = _make_reference_hitbox_button(_close_management_modal)
+	management_modal.add_child(close_btn)
+	_position_reference_control(close_btn, MGMT_POPUP_CLOSE_CENTER, MGMT_POPUP_CLOSE_REF_SIZE, reference_origin, reference_scale)
+
+	var preview_tex: Texture2D = AssetPaths.load_texture(_get_habitat_texture_path(habitat_id))
+	if preview_tex != null:
+		var preview: TextureRect = TextureRect.new()
+		preview.texture = preview_tex
+		preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		management_modal.add_child(preview)
+		_position_reference_control(preview, MGMT_POPUP_PREVIEW_CENTER, MGMT_POPUP_PREVIEW_REF_SIZE, reference_origin, reference_scale)
+
+	var habitat_type: String = ReptileSystem.normalize_habitat_type(str(habitat.get("habitat_type", "grass")))
+	var habitat_level: int = ReptileSystem.normalize_habitat_level(habitat.get("habitat_level", 1))
+	var is_building: bool = bool(habitat.get("is_building", false))
+	var is_upgrading: bool = bool(habitat.get("is_upgrading", false))
+
+	_mgmt_add_row(management_modal,
+		LocalizationSystem.tr_key("habitat.type") + ":",
+		LocalizationSystem.tr_key(ReptileSystem.get_habitat_type_label_key(habitat_type)),
+		MGMT_POPUP_ROW1_CENTER, reference_origin, reference_scale)
+	_mgmt_add_row(management_modal,
+		LocalizationSystem.tr_key("habitat.level") + ":",
+		LocalizationSystem.tr_key(ReptileSystem.get_habitat_level_label_key(habitat_level)),
+		MGMT_POPUP_ROW2_CENTER, reference_origin, reference_scale)
+
+	if is_building:
+		_mgmt_add_row(management_modal,
+			LocalizationSystem.tr_key("habitat.building_in_progress"),
+			_format_duration_compact(ReptileSystem.get_habitat_build_remaining_seconds(habitat_id)),
+			MGMT_POPUP_ROW3_CENTER, reference_origin, reference_scale)
+	elif is_upgrading:
+		_mgmt_add_row(management_modal,
+			LocalizationSystem.tr_key("habitat.upgrade_in_progress"),
+			_format_duration_compact(ReptileSystem.get_habitat_upgrade_remaining_seconds(habitat_id)),
+			MGMT_POPUP_ROW3_CENTER, reference_origin, reference_scale)
+		_mgmt_add_row(management_modal,
+			LocalizationSystem.tr_key("habitat.next_level") + ":",
+			LocalizationSystem.tr_key(ReptileSystem.get_habitat_level_label_key(habitat.get("upgrade_target_level", habitat_level + 1))),
+			MGMT_POPUP_ROW4_CENTER, reference_origin, reference_scale)
+	elif habitat_level < ReptileSystem.get_habitat_max_level():
+		_mgmt_add_row(management_modal,
+			LocalizationSystem.tr_key("habitat.next_level") + ":",
+			LocalizationSystem.tr_key(ReptileSystem.get_habitat_level_label_key(habitat_level + 1)),
+			MGMT_POPUP_ROW3_CENTER, reference_origin, reference_scale)
+		_mgmt_add_row(management_modal,
+			LocalizationSystem.tr_key("habitat.upgrade_cost") + ":",
+			LocalizationSystem.tr_key("currency.repticash") + " " + str(ReptileSystem.get_habitat_upgrade_cost()),
+			MGMT_POPUP_ROW4_CENTER, reference_origin, reference_scale)
+		_mgmt_add_row(management_modal,
+			LocalizationSystem.tr_key("habitat.upgrade_time") + ":",
+			_format_duration_compact(ReptileSystem.get_habitat_upgrade_duration_seconds(habitat_level)),
+			MGMT_POPUP_ROW5_CENTER, reference_origin, reference_scale)
+	else:
+		_mgmt_add_row(management_modal,
+			LocalizationSystem.tr_key("habitat.next_level") + ":",
+			LocalizationSystem.tr_key("habitat.max_level"),
+			MGMT_POPUP_ROW3_CENTER, reference_origin, reference_scale)
+
+	var place_btn: Button = _make_reference_hitbox_button(func() -> void:
+		_close_management_modal()
+		_show_reptile_assignment_popup(habitat_id)
+	)
+	place_btn.disabled = is_building or is_upgrading
+	management_modal.add_child(place_btn)
+	_position_reference_control(place_btn, MGMT_POPUP_BTN1_CENTER, MGMT_POPUP_BTN_SIZE, reference_origin, reference_scale)
+	var place_lbl: Label = _make_reference_label(LocalizationSystem.tr_key("habitat.place_reptile"), MGMT_POPUP_BTN_FONT_SIZE, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, reference_scale)
+	place_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	place_btn.add_child(place_lbl)
+
+	var upgrade_btn: Button = _make_reference_hitbox_button(func() -> void:
+		_confirm_habitat_upgrade(habitat_id)
+	)
+	upgrade_btn.disabled = is_building or is_upgrading or habitat_level >= ReptileSystem.get_habitat_max_level()
+	management_modal.add_child(upgrade_btn)
+	_position_reference_control(upgrade_btn, MGMT_POPUP_BTN2_CENTER, MGMT_POPUP_BTN_SIZE, reference_origin, reference_scale)
+	var upgrade_lbl: Label = _make_reference_label(LocalizationSystem.tr_key("habitat.upgrade"), MGMT_POPUP_BTN_FONT_SIZE, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, reference_scale)
+	upgrade_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	upgrade_btn.add_child(upgrade_lbl)
+
+	var remove_btn: Button = _make_reference_hitbox_button(func() -> void:
+		_confirm_remove_habitat(habitat_id)
+	)
+	remove_btn.disabled = is_upgrading
+	management_modal.add_child(remove_btn)
+	_position_reference_control(remove_btn, MGMT_POPUP_BTN3_CENTER, MGMT_POPUP_BTN_SIZE, reference_origin, reference_scale)
+	var remove_lbl: Label = _make_reference_label(LocalizationSystem.tr_key("habitat.remove_habitat"), MGMT_POPUP_BTN_FONT_SIZE, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, reference_scale)
+	remove_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	remove_btn.add_child(remove_lbl)
+
+
+func _mgmt_add_row(parent: Control, label_text: String, value_text: String, row_center: Vector2, origin: Vector2, ref_scale: float) -> void:
+	_add_habitat_options_label(parent, label_text,
+		row_center, MGMT_POPUP_ROW_LABEL_SIZE, MGMT_POPUP_ROW_FONT_SIZE,
+		POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_LEFT, origin, ref_scale, false)
+	_add_habitat_options_label(parent, value_text,
+		Vector2(MGMT_POPUP_ROW_VALUE_X, row_center.y), MGMT_POPUP_ROW_VALUE_SIZE, MGMT_POPUP_ROW_FONT_SIZE,
+		POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_LEFT, origin, ref_scale, false)
+
+
+func _build_habitat_mgmt_popup_legacy(habitat_id: String, habitat: Dictionary) -> void:
 	var center: CenterContainer = CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.offset_left = 24
@@ -2184,11 +2984,40 @@ func _show_shop_view() -> void:
 	frame.anchor_left = 0.0
 	frame.anchor_top = 0.0
 	frame.anchor_right = 1.0
-	frame.anchor_bottom = 1.0
+	frame.anchor_bottom = 1.05
 	frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	frame.stretch_mode = TextureRect.STRETCH_SCALE
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shop_view.add_child(frame)
+
+	var title_art: TextureRect = TextureRect.new()
+	title_art.name = "ShopTitleArt"
+	var shop_title_path: String = _get_shop_title_path()
+	if ResourceLoader.exists(shop_title_path) or FileAccess.file_exists(ProjectSettings.globalize_path(shop_title_path)):
+		title_art.texture = AssetPaths.load_texture(shop_title_path)
+	title_art.anchor_left = QUEST_TITLE_ANCHOR_LEFT
+	title_art.anchor_top = QUEST_TITLE_ANCHOR_TOP
+	title_art.anchor_right = QUEST_TITLE_ANCHOR_RIGHT
+	title_art.anchor_bottom = QUEST_TITLE_ANCHOR_BOTTOM
+	title_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	title_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	title_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shop_view.add_child(title_art)
+	if title_art.texture == null:
+		var fallback_title: Label = _make_popup_label(LocalizationSystem.tr_key("nav.shop"), 24)
+		fallback_title.name = "ShopTitleFallback"
+		fallback_title.set_anchors_preset(Control.PRESET_FULL_RECT)
+		fallback_title.anchor_left = QUEST_TITLE_ANCHOR_LEFT
+		fallback_title.anchor_top = QUEST_TITLE_ANCHOR_TOP
+		fallback_title.anchor_right = QUEST_TITLE_ANCHOR_RIGHT
+		fallback_title.anchor_bottom = QUEST_TITLE_ANCHOR_BOTTOM
+		fallback_title.offset_left = 0
+		fallback_title.offset_top = 0
+		fallback_title.offset_right = 0
+		fallback_title.offset_bottom = 0
+		fallback_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		fallback_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		shop_view.add_child(fallback_title)
 
 	var close_button: Button = Button.new()
 	close_button.tooltip_text = LocalizationSystem.tr_key("ui.close")
@@ -2197,10 +3026,10 @@ func _show_shop_view() -> void:
 	close_button.add_theme_stylebox_override("normal", _make_transparent_button_style())
 	close_button.add_theme_stylebox_override("hover", _make_transparent_button_style())
 	close_button.add_theme_stylebox_override("pressed", _make_transparent_button_style())
-	close_button.anchor_left = 0.798
-	close_button.anchor_top = 0.020
-	close_button.anchor_right = 0.954
-	close_button.anchor_bottom = 0.146
+	close_button.anchor_left = QUEST_CLOSE_ANCHOR_LEFT
+	close_button.anchor_top = QUEST_CLOSE_ANCHOR_TOP
+	close_button.anchor_right = QUEST_CLOSE_ANCHOR_RIGHT
+	close_button.anchor_bottom = QUEST_CLOSE_ANCHOR_BOTTOM
 	close_button.pressed.connect(_close_shop_view)
 	shop_view.add_child(close_button)
 
@@ -2219,7 +3048,7 @@ func _show_shop_view() -> void:
 	scroll.anchor_left = 0.058
 	scroll.anchor_top = 0.478
 	scroll.anchor_right = 0.942
-	scroll.anchor_bottom = 0.944
+	scroll.anchor_bottom = 0.987
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	scroll.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -2228,7 +3057,7 @@ func _show_shop_view() -> void:
 	var list: VBoxContainer = VBoxContainer.new()
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list.mouse_filter = Control.MOUSE_FILTER_PASS
-	list.add_theme_constant_override("separation", 6)
+	list.add_theme_constant_override("separation", 5)
 	scroll.add_child(list)
 
 	if ReptileSystem.is_first_reptile_free():
@@ -2347,69 +3176,87 @@ func _show_animals_view(tab_id: String = "owned") -> void:
 	_close_habitat_purchase_modal()
 	ReptileSystem.sync_discovered_variants_from_owned_reptiles()
 
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var available_top: float = TOP_BAR_HEIGHT + ANIMALS_PANEL_TOP_GAP
+	var available_bottom: float = viewport_size.y - BOTTOM_NAV_HEIGHT - ANIMALS_PANEL_BOTTOM_GAP
+	var available_height: float = max(1.0, available_bottom - available_top)
+	var panel_scale: float = min(viewport_size.x / ANIMALS_REF_SIZE.x, available_height / ANIMALS_REF_SIZE.y)
+	var panel_size: Vector2 = Vector2(
+		ANIMALS_REF_SIZE.x * panel_scale * ANIMALS_WINDOW_EXTRA_W,
+		ANIMALS_REF_SIZE.y * panel_scale * ANIMALS_WINDOW_EXTRA_H
+	)
+	var panel_position: Vector2 = Vector2(
+		(viewport_size.x - panel_size.x) * 0.5,
+		available_top + (available_height - panel_size.y) * 0.5
+	)
+
 	animals_view = Control.new()
 	animals_view.name = "AnimalsView"
-	animals_view.anchor_left = 0.0
-	animals_view.anchor_top = 0.0
-	animals_view.anchor_right = 1.0
-	animals_view.anchor_bottom = 1.0
-	animals_view.offset_top = TOP_BAR_HEIGHT + 10
-	animals_view.offset_bottom = -(BOTTOM_NAV_HEIGHT + 8)
+	animals_view.position = panel_position
+	animals_view.size = panel_size
+	animals_view.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(animals_view)
 	if tab_id == "gallery":
 		_notify_quest_event("screen_opened", {"screen": "gallery"})
 
-	var panel: PanelContainer = PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
-	animals_view.add_child(panel)
+	var panel_root: Control = Control.new()
+	panel_root.name = "AnimalsDesignPanel"
+	panel_root.position = Vector2.ZERO
+	panel_root.size = panel_size
+	panel_root.mouse_filter = Control.MOUSE_FILTER_PASS
+	animals_view.add_child(panel_root)
 
-	var margin: MarginContainer = MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_top", 16)
-	margin.add_theme_constant_override("margin_bottom", 16)
-	panel.add_child(margin)
+	var background: TextureRect = TextureRect.new()
+	background.name = "AnimalsBackground"
+	background.texture = AssetPaths.load_texture(ANIMALS_BG_PATH)
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_SCALE
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel_root.add_child(background)
 
-	var column: VBoxContainer = VBoxContainer.new()
-	column.add_theme_constant_override("separation", 12)
-	margin.add_child(column)
+	var _content_x: float = panel_size.x * ANIMALS_CONTENT_X_OFFSET
+	var _title_x: float = _content_x + panel_size.x * ANIMALS_TITLE_X_EXTRA
+	var _tabs_x: float = _content_x + panel_size.x * ANIMALS_TABS_X_EXTRA
 
-	var header: HBoxContainer = HBoxContainer.new()
-	header.add_theme_constant_override("separation", 10)
-	column.add_child(header)
-
-	var title: Label = _make_popup_label(LocalizationSystem.tr_key("animals.title"), 24)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_apply_label_color(title, POPUP_TEXT_PRIMARY)
-	header.add_child(title)
+	var title_art: TextureRect = _make_animals_design_texture(_get_animals_design_title_path())
+	panel_root.add_child(title_art)
+	_position_animals_design_control(title_art, ANIMALS_TITLE_RECT, panel_scale, _title_x)
 
 	var close_button: Button = Button.new()
-	close_button.text = LocalizationSystem.tr_key("ui.close")
-	close_button.custom_minimum_size = Vector2(96, 42)
+	close_button.name = "AnimalsCloseHitbox"
+	close_button.text = ""
+	close_button.flat = true
+	close_button.focus_mode = Control.FOCUS_NONE
+	close_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	close_button.add_theme_stylebox_override("normal", _make_transparent_button_style())
+	close_button.add_theme_stylebox_override("hover", _make_transparent_button_style())
+	close_button.add_theme_stylebox_override("pressed", _make_transparent_button_style())
 	close_button.pressed.connect(_close_animals_view)
-	_apply_button_text_color(close_button, POPUP_TEXT_PRIMARY)
-	header.add_child(close_button)
+	panel_root.add_child(close_button)
+	_position_animals_design_control(close_button, Rect2(
+		ANIMALS_CLOSE_BUTTON_RECT.position.x * ANIMALS_WINDOW_EXTRA_W,
+		ANIMALS_CLOSE_BUTTON_RECT.position.y * ANIMALS_WINDOW_EXTRA_H,
+		ANIMALS_CLOSE_BUTTON_RECT.size.x * ANIMALS_WINDOW_EXTRA_W,
+		ANIMALS_CLOSE_BUTTON_RECT.size.y * ANIMALS_WINDOW_EXTRA_H
+	), panel_scale)
 
-	var tabs: HBoxContainer = HBoxContainer.new()
-	tabs.add_theme_constant_override("separation", 8)
-	column.add_child(tabs)
-
-	tabs.add_child(_make_animals_tab_button("animals.tab.owned", "owned", tab_id))
-	tabs.add_child(_make_animals_tab_button("animals.tab.gallery", "gallery", tab_id))
-	tabs.add_child(_make_animals_tab_button("animals.tab.achievements", "achievements", tab_id))
+	panel_root.add_child(_make_animals_design_tab_button("owned", tab_id, ANIMALS_OWNED_TAB_RECT, panel_scale, _tabs_x))
+	panel_root.add_child(_make_animals_design_tab_button("gallery", tab_id, ANIMALS_GALLERY_TAB_RECT, panel_scale, _tabs_x))
+	panel_root.add_child(_make_animals_design_tab_button("achievements", tab_id, ANIMALS_ACHIEVEMENTS_TAB_RECT, panel_scale, _tabs_x))
 
 	var scroll: ScrollContainer = ScrollContainer.new()
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(scroll)
+	scroll.name = "AnimalsContentScroll"
+	scroll.mouse_filter = Control.MOUSE_FILTER_PASS
+	panel_root.add_child(scroll)
+	var _scroll_w_scale: float = ANIMALS_GALLERY_SCROLL_WIDTH_SCALE if tab_id == "gallery" else ANIMALS_CARD_BACKGROUND_WIDTH_SCALE
+	_position_animals_design_control(scroll, _scale_animals_reference_rect(ANIMALS_CONTENT_AREA_RECT, _scroll_w_scale, Vector2(1.0, 0.0)), panel_scale, _content_x)
 
 	var content: VBoxContainer = VBoxContainer.new()
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.mouse_filter = Control.MOUSE_FILTER_PASS
-	content.add_theme_constant_override("separation", 10)
+	content.custom_minimum_size = Vector2(ANIMALS_CONTENT_AREA_RECT.size.x * _scroll_w_scale * panel_scale - 28.0, 0)
+	content.add_theme_constant_override("separation", _get_animals_list_separation(tab_id))
 	scroll.add_child(content)
 
 	if tab_id == "gallery":
@@ -2418,6 +3265,96 @@ func _show_animals_view(tab_id: String = "owned") -> void:
 		_populate_animals_achievements(content)
 	else:
 		_populate_owned_animals(content)
+
+
+func _make_animals_design_texture(texture_path: String) -> TextureRect:
+	var texture_rect: TextureRect = TextureRect.new()
+	texture_rect.texture = AssetPaths.load_texture(texture_path)
+	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return texture_rect
+
+
+func _make_animals_design_tab_button(tab_id: String, active_tab_id: String, reference_rect: Rect2, panel_scale: float, x_offset: float = 0.0) -> TextureButton:
+	var button: TextureButton = TextureButton.new()
+	button.name = "AnimalsTab" + tab_id.capitalize()
+	button.texture_normal = AssetPaths.load_texture(_get_animals_design_tab_path(tab_id))
+	button.texture_hover = button.texture_normal
+	button.texture_pressed = button.texture_normal
+	button.ignore_texture_size = true
+	button.stretch_mode = TextureButton.STRETCH_SCALE
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.modulate = Color.WHITE if tab_id == active_tab_id else Color(0.82, 0.82, 0.82, 0.96)
+	button.z_index = 3 if tab_id == active_tab_id else 2
+	button.pressed.connect(func() -> void:
+		_show_animals_view(tab_id)
+	)
+	var raised_rect: Rect2 = _scale_animals_reference_rect(reference_rect, ANIMALS_TAB_GRAPHIC_SCALE)
+	raised_rect.position.y -= reference_rect.size.y * ANIMALS_TAB_RAISE_RATIO
+	_position_animals_design_control(button, raised_rect, panel_scale, x_offset)
+	if tab_id == active_tab_id:
+		_add_animals_active_tab_underline(button)
+	return button
+
+
+func _position_animals_design_control(control: Control, reference_rect: Rect2, panel_scale: float, x_offset: float = 0.0) -> void:
+	control.position = Vector2(reference_rect.position.x * panel_scale + x_offset, reference_rect.position.y * panel_scale)
+	control.size = reference_rect.size * panel_scale
+	control.custom_minimum_size = reference_rect.size * panel_scale
+
+
+func _scale_animals_reference_rect(reference_rect: Rect2, scale_amount: float, axes: Vector2 = Vector2.ONE) -> Rect2:
+	var scale_vector: Vector2 = Vector2(
+		1.0 + (scale_amount - 1.0) * axes.x,
+		1.0 + (scale_amount - 1.0) * axes.y
+	)
+	var scaled_size: Vector2 = reference_rect.size * scale_vector
+	var centered_position: Vector2 = reference_rect.position + (reference_rect.size - scaled_size) * 0.5
+	return Rect2(centered_position, scaled_size)
+
+
+func _add_animals_active_tab_underline(button: Control) -> void:
+	var underline: ColorRect = ColorRect.new()
+	underline.name = "ActiveTabUnderline"
+	underline.color = ANIMALS_ACTIVE_TAB_UNDERLINE_COLOR
+	underline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var underline_size: Vector2 = Vector2(
+		button.size.x * ANIMALS_ACTIVE_TAB_UNDERLINE_WIDTH_RATIO,
+		max(2.0, button.size.y * ANIMALS_ACTIVE_TAB_UNDERLINE_HEIGHT_RATIO)
+	)
+	underline.position = Vector2(
+		(button.size.x - underline_size.x) * 0.5,
+		button.size.y * ANIMALS_ACTIVE_TAB_UNDERLINE_Y_RATIO
+	)
+	underline.size = underline_size
+	button.add_child(underline)
+
+
+func _get_animals_list_separation(tab_id: String) -> int:
+	match tab_id:
+		"gallery":
+			return ANIMALS_GALLERY_LIST_SEPARATION
+		"achievements":
+			return ANIMALS_ACHIEVEMENTS_LIST_SEPARATION
+		_:
+			return ANIMALS_CARD_LIST_SEPARATION
+
+
+func _get_animals_design_title_path() -> String:
+	return ANIMALS_DESIGN_DIR + ("title_en.png" if GameState.get_language() == "en" else "title_pl.png")
+
+
+func _get_animals_design_tab_path(tab_id: String) -> String:
+	var suffix: String = "_en.png" if GameState.get_language() == "en" else "_pl.png"
+	match tab_id:
+		"gallery":
+			return ANIMALS_DESIGN_DIR + "gallery" + suffix
+		"achievements":
+			return ANIMALS_DESIGN_DIR + "achievements" + suffix
+		_:
+			return ANIMALS_DESIGN_DIR + "owned" + suffix
 
 
 func _make_owned_species_group_card(reptile_id: String, instances: Array) -> Control:
@@ -2450,40 +3387,41 @@ func _make_owned_species_group_card(reptile_id: String, instances: Array) -> Con
 			free_count += 1
 
 	var card: PanelContainer = PanelContainer.new()
+	card.custom_minimum_size = _animals_card_bg_vec(0, 104)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.add_theme_stylebox_override("panel", _make_card_style())
+	card.add_theme_stylebox_override("panel", _make_animals_single_card_style())
 
 	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.add_theme_constant_override("margin_left", _animals_ui_size(10))
+	margin.add_theme_constant_override("margin_right", _animals_ui_size(10))
+	margin.add_theme_constant_override("margin_top", _animals_ui_size(10))
+	margin.add_theme_constant_override("margin_bottom", _animals_ui_size(10))
 	card.add_child(margin)
 
 	var row: HBoxContainer = HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 12)
+	row.add_theme_constant_override("separation", _animals_ui_size(12))
 	margin.add_child(row)
 
-	row.add_child(_make_fixed_texture(portrait_path, Vector2(80, 80)))
+	row.add_child(_make_fixed_texture(portrait_path, _animals_image_vec(80, 80)))
 
 	var info: VBoxContainer = VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	info.add_theme_constant_override("separation", 3)
+	info.add_theme_constant_override("separation", _animals_ui_size(3))
 	row.add_child(info)
 
 	var name_lbl: Label = Label.new()
 	name_lbl.text = LocalizationSystem.tr_key(str(reptile.get("name_key", reptile_id)))
 	name_lbl.clip_text = true
-	name_lbl.add_theme_font_size_override("font_size", 17)
+	name_lbl.add_theme_font_size_override("font_size", _animals_text_size(17))
 	_apply_label_color(name_lbl, POPUP_TEXT_PRIMARY)
 	info.add_child(name_lbl)
 
 	var total_lbl: Label = Label.new()
 	total_lbl.text = LocalizationSystem.tr_key("animals.count") + ": " + str(instances.size()) \
 		+ "   " + LocalizationSystem.tr_key("animals.status.free") + ": " + str(free_count)
-	total_lbl.add_theme_font_size_override("font_size", 12)
+	total_lbl.add_theme_font_size_override("font_size", _animals_text_size(12))
 	_apply_label_color(total_lbl, POPUP_TEXT_SECONDARY)
 	info.add_child(total_lbl)
 
@@ -2494,13 +3432,17 @@ func _make_owned_species_group_card(reptile_id: String, instances: Array) -> Con
 		var cnt: int = int(rarity_counts[rarity])
 		var icon_path: String = ReptileSystem.RARITY_ICON_PATHS.get(rarity, "")
 		var label_key: String = ReptileSystem.get_rarity_label_key(rarity)
-		var r_row: HBoxContainer = _make_icon_text_row(icon_path, LocalizationSystem.tr_key(label_key) + ": " + str(cnt), 22)
+		var r_row: HBoxContainer = _make_icon_text_row(icon_path, LocalizationSystem.tr_key(label_key) + ": " + str(cnt), _animals_rarity_icon_size(22), _animals_text_size(12))
 		info.add_child(r_row)
 
+	var btn_offset: MarginContainer = MarginContainer.new()
+	btn_offset.add_theme_constant_override("margin_right", _animals_ui_size(112 * ANIMALS_CARD_ACTION_LEFT_SHIFT_RATIO))
+	row.add_child(btn_offset)
+
 	var btn_col: VBoxContainer = VBoxContainer.new()
-	btn_col.custom_minimum_size = Vector2(112, 0)
+	btn_col.custom_minimum_size = _animals_ui_vec(112, 0)
 	btn_col.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_child(btn_col)
+	btn_offset.add_child(btn_col)
 
 	var enter_btn: Button = _make_owned_card_action_button("animals.view_group")
 	var rid: String = reptile_id
@@ -2541,7 +3483,7 @@ func _populate_owned_animals(parent: VBoxContainer) -> void:
 	if _animals_step == 1 and not _animals_selected_species_id.is_empty():
 		var back_btn := Button.new()
 		back_btn.text = "← " + LocalizationSystem.tr_key("button.back")
-		back_btn.custom_minimum_size = Vector2(130, 42)
+		back_btn.custom_minimum_size = _animals_ui_vec(130, 42)
 		back_btn.add_theme_stylebox_override("normal", _make_button_style(Color(0.78, 0.70, 0.55, 0.55)))
 		back_btn.add_theme_stylebox_override("hover", _make_button_style(Color(0.80, 0.72, 0.57, 0.75)))
 		back_btn.add_theme_stylebox_override("pressed", _make_button_style(Color(0.68, 0.60, 0.47, 0.75)))
@@ -2608,7 +3550,7 @@ func _show_quests_view() -> void:
 
 	var background: TextureRect = TextureRect.new()
 	background.name = "QuestsDesignBackground"
-	background.texture = AssetPaths.load_texture(_get_quests_background_path())
+	background.texture = AssetPaths.load_texture(QUESTS_BG_PATH)
 	background.anchor_left = 0.0
 	background.anchor_top = 0.0
 	background.anchor_right = 1.0
@@ -2617,6 +3559,18 @@ func _show_quests_view() -> void:
 	background.stretch_mode = TextureRect.STRETCH_SCALE
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	quests_view.add_child(background)
+
+	var title_art: TextureRect = TextureRect.new()
+	title_art.name = "QuestsTitleArt"
+	title_art.texture = AssetPaths.load_texture(_get_quests_title_path())
+	title_art.anchor_left = QUEST_TITLE_ANCHOR_LEFT
+	title_art.anchor_top = QUEST_TITLE_ANCHOR_TOP
+	title_art.anchor_right = QUEST_TITLE_ANCHOR_RIGHT
+	title_art.anchor_bottom = QUEST_TITLE_ANCHOR_BOTTOM
+	title_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	title_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	title_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	quests_view.add_child(title_art)
 
 	var close_button: Button = Button.new()
 	close_button.name = "QuestsCloseHitbox"
@@ -2649,7 +3603,7 @@ func _show_quests_view() -> void:
 	list.name = "QuestsList"
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list.mouse_filter = Control.MOUSE_FILTER_PASS
-	list.add_theme_constant_override("separation", 8)
+	list.add_theme_constant_override("separation", QUEST_LIST_SEPARATION)
 	scroll.add_child(list)
 	_make_scroll_safe(list)
 	_populate_quests_list(list)
@@ -2744,30 +3698,44 @@ func _show_upgrades_view() -> void:
 	upgrades_view.anchor_top = 0.0
 	upgrades_view.anchor_right = 1.0
 	upgrades_view.anchor_bottom = 1.0
-	upgrades_view.offset_top = TOP_BAR_HEIGHT + 2
-	upgrades_view.offset_bottom = -(BOTTOM_NAV_HEIGHT + 6)
+	var _upg_avail_h: float = get_viewport_rect().size.y - float(TOP_BAR_HEIGHT) - 2.0 - float(BOTTOM_NAV_HEIGHT) - 6.0
+	var _upg_h_extra: float = _upg_avail_h * UPGRADES_VIEW_EXTRA_H_FRAC * 0.5
+	upgrades_view.offset_top = float(TOP_BAR_HEIGHT) + 2.0 - _upg_h_extra
+	upgrades_view.offset_bottom = -float(BOTTOM_NAV_HEIGHT) - 6.0 + _upg_h_extra
 	add_child(upgrades_view)
 
 	var background: TextureRect = TextureRect.new()
 	background.name = "UpgradesDesignBackground"
-	background.texture = AssetPaths.load_texture(_get_upgrades_background_path())
-	background.anchor_left = 0.025
+	background.texture = AssetPaths.load_texture(UPGRADES_BG_PATH)
+	background.anchor_left = 0.0
 	background.anchor_top = 0.0
-	background.anchor_right = 0.975
+	background.anchor_right = 1.0
 	background.anchor_bottom = 1.0
 	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	background.stretch_mode = TextureRect.STRETCH_SCALE
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	upgrades_view.add_child(background)
 
+	var title_art: TextureRect = TextureRect.new()
+	title_art.name = "UpgradesTitleArt"
+	title_art.texture = AssetPaths.load_texture(_get_upgrades_title_path())
+	title_art.anchor_left = UPGRADE_TITLE_ANCHOR_LEFT
+	title_art.anchor_top = UPGRADE_TITLE_ANCHOR_TOP
+	title_art.anchor_right = UPGRADE_TITLE_ANCHOR_RIGHT
+	title_art.anchor_bottom = UPGRADE_TITLE_ANCHOR_BOTTOM
+	title_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	title_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	title_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	upgrades_view.add_child(title_art)
+
 	var close_button: Button = Button.new()
 	close_button.name = "UpgradesCloseHitbox"
 	close_button.text = ""
 	close_button.flat = true
-	close_button.anchor_left = 0.785
-	close_button.anchor_top = 0.052
-	close_button.anchor_right = 0.945
-	close_button.anchor_bottom = 0.160
+	close_button.anchor_left = UPGRADE_CLOSE_ANCHOR_LEFT
+	close_button.anchor_top = UPGRADE_CLOSE_ANCHOR_TOP
+	close_button.anchor_right = UPGRADE_CLOSE_ANCHOR_RIGHT
+	close_button.anchor_bottom = UPGRADE_CLOSE_ANCHOR_BOTTOM
 	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	close_button.add_theme_stylebox_override("normal", _make_transparent_button_style())
@@ -2778,10 +3746,10 @@ func _show_upgrades_view() -> void:
 
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.name = "UpgradesScroll"
-	scroll.anchor_left = 0.047
-	scroll.anchor_top = 0.15
-	scroll.anchor_right = 0.948
-	scroll.anchor_bottom = 0.955
+	scroll.anchor_left = UPGRADE_SCROLL_LEFT_ANCHOR
+	scroll.anchor_top = UPGRADE_SCROLL_TOP_ANCHOR
+	scroll.anchor_right = UPGRADE_SCROLL_RIGHT_ANCHOR
+	scroll.anchor_bottom = UPGRADE_SCROLL_BOTTOM_ANCHOR
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -2791,7 +3759,7 @@ func _show_upgrades_view() -> void:
 	list.name = "UpgradesList"
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list.mouse_filter = Control.MOUSE_FILTER_PASS
-	list.add_theme_constant_override("separation", -16)
+	list.add_theme_constant_override("separation", UPGRADE_LIST_SEPARATION)
 	scroll.add_child(list)
 	_make_scroll_safe(list)
 	_populate_upgrades_list(list)
@@ -2902,7 +3870,7 @@ func _make_upgrade_card(upgrade: Dictionary) -> Control:
 	var can_afford: bool = at_max or EconomySystem.can_afford("repticash", next_cost)
 
 	var card: Control = Control.new()
-	card.custom_minimum_size = Vector2(0, 224)
+	card.custom_minimum_size = Vector2(0, UPGRADE_CARD_MIN_HEIGHT)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var background: TextureRect = TextureRect.new()
@@ -2916,46 +3884,46 @@ func _make_upgrade_card(upgrade: Dictionary) -> Control:
 
 	var margin: MarginContainer = MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_left", UPGRADE_CARD_MARGIN_LEFT)
 	margin.add_theme_constant_override("margin_right", 0)
-	margin.add_theme_constant_override("margin_top", 14)
-	margin.add_theme_constant_override("margin_bottom", 14)
+	margin.add_theme_constant_override("margin_top", UPGRADE_CARD_MARGIN_V + UPGRADE_CARD_CONTENT_V_EXTRA)
+	margin.add_theme_constant_override("margin_bottom", UPGRADE_CARD_MARGIN_V + UPGRADE_CARD_CONTENT_V_EXTRA)
 	card.add_child(margin)
 
 	var row: HBoxContainer = HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 12)
+	row.add_theme_constant_override("separation", UPGRADE_CARD_ROW_SEP)
 	margin.add_child(row)
 
 	var icon_column: Control = Control.new()
-	icon_column.custom_minimum_size = Vector2(122, 0)
+	icon_column.custom_minimum_size = Vector2(UPGRADE_ICON_COLUMN_W, 0)
 	icon_column.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	icon_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	row.add_child(icon_column)
 
-	var icon_size := Vector2(104, 104)
+	var icon_size := Vector2(UPGRADE_ICON_SIZE, UPGRADE_ICON_SIZE)
 	var icon: Control = _make_icon_or_fallback(str(upgrade.get("icon_path", "")), icon_size, "+")
 	icon.anchor_left = 0.5
 	icon.anchor_top = 0.5
 	icon.anchor_right = 0.5
 	icon.anchor_bottom = 0.5
 	icon.offset_left = -icon_size.x * 0.5 + 9
-	icon.offset_top = -icon_size.y * 0.5 - icon_size.y * 0.05
+	icon.offset_top = -icon_size.y * 0.5
 	icon.offset_right = icon_size.x * 0.5 + 9
-	icon.offset_bottom = icon_size.y * 0.5 - icon_size.y * 0.05
+	icon.offset_bottom = icon_size.y * 0.5
 	icon_column.add_child(icon)
 
 	var info: VBoxContainer = VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	info.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	info.add_theme_constant_override("separation", 0)
 	row.add_child(info)
 
 	var name_label: Label = Label.new()
 	name_label.text = LocalizationSystem.tr_key(str(upgrade.get("name_key", upgrade_id)))
-	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	name_label.add_theme_font_size_override("font_size", 20)
+	name_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	name_label.add_theme_font_size_override("font_size", UPGRADE_TEXT_NAME_SIZE)
 	name_label.add_theme_color_override("font_shadow_color", Color(1.0, 0.86, 0.48, 0.45))
 	name_label.add_theme_constant_override("shadow_offset_x", 1)
 	name_label.add_theme_constant_override("shadow_offset_y", 1)
@@ -2969,10 +3937,10 @@ func _make_upgrade_card(upgrade: Dictionary) -> Control:
 
 	var desc_label: Label = Label.new()
 	desc_label.text = LocalizationSystem.tr_key(str(upgrade.get("description_key", upgrade_id)))
-	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	desc_label.custom_minimum_size = Vector2(0, 30)
 	desc_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	desc_label.add_theme_font_size_override("font_size", 12)
+	desc_label.add_theme_font_size_override("font_size", UPGRADE_TEXT_DESC_SIZE)
 	_apply_label_color(desc_label, POPUP_TEXT_SECONDARY)
 	info.add_child(desc_label)
 
@@ -3006,24 +3974,30 @@ func _make_upgrade_card(upgrade: Dictionary) -> Control:
 			POPUP_TEXT_SUCCESS
 		))
 
-	var action_area: VBoxContainer = VBoxContainer.new()
-	action_area.custom_minimum_size = Vector2(220, 0)
-	action_area.alignment = BoxContainer.ALIGNMENT_BEGIN
-	action_area.add_theme_constant_override("separation", 2)
-	row.add_child(action_area)
-
-	var action_top_spacer: Control = Control.new()
-	action_top_spacer.custom_minimum_size = Vector2(0, 32)
-	action_top_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	action_area.add_child(action_top_spacer)
+	var push_spacer: Control = Control.new()
+	push_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	push_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(push_spacer)
 
 	var price_text: String = "MAX" if at_max else _format_upgrade_cost_text(next_cost)
-	action_area.add_child(_make_upgrade_price_badge(price_text, at_max))
+	var action_row: HBoxContainer = HBoxContainer.new()
+	action_row.add_theme_constant_override("separation", 8)
+	info.add_child(action_row)
+
+	var badge: Control = _make_upgrade_price_badge(price_text, at_max)
+	badge.custom_minimum_size = Vector2(0, UPGRADE_PRICE_BADGE_H)
+	badge.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	action_row.add_child(badge)
 
 	if at_max:
-		action_area.add_child(_make_upgrade_max_state_label())
+		var max_lbl: Label = _make_upgrade_max_state_label()
+		max_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		action_row.add_child(max_lbl)
 	elif can_afford:
-		action_area.add_child(_make_upgrade_buy_texture_button(upgrade_id))
+		var btn: TextureButton = _make_upgrade_buy_texture_button(upgrade_id)
+		btn.custom_minimum_size = Vector2(0, UPGRADE_BUY_BTN_H)
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		action_row.add_child(btn)
 
 	_make_scroll_safe(card)
 	return card
@@ -3133,7 +4107,8 @@ func _make_upgrade_card_fallback(upgrade: Dictionary) -> Control:
 
 func _upgrades_design_assets_available() -> bool:
 	var paths: Array[String] = [
-		_get_upgrades_background_path(),
+		UPGRADES_BG_PATH,
+		_get_upgrades_title_path(),
 		UPGRADES_ROW_BG_PATH,
 		UPGRADES_PRICE_BADGE_PATH,
 		_get_upgrades_buy_button_path(),
@@ -3149,8 +4124,8 @@ func _upgrades_design_assets_available() -> bool:
 	return available
 
 
-func _get_upgrades_background_path() -> String:
-	return UPGRADES_BG_EN_PATH if GameState.get_language() == "en" else UPGRADES_BG_PL_PATH
+func _get_upgrades_title_path() -> String:
+	return UPGRADES_TITLE_EN_PATH if GameState.get_language() == "en" else UPGRADES_TITLE_PL_PATH
 
 
 func _get_upgrades_buy_button_path() -> String:
@@ -3161,7 +4136,7 @@ func _shop_design_assets_available() -> bool:
 	var paths: Array[String] = [
 		_get_shop_background_path(),
 		SHOP_RESOURCE_CARD_BG_PATH,
-		SHOP_REPTILE_ROW_BG_PATH,
+		QUESTS_CARD_BG_PATH,
 		SHOP_BUY_COMMON_BUTTON_PATH,
 		SHOP_BUY_RARE_BUTTON_PATH,
 		SHOP_FOOD_ICON_PATH,
@@ -3176,12 +4151,17 @@ func _shop_design_assets_available() -> bool:
 
 
 func _get_shop_background_path() -> String:
-	return SHOP_BG_EN_PATH if GameState.get_language() == "en" else SHOP_BG_PL_PATH
+	return QUESTS_BG_PATH
+
+
+func _get_shop_title_path() -> String:
+	return SHOP_TITLE_EN_PATH if GameState.get_language() == "en" else SHOP_TITLE_PL_PATH
 
 
 func _quests_design_assets_available() -> bool:
 	var paths: Array[String] = [
-		_get_quests_background_path(),
+		QUESTS_BG_PATH,
+		_get_quests_title_path(),
 		QUESTS_CARD_BG_PATH,
 		_get_quests_claim_button_path()
 	]
@@ -3192,8 +4172,8 @@ func _quests_design_assets_available() -> bool:
 	return true
 
 
-func _get_quests_background_path() -> String:
-	return QUESTS_BG_EN_PATH if GameState.get_language() == "en" else QUESTS_BG_PL_PATH
+func _get_quests_title_path() -> String:
+	return QUESTS_TITLE_EN_PATH if GameState.get_language() == "en" else QUESTS_TITLE_PL_PATH
 
 
 func _get_quests_claim_button_path() -> String:
@@ -3331,29 +4311,36 @@ func _get_shop_habitat_icon_path(preferred_type: String) -> String:
 
 
 func _make_shop_reptile_income_row(reptile_id: String, base_income: float) -> Control:
-	var row: HBoxContainer = HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_BEGIN
-	row.add_theme_constant_override("separation", 3)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var column: VBoxContainer = VBoxContainer.new()
+	column.alignment = BoxContainer.ALIGNMENT_BEGIN
+	column.add_theme_constant_override("separation", 3)
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	var prefix: Label = _make_shop_compact_text(LocalizationSystem.tr_key("ui.base_income") + ":", 10, POPUP_TEXT_SECONDARY, Vector2(78, 22))
-	row.add_child(prefix)
+	var prefix: Label = _make_shop_compact_text(LocalizationSystem.tr_key("ui.base_income"), 10 + SHOP_REPTILE_TEXT_BONUS, POPUP_TEXT_SECONDARY, Vector2(250, 32))
+	prefix.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	column.add_child(prefix)
 
-	_add_shop_income_variant_piece(row, reptile_id, "common", base_income)
-	_add_shop_income_variant_piece(row, reptile_id, "rare", base_income)
-	return row
+	var value_row: HBoxContainer = HBoxContainer.new()
+	value_row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	value_row.add_theme_constant_override("separation", 10)
+	value_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(value_row)
+
+	_add_shop_income_variant_piece(value_row, reptile_id, "common", base_income)
+	_add_shop_income_variant_piece(value_row, reptile_id, "rare", base_income)
+	return column
 
 
 func _add_shop_income_variant_piece(row: HBoxContainer, reptile_id: String, rarity: String, base_income: float) -> void:
 	var variant: Dictionary = ReptileSystem.get_shop_variant_for_rarity(reptile_id, rarity)
 	var icon_path: String = str(variant.get("rarity_icon_path", ReptileSystem.get_rarity_icon_path(rarity))) if not variant.is_empty() else ReptileSystem.get_rarity_icon_path(rarity)
-	var icon: TextureRect = _make_rarity_icon(icon_path, Vector2(16, 16))
+	var icon: TextureRect = _make_rarity_icon(icon_path, SHOP_REPTILE_RARITY_ICON_SIZE)
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(icon)
 
 	var multiplier: float = ReptileSystem.get_variant_income_multiplier(variant) if not variant.is_empty() else ReptileSystem.get_rarity_income_multiplier(rarity)
 	var income_text: String = _format_decimal(base_income * multiplier) + " " + LocalizationSystem.tr_key("currency.repticash") + LocalizationSystem.tr_key("ui.per_minute").replace(" ", "")
-	row.add_child(_make_shop_compact_text(income_text, 10, POPUP_TEXT_SECONDARY, Vector2(62, 22)))
+	row.add_child(_make_shop_compact_text(income_text, 10 + SHOP_REPTILE_TEXT_BONUS, POPUP_TEXT_SECONDARY, Vector2(104, 34)))
 
 
 func _make_shop_compact_text(text: String, font_size: int, color: Color, min_size: Vector2) -> Label:
@@ -3362,6 +4349,7 @@ func _make_shop_compact_text(text: String, font_size: int, color: Color, min_siz
 	label.custom_minimum_size = min_size
 	label.clip_text = true
 	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", font_size)
 	_apply_label_color(label, color)
@@ -3374,15 +4362,15 @@ func _make_upgrade_info_line(icon_path: String, text: String, color: Color) -> C
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 4)
 
-	var icon: TextureRect = _make_fixed_texture(icon_path, Vector2(18, 18))
+	var icon: TextureRect = _make_fixed_texture(icon_path, Vector2(UPGRADE_INFO_ICON_SIZE, UPGRADE_INFO_ICON_SIZE))
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(icon)
 
 	var label: Label = Label.new()
 	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_font_size_override("font_size", UPGRADE_TEXT_INFO_SIZE)
 	_apply_label_color(label, color)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(label)
@@ -3391,7 +4379,7 @@ func _make_upgrade_info_line(icon_path: String, text: String, color: Color) -> C
 
 func _make_upgrade_price_badge(text: String, at_max: bool) -> Control:
 	var badge: Control = Control.new()
-	badge.custom_minimum_size = Vector2(220, 50)
+	badge.custom_minimum_size = Vector2(UPGRADE_PRICE_BADGE_W, UPGRADE_PRICE_BADGE_H)
 	badge.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
@@ -3410,7 +4398,7 @@ func _make_upgrade_price_badge(text: String, at_max: bool) -> Control:
 	label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_font_size_override("font_size", UPGRADE_PRICE_TEXT_SIZE)
 	label.add_theme_color_override("font_color", Color(1.0, 0.96, 0.82, 1.0))
 	label.add_theme_color_override("font_shadow_color", Color(0.18, 0.08, 0.02, 0.95))
 	label.add_theme_constant_override("shadow_offset_x", 1)
@@ -3423,7 +4411,7 @@ func _make_upgrade_price_badge(text: String, at_max: bool) -> Control:
 func _make_upgrade_buy_texture_button(upgrade_id: String) -> TextureButton:
 	var button: TextureButton = TextureButton.new()
 	button.name = "UpgradeBuyButton"
-	button.custom_minimum_size = Vector2(175, 70)
+	button.custom_minimum_size = Vector2(UPGRADE_BUY_BTN_W, UPGRADE_BUY_BTN_H)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.texture_normal = AssetPaths.load_texture(_get_upgrades_buy_button_path())
 	button.texture_hover = button.texture_normal
@@ -3721,7 +4709,7 @@ func _make_quest_card(state: Dictionary) -> Control:
 	var row: HBoxContainer = HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 12)
+	row.add_theme_constant_override("separation", QUEST_CARD_ROW_SEP)
 	margin.add_child(row)
 
 	var info: VBoxContainer = VBoxContainer.new()
@@ -3733,7 +4721,7 @@ func _make_quest_card(state: Dictionary) -> Control:
 	var title_label: Label = Label.new()
 	title_label.text = LocalizationSystem.tr_key(str(state.get("title_key", "")))
 	title_label.clip_text = true
-	title_label.add_theme_font_size_override("font_size", 16)
+	title_label.add_theme_font_size_override("font_size", QUEST_TEXT_TITLE_SIZE)
 	_apply_label_color(title_label, POPUP_TEXT_PRIMARY)
 	var title_wrap: MarginContainer = MarginContainer.new()
 	title_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -3745,7 +4733,7 @@ func _make_quest_card(state: Dictionary) -> Control:
 	var desc_label: Label = Label.new()
 	desc_label.text = LocalizationSystem.tr_key(str(state.get("description_key", "")))
 	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc_label.add_theme_font_size_override("font_size", 12)
+	desc_label.add_theme_font_size_override("font_size", QUEST_TEXT_DESC_SIZE)
 	_apply_label_color(desc_label, POPUP_TEXT_SECONDARY)
 	var desc_wrap: MarginContainer = MarginContainer.new()
 	desc_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -3761,7 +4749,7 @@ func _make_quest_card(state: Dictionary) -> Control:
 
 	var progress_label: Label = Label.new()
 	progress_label.text = LocalizationSystem.tr_key("quests.progress") + ": " + str(displayed_current) + " / " + str(target)
-	progress_label.add_theme_font_size_override("font_size", 12)
+	progress_label.add_theme_font_size_override("font_size", QUEST_TEXT_PROGRESS_SIZE)
 	_apply_label_color(progress_label, POPUP_TEXT_ACCENT)
 	var progress_label_wrap: MarginContainer = MarginContainer.new()
 	progress_label_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -3771,25 +4759,32 @@ func _make_quest_card(state: Dictionary) -> Control:
 	info.add_child(progress_label_wrap)
 
 	var progress_bar: ProgressBar = ProgressBar.new()
+	progress_bar.anchor_left = 0.0
+	progress_bar.anchor_top = 0.0
+	progress_bar.anchor_right = QUEST_PROGRESS_BAR_WIDTH_RATIO
+	progress_bar.anchor_bottom = 1.0
 	progress_bar.min_value = 0
 	progress_bar.max_value = target
 	progress_bar.value = displayed_current
 	progress_bar.show_percentage = false
-	progress_bar.custom_minimum_size = Vector2(0, 13)
-	progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if completed:
 		progress_bar.add_theme_stylebox_override("fill", _make_progress_fill_style(Color(0.18, 0.68, 0.22, 1.0)))
 		progress_bar.add_theme_stylebox_override("background", _make_progress_background_style(Color(0.13, 0.24, 0.12, 0.32)))
+	var progress_bar_ctrl: Control = Control.new()
+	progress_bar_ctrl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	progress_bar_ctrl.custom_minimum_size = Vector2(0, QUEST_PROGRESS_BAR_HEIGHT)
+	progress_bar_ctrl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	progress_bar_ctrl.add_child(progress_bar)
 	var progress_bar_wrap: MarginContainer = MarginContainer.new()
 	progress_bar_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	progress_bar_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	progress_bar_wrap.add_theme_constant_override("margin_left", QUEST_CARD_TEXT_INDENT)
-	progress_bar_wrap.add_child(progress_bar)
+	progress_bar_wrap.add_child(progress_bar_ctrl)
 	info.add_child(progress_bar_wrap)
 
 	var reward_label: Label = Label.new()
 	reward_label.text = _format_quest_reward(state)
-	reward_label.add_theme_font_size_override("font_size", 12)
+	reward_label.add_theme_font_size_override("font_size", QUEST_TEXT_REWARD_SIZE)
 	_apply_label_color(reward_label, POPUP_TEXT_SUCCESS)
 	var reward_label_wrap: MarginContainer = MarginContainer.new()
 	reward_label_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -3804,9 +4799,14 @@ func _make_quest_card(state: Dictionary) -> Control:
 	action_area.add_theme_constant_override("separation", 6)
 	row.add_child(action_area)
 
+	var action_right_spacer: Control = Control.new()
+	action_right_spacer.custom_minimum_size = Vector2(QUEST_ACTION_RIGHT_PADDING, 0)
+	action_right_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(action_right_spacer)
+
 	var status_label: Label = Label.new()
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	status_label.add_theme_font_size_override("font_size", 12)
+	status_label.add_theme_font_size_override("font_size", QUEST_TEXT_STATUS_SIZE)
 	_apply_label_color(status_label, POPUP_TEXT_SECONDARY)
 	action_area.add_child(status_label)
 
@@ -3889,67 +4889,72 @@ func _make_owned_reptile_card(instance: Dictionary) -> Control:
 	var is_assigned: bool = _is_reptile_instance_assigned(instance)
 
 	var card: PanelContainer = PanelContainer.new()
-	card.custom_minimum_size = Vector2(0, 166)
+	card.custom_minimum_size = _animals_card_bg_vec(0, 133)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.add_theme_stylebox_override("panel", _make_card_style())
+	card.add_theme_stylebox_override("panel", _make_animals_single_card_style())
 
 	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.add_theme_constant_override("margin_left", _animals_ui_size(12))
+	margin.add_theme_constant_override("margin_right", _animals_ui_size(12))
+	margin.add_theme_constant_override("margin_top", _animals_ui_size(12))
+	margin.add_theme_constant_override("margin_bottom", _animals_ui_size(12))
 	card.add_child(margin)
 
 	var row: HBoxContainer = HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 12)
+	row.add_theme_constant_override("separation", _animals_ui_size(12))
 	margin.add_child(row)
 
-	row.add_child(_make_fixed_texture(ReptileSystem.get_owned_animal_image_path(instance), Vector2(92, 92)))
+	var _owned_icon: TextureRect = _make_fixed_texture(ReptileSystem.get_owned_animal_image_path(instance), _animals_image_vec(115, 115))
+	_add_owned_reptile_level_badge(_owned_icon, instance)
+	var _icon_shift: MarginContainer = MarginContainer.new()
+	_icon_shift.add_theme_constant_override("margin_left", -_animals_ui_size(6))
+	_icon_shift.add_theme_constant_override("margin_right", 0)
+	_icon_shift.add_theme_constant_override("margin_top", 0)
+	_icon_shift.add_theme_constant_override("margin_bottom", 0)
+	_icon_shift.add_child(_owned_icon)
+	row.add_child(_icon_shift)
 
 	var info: VBoxContainer = VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 4)
+	info.add_theme_constant_override("separation", _animals_ui_size(4))
 	row.add_child(info)
 
 	var name_label: Label = Label.new()
 	name_label.text = _get_reptile_display_name(instance, reptile)
 	name_label.clip_text = true
-	name_label.add_theme_font_size_override("font_size", 16)
+	name_label.add_theme_font_size_override("font_size", _animals_text_size(16))
 	_apply_label_color(name_label, POPUP_TEXT_PRIMARY)
 	info.add_child(name_label)
 
 	var species_label: Label = Label.new()
 	species_label.text = LocalizationSystem.tr_key(str(reptile.get("name_key", reptile_id)))
 	species_label.clip_text = true
-	species_label.add_theme_font_size_override("font_size", 12)
+	species_label.add_theme_font_size_override("font_size", _animals_text_size(12))
 	_apply_label_color(species_label, POPUP_TEXT_SECONDARY)
 	info.add_child(species_label)
 
-	var variant_label: Label = Label.new()
-	variant_label.text = LocalizationSystem.tr_key("ui.variant") + ": " + LocalizationSystem.tr_key(str(variant.get("name_key", "ui.variant")))
-	variant_label.clip_text = true
-	variant_label.add_theme_font_size_override("font_size", 12)
-	_apply_label_color(variant_label, POPUP_TEXT_SECONDARY)
-	info.add_child(variant_label)
-
 	var owned_rarity: String = str(instance.get("rarity", str(variant.get("rarity", "common"))))
 	var owned_rarity_icon: String = ReptileSystem.RARITY_ICON_PATHS.get(owned_rarity, str(variant.get("rarity_icon_path", "")))
-	var rarity_row: HBoxContainer = _make_icon_text_row(owned_rarity_icon, LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(owned_rarity)), 28)
+	var rarity_row: HBoxContainer = _make_icon_text_row(owned_rarity_icon, LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(owned_rarity)), _animals_rarity_icon_size(28), _animals_text_size(12))
 	info.add_child(rarity_row)
 
 	var sex_icon_path: String = FEMALE_ICON_PATH if str(instance.get("sex", "male")) == "female" else MALE_ICON_PATH
-	info.add_child(_make_icon_text_row(sex_icon_path, _get_localized_sex(str(instance.get("sex", "male"))), 28))
+	info.add_child(_make_icon_text_row(sex_icon_path, _get_localized_sex(str(instance.get("sex", "male"))), _animals_rarity_icon_size(28), _animals_text_size(12)))
 
 	var status_icon_path: String = ASSIGNED_ICON_PATH if is_assigned else FREE_ICON_PATH
 	var status_key: String = "animals.status.assigned" if is_assigned else "animals.status.free"
-	info.add_child(_make_icon_text_row(status_icon_path, LocalizationSystem.tr_key(status_key), 28))
+	info.add_child(_make_icon_text_row(status_icon_path, LocalizationSystem.tr_key(status_key), _animals_rarity_icon_size(28), _animals_text_size(12)))
+
+	var action_offset: MarginContainer = MarginContainer.new()
+	action_offset.add_theme_constant_override("margin_right", _animals_ui_size(112 * ANIMALS_CARD_ACTION_LEFT_SHIFT_RATIO))
+	row.add_child(action_offset)
 
 	var action_area: VBoxContainer = VBoxContainer.new()
-	action_area.custom_minimum_size = Vector2(112, 0)
+	action_area.custom_minimum_size = _animals_ui_vec(112, 0)
 	action_area.alignment = BoxContainer.ALIGNMENT_CENTER
-	action_area.add_theme_constant_override("separation", 8)
-	row.add_child(action_area)
+	action_area.add_theme_constant_override("separation", _animals_ui_size(8))
+	action_offset.add_child(action_area)
 
 	var manage_button: Button = _make_owned_card_action_button("animals.manage")
 	manage_button.pressed.connect(func() -> void:
@@ -3976,6 +4981,38 @@ func _make_owned_reptile_card(instance: Dictionary) -> Control:
 	return card
 
 
+func _add_owned_reptile_level_badge(parent: Control, instance: Dictionary) -> void:
+	var level: int = ReptileSystem.get_reptile_level(instance)
+	var badge_size: int = _animals_ui_size(43)
+	var badge: PanelContainer = PanelContainer.new()
+	badge.name = "ReptileLevelBadge"
+	badge.custom_minimum_size = Vector2(badge_size, badge_size)
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.position = Vector2(-_animals_ui_size(2), -_animals_ui_size(2))
+
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.78, 0.08, 0.06, 0.96)
+	style.border_color = Color(1.0, 0.86, 0.62, 0.95)
+	style.set_border_width_all(max(1, _animals_ui_size(1)))
+	style.set_corner_radius_all(int(round(float(badge_size) * 0.5)))
+	style.shadow_color = Color(0.10, 0.02, 0.01, 0.35)
+	style.shadow_size = max(2, _animals_ui_size(3))
+	badge.add_theme_stylebox_override("panel", style)
+	parent.add_child(badge)
+
+	var label: Label = Label.new()
+	label.text = str(level)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", _animals_text_size(18))
+	label.add_theme_color_override("font_color", Color(1.0, 0.96, 0.88, 1.0))
+	label.add_theme_color_override("font_shadow_color", Color(0.18, 0.02, 0.01, 0.70))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_child(label)
+
+
 func _populate_animals_gallery(parent: VBoxContainer) -> void:
 	var discovered_count: int = _get_expected_gallery_discovered_count()
 	var total_count: int = GALLERY_REPTILE_IDS.size() * GALLERY_RARITIES.size()
@@ -3985,9 +5022,10 @@ func _populate_animals_gallery(parent: VBoxContainer) -> void:
 		LocalizationSystem.tr_key("animals.gallery_progress") + "\n"
 		+ LocalizationSystem.tr_key("animals.discovered") + ": " + str(discovered_count) + " / " + str(total_count) + "\n"
 		+ LocalizationSystem.tr_key("animals.completion") + ": " + str(completion) + "%",
-		14
+		_animals_gallery_content_size(_animals_text_size(14) + 5)
 	)
 	_apply_label_color(progress, POPUP_TEXT_ACCENT)
+	_make_label_visually_bold(progress)
 	parent.add_child(progress)
 
 	for reptile_id_value in GALLERY_REPTILE_IDS:
@@ -3998,30 +5036,30 @@ func _make_gallery_species_section(reptile_id: String) -> Control:
 	var reptile: Dictionary = ReptileSystem.get_reptile(reptile_id)
 	var section: PanelContainer = PanelContainer.new()
 	section.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	section.add_theme_stylebox_override("panel", _make_card_style())
+	section.add_theme_stylebox_override("panel", _make_animals_single_card_style())
 
 	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 14)
-	margin.add_theme_constant_override("margin_right", 14)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.add_theme_constant_override("margin_left", _animals_ui_size(14))
+	margin.add_theme_constant_override("margin_right", _animals_ui_size(14))
+	margin.add_theme_constant_override("margin_top", _animals_ui_size(12))
+	margin.add_theme_constant_override("margin_bottom", _animals_ui_size(12))
 	section.add_child(margin)
 
 	var column: VBoxContainer = VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	column.add_theme_constant_override("separation", 10)
+	column.add_theme_constant_override("separation", _animals_ui_size(10))
 	margin.add_child(column)
 
 	var species_label: Label = Label.new()
 	species_label.text = LocalizationSystem.tr_key(str(reptile.get("name_key", reptile_id)))
 	species_label.clip_text = true
-	species_label.add_theme_font_size_override("font_size", 16)
+	species_label.add_theme_font_size_override("font_size", _animals_gallery_content_size(_animals_text_size(16)))
 	_apply_label_color(species_label, POPUP_TEXT_PRIMARY)
 	column.add_child(species_label)
 
 	var slot_row: HBoxContainer = HBoxContainer.new()
 	slot_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	slot_row.add_theme_constant_override("separation", 8)
+	slot_row.add_theme_constant_override("separation", _animals_gallery_content_size(_animals_ui_size(8)))
 	column.add_child(slot_row)
 
 	for rarity_value in GALLERY_RARITIES:
@@ -4039,58 +5077,51 @@ func _make_gallery_rarity_slot(reptile_id: String, rarity: String) -> Control:
 	var discovered: bool = has_variant_data and ReptileSystem.is_variant_discovered(variant_id)
 
 	var slot: PanelContainer = PanelContainer.new()
-	slot.custom_minimum_size = Vector2(0, 168)
+	slot.custom_minimum_size = _animals_card_bg_vec(0, 168, ANIMALS_CARD_BACKGROUND_WIDTH_SCALE, ANIMALS_GALLERY_SLOT_BACKGROUND_HEIGHT_SCALE)
 	slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	slot.add_theme_stylebox_override("panel", _make_gallery_slot_style(discovered))
 
 	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
+	margin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	margin.add_theme_constant_override("margin_left", _animals_gallery_content_size(_animals_ui_size(8)))
+	margin.add_theme_constant_override("margin_right", _animals_gallery_content_size(_animals_ui_size(8)))
+	margin.add_theme_constant_override("margin_top", _animals_ui_size(8))
+	margin.add_theme_constant_override("margin_bottom", _animals_ui_size(8))
 	slot.add_child(margin)
 
 	var column: VBoxContainer = VBoxContainer.new()
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
-	column.add_theme_constant_override("separation", 4)
+	column.add_theme_constant_override("separation", _animals_ui_size(4))
 	margin.add_child(column)
 
 	var image_path: String = _get_variant_image_path(reptile, variant, false) if discovered else _get_gallery_shadow_path(reptile_id, variant)
-	var image: TextureRect = _make_fixed_texture(image_path, Vector2(72, 72))
+	var image: TextureRect = _make_fixed_texture(image_path, _animals_gallery_content_vec(_animals_image_vec(72, 72)))
 	image.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	column.add_child(image)
 
 	var rarity_icon_path: String = str(variant.get("rarity_icon_path", ReptileSystem.get_rarity_icon_path(rarity))) if has_variant_data else ReptileSystem.get_rarity_icon_path(rarity)
 	var rarity_row: HBoxContainer = HBoxContainer.new()
 	rarity_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	rarity_row.add_theme_constant_override("separation", 4)
+	rarity_row.add_theme_constant_override("separation", _animals_ui_size(4))
 	column.add_child(rarity_row)
 
-	var rarity_icon: TextureRect = _make_fixed_texture(rarity_icon_path, Vector2(22, 22))
+	var rarity_icon_size: int = _animals_gallery_content_size(_animals_rarity_icon_size(22))
+	var rarity_icon: TextureRect = _make_fixed_texture(rarity_icon_path, Vector2(rarity_icon_size, rarity_icon_size))
 	rarity_row.add_child(rarity_icon)
 
 	var rarity_label: Label = Label.new()
 	rarity_label.text = LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(rarity))
 	rarity_label.clip_text = true
-	rarity_label.add_theme_font_size_override("font_size", 11)
+	rarity_label.add_theme_font_size_override("font_size", _animals_gallery_content_size(_animals_text_size(11)))
 	_apply_label_color(rarity_label, POPUP_TEXT_ACCENT)
 	rarity_row.add_child(rarity_label)
-
-	var variant_name: String = LocalizationSystem.tr_key(str(variant.get("name_key", "ui.variant"))) if discovered else "???"
-	var variant_label: Label = Label.new()
-	variant_label.text = variant_name
-	variant_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	variant_label.clip_text = true
-	variant_label.add_theme_font_size_override("font_size", 11)
-	_apply_label_color(variant_label, POPUP_TEXT_SECONDARY)
-	column.add_child(variant_label)
 
 	var state_key: String = "animals.discovered_state" if discovered else "animals.undiscovered_state"
 	var state_label: Label = Label.new()
 	state_label.text = LocalizationSystem.tr_key(state_key)
 	state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	state_label.clip_text = true
-	state_label.add_theme_font_size_override("font_size", 10)
+	state_label.add_theme_font_size_override("font_size", _animals_gallery_content_size(_animals_text_size(10)))
 	_apply_label_color(state_label, POPUP_TEXT_SUCCESS if discovered else POPUP_TEXT_SECONDARY)
 	column.add_child(state_label)
 
@@ -4105,11 +5136,6 @@ func _populate_animals_achievements(parent: VBoxContainer) -> void:
 		parent.add_child(unavailable)
 		return
 
-	var title: Label = _make_popup_label(LocalizationSystem.tr_key("achievements.title"), 18)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_apply_label_color(title, POPUP_TEXT_PRIMARY)
-	parent.add_child(title)
-
 	var states: Array = AchievementSystem.get_achievement_states()
 	for state_value in states:
 		if typeof(state_value) != TYPE_DICTIONARY:
@@ -4121,44 +5147,45 @@ func _populate_animals_achievements(parent: VBoxContainer) -> void:
 func _make_achievement_card(state: Dictionary) -> Control:
 	var card: PanelContainer = PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.custom_minimum_size = Vector2(0, 142)
-	card.add_theme_stylebox_override("panel", _make_card_style())
+	card.custom_minimum_size = _animals_card_bg_vec(0, 142, ANIMALS_CARD_BACKGROUND_WIDTH_SCALE, ANIMALS_ACHIEVEMENT_CARD_BACKGROUND_HEIGHT_SCALE)
+	card.add_theme_stylebox_override("panel", _make_animals_single_card_style())
 
 	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	margin.add_theme_constant_override("margin_left", _animals_ui_size(12))
+	margin.add_theme_constant_override("margin_right", _animals_ui_size(12))
+	margin.add_theme_constant_override("margin_top", _animals_ui_size(12))
+	margin.add_theme_constant_override("margin_bottom", _animals_ui_size(12))
 	card.add_child(margin)
 
 	var row: HBoxContainer = HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 12)
+	row.add_theme_constant_override("separation", _animals_ui_size(12))
 	margin.add_child(row)
 
 	var icon_path: String = str(state.get("icon_path", ""))
 	if icon_path.is_empty() or not ResourceLoader.exists(icon_path):
 		icon_path = "res://assets/art/ui/icons/achievements/buy_first_reptiles.png"
-	var icon: TextureRect = _make_fixed_texture(icon_path, Vector2(72, 72))
+	var icon: TextureRect = _make_fixed_texture(icon_path, _animals_image_vec(72, 72))
 	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	row.add_child(icon)
 
 	var info: VBoxContainer = VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 4)
+	info.add_theme_constant_override("separation", _animals_ui_size(4))
 	row.add_child(info)
 
 	var title_label: Label = Label.new()
 	title_label.text = LocalizationSystem.tr_key(str(state.get("title_key", "")))
 	title_label.clip_text = true
-	title_label.add_theme_font_size_override("font_size", 16)
+	title_label.add_theme_font_size_override("font_size", _animals_text_size(16))
 	_apply_label_color(title_label, POPUP_TEXT_PRIMARY)
 	info.add_child(title_label)
 
 	var desc_label: Label = Label.new()
 	desc_label.text = LocalizationSystem.tr_key(str(state.get("description_key", "")))
 	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc_label.add_theme_font_size_override("font_size", 12)
+	desc_label.add_theme_font_size_override("font_size", _animals_text_size(12))
 	_apply_label_color(desc_label, POPUP_TEXT_SECONDARY)
 	info.add_child(desc_label)
 
@@ -4168,7 +5195,7 @@ func _make_achievement_card(state: Dictionary) -> Control:
 	var displayed_current: int = target if completed else current
 	var progress_text: Label = Label.new()
 	progress_text.text = LocalizationSystem.tr_key("achievements.progress") + ": " + str(displayed_current) + " / " + str(target)
-	progress_text.add_theme_font_size_override("font_size", 12)
+	progress_text.add_theme_font_size_override("font_size", _animals_text_size(12))
 	_apply_label_color(progress_text, POPUP_TEXT_ACCENT)
 	info.add_child(progress_text)
 
@@ -4177,7 +5204,7 @@ func _make_achievement_card(state: Dictionary) -> Control:
 	progress_bar.max_value = target
 	progress_bar.value = displayed_current
 	progress_bar.show_percentage = false
-	progress_bar.custom_minimum_size = Vector2(0, 16)
+	progress_bar.custom_minimum_size = _animals_ui_vec(0, 16)
 	progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if completed:
 		progress_bar.add_theme_stylebox_override("fill", _make_progress_fill_style(Color(0.18, 0.68, 0.22, 1.0)))
@@ -4186,19 +5213,19 @@ func _make_achievement_card(state: Dictionary) -> Control:
 
 	var reward_label: Label = Label.new()
 	reward_label.text = _format_achievement_reward(state)
-	reward_label.add_theme_font_size_override("font_size", 12)
+	reward_label.add_theme_font_size_override("font_size", _animals_text_size(12))
 	_apply_label_color(reward_label, POPUP_TEXT_SUCCESS)
 	info.add_child(reward_label)
 
 	var action_area: VBoxContainer = VBoxContainer.new()
-	action_area.custom_minimum_size = Vector2(112, 0)
+	action_area.custom_minimum_size = _animals_ui_vec(112, 0)
 	action_area.alignment = BoxContainer.ALIGNMENT_CENTER
-	action_area.add_theme_constant_override("separation", 6)
+	action_area.add_theme_constant_override("separation", _animals_ui_size(6))
 	row.add_child(action_area)
 
 	var status_label: Label = Label.new()
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	status_label.add_theme_font_size_override("font_size", 12)
+	status_label.add_theme_font_size_override("font_size", _animals_text_size(12))
 	_apply_label_color(status_label, POPUP_TEXT_SECONDARY)
 	action_area.add_child(status_label)
 
@@ -4580,15 +5607,22 @@ func _show_reward_claim_feedback_popup(reward_text: String, title_key: String) -
 
 
 func _show_upgrade_blocked_popup() -> void:
-	_show_feedback_modal(LocalizationSystem.tr_key("habitat.upgrade_blocked_title"), LocalizationSystem.tr_key("habitat.remove_reptile_first"), "ui.ok", false)
+	_show_feedback_modal(LocalizationSystem.tr_key("habitat.upgrade_blocked_title"), LocalizationSystem.tr_key("habitat.remove_reptile_first"), "ui.ok", false, 1.5)
 
 
 func _add_toast() -> void:
 	_toast_panel = PanelContainer.new()
 	_toast_panel.name = "BiomeToastPanel"
 	_toast_panel.z_index = 200
-	_toast_panel.position = Vector2((720.0 - 580.0) / 2.0, float(TOP_BAR_HEIGHT) + 8.0)
-	_toast_panel.custom_minimum_size = Vector2(580.0, 0.0)
+	_toast_panel.anchor_left = 0.5
+	_toast_panel.anchor_top = 0.0
+	_toast_panel.anchor_right = 0.5
+	_toast_panel.anchor_bottom = 0.0
+	_toast_panel.offset_left = -326.0
+	_toast_panel.offset_top = float(TOP_BAR_HEIGHT) + 8.0
+	_toast_panel.offset_right = 326.0
+	_toast_panel.offset_bottom = float(TOP_BAR_HEIGHT) + 88.0
+	_toast_panel.custom_minimum_size = Vector2(652.0, 0.0)
 	_toast_panel.grow_vertical = Control.GROW_DIRECTION_END
 	_toast_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_toast_panel.visible = false
@@ -4606,7 +5640,7 @@ func _add_toast() -> void:
 
 	_toast_label = Label.new()
 	_toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_toast_label.add_theme_font_size_override("font_size", 14)
+	_toast_label.add_theme_font_size_override("font_size", 32)
 	_toast_label.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	_toast_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_toast_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -4629,8 +5663,9 @@ func _show_toast_raw(text: String) -> void:
 	)
 
 
-func _show_feedback_modal(title_text: String, message_text: String, ok_key: String = "ui.ok", reward_style: bool = false) -> void:
+func _show_feedback_modal(title_text: String, message_text: String, ok_key: String = "ui.ok", reward_style: bool = false, ui_scale: float = 1.0) -> void:
 	_close_feedback_modal()
+	ui_scale = max(0.5, ui_scale)
 
 	feedback_modal = Control.new()
 	feedback_modal.name = "FeedbackModal"
@@ -4649,29 +5684,29 @@ func _show_feedback_modal(title_text: String, message_text: String, ok_key: Stri
 
 	var panel: PanelContainer = PanelContainer.new()
 	var panel_height: float = 230.0 if reward_style else 210.0
-	panel.custom_minimum_size = Vector2(410, panel_height)
+	panel.custom_minimum_size = Vector2(410, panel_height) * ui_scale
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
 	center.add_child(panel)
 
 	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 22)
-	margin.add_theme_constant_override("margin_right", 22)
-	margin.add_theme_constant_override("margin_top", 20)
-	margin.add_theme_constant_override("margin_bottom", 20)
+	margin.add_theme_constant_override("margin_left", int(round(22.0 * ui_scale)))
+	margin.add_theme_constant_override("margin_right", int(round(22.0 * ui_scale)))
+	margin.add_theme_constant_override("margin_top", int(round(20.0 * ui_scale)))
+	margin.add_theme_constant_override("margin_bottom", int(round(20.0 * ui_scale)))
 	panel.add_child(margin)
 
 	var column: VBoxContainer = VBoxContainer.new()
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
-	column.add_theme_constant_override("separation", 12)
+	column.add_theme_constant_override("separation", int(round(12.0 * ui_scale)))
 	margin.add_child(column)
 
 	if not title_text.is_empty():
-		var title: Label = _make_popup_label(title_text, 21)
+		var title: Label = _make_popup_label(title_text, int(round(21.0 * ui_scale)))
 		_apply_label_color(title, POPUP_TEXT_PRIMARY)
 		column.add_child(title)
 
-	var message_font_size: int = 18 if reward_style else 16
+	var message_font_size: int = int(round((18.0 if reward_style else 16.0) * ui_scale))
 	var message: Label = _make_popup_label(message_text, message_font_size)
 	_apply_label_color(message, POPUP_TEXT_SUCCESS if reward_style else POPUP_TEXT_PRIMARY)
 	column.add_child(message)
@@ -4680,6 +5715,8 @@ func _show_feedback_modal(title_text: String, message_text: String, ok_key: Stri
 		_close_feedback_modal()
 	)
 	_style_primary_action_button(ok_button)
+	ok_button.custom_minimum_size = Vector2(0, 44.0 * ui_scale)
+	ok_button.add_theme_font_size_override("font_size", int(round(14.0 * ui_scale)))
 	column.add_child(ok_button)
 
 
@@ -4904,6 +5941,62 @@ func _show_variant_discovery_popup(variant_id: String, instance_id: String = "")
 	var overlay: ColorRect = _make_modal_dim_overlay(0.66)
 	variant_discovery_modal.add_child(overlay)
 
+	var background_texture: Texture2D = AssetPaths.load_texture(DISCOVERY_POPUP_BG_PATH)
+	if background_texture == null:
+		push_warning("BiomeView: missing discovery popup background: " + DISCOVERY_POPUP_BG_PATH)
+		_build_discovery_popup_legacy(variant, reptile, discovered_sex)
+		return
+
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var reference_scale: float = min(viewport_size.x / DISCOVERY_POPUP_REF_SIZE.x, viewport_size.y / DISCOVERY_POPUP_REF_SIZE.y) * DISCOVERY_POPUP_WINDOW_SCALE
+	var reference_origin: Vector2 = (viewport_size - DISCOVERY_POPUP_REF_SIZE * reference_scale) * 0.5
+
+	var background: TextureRect = TextureRect.new()
+	background.texture = background_texture
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_SCALE
+	background.mouse_filter = Control.MOUSE_FILTER_STOP
+	variant_discovery_modal.add_child(background)
+	_position_reference_control(background, DISCOVERY_POPUP_REF_SIZE * 0.5, DISCOVERY_POPUP_REF_SIZE, reference_origin, reference_scale)
+
+	var rarity_icon_tex: Texture2D = AssetPaths.load_texture(str(variant.get("rarity_icon_path", "")))
+	if rarity_icon_tex != null:
+		var rarity_icon: TextureRect = TextureRect.new()
+		rarity_icon.texture = rarity_icon_tex
+		rarity_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rarity_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		rarity_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		variant_discovery_modal.add_child(rarity_icon)
+		_position_reference_control(rarity_icon, DISCOVERY_POPUP_ICON_CENTER, DISCOVERY_POPUP_ICON_REF_SIZE, reference_origin, reference_scale)
+
+	_add_habitat_options_label(variant_discovery_modal, LocalizationSystem.tr_key("ui.new_rarity_discovered"), DISCOVERY_POPUP_TITLE_CENTER, DISCOVERY_POPUP_TITLE_REF_SIZE, 39, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, true)
+
+	var portrait_tex: Texture2D = AssetPaths.load_texture(_get_variant_image_path(reptile, variant, false))
+	if portrait_tex != null:
+		var portrait: TextureRect = TextureRect.new()
+		portrait.texture = portrait_tex
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		variant_discovery_modal.add_child(portrait)
+		_position_reference_control(portrait, DISCOVERY_POPUP_PORTRAIT_CENTER, DISCOVERY_POPUP_PORTRAIT_REF_SIZE, reference_origin, reference_scale)
+
+	var species_text: String = LocalizationSystem.tr_key("reptile.species") + ": " + LocalizationSystem.tr_key(str(reptile.get("name_key", "")))
+	_add_habitat_options_label(variant_discovery_modal, species_text, Vector2(DISCOVERY_POPUP_DETAIL_CENTER_X, DISCOVERY_POPUP_SPECIES_Y), DISCOVERY_POPUP_DETAIL_REF_SIZE, 31, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, false)
+
+	var variant_text: String = LocalizationSystem.tr_key("reptile.variant") + ": " + LocalizationSystem.tr_key(str(variant.get("name_key", "")))
+	_add_habitat_options_label(variant_discovery_modal, variant_text, Vector2(DISCOVERY_POPUP_DETAIL_CENTER_X, DISCOVERY_POPUP_VARIANT_Y), DISCOVERY_POPUP_DETAIL_REF_SIZE, 31, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, false)
+
+	var sex_text: String = LocalizationSystem.tr_key("ui.sex") + ": " + _get_localized_sex(discovered_sex)
+	_add_habitat_options_label(variant_discovery_modal, sex_text, Vector2(DISCOVERY_POPUP_DETAIL_CENTER_X, DISCOVERY_POPUP_SEX_Y), DISCOVERY_POPUP_DETAIL_REF_SIZE, 31, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, false)
+
+	var rarity_text: String = LocalizationSystem.tr_key("reptile.rarity") + ": " + LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(str(variant.get("rarity", "common"))))
+	_add_habitat_options_label(variant_discovery_modal, rarity_text, Vector2(DISCOVERY_POPUP_DETAIL_CENTER_X, DISCOVERY_POPUP_RARITY_Y), DISCOVERY_POPUP_DETAIL_REF_SIZE, 31, POPUP_TEXT_ACCENT, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, false)
+
+	_add_habitat_options_button(variant_discovery_modal, LocalizationSystem.tr_key("ui.ok"), DISCOVERY_POPUP_OK_CENTER, DISCOVERY_POPUP_OK_REF_SIZE, 34, _close_variant_discovery_modal, reference_origin, reference_scale)
+
+
+func _build_discovery_popup_legacy(variant: Dictionary, reptile: Dictionary, discovered_sex: String) -> void:
 	var center: CenterContainer = CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.offset_left = 24
@@ -4930,7 +6023,7 @@ func _show_variant_discovery_popup(variant_id: String, instance_id: String = "")
 	column.add_theme_constant_override("separation", 10)
 	margin.add_child(column)
 
-	var title: Label = _make_popup_label(LocalizationSystem.tr_key("ui.new_variant_discovered"), 21)
+	var title: Label = _make_popup_label(LocalizationSystem.tr_key("ui.new_rarity_discovered"), 21)
 	_apply_label_color(title, POPUP_TEXT_PRIMARY)
 	column.add_child(title)
 
@@ -4955,10 +6048,6 @@ func _show_variant_discovery_popup(variant_id: String, instance_id: String = "")
 	var reptile_label: Label = _make_popup_label(LocalizationSystem.tr_key(str(reptile.get("name_key", ""))), 15)
 	_apply_label_color(reptile_label, POPUP_TEXT_SECONDARY)
 	column.add_child(reptile_label)
-
-	var variant_label: Label = _make_popup_label(LocalizationSystem.tr_key("ui.variant") + ": " + LocalizationSystem.tr_key(str(variant.get("name_key", "ui.variant"))), 15)
-	_apply_label_color(variant_label, POPUP_TEXT_SECONDARY)
-	column.add_child(variant_label)
 
 	var sex_label: Label = _make_popup_label(LocalizationSystem.tr_key("ui.sex") + ": " + _get_localized_sex(discovered_sex), 15)
 	_apply_label_color(sex_label, POPUP_TEXT_SECONDARY)
@@ -5003,7 +6092,6 @@ func _show_reptile_name_popup(instance_id: String, edit_mode: bool) -> void:
 
 	var instance: Dictionary = instance_value as Dictionary
 	var reptile: Dictionary = ReptileSystem.get_reptile(str(instance.get("reptile_id", "")))
-	var variant: Dictionary = ReptileSystem.get_owned_animal_variant(instance)
 
 	naming_modal = Control.new()
 	naming_modal.name = "ReptileNamingModal"
@@ -5013,6 +6101,108 @@ func _show_reptile_name_popup(instance_id: String, edit_mode: bool) -> void:
 	var overlay: ColorRect = _make_modal_dim_overlay(0.66)
 	naming_modal.add_child(overlay)
 
+	var background_texture: Texture2D = AssetPaths.load_texture(NAME_POPUP_BG_PATH)
+	if background_texture == null:
+		push_warning("BiomeView: missing name popup background: " + NAME_POPUP_BG_PATH)
+		_build_name_popup_legacy(instance_id, instance, reptile, edit_mode)
+		return
+
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var reference_scale: float = min(viewport_size.x / NAME_POPUP_REF_SIZE.x, viewport_size.y / NAME_POPUP_REF_SIZE.y) * NAME_POPUP_WINDOW_SCALE
+	var reference_origin: Vector2 = (viewport_size - NAME_POPUP_REF_SIZE * reference_scale) * 0.5
+
+	var background: TextureRect = TextureRect.new()
+	background.texture = background_texture
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_SCALE
+	background.mouse_filter = Control.MOUSE_FILTER_STOP
+	naming_modal.add_child(background)
+	_position_reference_control(background, NAME_POPUP_REF_SIZE * 0.5, NAME_POPUP_REF_SIZE, reference_origin, reference_scale)
+
+	var title_key: String = "ui.rename_reptile" if edit_mode else "ui.name_reptile"
+	_add_habitat_options_label(naming_modal, LocalizationSystem.tr_key(title_key), NAME_POPUP_TITLE_CENTER, NAME_POPUP_TITLE_REF_SIZE, NAME_POPUP_TITLE_FONT_SIZE, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, true)
+
+	var portrait_tex: Texture2D = AssetPaths.load_texture(ReptileSystem.get_owned_animal_image_path(instance))
+	if portrait_tex != null:
+		var portrait: TextureRect = TextureRect.new()
+		portrait.texture = portrait_tex
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		naming_modal.add_child(portrait)
+		_position_reference_control(portrait, NAME_POPUP_PORTRAIT_CENTER, NAME_POPUP_PORTRAIT_REF_SIZE, reference_origin, reference_scale)
+
+	var species_name: String = LocalizationSystem.tr_key(str(reptile.get("name_key", "")))
+	_add_habitat_options_label(naming_modal, species_name, NAME_POPUP_SPECIES_CENTER, NAME_POPUP_SPECIES_REF_SIZE, NAME_POPUP_SPECIES_FONT_SIZE, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_LEFT, reference_origin, reference_scale, false)
+
+	_add_habitat_options_label(naming_modal, LocalizationSystem.tr_key("ui.reptile_name_prompt"), NAME_POPUP_PROMPT_CENTER, NAME_POPUP_PROMPT_REF_SIZE, NAME_POPUP_PROMPT_FONT_SIZE, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, false)
+
+	var input: LineEdit = LineEdit.new()
+	input.name = "NameInput"
+	input.placeholder_text = LocalizationSystem.tr_key("ui.reptile_name_placeholder")
+	input.max_length = NAME_MAX_LENGTH
+	input.text = str(instance.get("custom_name", "")) if edit_mode else ""
+	input.add_theme_font_size_override("font_size", int(round(float(NAME_POPUP_INPUT_FONT_SIZE) * reference_scale)))
+	input.add_theme_color_override("font_color", POPUP_TEXT_PRIMARY)
+	input.add_theme_color_override("font_placeholder_color", Color(POPUP_TEXT_SECONDARY.r, POPUP_TEXT_SECONDARY.g, POPUP_TEXT_SECONDARY.b, 0.55))
+	var input_style: StyleBoxFlat = StyleBoxFlat.new()
+	input_style.bg_color = Color(1.0, 1.0, 1.0, 0.0)
+	input_style.draw_center = false
+	input.add_theme_stylebox_override("normal", input_style)
+	input.add_theme_stylebox_override("focus", input_style)
+	naming_modal.add_child(input)
+	_position_reference_control(input, NAME_POPUP_INPUT_CENTER, NAME_POPUP_INPUT_REF_SIZE, reference_origin, reference_scale)
+
+	var validation_label: Label = Label.new()
+	validation_label.name = "ValidationLabel"
+	validation_label.visible = false
+	validation_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	validation_label.add_theme_font_size_override("font_size", int(round(float(NAME_POPUP_VALIDATION_FONT_SIZE) * reference_scale)))
+	_apply_label_color(validation_label, Color(0.62, 0.12, 0.08, 1.0))
+	naming_modal.add_child(validation_label)
+	_position_reference_control(validation_label,
+		Vector2(NAME_POPUP_INPUT_CENTER.x, NAME_POPUP_INPUT_CENTER.y + NAME_POPUP_INPUT_REF_SIZE.y * 0.5 + 22.0),
+		Vector2(NAME_POPUP_INPUT_REF_SIZE.x, 36.0),
+		reference_origin, reference_scale)
+
+	var cancel_key: String = "ui.cancel" if edit_mode else "ui.skip"
+	var cancel_btn: Button = _make_reference_hitbox_button(func() -> void:
+		if not edit_mode:
+			SaveSystem.save_game()
+		_close_naming_modal()
+	)
+	naming_modal.add_child(cancel_btn)
+	_position_reference_control(cancel_btn, NAME_POPUP_CANCEL_CENTER, NAME_POPUP_CANCEL_REF_SIZE, reference_origin, reference_scale)
+	var cancel_lbl: Label = _make_reference_label(LocalizationSystem.tr_key(cancel_key), NAME_POPUP_CANCEL_FONT_SIZE, POPUP_TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_CENTER, reference_scale)
+	cancel_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	cancel_btn.add_child(cancel_lbl)
+
+	var save_btn: Button = _make_reference_hitbox_button(func() -> void:
+		var normalized_name: String = _sanitize_reptile_name(input.text)
+		if not edit_mode and normalized_name.is_empty():
+			_show_name_validation(validation_label, "ui.name_required_or_skip")
+			return
+		if normalized_name.length() > NAME_MAX_LENGTH:
+			_show_name_validation(validation_label, "ui.name_too_long")
+			return
+		if ReptileSystem.set_reptile_custom_name(instance_id, normalized_name):
+			if not normalized_name.is_empty():
+				_notify_quest_event("reptile_named", {"instance_id": instance_id})
+			_refresh_habitat_slots()
+			_close_naming_modal()
+			if edit_mode:
+				_show_management_for_instance_id(instance_id, false)
+	)
+	naming_modal.add_child(save_btn)
+	_position_reference_control(save_btn, NAME_POPUP_SAVE_CENTER, NAME_POPUP_SAVE_REF_SIZE, reference_origin, reference_scale)
+	var save_lbl: Label = _make_reference_label(LocalizationSystem.tr_key("ui.save"), NAME_POPUP_SAVE_FONT_SIZE, BUTTON_TEXT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, reference_scale)
+	save_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	save_btn.add_child(save_lbl)
+
+	input.grab_focus()
+
+
+func _build_name_popup_legacy(instance_id: String, instance: Dictionary, reptile: Dictionary, edit_mode: bool) -> void:
 	var center: CenterContainer = CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.offset_left = 24
@@ -5062,15 +6252,7 @@ func _show_reptile_name_popup(instance_id: String, edit_mode: bool) -> void:
 	_apply_label_color(species_label, POPUP_TEXT_PRIMARY)
 	context_info.add_child(species_label)
 
-	var variant_label: Label = _make_popup_label(LocalizationSystem.tr_key("ui.variant") + ": " + LocalizationSystem.tr_key(str(variant.get("name_key", "ui.variant"))), 13)
-	variant_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	variant_label.autowrap_mode = TextServer.AUTOWRAP_OFF
-	variant_label.clip_text = true
-	_apply_label_color(variant_label, POPUP_TEXT_SECONDARY)
-	context_info.add_child(variant_label)
-
-	var prompt_key: String = "ui.reptile_name_prompt"
-	var prompt: Label = _make_popup_label(LocalizationSystem.tr_key(prompt_key), 14)
+	var prompt: Label = _make_popup_label(LocalizationSystem.tr_key("ui.reptile_name_prompt"), 14)
 	_apply_label_color(prompt, POPUP_TEXT_SECONDARY)
 	column.add_child(prompt)
 
@@ -5109,7 +6291,6 @@ func _show_reptile_name_popup(instance_id: String, edit_mode: bool) -> void:
 		if normalized_name.length() > NAME_MAX_LENGTH:
 			_show_name_validation(validation_label, "ui.name_too_long")
 			return
-
 		if ReptileSystem.set_reptile_custom_name(instance_id, normalized_name):
 			if not normalized_name.is_empty():
 				_notify_quest_event("reptile_named", {"instance_id": instance_id})
@@ -5173,6 +6354,11 @@ func _make_popup_label(text: String, font_size: int) -> Label:
 	label.add_theme_font_size_override("font_size", font_size)
 	_apply_label_color(label, POPUP_TEXT_PRIMARY)
 	return label
+
+
+func _make_label_visually_bold(label: Label) -> void:
+	label.add_theme_constant_override("outline_size", 1)
+	label.add_theme_color_override("font_outline_color", label.get_theme_color("font_color"))
 
 
 func _make_popup_button(key: String, callback: Callable) -> Button:
@@ -5321,25 +6507,82 @@ func _make_card_style() -> StyleBoxFlat:
 	return style
 
 
+func _make_animals_single_card_style() -> StyleBox:
+	var texture: Texture2D = AssetPaths.load_texture(ANIMALS_SINGLE_CARD_BG_PATH)
+	if texture == null:
+		return _make_card_style()
+
+	var style: StyleBoxTexture = StyleBoxTexture.new()
+	style.texture = texture
+	style.draw_center = true
+	style.texture_margin_left = 48.0
+	style.texture_margin_right = 48.0
+	style.texture_margin_top = 34.0
+	style.texture_margin_bottom = 34.0
+	return style
+
+
+func _animals_ui_size(value: float) -> int:
+	return max(1, int(round(value * ANIMALS_CARD_SCALE)))
+
+
+func _animals_ui_vec(width: float, height: float) -> Vector2:
+	return Vector2(float(_animals_ui_size(width)) if width > 0.0 else 0.0, float(_animals_ui_size(height)) if height > 0.0 else 0.0)
+
+
+func _animals_text_size(value: float) -> int:
+	return max(1, int(round(float(_animals_ui_size(value)) * ANIMALS_CARD_TEXT_SCALE)))
+
+
+func _animals_image_vec(width: float, height: float) -> Vector2:
+	var scaled_width: float = float(_animals_ui_size(width)) * ANIMALS_CARD_IMAGE_SCALE if width > 0.0 else 0.0
+	var scaled_height: float = float(_animals_ui_size(height)) * ANIMALS_CARD_IMAGE_SCALE if height > 0.0 else 0.0
+	return Vector2(scaled_width, scaled_height)
+
+
+func _animals_rarity_icon_size(value: float) -> int:
+	return max(1, int(round(float(_animals_ui_size(value)) * ANIMALS_RARITY_ICON_SCALE)))
+
+
+func _animals_gallery_content_size(value: float) -> int:
+	return max(1, int(round(value * ANIMALS_GALLERY_CONTENT_SCALE)))
+
+
+func _animals_gallery_content_vec(value: Vector2) -> Vector2:
+	return value * ANIMALS_GALLERY_CONTENT_SCALE
+
+
+func _animals_card_bg_vec(
+	width: float,
+	height: float,
+	width_scale: float = ANIMALS_CARD_BACKGROUND_WIDTH_SCALE,
+	height_scale: float = ANIMALS_CARD_BACKGROUND_HEIGHT_SCALE
+) -> Vector2:
+	var scaled_width: float = float(_animals_ui_size(width)) * width_scale if width > 0.0 else 0.0
+	var scaled_height: float = float(_animals_ui_size(height)) * height_scale if height > 0.0 else 0.0
+	return Vector2(scaled_width, scaled_height)
+
+
 func _make_owned_card_action_button(label_key: String) -> Button:
 	var button: Button = Button.new()
-	button.custom_minimum_size = Vector2(104, 44)
+	button.custom_minimum_size = _animals_ui_vec(104, 44)
 	button.text = LocalizationSystem.tr_key(label_key)
 	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.25, 0.58, 0.24, 1.0)))
 	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.30, 0.66, 0.29, 1.0)))
 	button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.20, 0.48, 0.19, 1.0)))
+	button.add_theme_font_size_override("font_size", _animals_text_size(13))
 	_apply_button_text_color(button, BUTTON_TEXT_COLOR)
 	return button
 
 
 func _make_release_action_button(label_key: String) -> Button:
 	var button: Button = Button.new()
-	button.custom_minimum_size = Vector2(104, 38)
+	button.custom_minimum_size = _animals_ui_vec(104, 38)
 	button.text = LocalizationSystem.tr_key(label_key)
 	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.62, 0.18, 0.14, 0.90)))
 	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.74, 0.22, 0.17, 0.95)))
 	button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.50, 0.14, 0.11, 0.95)))
-	button.add_theme_font_size_override("font_size", 13)
+	button.add_theme_font_size_override("font_size", _animals_text_size(13))
 	_apply_button_text_color(button, BUTTON_TEXT_COLOR)
 	return button
 
@@ -5402,7 +6645,7 @@ func _make_icon_or_fallback(path: String, icon_size: Vector2, fallback_text: Str
 	return fallback
 
 
-func _make_icon_text_row(icon_path: String, text: String, icon_size: int) -> HBoxContainer:
+func _make_icon_text_row(icon_path: String, text: String, icon_size: int, font_size: int = 12) -> HBoxContainer:
 	var row: HBoxContainer = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
 
@@ -5413,7 +6656,7 @@ func _make_icon_text_row(icon_path: String, text: String, icon_size: int) -> HBo
 	label.clip_text = true
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_font_size_override("font_size", font_size)
 	_apply_label_color(label, POPUP_TEXT_SECONDARY)
 	row.add_child(label)
 
@@ -5586,12 +6829,15 @@ func _on_care_action_pressed(action_id: String) -> void:
 		return
 
 	var result: Dictionary = ReptileSystem.perform_care_action(current_management_instance_id, action_id)
-	current_management_feedback_key = str(result.get("message_key", "ui.feature_later"))
+	var feedback_text: String = LocalizationSystem.tr_key(str(result.get("message_key", "ui.feature_later")))
+	current_management_feedback_key = ""
 	if bool(result.get("success", false)):
 		_notify_quest_event("care_action_success", {"action": action_id, "instance_id": current_management_instance_id})
-		current_management_feedback_key = _format_care_success_feedback(result)
+		feedback_text = _format_care_success_feedback(result)
 	_refresh_habitat_slots()
 	_show_management_for_instance_id(current_management_instance_id, false)
+	if not feedback_text.is_empty():
+		_show_toast_raw(feedback_text)
 
 
 func _format_care_success_feedback(result: Dictionary) -> String:
@@ -5654,6 +6900,11 @@ func _make_edit_icon_button(instance_id: String) -> Button:
 	button.flat = true
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var empty_style: StyleBoxEmpty = StyleBoxEmpty.new()
+	button.add_theme_stylebox_override("normal", empty_style)
+	button.add_theme_stylebox_override("hover", empty_style)
+	button.add_theme_stylebox_override("pressed", empty_style)
+	button.add_theme_stylebox_override("disabled", empty_style)
 	button.pressed.connect(func() -> void:
 		_show_reptile_name_popup(instance_id, true)
 	)

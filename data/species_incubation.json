@@ -40,6 +40,13 @@
       "egg_name_en": "Small Monitor Eggs",
       "enabled_in_egg_shop": true
     },
+    "chameleon": {
+      "biome_id": "green_meadow",
+      "incubation_time_hours": 20,
+      "egg_name_pl": "Jaja kameleona",
+      "egg_name_en": "Chameleon Eggs",
+      "enabled_in_egg_shop": true
+    },
     "bullsnake": {
       "biome_id": "dry_prairie",
       "incubation_time_hours": 20,

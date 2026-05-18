@@ -1,10 +1,12 @@
 extends Node
 
 signal reptile_released(instance_id: String)
+signal reptile_leveled_up(instance_id: String, reptile_id: String, new_level: int)
 
 const REPTILES_PATH: String = "res://data/reptiles.json"
 const VARIANTS_PATH: String = "res://data/reptile_variants.json"
 const CARE_ACTIONS_PATH: String = "res://data/care_actions.json"
+const REPTILE_LEVELING_PATH: String = "res://data/reptile_leveling.json"
 const VALID_RARITIES: Array[String] = ["common", "rare", "exceptional", "ultra_rare", "shadow"]
 const HAPPINESS_DECAY_INTERVAL_SECONDS := 300.0
 const SATIETY_DECAY_INTERVAL_SECONDS := 420.0
@@ -47,6 +49,7 @@ const RARITY_ICON_PATHS: Dictionary = {
 var reptiles: Array = []
 var variants: Array = []
 var _care_actions_config: Dictionary = {}
+var _reptile_leveling_config: Dictionary = {}
 
 
 func _ready() -> void:
@@ -64,6 +67,7 @@ func load_data() -> void:
 	reptiles = _load_array(REPTILES_PATH)
 	variants = _load_array(VARIANTS_PATH)
 	_care_actions_config = _load_care_actions_config()
+	_reptile_leveling_config = _load_reptile_leveling_config()
 
 
 func get_available_reptiles(biome_id: String) -> Array:
@@ -328,6 +332,102 @@ func normalize_rarity(rarity: String) -> String:
 	return "common"
 
 
+func get_reptile_max_level() -> int:
+	return max(1, int(_reptile_leveling_config.get("max_level", 30)))
+
+
+func get_reptile_level(reptile: Dictionary) -> int:
+	return int(clamp(int(reptile.get("reptile_level", 1)), 1, get_reptile_max_level()))
+
+
+func get_reptile_xp(reptile: Dictionary) -> int:
+	if get_reptile_level(reptile) >= get_reptile_max_level():
+		return 0
+	return max(0, int(reptile.get("reptile_xp", 0)))
+
+
+func get_xp_to_next_reptile_level(level: int) -> int:
+	var normalized_level: int = int(clamp(level, 1, get_reptile_max_level()))
+	if normalized_level >= get_reptile_max_level():
+		return 0
+
+	var curve_value: Variant = _reptile_leveling_config.get("xp_curve", {})
+	if typeof(curve_value) == TYPE_DICTIONARY:
+		var curve: Dictionary = curve_value as Dictionary
+		var table_value: Variant = curve.get("xp_to_next_level", {})
+		if typeof(table_value) == TYPE_DICTIONARY:
+			var table: Dictionary = table_value as Dictionary
+			if table.has(str(normalized_level)):
+				return max(1, int(table.get(str(normalized_level), 100)))
+
+	return _get_default_reptile_xp_to_next(normalized_level)
+
+
+func get_reptile_xp_reward(reason: String) -> int:
+	var rewards_value: Variant = _reptile_leveling_config.get("xp_rewards", {})
+	if typeof(rewards_value) != TYPE_DICTIONARY:
+		return 0
+	return max(0, int((rewards_value as Dictionary).get(reason, 0)))
+
+
+func add_reptile_xp(instance_id: String, xp_amount: int, reason: String = "", save_if_changed: bool = true) -> Dictionary:
+	if instance_id.is_empty() or xp_amount <= 0:
+		return {"success": false, "levels_gained": []}
+
+	var instances: Dictionary = get_owned_reptile_instances()
+	if not instances.has(instance_id):
+		return {"success": false, "levels_gained": []}
+
+	var result: Dictionary = _grant_reptile_xp_in_instances(instances, instance_id, xp_amount, reason)
+	if bool(result.get("success", false)):
+		GameState.set_value("owned_reptile_instances", instances)
+		if save_if_changed:
+			SaveSystem.save_game()
+	return result
+
+
+func get_reptile_income_level_bonus_percent(reptile: Dictionary) -> int:
+	var income_bonus_value: Variant = _reptile_leveling_config.get("income_bonus", {})
+	var percent_per_level: float = 2.0
+	var max_bonus: float = 60.0
+	if typeof(income_bonus_value) == TYPE_DICTIONARY:
+		var income_bonus: Dictionary = income_bonus_value as Dictionary
+		percent_per_level = float(income_bonus.get("percent_per_level_above_1", percent_per_level))
+		max_bonus = float(income_bonus.get("max_bonus_percent", max_bonus))
+
+	var level: int = get_reptile_level(reptile)
+	return int(round(min(max(0, level - 1) * percent_per_level, max_bonus)))
+
+
+func get_reptile_income_level_multiplier(reptile: Dictionary) -> float:
+	return 1.0 + float(get_reptile_income_level_bonus_percent(reptile)) / 100.0
+
+
+func get_reptile_breeding_failure_reduction(parent_a: Dictionary, parent_b: Dictionary) -> float:
+	var breeding_bonus_value: Variant = _reptile_leveling_config.get("breeding_bonus", {})
+	var points_per_level: float = 0.5
+	var max_reduction: float = 15.0
+	if typeof(breeding_bonus_value) == TYPE_DICTIONARY:
+		var breeding_bonus: Dictionary = breeding_bonus_value as Dictionary
+		points_per_level = float(breeding_bonus.get("failure_reduction_points_per_average_parent_level_above_1", points_per_level))
+		max_reduction = float(breeding_bonus.get("max_failure_reduction_points", max_reduction))
+
+	var average_parent_level: float = (float(get_reptile_level(parent_a)) + float(get_reptile_level(parent_b))) / 2.0
+	return min(max(0.0, average_parent_level - 1.0) * points_per_level, max_reduction)
+
+
+func get_reptile_breeding_minimum_failure_chance() -> float:
+	var breeding_bonus_value: Variant = _reptile_leveling_config.get("breeding_bonus", {})
+	if typeof(breeding_bonus_value) == TYPE_DICTIONARY:
+		return max(0.0, float((breeding_bonus_value as Dictionary).get("minimum_failure_chance_percent", 1.0)))
+	return 1.0
+
+
+func get_adjusted_breeding_failure_chance(base_failure_chance: float, parent_a: Dictionary, parent_b: Dictionary) -> float:
+	var reduction: float = get_reptile_breeding_failure_reduction(parent_a, parent_b)
+	return max(float(base_failure_chance) - reduction, get_reptile_breeding_minimum_failure_chance())
+
+
 func get_base_reptile_income(reptile_id: String) -> float:
 	var reptile: Dictionary = get_reptile(reptile_id)
 	if reptile.is_empty():
@@ -513,7 +613,8 @@ func get_effective_animal_income_per_min(instance: Dictionary) -> float:
 	var variant_multiplier: float = get_variant_income_multiplier(get_owned_animal_variant(normalized))
 	var habitat_match_multiplier: float = get_habitat_match_multiplier(normalized)
 	var habitat_level_multiplier: float = get_habitat_level_income_multiplier(normalized)
-	return base_income * happiness_multiplier * variant_multiplier * habitat_match_multiplier * habitat_level_multiplier * get_worker_income_multiplier(normalized) * get_upgrade_income_multiplier(normalized)
+	var reptile_level_multiplier: float = get_reptile_income_level_multiplier(normalized)
+	return base_income * happiness_multiplier * variant_multiplier * habitat_match_multiplier * habitat_level_multiplier * reptile_level_multiplier * get_worker_income_multiplier(normalized) * get_upgrade_income_multiplier(normalized)
 
 
 func get_worker_income_multiplier(_instance: Dictionary) -> float:
@@ -588,10 +689,10 @@ func get_animal_income_contributors() -> Array:
 	return result
 
 
-func apply_time_updates(save_if_changed: bool = false) -> bool:
+func apply_time_updates(save_if_changed: bool = false, is_offline: bool = false) -> bool:
 	var now: int = Time.get_unix_time_from_system()
-	var changed: bool = _update_global_resources(now)
-	if _update_owned_reptile_needs(now):
+	var changed: bool = _update_global_resources(now, is_offline)
+	if _update_owned_reptile_needs(now, is_offline):
 		changed = true
 	if _update_habitat_timers(now):
 		changed = true
@@ -730,6 +831,8 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 
 	var message_key: String = ""
 	var xp_reward: float = 0.0
+	var reptile_xp_reward: int = 0
+	var reptile_xp_reason: String = ""
 	var money_reward: float = 0.0
 	var biome_id: String = _get_biome_id_for_instance(instance)
 	match action_id:
@@ -743,6 +846,8 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 			instance["last_feed_timestamp"] = now
 			instance["last_fed_at"] = now
 			xp_reward = FEED_XP_REWARD
+			reptile_xp_reward = get_reptile_xp_reward("feeding")
+			reptile_xp_reason = "feeding"
 			message_key = "ui.feed_success_xp"
 		"water":
 			var water_cost: int = _get_habitat_resource_cost(instance, "water")
@@ -754,6 +859,8 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 			instance["last_water_timestamp"] = now
 			instance["last_water_at"] = now
 			xp_reward = WATER_XP_REWARD
+			reptile_xp_reward = get_reptile_xp_reward("watering_or_basic_care")
+			reptile_xp_reason = "watering_or_basic_care"
 			message_key = "ui.water_success_xp"
 		"clean":
 			instance["cleanliness"] = _clamp_percent(float(instance.get("cleanliness", 100)) + _get_action_stat_gain("clean", CLEANLINESS_GAIN))
@@ -761,6 +868,8 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 			instance["last_clean_timestamp"] = now
 			instance["last_cleaned_at"] = now
 			xp_reward = CLEAN_XP_REWARD
+			reptile_xp_reward = get_reptile_xp_reward("cleaning")
+			reptile_xp_reason = "cleaning"
 			message_key = "ui.clean_success_xp"
 		"play":
 			instance["happiness"] = _clamp_percent(float(instance.get("happiness", 100)) + _get_action_stat_gain("play", PLAY_HAPPINESS_GAIN))
@@ -769,12 +878,17 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 			money_reward = float(PLAY_REPTICASH_REWARD) * play_reward_multiplier
 			EconomySystem.add_currency("repticash", money_reward)
 			xp_reward = float(PLAY_XP_REWARD) * play_reward_multiplier
+			reptile_xp_reward = get_reptile_xp_reward("play")
+			reptile_xp_reason = "play"
 			message_key = "ui.play_success_reward"
 		_:
 			return {"success": false, "message_key": "ui.reptile_unavailable"}
 
 	instance["last_needs_update_timestamp"] = now
 	instances[instance_id] = instance
+	var reptile_xp_result: Dictionary = {}
+	if reptile_xp_reward > 0:
+		reptile_xp_result = _grant_reptile_xp_in_instances(instances, instance_id, reptile_xp_reward, reptile_xp_reason)
 	GameState.set_value("owned_reptile_instances", instances)
 	if xp_reward > 0:
 		EconomySystem.add_currency("xp", xp_reward)
@@ -784,6 +898,8 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 		"message_key": message_key,
 		"instance_id": instance_id,
 		"xp": xp_reward,
+		"reptile_xp": reptile_xp_reward,
+		"reptile_levels_gained": reptile_xp_result.get("levels_gained", []),
 		"money": money_reward if action_id == "play" else 0
 	}
 
@@ -947,6 +1063,11 @@ func purchase_and_assign_reptile(reptile_id: String, habitat_id: String, biome_i
 		"custom_name": "",
 		"habitat_id": habitat_id,
 		"created_at": now,
+		"reptile_level": 1,
+		"reptile_xp": 0,
+		"reptile_xp_to_next_level": get_xp_to_next_reptile_level(1),
+		"reptile_total_xp": 0,
+		"reptile_level_updated_at": now,
 		"happiness": 100,
 		"hydration": 100,
 		"hunger": 100,
@@ -1017,18 +1138,25 @@ func purchase_reptile_from_shop(reptile_id: String, rarity: String, sex: String 
 	if price > 0 and not EconomySystem.spend_currency("repticash", price):
 		return {"success": false, "message_key": "ui.not_enough_currency"}
 
-	var variant_id: String = str(variant.get("id", get_default_variant_id(reptile_id)))
+	var normalized_rarity: String = normalize_rarity(rarity)
+	var variant_id: String = str(variant.get("id", reptile_id + "_" + normalized_rarity))
 	var instance_id: String = _create_instance_id()
 	var now: int = Time.get_unix_time_from_system()
 	var instance: Dictionary = {
 		"instance_id": instance_id,
 		"reptile_id": reptile_id,
+		"rarity": normalized_rarity,
 		"variant_id": variant_id,
 		"sex": _normalize_sex(sex),
 		"custom_name": "",
 		"habitat_id": null,
 		"source": "shop",
 		"created_at": now,
+		"reptile_level": 1,
+		"reptile_xp": 0,
+		"reptile_xp_to_next_level": get_xp_to_next_reptile_level(1),
+		"reptile_total_xp": 0,
+		"reptile_level_updated_at": now,
 		"happiness": 100,
 		"hydration": 100,
 		"hunger": 100,
@@ -1386,7 +1514,7 @@ func migrate_save_state() -> bool:
 		var normalized: Dictionary = _normalize_owned_instance(instance)
 		var reptile_id: String = str(normalized.get("reptile_id", ""))
 		var variant_id: String = str(normalized.get("variant_id", get_default_variant_id(reptile_id)))
-		if not instance.has("variant_id") or not instance.has("breeding_state") or not instance.has("sex") or not instance.has("habitat_id") or not instance.has("custom_name") or typeof(instance.get("custom_name", "")) != TYPE_STRING or not instance.has("happiness") or not instance.has("hydration") or not instance.has("hunger") or not instance.has("cleanliness") or not instance.has("last_needs_update_timestamp") or not instance.has("last_feed_timestamp") or not instance.has("last_water_timestamp") or not instance.has("last_clean_timestamp") or not instance.has("last_play_timestamp"):
+		if not instance.has("variant_id") or not instance.has("breeding_state") or not instance.has("sex") or not instance.has("habitat_id") or not instance.has("custom_name") or typeof(instance.get("custom_name", "")) != TYPE_STRING or not instance.has("happiness") or not instance.has("hydration") or not instance.has("hunger") or not instance.has("cleanliness") or not instance.has("last_needs_update_timestamp") or not instance.has("last_feed_timestamp") or not instance.has("last_water_timestamp") or not instance.has("last_clean_timestamp") or not instance.has("last_play_timestamp") or not instance.has("reptile_level") or not instance.has("reptile_xp") or not instance.has("reptile_xp_to_next_level") or not instance.has("reptile_total_xp") or int(normalized.get("reptile_level", 1)) != int(instance.get("reptile_level", 1)) or int(normalized.get("reptile_xp", 0)) != int(instance.get("reptile_xp", 0)) or int(normalized.get("reptile_xp_to_next_level", 0)) != int(instance.get("reptile_xp_to_next_level", 0)):
 			instances[instance_id] = normalized
 			changed = true
 
@@ -1634,7 +1762,7 @@ func _ensure_game_state_int(key: String, fallback: int, minimum: int, maximum: i
 	return true
 
 
-func _update_global_resources(now: int) -> bool:
+func _update_global_resources(now: int, is_offline: bool = false) -> bool:
 	var br_value: Variant = GameState.get_value("biome_resources", {})
 	if typeof(br_value) != TYPE_DICTIONARY:
 		return false
@@ -1647,7 +1775,7 @@ func _update_global_resources(now: int) -> bool:
 		var biome: Dictionary = (biome_value as Dictionary).duplicate(true)
 		for resource_id in ["food", "water"]:
 			var eff_max: int = _apply_storage_multiplier(resource_id, max(1, int((biome as Dictionary).get(resource_id + "_max", 100))))
-			if _regenerate_biome_resource_in_place(biome, resource_id, now, eff_max):
+			if _regenerate_biome_resource_in_place(biome, resource_id, now, eff_max, is_offline):
 				changed = true
 		br[biome_id] = biome
 	if changed:
@@ -1655,7 +1783,7 @@ func _update_global_resources(now: int) -> bool:
 	return changed
 
 
-func _regenerate_biome_resource_in_place(biome: Dictionary, resource_id: String, now: int, effective_max: int = -1) -> bool:
+func _regenerate_biome_resource_in_place(biome: Dictionary, resource_id: String, now: int, effective_max: int = -1, is_offline: bool = false) -> bool:
 	var current: int = int(biome.get(resource_id + "_current", 0))
 	var maximum: int = effective_max if effective_max > 0 else max(1, int(biome.get(resource_id + "_max", 100)))
 	var timestamp_key: String = "last_" + resource_id + "_regen_timestamp"
@@ -1663,7 +1791,8 @@ func _regenerate_biome_resource_in_place(biome: Dictionary, resource_id: String,
 	var action_id: String = "feed" if resource_id == "food" else "water"
 	var action_config: Dictionary = _get_care_action_config(action_id)
 	var amount: int = max(1, int(action_config.get("regen_amount", DEFAULT_RESOURCE_REGEN_AMOUNT)))
-	var interval: int = max(1, int(action_config.get("regen_interval_seconds", DEFAULT_RESOURCE_REGEN_INTERVAL)))
+	var interval_key: String = "regen_interval_seconds_offline" if is_offline else "regen_interval_seconds"
+	var interval: int = max(1, int(action_config.get(interval_key, action_config.get("regen_interval_seconds", DEFAULT_RESOURCE_REGEN_INTERVAL))))
 
 	if last_timestamp <= 0:
 		biome[timestamp_key] = now
@@ -1702,7 +1831,7 @@ func _set_global_resource(resource_id: String, value: int) -> void:
 	GameState.set_value(current_key, int(clamp(value, 0, maximum)))
 
 
-func _update_owned_reptile_needs(now: int) -> bool:
+func _update_owned_reptile_needs(now: int, is_offline: bool = false) -> bool:
 	var instances: Dictionary = get_owned_reptile_instances()
 	var changed: bool = false
 	for instance_id in instances.keys():
@@ -1725,10 +1854,11 @@ func _update_owned_reptile_needs(now: int) -> bool:
 				changed = true
 			continue
 
-		var satiety_decay: float = _calculate_need_decay(elapsed, SATIETY_DECAY_INTERVAL_SECONDS)
-		var hydration_decay: float = _calculate_need_decay(elapsed, HYDRATION_DECAY_INTERVAL_SECONDS)
-		var cleanliness_decay: float = _calculate_need_decay(elapsed, CLEANLINESS_DECAY_INTERVAL_SECONDS)
-		var happiness_decay: float = _calculate_need_decay(elapsed, HAPPINESS_DECAY_INTERVAL_SECONDS) * _get_happiness_decay_multiplier()
+		var decay_cfg: Dictionary = _get_decay_config(is_offline)
+		var satiety_decay: float = _calculate_need_decay(elapsed, float(decay_cfg.get("hunger_interval_seconds", SATIETY_DECAY_INTERVAL_SECONDS)), float(decay_cfg.get("amount_per_interval", NEED_DECAY_AMOUNT)))
+		var hydration_decay: float = _calculate_need_decay(elapsed, float(decay_cfg.get("hydration_interval_seconds", HYDRATION_DECAY_INTERVAL_SECONDS)), float(decay_cfg.get("amount_per_interval", NEED_DECAY_AMOUNT)))
+		var cleanliness_decay: float = _calculate_need_decay(elapsed, float(decay_cfg.get("cleanliness_interval_seconds", CLEANLINESS_DECAY_INTERVAL_SECONDS)), float(decay_cfg.get("amount_per_interval", NEED_DECAY_AMOUNT)))
+		var happiness_decay: float = _calculate_need_decay(elapsed, float(decay_cfg.get("happiness_interval_seconds", HAPPINESS_DECAY_INTERVAL_SECONDS)), float(decay_cfg.get("amount_per_interval", NEED_DECAY_AMOUNT))) * _get_happiness_decay_multiplier()
 		if satiety_decay > 0.0 or hydration_decay > 0.0 or cleanliness_decay > 0.0 or happiness_decay > 0.0:
 			instance["hunger"] = _clamp_percent(float(instance.get("hunger", 100)) - satiety_decay)
 			instance["hydration"] = _clamp_percent(float(instance.get("hydration", 100)) - hydration_decay)
@@ -1744,8 +1874,16 @@ func _update_owned_reptile_needs(now: int) -> bool:
 	return changed
 
 
-func _calculate_need_decay(elapsed_seconds: int, interval_seconds: float) -> float:
-	return float(elapsed_seconds) / max(1.0, interval_seconds) * NEED_DECAY_AMOUNT
+func _get_decay_config(is_offline: bool = false) -> Dictionary:
+	var key: String = "decay_offline" if is_offline else "decay"
+	var decay_value: Variant = _care_actions_config.get(key, {})
+	if typeof(decay_value) == TYPE_DICTIONARY:
+		return decay_value as Dictionary
+	return {}
+
+
+func _calculate_need_decay(elapsed_seconds: int, interval_seconds: float, amount: float = NEED_DECAY_AMOUNT) -> float:
+	return float(elapsed_seconds) / max(1.0, interval_seconds) * amount
 
 
 func _timestamp_from_value(value: Variant) -> int:
@@ -1783,8 +1921,21 @@ func _get_happiness_decay_multiplier() -> float:
 func _normalize_owned_instance(instance: Dictionary) -> Dictionary:
 	var normalized: Dictionary = instance.duplicate(true)
 	var reptile_id: String = str(normalized.get("reptile_id", ""))
+
+	var raw_rarity: String = str(normalized.get("rarity", ""))
+	if raw_rarity.is_empty() or not VALID_RARITIES.has(raw_rarity):
+		var vid: String = str(normalized.get("variant_id", ""))
+		if not vid.is_empty():
+			for rarity_candidate in ["ultra_rare", "exceptional", "rare", "common", "shadow"]:
+				if vid.ends_with("_" + rarity_candidate):
+					raw_rarity = rarity_candidate
+					break
+		if raw_rarity.is_empty() or not VALID_RARITIES.has(raw_rarity):
+			raw_rarity = "common"
+	normalized["rarity"] = raw_rarity
+
 	if str(normalized.get("variant_id", "")).is_empty():
-		normalized["variant_id"] = get_default_variant_id(reptile_id)
+		normalized["variant_id"] = reptile_id + "_" + raw_rarity
 
 	normalized["sex"] = _normalize_sex(str(normalized.get("sex", "male")))
 	normalized["custom_name"] = str(normalized.get("custom_name", ""))
@@ -1793,6 +1944,7 @@ func _normalize_owned_instance(instance: Dictionary) -> Dictionary:
 	normalized["hunger"] = _clamp_percent(float(normalized.get("hunger", 100)))
 	normalized["cleanliness"] = _clamp_percent(float(normalized.get("cleanliness", 100)))
 	normalized["boredom"] = _clamp_percent(float(normalized.get("boredom", 0)))
+	normalized = migrate_reptile_level_fields(normalized)
 	if not normalized.has("last_needs_update_timestamp"):
 		normalized["last_needs_update_timestamp"] = Time.get_unix_time_from_system()
 	normalized["last_feed_timestamp"] = _timestamp_from_value(normalized.get("last_feed_timestamp", normalized.get("last_fed_at", 0)))
@@ -1827,6 +1979,72 @@ func _normalize_owned_instance(instance: Dictionary) -> Dictionary:
 		normalized["breeding_cooldown_until"] = 0
 
 	return normalized
+
+
+func migrate_reptile_level_fields(reptile: Dictionary) -> Dictionary:
+	var normalized: Dictionary = reptile.duplicate(true)
+	var max_level: int = get_reptile_max_level()
+	var level: int = int(clamp(int(normalized.get("reptile_level", 1)), 1, max_level))
+	var xp: int = max(0, int(normalized.get("reptile_xp", 0)))
+	normalized["reptile_level"] = level
+	normalized["reptile_xp"] = xp
+	normalized["reptile_total_xp"] = max(0, int(normalized.get("reptile_total_xp", xp)))
+	if not normalized.has("reptile_level_updated_at"):
+		normalized["reptile_level_updated_at"] = 0
+	_process_reptile_level_ups_on_instance(normalized)
+	return normalized
+
+
+func _grant_reptile_xp_in_instances(instances: Dictionary, instance_id: String, xp_amount: int, reason: String = "") -> Dictionary:
+	var instance_value: Variant = instances.get(instance_id, null)
+	if typeof(instance_value) != TYPE_DICTIONARY:
+		return {"success": false, "levels_gained": []}
+
+	var instance: Dictionary = migrate_reptile_level_fields(instance_value as Dictionary)
+	var level_before: int = int(instance.get("reptile_level", 1))
+	var levels_gained: Array = []
+	if level_before < get_reptile_max_level() and xp_amount > 0:
+		instance["reptile_xp"] = max(0, int(instance.get("reptile_xp", 0))) + xp_amount
+		instance["reptile_total_xp"] = max(0, int(instance.get("reptile_total_xp", 0))) + xp_amount
+		levels_gained = _process_reptile_level_ups_on_instance(instance)
+	elif level_before >= get_reptile_max_level():
+		instance["reptile_xp"] = 0
+
+	instances[instance_id] = instance
+	for level_value in levels_gained:
+		reptile_leveled_up.emit(instance_id, str(instance.get("reptile_id", "")), int(level_value))
+
+	return {
+		"success": true,
+		"instance_id": instance_id,
+		"reason": reason,
+		"xp_added": xp_amount,
+		"level": int(instance.get("reptile_level", 1)),
+		"xp": int(instance.get("reptile_xp", 0)),
+		"levels_gained": levels_gained
+	}
+
+
+func _process_reptile_level_ups_on_instance(reptile: Dictionary) -> Array:
+	var levels_gained: Array = []
+	var max_level: int = get_reptile_max_level()
+	var level: int = int(clamp(int(reptile.get("reptile_level", 1)), 1, max_level))
+	var xp: int = max(0, int(reptile.get("reptile_xp", 0)))
+
+	while level < max_level:
+		var required: int = get_xp_to_next_reptile_level(level)
+		if required <= 0 or xp < required:
+			break
+		xp -= required
+		level += 1
+		levels_gained.append(level)
+
+	reptile["reptile_level"] = level
+	reptile["reptile_xp"] = 0 if level >= max_level else xp
+	reptile["reptile_xp_to_next_level"] = get_xp_to_next_reptile_level(level)
+	if not levels_gained.is_empty():
+		reptile["reptile_level_updated_at"] = Time.get_unix_time_from_system()
+	return levels_gained
 
 
 func _normalize_variant(variant: Dictionary) -> Dictionary:
@@ -2019,6 +2237,81 @@ func _load_care_actions_config() -> Dictionary:
 		push_warning("Invalid care actions config: " + CARE_ACTIONS_PATH)
 		return {}
 	return parsed as Dictionary
+
+
+func _get_default_reptile_leveling_config() -> Dictionary:
+	return {
+		"max_level": 30,
+		"xp_curve": {
+			"type": "table",
+			"xp_to_next_level": {
+				"1": 100, "2": 140, "3": 190, "4": 250, "5": 320,
+				"6": 400, "7": 500, "8": 620, "9": 760, "10": 920,
+				"11": 1100, "12": 1300, "13": 1520, "14": 1760, "15": 2020,
+				"16": 2300, "17": 2600, "18": 2920, "19": 3260, "20": 3620,
+				"21": 4000, "22": 4400, "23": 4820, "24": 5260, "25": 5720,
+				"26": 6200, "27": 6700, "28": 7220, "29": 7760
+			}
+		},
+		"xp_rewards": {
+			"feeding": 10,
+			"cleaning": 10,
+			"play": 15,
+			"watering_or_basic_care": 5,
+			"breeding_started": 25,
+			"breeding_success": 50,
+			"breeding_failed": 15,
+			"breeding_long_48h_bonus": 25
+		},
+		"income_bonus": {
+			"percent_per_level_above_1": 2,
+			"max_bonus_percent": 60
+		},
+		"breeding_bonus": {
+			"failure_reduction_points_per_average_parent_level_above_1": 0.5,
+			"max_failure_reduction_points": 15,
+			"minimum_failure_chance_percent": 1
+		}
+	}
+
+
+func _load_reptile_leveling_config() -> Dictionary:
+	var defaults: Dictionary = _get_default_reptile_leveling_config()
+	var file: FileAccess = FileAccess.open(REPTILE_LEVELING_PATH, FileAccess.READ)
+	if file == null:
+		push_warning("ReptileSystem: reptile_leveling.json not found, using defaults.")
+		return defaults
+
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(parsed) != TYPE_DICTIONARY:
+		push_warning("ReptileSystem: reptile_leveling.json malformed, using defaults.")
+		return defaults
+
+	var config: Dictionary = (parsed as Dictionary).duplicate(true)
+	if int(config.get("max_level", 0)) < 1:
+		push_warning("ReptileSystem: reptile_leveling.json has invalid max_level, using defaults.")
+		return defaults
+
+	var curve_value: Variant = config.get("xp_curve", {})
+	if typeof(curve_value) != TYPE_DICTIONARY or typeof((curve_value as Dictionary).get("xp_to_next_level", {})) != TYPE_DICTIONARY:
+		push_warning("ReptileSystem: reptile_leveling.json has invalid xp_curve, using defaults.")
+		return defaults
+
+	for section in ["xp_rewards", "income_bonus", "breeding_bonus"]:
+		if typeof(config.get(section, {})) != TYPE_DICTIONARY:
+			config[section] = defaults.get(section, {})
+
+	return config
+
+
+func _get_default_reptile_xp_to_next(level: int) -> int:
+	var defaults: Dictionary = _get_default_reptile_leveling_config()
+	var curve: Dictionary = defaults.get("xp_curve", {}) as Dictionary
+	var table: Dictionary = curve.get("xp_to_next_level", {}) as Dictionary
+	if table.has(str(level)):
+		return int(table.get(str(level), 100))
+	return 100
 
 
 func _get_care_action_config(action_id: String) -> Dictionary:

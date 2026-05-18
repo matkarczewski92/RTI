@@ -420,6 +420,21 @@
 		"repeatable": false
 	},
 	{
+		"id": "complete_chameleon_collection",
+		"title_key": "achievement.complete_chameleon_collection.title",
+		"description_key": "achievement.complete_chameleon_collection.desc",
+		"icon_path": "res://assets/art/ui/icons/achievements/complete_geco_collection.png",
+		"category": "collection",
+		"requirement_type": "reptile_collection",
+		"requirement_target": "chameleon",
+		"requirement_value": 0,
+		"reward_type": "repticash",
+		"reward_amount": 900,
+		"reward_xp": 230,
+		"sort_order": 235,
+		"repeatable": false
+	},
+	{
 		"id": "lifetime_earn_2500",
 		"title_key": "achievement.lifetime_earn_2500.title",
 		"description_key": "achievement.lifetime_earn_2500.desc",

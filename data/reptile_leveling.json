@@ -1,0 +1,56 @@
+{
+	"max_level": 30,
+	"xp_curve": {
+		"type": "table",
+		"xp_to_next_level": {
+			"1": 100,
+			"2": 140,
+			"3": 190,
+			"4": 250,
+			"5": 320,
+			"6": 400,
+			"7": 500,
+			"8": 620,
+			"9": 760,
+			"10": 920,
+			"11": 1100,
+			"12": 1300,
+			"13": 1520,
+			"14": 1760,
+			"15": 2020,
+			"16": 2300,
+			"17": 2600,
+			"18": 2920,
+			"19": 3260,
+			"20": 3620,
+			"21": 4000,
+			"22": 4400,
+			"23": 4820,
+			"24": 5260,
+			"25": 5720,
+			"26": 6200,
+			"27": 6700,
+			"28": 7220,
+			"29": 7760
+		}
+	},
+	"xp_rewards": {
+		"feeding": 10,
+		"cleaning": 10,
+		"play": 15,
+		"watering_or_basic_care": 5,
+		"breeding_started": 25,
+		"breeding_success": 50,
+		"breeding_failed": 15,
+		"breeding_long_48h_bonus": 25
+	},
+	"income_bonus": {
+		"percent_per_level_above_1": 2,
+		"max_bonus_percent": 60
+	},
+	"breeding_bonus": {
+		"failure_reduction_points_per_average_parent_level_above_1": 0.5,
+		"max_failure_reduction_points": 15,
+		"minimum_failure_chance_percent": 1
+	}
+}

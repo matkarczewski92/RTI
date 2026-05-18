@@ -4,6 +4,7 @@ signal biome_selected(biome_id: String)
 signal back_pressed
 
 const AssetPaths := preload("res://scripts/helpers/AssetPaths.gd")
+const LayoutScale := preload("res://scripts/helpers/LayoutScale.gd")
 
 const BACKGROUND_PATH := "res://assets/art/ui/biomes/biomes_background.png"
 const BACK_BUTTON_PATH := "res://assets/art/ui/biomes/back.png"
@@ -21,18 +22,18 @@ const INCUBATOR_PL_UNLOCK_PATH := "res://assets/art/ui/biomes/incubator_pl_unloc
 const INCUBATOR_EN_UNLOCK_PATH := "res://assets/art/ui/biomes/incubator_en_unlock.png"
 
 const GREEN_MEADOW_ID := "green_meadow"
-const REFERENCE_SIZE := Vector2(941, 1672)
-const BACK_CENTER := Vector2(105, 122)
-const BACK_SIZE := Vector2(122, 121)
-const TITLE_CENTER := Vector2(489, 248)
-const TITLE_SIZE := Vector2(720, 220)
-const GREEN_CARD_CENTER := Vector2(470, 566)
-const GREEN_CARD_SIZE := Vector2(830, 300)
-const DRY_CARD_CENTER := Vector2(470, 945)
-const DRY_CARD_SIZE := Vector2(830, 300)
-const NEW_CARD_CENTER := Vector2(470, 1264)
-const NEW_CARD_SIZE := Vector2(830, 280)
-const TOAST_REFERENCE_Y := 1524.0
+const REFERENCE_SIZE := Vector2(1080.0, 1920.0)
+const BACK_CENTER := Vector2(120.5, 140.1)
+const BACK_SIZE := Vector2(140.0, 138.9)
+const TITLE_CENTER := Vector2(561.2, 284.8)
+const TITLE_SIZE := Vector2(826.4, 252.6)
+const GREEN_CARD_CENTER := Vector2(539.4, 650.0)
+const GREEN_CARD_SIZE := Vector2(952.6, 344.5)
+const DRY_CARD_CENTER := Vector2(539.4, 1085.2)
+const DRY_CARD_SIZE := Vector2(952.6, 344.5)
+const NEW_CARD_CENTER := Vector2(539.4, 1451.5)
+const NEW_CARD_SIZE := Vector2(952.6, 321.5)
+const TOAST_REFERENCE_Y := 1750.0
 
 var background: TextureRect
 var ui_layer: Control
@@ -166,8 +167,8 @@ func _layout_controls() -> void:
 	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		return
 
-	var scale: float = min(viewport_size.x / REFERENCE_SIZE.x, viewport_size.y / REFERENCE_SIZE.y)
-	var origin := (viewport_size - REFERENCE_SIZE * scale) * 0.5
+	var scale: float = LayoutScale.fit_scale(viewport_size, REFERENCE_SIZE)
+	var origin := LayoutScale.fit_origin(viewport_size, scale, REFERENCE_SIZE)
 
 	_position_control(back_button, BACK_CENTER, BACK_SIZE, origin, scale)
 	_position_control(title_banner, TITLE_CENTER, TITLE_SIZE, origin, scale)

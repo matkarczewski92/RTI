@@ -22,6 +22,7 @@ GameState="*res://scripts/autoload/GameState.gd"
 LocalizationSystem="*res://scripts/autoload/LocalizationSystem.gd"
 EconomySystem="*res://scripts/autoload/EconomySystem.gd"
 SaveSystem="*res://scripts/autoload/SaveSystem.gd"
+AudioSystem="*res://scripts/autoload/AudioSystem.gd"
 ReptileSystem="*res://scripts/autoload/ReptileSystem.gd"
 AchievementSystem="*res://scripts/autoload/AchievementSystem.gd"
 QuestSystem="*res://scripts/autoload/QuestSystem.gd"
@@ -34,10 +35,11 @@ LevelUpOverlay="*res://scripts/autoload/LevelUpOverlay.gd"
 
 [display]
 
-window/size/viewport_width=720
-window/size/viewport_height=1280
+window/size/viewport_width=1080
+window/size/viewport_height=1920
+window/size/window_width_override=675
+window/size/window_height_override=1200
 window/stretch/mode="canvas_items"
-window/stretch/aspect="expand"
 window/handheld/orientation=1
 
 [physics]

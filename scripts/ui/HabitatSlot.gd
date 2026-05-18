@@ -126,10 +126,10 @@ func _build_layout() -> void:
 	reptile_icon.anchor_top = 0.5
 	reptile_icon.anchor_right = 0.5
 	reptile_icon.anchor_bottom = 0.5
-	reptile_icon.offset_left = -38
-	reptile_icon.offset_top = -50
-	reptile_icon.offset_right = 38
-	reptile_icon.offset_bottom = 26
+	reptile_icon.offset_left = -51
+	reptile_icon.offset_top = -63
+	reptile_icon.offset_right = 51
+	reptile_icon.offset_bottom = 39
 	visual_root.add_child(reptile_icon)
 
 	alert_icon = TextureRect.new()
@@ -142,9 +142,9 @@ func _build_layout() -> void:
 	alert_icon.anchor_right = 0.5
 	alert_icon.anchor_bottom = 0.0
 	alert_icon.offset_left = -20
-	alert_icon.offset_top = -14
+	alert_icon.offset_top = -10
 	alert_icon.offset_right = 20
-	alert_icon.offset_bottom = 26
+	alert_icon.offset_bottom = 30
 	visual_root.add_child(alert_icon)
 
 	income_progress = ProgressBar.new()

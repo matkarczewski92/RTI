@@ -127,6 +127,10 @@
 		"pl": "Ma\u0142y waran",
 		"en": "Small Monitor"
 	},
+	"reptile.chameleon.name": {
+		"pl": "Kameleon",
+		"en": "Chameleon"
+	},
 	"rarity.common": {
 		"pl": "Zwyk\u0142y",
 		"en": "Common"
@@ -196,6 +200,10 @@
 	"variant.small_monitor.rare.name": { "pl": "Rzadki", "en": "Rare" },
 	"variant.small_monitor.exceptional.name": { "pl": "Wyjątkowy", "en": "Exceptional" },
 	"variant.small_monitor.ultra_rare.name": { "pl": "Ultra rzadki", "en": "Ultra Rare" },
+	"variant.chameleon.common.name": { "pl": "Zwykły", "en": "Common" },
+	"variant.chameleon.rare.name": { "pl": "Rzadki", "en": "Rare" },
+	"variant.chameleon.exceptional.name": { "pl": "Wyjątkowy", "en": "Exceptional" },
+	"variant.chameleon.ultra_rare.name": { "pl": "Ultra rzadki", "en": "Ultra Rare" },
 	"nav.biome": {
 		"pl": "Biom",
 		"en": "Biome"
@@ -870,7 +878,7 @@
 	},
 	"ui.choose_habitat_type": {
 		"pl": "Wybierz typ habitatu",
-		"en": "Choose habitat type"
+		"en": "Select habitat type"
 	},
 	"habitat.management": {
 		"pl": "Zarządzanie habitatem",
@@ -977,8 +985,12 @@
 		"en": "Place reptile"
 	},
 	"habitat.remove_reptile": {
-		"pl": "Wyprowadź gada",
-		"en": "Remove reptile"
+		"pl": "Wyprowadź do schowka",
+		"en": "Move to storage"
+	},
+	"habitat.storage_short": {
+		"pl": "Przenie\u015b do schowka",
+		"en": "Move to storage"
 	},
 	"habitat.remove_habitat": {
 		"pl": "Usuń habitat",
@@ -993,7 +1005,7 @@
 		"en": "Are you sure you want to remove this habitat? No refund will be granted."
 	},
 	"habitat.remove_reptile_first": {
-		"pl": "Najpierw wyprowadź gada z habitatu.",
+		"pl": "Najpierw przenie\u015b gada do schowka.",
 		"en": "Remove the reptile from the habitat first."
 	},
 	"habitat.upgrade_blocked_title": {
@@ -1045,8 +1057,12 @@
 		"en": "Price"
 	},
 	"ui.new_variant_discovered": {
-		"pl": "Nowy wariant odkryty!",
-		"en": "New variant discovered!"
+		"pl": "Nowa rzadkość odkryta!",
+		"en": "New rarity discovered!"
+	},
+	"ui.new_rarity_discovered": {
+		"pl": "Nowa rzadkość odkryta!",
+		"en": "New rarity discovered!"
 	},
 	"ui.variant": {
 		"pl": "Wariant",
@@ -1677,8 +1693,8 @@
 		"en": "Max level"
 	},
 	"ui.upgrade_current_effect": {
-		"pl": "Obecny efekt",
-		"en": "Current effect"
+		"pl": "Aktualny poziom",
+		"en": "Current level"
 	},
 	"ui.upgrade_next_effect": {
 		"pl": "Następny poziom",
@@ -1689,28 +1705,28 @@
 		"en": "Not enough R$"
 	},
 	"ui.upgrade_reptile_income_effect": {
-		"pl": "Dochód gadów {value}",
-		"en": "Reptile income {value}"
+		"pl": " {value}",
+		"en": " {value}"
 	},
 	"ui.upgrade_offline_cap_effect": {
-		"pl": "Limit offline {time}",
-		"en": "Offline cap {time}"
+		"pl": "{time}",
+		"en": "{time}"
 	},
 	"ui.upgrade_play_reward_effect": {
-		"pl": "Nagroda za zabawę {value}",
-		"en": "Play reward {value}"
+		"pl": "{value}",
+		"en": "{value}"
 	},
 	"ui.upgrade_happiness_decay_effect": {
-		"pl": "Spadek zadowolenia {value}",
-		"en": "Happiness decay {value}"
+		"pl": "{value}",
+		"en": "{value}"
 	},
 	"ui.upgrade_worker_efficiency_effect": {
-		"pl": "Skuteczność pracowników {value}",
-		"en": "Worker efficiency {value}"
+		"pl": "{value}",
+		"en": " {value}"
 	},
 	"ui.upgrade_collection_bonus_effect": {
-		"pl": "Bonus kolekcji {value}",
-		"en": "Collection bonus {value}"
+		"pl": " {value}",
+		"en": " {value}"
 	},
 	"upgrades.unavailable": {
 		"pl": "Ulepszenia są chwilowo niedostępne.",
@@ -1926,7 +1942,7 @@
 	},
 	"habitat.choose_type": {
 		"pl": "Wybierz typ habitatu",
-		"en": "Choose habitat type"
+		"en": "Select habitat type"
 	},
 	"habitat.buy": {
 		"pl": "Kup habitat",
@@ -1961,8 +1977,12 @@
 		"en": "Happiness multiplier"
 	},
 	"management.variant_multiplier": {
-		"pl": "Mno\u017cnik wariantu",
-		"en": "Variant multiplier"
+		"pl": "Mno\u017cnik rzadko\u015bci",
+		"en": "Rarity multiplier"
+	},
+	"management.rarity_multiplier": {
+		"pl": "Mno\u017cnik rzadko\u015bci",
+		"en": "Rarity multiplier"
 	},
 	"management.habitat_multiplier": {
 		"pl": "Mno\u017cnik habitatu",
@@ -1972,13 +1992,41 @@
 		"pl": "Bonus poziomu habitatu",
 		"en": "Habitat level bonus"
 	},
+	"management.reptile_level_bonus": {
+		"pl": "Bonus poziomu gada",
+		"en": "Reptile level bonus"
+	},
+	"management.level_bonus": {
+		"pl": "Bonus poziomu",
+		"en": "Level bonus"
+	},
+	"management.actions": {
+		"pl": "Akcje",
+		"en": "Actions"
+	},
+	"management.habitat_upgrade": {
+		"pl": "Rozbudowa habitatu",
+		"en": "Habitat upgrade"
+	},
+	"management.habitat_level": {
+		"pl": "Poziom habitatu",
+		"en": "Habitat level"
+	},
+	"management.time": {
+		"pl": "Czas",
+		"en": "Time"
+	},
+	"management.habitat_bonus": {
+		"pl": "Bonus habitatu",
+		"en": "Habitat bonus"
+	},
 	"care.happiness": {
 		"pl": "Zadowolenie",
 		"en": "Happiness"
 	},
 	"care.hunger": {
 		"pl": "Najedzenie",
-		"en": "Satiety"
+		"en": "Fed"
 	},
 	"care.hydration": {
 		"pl": "Nawodnienie",
@@ -2571,12 +2619,12 @@
 		"en": "Increases the maximum water limit."
 	},
 	"ui.upgrade_food_max_effect": {
-		"pl": "Pojemność jedzenia: {value}",
-		"en": "Food capacity: {value}"
+		"pl": " {value}",
+		"en": " {value}"
 	},
 	"ui.upgrade_water_max_effect": {
-		"pl": "Pojemność wody: {value}",
-		"en": "Water capacity: {value}"
+		"pl": " {value}",
+		"en": " {value}"
 	},
 	"shop.resources": {
 		"pl": "Zasoby",
@@ -2663,20 +2711,20 @@
 		"en": "Improves play efficiency without reducing its effect."
 	},
 	"ui.upgrade_food_cost_reduction_effect": {
-		"pl": "Zużycie karmy -{value}%",
-		"en": "Food cost -{value}%"
+		"pl": " -{value}%",
+		"en": " -{value}%"
 	},
 	"ui.upgrade_water_cost_reduction_effect": {
-		"pl": "Zużycie wody -{value}%",
-		"en": "Water cost -{value}%"
+		"pl": " -{value}%",
+		"en": " st -{value}%"
 	},
 	"ui.upgrade_clean_cooldown_reduction_effect": {
-		"pl": "Czas odnowienia czyszczenia -{value}%",
-		"en": "Cleaning cooldown -{value}%"
+		"pl": " -{value}%",
+		"en": " -{value}%"
 	},
 	"ui.upgrade_play_cooldown_reduction_effect": {
-		"pl": "Czas odnowienia zabawy -{value}%",
-		"en": "Play cooldown -{value}%"
+		"pl": " -{value}%",
+		"en": " -{value}%"
 	},
 	"biome.incubator": {
 		"pl": "Inkubator",
@@ -3413,5 +3461,14 @@
 	"task_incubator_hatch_exceptional_desc": { "pl": "Wykluj gada rzadkości Exceptional.", "en": "Hatch an Exceptional reptile." },
 	"task_incubator_hatch_50_reptiles_name": { "pl": "Mistrz Inkubatora", "en": "Incubator Master" },
 	"task_incubator_hatch_50_reptiles_desc": { "pl": "Wykluj łącznie 50 gadów z jaj.", "en": "Hatch a total of 50 reptiles from eggs." },
-	"upgrade.level_label": { "pl": "Poziom", "en": "Level" }
+	"upgrade.level_label": { "pl": "Poziom", "en": "Level" },
+	"reptile_level_label": { "pl": "Poziom gada: {level}", "en": "Reptile Level: {level}" },
+	"reptile_xp_label": { "pl": "EXP: {current} / {required}", "en": "XP: {current} / {required}" },
+	"reptile_max_level": { "pl": "Maksymalny poziom", "en": "Max level" },
+	"reptile_income_bonus": { "pl": "Bonus dochodu: +{percent}%", "en": "Income bonus: +{percent}%" },
+	"reptile_income_bonus_short": { "pl": "Bonus poziomu", "en": "Level bonus" },
+	"reptile_breeding_bonus": { "pl": "Bonus łączenia: -{points} p.p. ryzyka", "en": "Breeding bonus: -{points} p.p. failure risk" },
+	"reptile_level_up_toast": { "pl": "{species_name} awansował na poziom {level}!", "en": "{species_name} reached level {level}!" },
+	"achievement.complete_chameleon_collection.title": { "pl": "Kolekcja kameleona", "en": "Chameleon collection" },
+	"achievement.complete_chameleon_collection.desc": { "pl": "Odkryj wszystkie warianty kameleona.", "en": "Discover all chameleon variants." }
 }

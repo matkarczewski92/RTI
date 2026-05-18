@@ -17,7 +17,7 @@
 		"name_key": "biome.dry_prairie.name",
 		"description_key": "biome.dry_prairie.description",
 		"is_starting_biome": false,
-		"habitat_slots": 5,
+		"habitat_slots": 6,
 		"background_path": "res://assets/art/biomes/dry_praire_background.png",
 		"top_bar_path": "res://assets/art/ui/top_bar_dry_praire.png",
 		"bottom_menu_path": "res://assets/art/ui/bottom_menu_dry_praire.png",

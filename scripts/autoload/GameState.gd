@@ -114,6 +114,11 @@ func get_default_animal_instance(instance_id: String = "") -> Dictionary:
 		"habitat_id": null,
 		"source": "migration",
 		"created_at": now,
+		"reptile_level": 1,
+		"reptile_xp": 0,
+		"reptile_xp_to_next_level": 100,
+		"reptile_total_xp": 0,
+		"reptile_level_updated_at": now,
 		"happiness": 100,
 		"hydration": 100,
 		"hunger": 100,
@@ -641,6 +646,11 @@ func _normalize_animals(value: Variant) -> Dictionary:
 		normalized["custom_name"] = _first_non_empty_string([normalized.get("custom_name", ""), normalized.get("name", "")])
 		normalized["name"] = str(normalized["custom_name"])
 		normalized["habitat_id"] = _nullable_id(normalized.get("habitat_id", null))
+		normalized["reptile_level"] = max(1, int(normalized.get("reptile_level", 1)))
+		normalized["reptile_xp"] = max(0, int(normalized.get("reptile_xp", 0)))
+		normalized["reptile_xp_to_next_level"] = max(0, int(normalized.get("reptile_xp_to_next_level", 100)))
+		normalized["reptile_total_xp"] = max(0, int(normalized.get("reptile_total_xp", normalized["reptile_xp"])))
+		normalized["reptile_level_updated_at"] = _safe_timestamp(normalized.get("reptile_level_updated_at", 0), 0)
 		normalized["happiness"] = _percent(normalized.get("happiness", 100))
 		normalized["hunger"] = _percent(normalized.get("hunger", normalized.get("satiety", 100)))
 		normalized["satiety"] = normalized["hunger"]

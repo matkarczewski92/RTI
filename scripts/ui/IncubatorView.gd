@@ -25,9 +25,9 @@ const EGG_SHOP_EXCEPTIONAL_PATH := "res://assets/art/incubator/eggs/shop_egg_exc
 
 const LAYOUT_REF_W := 720.0
 const LAYOUT_REF_H := 1280.0
-const PLAY_AREA_REF_TOP := 84.0   # TOP_BAR_HEIGHT in reference pixels
-const TOP_BAR_HEIGHT := 84
-const BOTTOM_MENU_HEIGHT := 172
+const PLAY_AREA_REF_TOP := 150.722775   # TOP_BAR_HEIGHT in reference pixels
+const TOP_BAR_HEIGHT := 150.722775
+const BOTTOM_MENU_HEIGHT := 226.157092875
 
 const SLOT_HITBOX_PAD := 40.0   # extra px added to max(icon_size, habitat_size) for the hitbox
 const SLOT_ICON_DEFAULT := 80.0
@@ -89,6 +89,8 @@ func _ready() -> void:
 	_load_incubator_layout()
 	_build_layout()
 	_start_tick_timer()
+	if ReptileSystem.has_signal("reptile_leveled_up") and not ReptileSystem.reptile_leveled_up.is_connected(_on_reptile_leveled_up):
+		ReptileSystem.reptile_leveled_up.connect(_on_reptile_leveled_up)
 	if not GameState.language_changed.is_connected(_on_language_changed):
 		GameState.language_changed.connect(_on_language_changed)
 
@@ -530,6 +532,19 @@ func _refresh_all_slots() -> void:
 		var node: Variant = _incubation_slot_nodes.get(index)
 		if typeof(node) == TYPE_OBJECT and is_instance_valid(node as Control):
 			_refresh_slot(node as Control, index, "incubation")
+
+
+func _on_reptile_leveled_up(instance_id: String, reptile_id: String, new_level: int) -> void:
+	var instances: Dictionary = ReptileSystem.get_owned_reptile_instances()
+	var instance_value: Variant = instances.get(instance_id, {})
+	var instance: Dictionary = {}
+	if typeof(instance_value) == TYPE_DICTIONARY:
+		instance = instance_value as Dictionary
+	var reptile: Dictionary = ReptileSystem.get_reptile(reptile_id)
+	var species_name: String = _get_reptile_card_name(instance) if not instance.is_empty() else _localized_text(str(reptile.get("name_key", "")), reptile_id)
+	var text: String = _localized_text("reptile_level_up_toast", "{species_name} reached level {level}!")
+	text = text.replace("{species_name}", species_name).replace("{level}", str(new_level))
+	_show_toast_raw(text)
 
 
 # ─── Slot press handler ────────────────────────────────────────────────
@@ -1416,11 +1431,18 @@ func _make_prediction_panel() -> Control:
 	column.add_child(odds)
 
 	var success := Label.new()
-	success.text = _localized_text("incubator_breeding_success_chance", "Success chance") + ": " + str(int(prediction.get("success_chance", 0))) + "%  |  " + _localized_text("incubator_breeding_failure_risk", "Failure risk") + ": " + str(int(prediction.get("failure_risk", 0))) + "%"
+	success.text = _localized_text("incubator_breeding_success_chance", "Success chance") + ": " + _format_breeding_percent(float(prediction.get("success_chance", 0.0))) + "%  |  " + _localized_text("incubator_breeding_failure_risk", "Failure risk") + ": " + _format_breeding_percent(float(prediction.get("failure_risk", 0.0))) + "%"
 	success.add_theme_font_size_override("font_size", 12)
 	success.add_theme_color_override("font_color", Color(0.66, 0.90, 0.58, 1.0))
 	success.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(success)
+
+	var level_bonus := Label.new()
+	level_bonus.text = LocalizationSystem.tr_key("reptile_breeding_bonus").replace("{points}", _format_breeding_percent(float(prediction.get("level_failure_reduction", 0.0))))
+	level_bonus.add_theme_font_size_override("font_size", 12)
+	level_bonus.add_theme_color_override("font_color", Color(0.72, 0.84, 0.62, 1.0))
+	level_bonus.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(level_bonus)
 
 	var eggs := Label.new()
 	eggs.text = _localized_text("incubator_breeding_egg_count_range", "Egg count: 1-5")
@@ -2127,6 +2149,12 @@ func _format_rates(rates: Dictionary) -> String:
 	for rarity in ["common", "rare", "ultra_rare", "exceptional"]:
 		pieces.append(_localized_rarity(rarity) + " " + str(int(round(float(rates.get(rarity, 0.0))))) + "%")
 	return _join_plain_text(pieces, " | ")
+
+
+func _format_breeding_percent(value: float) -> String:
+	if is_equal_approx(value, round(value)):
+		return str(int(round(value)))
+	return "%.1f" % value
 
 
 func _join_plain_text(pieces: Array[String], separator: String) -> String:

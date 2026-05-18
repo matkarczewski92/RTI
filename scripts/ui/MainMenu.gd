@@ -1,6 +1,7 @@
 extends Control
 
 const AssetPaths := preload("res://scripts/helpers/AssetPaths.gd")
+const LayoutScale := preload("res://scripts/helpers/LayoutScale.gd")
 
 const WELCOME_BACKGROUND_PATH := "res://assets/art/ui/welcome_screen/welcome_screen.png"
 const PLAY_PL_PATH := "res://assets/art/ui/welcome_screen/play_orange_pl.png"
@@ -11,14 +12,14 @@ const LANGUAGE_PL_PATH := "res://assets/art/ui/welcome_screen/pl.png"
 const LANGUAGE_EN_PATH := "res://assets/art/ui/welcome_screen/en.png"
 const SETTINGS_MODAL_SCRIPT := preload("res://scripts/ui/SettingsModal.gd")
 
-const REFERENCE_SIZE := Vector2(941, 1672)
-const PLAY_CENTER := Vector2(470, 890)
-const PLAY_SIZE := Vector2(590, 190)
-const POLISH_CENTER := Vector2(330, 1156)
-const ENGLISH_CENTER := Vector2(612, 1156)
-const LANGUAGE_SIZE := Vector2(265, 198)
-const SETTINGS_CENTER := Vector2(470, 1326)
-const SETTINGS_SIZE := Vector2(410, 118)
+const REFERENCE_SIZE := Vector2(1080.0, 1920.0)
+const PLAY_CENTER := Vector2(539.4, 1022.0)
+const PLAY_SIZE := Vector2(677.2, 218.2)
+const POLISH_CENTER := Vector2(378.7, 1327.5)
+const ENGLISH_CENTER := Vector2(702.4, 1327.5)
+const LANGUAGE_SIZE := Vector2(304.1, 227.4)
+const SETTINGS_CENTER := Vector2(539.4, 1522.7)
+const SETTINGS_SIZE := Vector2(470.6, 135.5)
 
 signal play_pressed
 
@@ -105,8 +106,8 @@ func _layout_buttons() -> void:
 	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		return
 
-	var scale: float = min(viewport_size.x / REFERENCE_SIZE.x, viewport_size.y / REFERENCE_SIZE.y)
-	var origin := (viewport_size - REFERENCE_SIZE * scale) * 0.5
+	var scale: float = LayoutScale.fit_scale(viewport_size, REFERENCE_SIZE)
+	var origin := LayoutScale.fit_origin(viewport_size, scale, REFERENCE_SIZE)
 
 	_position_control(play_button, PLAY_CENTER, PLAY_SIZE, origin, scale)
 	_position_control(polish_button, POLISH_CENTER, LANGUAGE_SIZE, origin, scale)

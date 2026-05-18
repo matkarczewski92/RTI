@@ -14,7 +14,22 @@
       "Bash(python -c ' *)",
       "Bash(Get-ChildItem -Path \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\" -Recurse -Filter \"*.gd\")",
       "Bash(Select-Object -First 20)",
-      "Bash(powershell -Command \"Get-Item 'assets/art/reptiles/portraits/corn_snake_portrait_common.png', 'assets/art/reptiles/portraits/corn_snake_portrait_rare.png', 'assets/art/reptiles/portraits/bearded_dragon_portrait_common.png', 'assets/art/reptiles/portraits/bearded_dragon_portrait_rare.png', 'assets/art/reptiles/portraits/steppe_tortoise_portrait_common.png', 'assets/art/reptiles/portraits/steppe_tortoise_portrait_rare.png', 'assets/art/reptiles/portraits/leopard_gecko_portrait_common.png', 'assets/art/reptiles/portraits/leopard_gecko_portrait_rare.png' | Select-Object Name, Length\")"
+      "Bash(powershell -Command \"Get-Item 'assets/art/reptiles/portraits/corn_snake_portrait_common.png', 'assets/art/reptiles/portraits/corn_snake_portrait_rare.png', 'assets/art/reptiles/portraits/bearded_dragon_portrait_common.png', 'assets/art/reptiles/portraits/bearded_dragon_portrait_rare.png', 'assets/art/reptiles/portraits/steppe_tortoise_portrait_common.png', 'assets/art/reptiles/portraits/steppe_tortoise_portrait_rare.png', 'assets/art/reptiles/portraits/leopard_gecko_portrait_common.png', 'assets/art/reptiles/portraits/leopard_gecko_portrait_rare.png' | Select-Object Name, Length\")",
+      "Bash(python3 -c ' *)",
+      "Bash(powershell -Command ' *)",
+      "Bash(powershell -Command \"Get-Content data/translations.json | Select-String 'variant|rarity_multi|new_rarity' | Select-Object -First 20\")",
+      "Bash(powershell -Command \"Get-Content data/translations.json | Select-String 'new_variant\\\\|variant_multi\\\\|management\\\\.' | Select-Object -First 20\")",
+      "Bash(powershell -Command \"Get-Content data/translations.json | Select-String 'management\\\\.' | Select-Object -First 20\")",
+      "Bash(powershell -Command \"\\(Get-Content data/translations.json | Select-String -Pattern 'management\\\\.' -List\\).LineNumber\")",
+      "Bash(Select-Object -First 5)",
+      "Bash(Get-ChildItem -Recurse -Path . -Include \"*.tscn\", \"*.gd\")",
+      "Bash(Select-Object -First 50 FullName)",
+      "Bash(xargs grep -l \"modal\\\\|popup\\\\|discovery\\\\|rarity\")",
+      "Bash(python -c \"from PIL import Image; img = Image.open\\('assets/art/ui/small_design/build_habitat.png'\\); print\\(img.size\\)\")",
+      "Bash(python3 -c \"from PIL import Image; img = Image.open\\('assets/art/ui/small_design/build_habitat.png'\\); print\\(img.size\\)\")",
+      "Bash(powershell -command 'Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\('\\\\''__CMDSUB_OUTPUT__/assets/art/ui/small_design/build_habitat.png'\\\\''\\); Write-Host $img.Width $img.Height; $img.Dispose\\(\\)')",
+      "PowerShell(Add-Type -AssemblyName System.Drawing; $path = \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\\\\assets\\\\art\\\\ui\\\\small_design\\\\build_habitat.png\"; $img = [System.Drawing.Image]::FromFile\\($path\\); Write-Host \"Width: $\\($img.Width\\) Height: $\\($img.Height\\)\"; $img.Dispose\\(\\))",
+      "PowerShell(Add-Type -AssemblyName System.Drawing; $path = \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\\\\assets\\\\art\\\\ui\\\\small_design\\\\project_build_habutat.png\"; $img = [System.Drawing.Image]::FromFile\\($path\\); Write-Host \"Width: $\\($img.Width\\) Height: $\\($img.Height\\)\"; $img.Dispose\\(\\))"
     ]
   }
 }

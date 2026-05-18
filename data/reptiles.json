@@ -4,7 +4,7 @@
 		"name_key": "reptile.leopard_gecko.name",
 		"starting_reptile": true,
 		"biome_id": "green_meadow",
-		"preferred_habitat_type": "sand",
+		"preferred_habitat_type": "jungle",
 		"base_cost": 100,
 		"base_income_per_minute": 6,
 		"default_variant_id": "leopard_gecko_common",
@@ -54,6 +54,17 @@
 		"default_variant_id": "small_monitor_common",
 		"portrait_path": "res://assets/art/reptiles/portraits/small_monitor_portrait_common.png",
 		"icon_path": "res://assets/art/reptiles/icons/small_monitor_icon_common.png"
+	},
+	{
+		"id": "chameleon",
+		"name_key": "reptile.chameleon.name",
+		"biome_id": "green_meadow",
+		"preferred_habitat_type": "jungle",
+		"base_cost": 750,
+		"base_income_per_minute": 27,
+		"default_variant_id": "chameleon_common",
+		"portrait_path": "res://assets/art/reptiles/portraits/chameleon_common.png",
+		"icon_path": "res://assets/art/reptiles/portraits/chameleon_common.png"
 	},
 	{
 		"id": "bullsnake",
