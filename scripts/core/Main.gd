@@ -32,12 +32,14 @@ func _set_screen(scene: PackedScene) -> Node:
 
 
 func _show_main_menu() -> void:
+	_notify_onboarding_screen_opened("main_menu")
 	var menu: Node = _set_screen(MAIN_MENU_SCENE)
 	if menu.has_signal("play_pressed"):
 		menu.connect("play_pressed", Callable(self, "_show_biome_map"))
 
 
 func _show_biome_map() -> void:
+	_notify_onboarding_screen_opened("biome_map")
 	var map: Node = _set_screen(BIOME_MAP_SCENE)
 	if map.has_signal("back_pressed"):
 		map.connect("back_pressed", Callable(self, "_show_main_menu"))
@@ -63,6 +65,7 @@ func _show_biome_view(selected_biome_id: String) -> void:
 
 
 func _show_incubator() -> void:
+	_notify_onboarding_screen_opened("incubator")
 	for child in content_root.get_children():
 		child.queue_free()
 	var incubator_view: Node = INCUBATOR_VIEW_SCENE.instantiate()
@@ -73,3 +76,8 @@ func _show_incubator() -> void:
 		incubator_view.connect("biome_map_requested", Callable(self, "_show_biome_map"))
 	if has_node("/root/QuestSystem") and QuestSystem.has_method("notify_event"):
 		QuestSystem.notify_event("incubator_entered", {})
+
+
+func _notify_onboarding_screen_opened(screen_id: String) -> void:
+	if has_node("/root/OnboardingSystem") and OnboardingSystem.has_method("notify_event"):
+		OnboardingSystem.notify_event("screen_opened", {"screen": screen_id})

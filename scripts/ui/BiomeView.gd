@@ -136,10 +136,9 @@ const QUEST_SCROLL_RIGHT_ANCHOR  := 0.887
 const QUEST_SCROLL_BOTTOM_ANCHOR := 0.985
 
 # Kafelek pojedynczego questa
-const QUEST_CARD_MIN_HEIGHT    := 268  # minimalna wysokość kafelka (px)
+const QUEST_CARD_MIN_HEIGHT    := 354  # minimalna wysokość kafelka (+32%)
 const QUEST_CARD_MARGIN        := 14   # wewnętrzny margines kafelka z każdej strony (px)
 const QUEST_CARD_TEXT_INDENT   := 12   # wcięcie tekstów po lewej (px)
-const QUEST_CARD_ROW_SEP       := 12   # odstęp między kolumną info a akcją (px)
 const QUEST_LIST_SEPARATION    := 8    # odstęp między kafelkami questów (px)
 
 # Rozmiary tekstu wewnątrz kafelka (pt)
@@ -156,7 +155,6 @@ const QUEST_CLAIM_BTN_H := 80
 # Progressbar questa
 const QUEST_PROGRESS_BAR_HEIGHT      := 20   # wysokość paska (+50% z 13px)
 const QUEST_PROGRESS_BAR_WIDTH_RATIO := 0.80 # szerokość paska (0.80 = -20%)
-const QUEST_ACTION_RIGHT_PADDING     := 18   # przesunięcie przycisku w lewo (≈5% karty)
 const ANIMALS_DESIGN_DIR := "res://assets/art/ui/animals_design/"
 const ANIMALS_BG_PATH := ANIMALS_DESIGN_DIR + "background.png"
 const ANIMALS_SINGLE_CARD_BG_PATH := ANIMALS_DESIGN_DIR + "single_background.png"
@@ -250,7 +248,8 @@ const BIOMES_DATA_PATH := "res://data/biomes.json"
 const EXP_BAR_PATH := "res://assets/art/ui/exp_progressbar.png"
 const BIOME_BAR_PATH := "res://assets/art/ui/biome_progressbar.png"
 const PROGRESS_BAR_ROW_HEIGHT := 81
-const PROGRESS_BARS_HEIGHT := PROGRESS_BAR_ROW_HEIGHT * 2 + 32
+const TOP_PROGRESS_BARS_HEIGHT := PROGRESS_BAR_ROW_HEIGHT + 16
+const BIOME_UNLOCK_BAR_BOTTOM_GAP := 12.0
 const POPUP_TEXT_PRIMARY := Color(0.14, 0.10, 0.07, 1.0)
 const POPUP_TEXT_SECONDARY := Color(0.28, 0.22, 0.15, 1.0)
 const POPUP_TEXT_ACCENT := Color(0.35, 0.24, 0.08, 1.0)
@@ -393,7 +392,6 @@ var habitat_slots: Dictionary = {}
 var action_popup: PopupPanel
 var feedback_modal: Control
 var confirmation_modal: Control
-var level_up_modal: Control
 var reptile_selection_modal: Control
 var management_modal: Control
 var management_modal_mouse_filter_backup: Array = []
@@ -442,8 +440,6 @@ func _ready() -> void:
 		EconomySystem.income_progress_updated.connect(_on_income_progress_updated)
 	if EconomySystem.has_signal("income_tick"):
 		EconomySystem.income_tick.connect(_on_income_tick)
-	if EconomySystem.has_signal("player_level_up"):
-		EconomySystem.player_level_up.connect(_on_player_level_up)
 	if EconomySystem.has_signal("currency_changed"):
 		EconomySystem.currency_changed.connect(_on_currency_changed_for_bars)
 	if EconomySystem.has_signal("player_level_changed"):
@@ -563,7 +559,6 @@ func _rebuild_layout() -> void:
 	action_popup = null
 	feedback_modal = null
 	confirmation_modal = null
-	level_up_modal = null
 	reptile_selection_modal = null
 	management_modal = null
 	management_modal_mouse_filter_backup.clear()
@@ -632,11 +627,6 @@ func _on_income_tick(amount: float) -> void:
 	_refresh_habitat_income_progress()
 
 
-func _on_player_level_up(levels: Array, reward_amount: float) -> void:
-	_show_level_up_popup(levels, reward_amount)
-	_refresh_progress_bars()
-
-
 func _on_currency_changed_for_bars(currency_id: String, _amount: Variant) -> void:
 	if currency_id == "xp":
 		_refresh_progress_bars()
@@ -688,6 +678,7 @@ func _build_layout() -> void:
 	_add_progress_bars_widget()
 	_add_map_area()
 	_add_workers_shortcut()
+	_add_biome_unlock_bar_widget()
 	_add_bottom_nav()
 	_add_offline_income_popup()
 	_add_toast()
@@ -842,7 +833,7 @@ func _add_map_area() -> void:
 	play_area.anchor_top = 0.0
 	play_area.anchor_right = 1.0
 	play_area.anchor_bottom = 1.0
-	play_area.offset_top = TOP_BAR_HEIGHT + PROGRESS_BARS_HEIGHT + 4
+	play_area.offset_top = TOP_BAR_HEIGHT + TOP_PROGRESS_BARS_HEIGHT + 4
 	play_area.offset_bottom = -(BOTTOM_NAV_HEIGHT + 18)
 	add_child(play_area)
 
@@ -920,7 +911,7 @@ func _add_progress_bars_widget() -> void:
 	progress_bars_widget.anchor_right = 0.90
 	progress_bars_widget.anchor_bottom = 0.0
 	progress_bars_widget.offset_top = TOP_BAR_HEIGHT + 4
-	progress_bars_widget.offset_bottom = TOP_BAR_HEIGHT + PROGRESS_BARS_HEIGHT
+	progress_bars_widget.offset_bottom = TOP_BAR_HEIGHT + TOP_PROGRESS_BARS_HEIGHT
 	progress_bars_widget.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(progress_bars_widget)
 
@@ -943,11 +934,23 @@ func _add_progress_bars_widget() -> void:
 	xp_progress_label = xp_art["label"]
 	column.add_child(xp_art["outer"])
 
+	_refresh_progress_bars()
+
+
+func _add_biome_unlock_bar_widget() -> void:
 	var biome_art := _make_art_progress_bar(BIOME_BAR_PATH, Color(0.22, 0.72, 0.28, 0.80))
 	biome_unlock_bar_row = biome_art["outer"]
 	biome_unlock_progress_bar = biome_art["bar"]
 	biome_unlock_label = biome_art["label"]
-	column.add_child(biome_unlock_bar_row)
+	biome_unlock_bar_row.name = "BiomeUnlockBar"
+	biome_unlock_bar_row.anchor_left = 0.10
+	biome_unlock_bar_row.anchor_top = 1.0
+	biome_unlock_bar_row.anchor_right = 0.86
+	biome_unlock_bar_row.anchor_bottom = 1.0
+	biome_unlock_bar_row.offset_top = -(BOTTOM_NAV_HEIGHT + PROGRESS_BAR_ROW_HEIGHT + BIOME_UNLOCK_BAR_BOTTOM_GAP)
+	biome_unlock_bar_row.offset_bottom = -(BOTTOM_NAV_HEIGHT + BIOME_UNLOCK_BAR_BOTTOM_GAP)
+	biome_unlock_bar_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(biome_unlock_bar_row)
 
 	_refresh_progress_bars()
 
@@ -1005,9 +1008,7 @@ func _refresh_progress_bars() -> void:
 		return
 
 	var total_xp: float = float(GameState.get_value("xp", 0))
-	var effective_level: int = 1
-	while total_xp >= float(EconomySystem.get_required_xp_for_level(effective_level + 1)):
-		effective_level += 1
+	var effective_level: int = _get_effective_player_level(total_xp)
 	var xp_for_current: float = float(EconomySystem.get_required_xp_for_level(effective_level))
 	var xp_for_next: float = float(EconomySystem.get_required_xp_for_level(effective_level + 1))
 	var xp_in_level: int = max(0, int(total_xp - xp_for_current))
@@ -1021,7 +1022,7 @@ func _refresh_progress_bars() -> void:
 			.replace("{next}", str(effective_level + 1))
 	)
 
-	var current_level: int = max(1, int(GameState.get_value("level", 1)))
+	var current_level: int = effective_level
 	if biome_unlock_bar_row == null:
 		return
 
@@ -1035,7 +1036,8 @@ func _refresh_progress_bars() -> void:
 	biome_unlock_progress_bar.value = clamp(float(current_level) / float(req_level), 0.0, 1.0) * 100.0
 	var biome_name: String = LocalizationSystem.tr_key(str(biome_data.get("name_key", "biome.new_biome")))
 	biome_unlock_label.text = (
-		biome_name + ": " + LocalizationSystem.tr_key("ui.biome_unlock_level_req")
+		LocalizationSystem.tr_key("ui.biome_unlock_bar_label").replace("{biome}", biome_name)
+			+ ": " + LocalizationSystem.tr_key("ui.biome_unlock_level_req")
 			.replace("{current}", str(current_level))
 			.replace("{target}", str(req_level))
 	)
@@ -1049,29 +1051,36 @@ func _get_next_biome_unlock_data() -> Dictionary:
 	if typeof(parsed) != TYPE_ARRAY:
 		return {}
 	var biomes: Array = parsed as Array
-	var next_id: String = ""
+	var current_level: int = _get_effective_player_level()
+	var next_unlock: Dictionary = {}
+	var next_req_level: int = 2147483647
+
 	for biome_value in biomes:
 		if typeof(biome_value) != TYPE_DICTIONARY:
 			continue
 		var biome: Dictionary = biome_value as Dictionary
-		if str(biome.get("id", "")) == biome_id:
-			next_id = str(biome.get("next_biome_id", ""))
-			break
-	if next_id.is_empty():
-		return {}
-	for biome_value in biomes:
-		if typeof(biome_value) != TYPE_DICTIONARY:
+		var req_value: Variant = biome.get("unlock_requirements", {})
+		if typeof(req_value) != TYPE_DICTIONARY:
 			continue
-		var biome: Dictionary = biome_value as Dictionary
-		if str(biome.get("id", "")) != next_id:
+		var req_level: int = int((req_value as Dictionary).get("level", 0))
+		if req_level <= current_level or req_level >= next_req_level:
 			continue
-		var req: Dictionary = biome.get("unlock_requirements", {}) as Dictionary
-		return {
-			"id": next_id,
+		next_req_level = req_level
+		next_unlock = {
+			"id": str(biome.get("id", "")),
 			"name_key": str(biome.get("name_key", "biome.new_biome")),
-			"req_level": int(req.get("level", 0))
+			"req_level": req_level
 		}
-	return {}
+	return next_unlock
+
+
+func _get_effective_player_level(total_xp: float = -1.0) -> int:
+	if total_xp < 0.0:
+		total_xp = float(GameState.get_value("xp", GameState.get_value("player_xp", 0)))
+	var level: int = max(1, int(GameState.get_value("level", GameState.get_value("player_level", 1))))
+	while total_xp >= float(EconomySystem.get_required_xp_for_level(level + 1)):
+		level += 1
+	return level
 
 
 func _add_habitat_slots(parent: Control) -> void:
@@ -1083,7 +1092,7 @@ func _add_habitat_slots(parent: Control) -> void:
 	var default_purchased_h := 409.5
 	var cover_scale := _get_background_cover_scale()
 	var cover_origin := _get_background_cover_origin(cover_scale)
-	var play_area_screen_top := float(TOP_BAR_HEIGHT + PROGRESS_BARS_HEIGHT + 4)
+	var play_area_screen_top := float(TOP_BAR_HEIGHT + TOP_PROGRESS_BARS_HEIGHT + 4)
 
 	var count: int = min(habitat_data.size(), _biome_layout_slots.size())
 	for index in count:
@@ -2135,6 +2144,7 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 		_show_message_popup("ui.reptile_unavailable")
 		return
 	current_management_instance_id = str(instance.get("instance_id", ""))
+	_notify_quest_event("reptile_management_opened", {"instance_id": current_management_instance_id})
 
 	var reptile: Dictionary = ReptileSystem.get_reptile(str(instance.get("reptile_id", "")))
 	var variant: Dictionary = ReptileSystem.get_owned_animal_variant(instance)
@@ -2668,6 +2678,7 @@ func _show_habitat_management_popup(habitat_id: String) -> void:
 	_close_management_modal()
 	current_management_feedback_key = ""
 	current_management_instance_id = ""
+	_notify_quest_event("habitat_management_opened", {"habitat_id": habitat_id})
 
 	management_modal = Control.new()
 	management_modal.name = "HabitatManagementModal"
@@ -3198,6 +3209,8 @@ func _show_animals_view(tab_id: String = "owned") -> void:
 	add_child(animals_view)
 	if tab_id == "gallery":
 		_notify_quest_event("screen_opened", {"screen": "gallery"})
+	elif tab_id == "achievements":
+		_notify_quest_event("screen_opened", {"screen": "achievements"})
 
 	var panel_root: Control = Control.new()
 	panel_root.name = "AnimalsDesignPanel"
@@ -3688,6 +3701,7 @@ func _show_upgrades_view() -> void:
 	_close_habitat_purchase_modal()
 
 	_upgrade_purchase_in_progress = false
+	_notify_quest_event("screen_opened", {"screen": "upgrades"})
 	if not _upgrades_design_assets_available():
 		_show_upgrades_view_fallback()
 		return
@@ -4706,17 +4720,12 @@ func _make_quest_card(state: Dictionary) -> Control:
 	margin.add_theme_constant_override("margin_bottom", QUEST_CARD_MARGIN)
 	card.add_child(margin)
 
-	var row: HBoxContainer = HBoxContainer.new()
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", QUEST_CARD_ROW_SEP)
-	margin.add_child(row)
-
 	var info: VBoxContainer = VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	info.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	info.alignment = BoxContainer.ALIGNMENT_CENTER
 	info.add_theme_constant_override("separation", 4)
-	row.add_child(info)
+	margin.add_child(info)
 
 	var title_label: Label = Label.new()
 	title_label.text = LocalizationSystem.tr_key(str(state.get("title_key", "")))
@@ -4784,6 +4793,8 @@ func _make_quest_card(state: Dictionary) -> Control:
 
 	var reward_label: Label = Label.new()
 	reward_label.text = _format_quest_reward(state)
+	reward_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	reward_label.clip_text = false
 	reward_label.add_theme_font_size_override("font_size", QUEST_TEXT_REWARD_SIZE)
 	_apply_label_color(reward_label, POPUP_TEXT_SUCCESS)
 	var reward_label_wrap: MarginContainer = MarginContainer.new()
@@ -4794,26 +4805,20 @@ func _make_quest_card(state: Dictionary) -> Control:
 	info.add_child(reward_label_wrap)
 
 	var action_area: VBoxContainer = VBoxContainer.new()
-	action_area.custom_minimum_size = Vector2(QUEST_CLAIM_BTN_W + 8, 0)
+	action_area.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	action_area.alignment = BoxContainer.ALIGNMENT_CENTER
-	action_area.add_theme_constant_override("separation", 6)
-	row.add_child(action_area)
-
-	var action_right_spacer: Control = Control.new()
-	action_right_spacer.custom_minimum_size = Vector2(QUEST_ACTION_RIGHT_PADDING, 0)
-	action_right_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(action_right_spacer)
+	action_area.add_theme_constant_override("separation", 4)
+	info.add_child(action_area)
 
 	var status_label: Label = Label.new()
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	status_label.add_theme_font_size_override("font_size", QUEST_TEXT_STATUS_SIZE)
 	_apply_label_color(status_label, POPUP_TEXT_SECONDARY)
-	action_area.add_child(status_label)
 
 	if bool(state.get("claimed", false)):
 		status_label.text = LocalizationSystem.tr_key("quests.claimed")
+		action_area.add_child(status_label)
 	elif bool(state.get("claimable", false)):
-		status_label.text = LocalizationSystem.tr_key("quests.completed")
 		var claim_tex: Texture2D = AssetPaths.load_texture(_get_quests_claim_button_path())
 		if claim_tex != null:
 			var claim_button: TextureButton = TextureButton.new()
@@ -4834,12 +4839,14 @@ func _make_quest_card(state: Dictionary) -> Control:
 			action_area.add_child(claim_button)
 		else:
 			var claim_button: Button = _make_owned_card_action_button("quests.claim")
+			claim_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 			claim_button.pressed.connect(func() -> void:
 				_on_quest_claim_pressed(str(state.get("id", "")))
 			)
 			action_area.add_child(claim_button)
 	else:
 		status_label.text = LocalizationSystem.tr_key("quests.in_progress")
+		action_area.add_child(status_label)
 
 	_make_scroll_safe(card)
 	return card
@@ -5295,6 +5302,7 @@ func _format_quest_reward(state: Dictionary) -> String:
 	var reward_xp: float = float(state.get("reward_xp", 0.0))
 	if reward_xp > 0.0:
 		pieces.append(_format_decimal(reward_xp) + " XP")
+	_append_quest_capacity_reward_pieces(pieces, state)
 	return LocalizationSystem.tr_key("quests.reward") + ": " + _join_text_pieces(pieces, " + ")
 
 
@@ -5318,7 +5326,17 @@ func _format_quest_claim_feedback(result: Dictionary) -> String:
 	var reward_xp: float = float(result.get("reward_xp", 0.0))
 	if reward_xp > 0.0:
 		pieces.append("+" + _format_decimal(reward_xp) + " XP")
+	_append_quest_capacity_reward_pieces(pieces, result)
 	return _join_text_pieces(pieces, "  ")
+
+
+func _append_quest_capacity_reward_pieces(pieces: Array[String], source: Dictionary) -> void:
+	var reward_food_max: int = max(0, int(source.get("reward_food_max", 0)))
+	if reward_food_max > 0:
+		pieces.append(LocalizationSystem.tr_key("quests.reward_food_max").replace("{amount}", str(reward_food_max)))
+	var reward_water_max: int = max(0, int(source.get("reward_water_max", 0)))
+	if reward_water_max > 0:
+		pieces.append(LocalizationSystem.tr_key("quests.reward_water_max").replace("{amount}", str(reward_water_max)))
 
 
 func _join_text_pieces(pieces: Array[String], separator: String) -> String:
@@ -5337,6 +5355,10 @@ func _notify_quest_event(event_type: String, payload: Dictionary = {}) -> void:
 		var quest_system: Node = get_node("/root/QuestSystem")
 		if quest_system.has_method("notify_event"):
 			quest_system.call("notify_event", event_type, payload)
+	if has_node("/root/OnboardingSystem"):
+		var onboarding_system: Node = get_node("/root/OnboardingSystem")
+		if onboarding_system.has_method("notify_event"):
+			onboarding_system.call("notify_event", event_type, payload)
 	_refresh_next_step_widget()
 	if has_node("/root/AchievementSystem"):
 		var achievement_system: Node = get_node("/root/AchievementSystem")
@@ -5717,67 +5739,6 @@ func _show_feedback_modal(title_text: String, message_text: String, ok_key: Stri
 	_style_primary_action_button(ok_button)
 	ok_button.custom_minimum_size = Vector2(0, 44.0 * ui_scale)
 	ok_button.add_theme_font_size_override("font_size", int(round(14.0 * ui_scale)))
-	column.add_child(ok_button)
-
-
-func _show_level_up_popup(levels: Array, reward_amount: float) -> void:
-	if levels.is_empty():
-		return
-
-	_close_level_up_modal()
-	level_up_modal = Control.new()
-	level_up_modal.name = "LevelUpModal"
-	_add_to_ui_modal_layer(level_up_modal)
-
-	var overlay: ColorRect = _make_modal_dim_overlay(0.46)
-	overlay.gui_input.connect(func(event: InputEvent) -> void:
-		if event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
-			_close_level_up_modal()
-	)
-	level_up_modal.add_child(overlay)
-
-	var center: CenterContainer = CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.offset_left = 24
-	center.offset_right = -24
-	center.offset_top = TOP_BAR_HEIGHT * 0.5
-	center.offset_bottom = -(BOTTOM_NAV_HEIGHT * 0.35)
-	level_up_modal.add_child(center)
-
-	var panel: PanelContainer = PanelContainer.new()
-	panel.custom_minimum_size = Vector2(430, 290)
-	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
-	center.add_child(panel)
-
-	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 22)
-	margin.add_theme_constant_override("margin_right", 22)
-	margin.add_theme_constant_override("margin_top", 20)
-	margin.add_theme_constant_override("margin_bottom", 20)
-	panel.add_child(margin)
-
-	var column: VBoxContainer = VBoxContainer.new()
-	column.add_theme_constant_override("separation", 12)
-	margin.add_child(column)
-
-	var new_level: int = int(levels[levels.size() - 1])
-	var title: Label = _make_popup_label(LocalizationSystem.tr_key("player.level_up_title"), 22)
-	_apply_label_color(title, POPUP_TEXT_PRIMARY)
-	column.add_child(title)
-
-	var message: Label = _make_popup_label(LocalizationSystem.tr_key("player.level_up_message").replace("{level}", str(new_level)), 16)
-	_apply_label_color(message, POPUP_TEXT_SECONDARY)
-	column.add_child(message)
-
-	var reward: Label = _make_popup_label(LocalizationSystem.tr_key("player.level_reward").replace("{amount}", _format_decimal(reward_amount)), 17)
-	_apply_label_color(reward, POPUP_TEXT_SUCCESS)
-	column.add_child(reward)
-
-	var ok_button: Button = _make_popup_button("player.level_up_ok", func() -> void:
-		_close_level_up_modal()
-	)
-	_style_primary_action_button(ok_button)
 	column.add_child(ok_button)
 
 
@@ -6394,14 +6355,6 @@ func _close_confirmation_modal() -> void:
 
 	confirmation_modal.queue_free()
 	confirmation_modal = null
-
-
-func _close_level_up_modal() -> void:
-	if level_up_modal == null:
-		return
-
-	level_up_modal.queue_free()
-	level_up_modal = null
 
 
 func _close_management_modal() -> void:

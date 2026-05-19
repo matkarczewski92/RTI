@@ -557,6 +557,24 @@ func _execute_dev_command(command: String) -> String:
 		SaveSystem.save_game()
 		GameState.state_changed.emit()
 		return "Connections skipped"
+	elif cmd == "reset_onboarding":
+		var onboarding_reset: Node = get_node_or_null("/root/OnboardingSystem")
+		if onboarding_reset != null and onboarding_reset.has_method("reset_onboarding"):
+			onboarding_reset.call("reset_onboarding", true)
+			return "Onboarding reset"
+		return "Onboarding unavailable"
+	elif cmd == "complete_onboarding":
+		var onboarding_complete: Node = get_node_or_null("/root/OnboardingSystem")
+		if onboarding_complete != null and onboarding_complete.has_method("complete_onboarding"):
+			onboarding_complete.call("complete_onboarding")
+			return "Onboarding completed"
+		return "Onboarding unavailable"
+	elif cmd == "start_onboarding":
+		var onboarding_start: Node = get_node_or_null("/root/OnboardingSystem")
+		if onboarding_start != null and onboarding_start.has_method("start_onboarding"):
+			onboarding_start.call("start_onboarding")
+			return "Onboarding started"
+		return "Onboarding unavailable"
 	elif cmd.is_empty():
 		return ""
 	return "Unknown: " + cmd

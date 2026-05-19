@@ -7,8 +7,10 @@ signal save_loaded
 const SAVE_VERSION := 2
 const CURRENT_SAVE_VERSION := SAVE_VERSION
 const DEFAULT_BIOME_ID := "green_meadow"
+const LEVEL_PROGRESSION_PATH := "res://data/level_progression.json"
 
 var state: Dictionary = {}
+var _level_progression_cache: Dictionary = {}
 
 
 func _ready() -> void:
@@ -73,6 +75,25 @@ func get_default_upgrade_state() -> Dictionary:
 		"upgrades": {},
 		"upgrade_levels": {}
 	}
+
+
+func get_default_onboarding_state() -> Dictionary:
+	return {
+		"welcome_seen": false,
+		"active_task_id": "",
+		"active_task_accepted": false,
+		"active_task_completed": false,
+		"completed_task_ids": [],
+		"skipped_task_ids": [],
+		"claimed_task_ids": [],
+		"onboarding_finished": false,
+		"bubble_visible": false,
+		"event_counters": {}
+	}
+
+
+func normalize_onboarding_state(value: Variant) -> Dictionary:
+	return _normalize_onboarding_state(value)
 
 
 func get_default_habitat_state(habitat_id: String = "", biome_id: String = DEFAULT_BIOME_ID, slot_index: int = 0) -> Dictionary:
@@ -178,6 +199,7 @@ func get_default_save_data() -> Dictionary:
 		"level": 1,
 		"player_level": 1,
 		"last_rewarded_level": 1,
+		"onboarding_state": get_default_onboarding_state(),
 		"food_current": 100,
 		"food_max": 100,
 		"water_current": 100,
@@ -315,6 +337,8 @@ func normalize_save_data(data: Dictionary) -> Dictionary:
 
 	for key in ["biomes", "biome_progress", "biome_progress_points", "quests", "quest_progress", "quest_event_counters", "workers", "worker_levels", "upgrades", "upgrade_levels", "owned_variant_instances"]:
 		normalized[key] = _normalize_dictionary(normalized.get(key, {}))
+
+	normalized["onboarding_state"] = _normalize_onboarding_state(normalized.get("onboarding_state", {}))
 
 	normalized["worker_levels"] = _normalize_level_dictionary(normalized.get("worker_levels", normalized.get("workers", {})))
 	normalized["upgrade_levels"] = _normalize_level_dictionary(normalized.get("upgrade_levels", normalized.get("upgrades", {})))
@@ -831,6 +855,33 @@ func _normalize_unique_string_array(value: Variant) -> Array:
 	return result
 
 
+func _normalize_onboarding_state(value: Variant) -> Dictionary:
+	var result: Dictionary = get_default_onboarding_state()
+	if typeof(value) != TYPE_DICTIONARY:
+		return result
+
+	var source: Dictionary = value as Dictionary
+	result["welcome_seen"] = bool(source.get("welcome_seen", false))
+	result["active_task_id"] = str(source.get("active_task_id", ""))
+	result["active_task_accepted"] = bool(source.get("active_task_accepted", false))
+	result["active_task_completed"] = bool(source.get("active_task_completed", false))
+	result["completed_task_ids"] = _normalize_unique_string_array(source.get("completed_task_ids", []))
+	result["skipped_task_ids"] = _normalize_unique_string_array(source.get("skipped_task_ids", []))
+	result["claimed_task_ids"] = _normalize_unique_string_array(source.get("claimed_task_ids", []))
+	result["onboarding_finished"] = bool(source.get("onboarding_finished", false))
+	result["bubble_visible"] = bool(source.get("bubble_visible", false))
+
+	var counters: Dictionary = {}
+	var counters_value: Variant = source.get("event_counters", {})
+	if typeof(counters_value) == TYPE_DICTIONARY:
+		for key in (counters_value as Dictionary).keys():
+			var counter_id: String = str(key).strip_edges()
+			if not counter_id.is_empty():
+				counters[counter_id] = max(0, int((counters_value as Dictionary).get(key, 0)))
+	result["event_counters"] = counters
+	return result
+
+
 func _safe_timestamp(value: Variant, fallback: int, max_value: int = 2147483647) -> int:
 	if value == null:
 		return fallback
@@ -852,15 +903,38 @@ func _get_level_for_xp(total_xp: float) -> int:
 func _get_required_xp_for_level(level: int) -> int:
 	if level <= 1:
 		return 0
-	if level == 2:
-		return 500
-	if level == 3:
-		return 2000
 
-	var required: float = 2000.0
-	for _next_level in range(4, level + 1):
-		required = required + (required * 1.15)
+	var progression: Dictionary = _get_level_progression()
+	var levels_val: Variant = progression.get("levels", null)
+	if typeof(levels_val) == TYPE_DICTIONARY:
+		var levels_dict: Dictionary = levels_val as Dictionary
+		var key := str(level)
+		if levels_dict.has(key):
+			return int(levels_dict[key])
+
+	var required: float = float(progression.get("level_2_xp", 1000.0))
+	var multiplier: float = float(progression.get("multiplier", 1.75))
+	for _next_level in range(3, level + 1):
+		required *= multiplier
 	return int(round(required))
+
+
+func _get_level_progression() -> Dictionary:
+	if not _level_progression_cache.is_empty():
+		return _level_progression_cache
+
+	var file := FileAccess.open(LEVEL_PROGRESSION_PATH, FileAccess.READ)
+	if file == null:
+		_level_progression_cache = {"level_2_xp": 1000.0, "multiplier": 1.75}
+		return _level_progression_cache
+
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(parsed) == TYPE_DICTIONARY:
+		_level_progression_cache = parsed as Dictionary
+	else:
+		_level_progression_cache = {"level_2_xp": 1000.0, "multiplier": 1.75}
+	return _level_progression_cache
 
 
 func _nullable_id(value: Variant) -> Variant:

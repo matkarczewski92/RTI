@@ -39,10 +39,10 @@
 		"cleaning": 10,
 		"play": 15,
 		"watering_or_basic_care": 5,
-		"breeding_started": 25,
-		"breeding_success": 50,
+		"breeding_started": 250,
+		"breeding_success": 500,
 		"breeding_failed": 15,
-		"breeding_long_48h_bonus": 25
+		"breeding_long_48h_bonus": 250
 	},
 	"income_bonus": {
 		"percent_per_level_above_1": 2,

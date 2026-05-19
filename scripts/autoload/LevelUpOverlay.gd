@@ -44,13 +44,9 @@ func _build_ui() -> void:
 	_image_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_wrapper.add_child(_image_rect)
 
-	# Transparent hitbox over the drawn "DALEJ / Continue" button region
-	# The button occupies roughly the bottom 14% of the image, centred horizontally
+	# Transparent hitbox over the whole image. The art already contains the button.
 	var btn := Button.new()
-	btn.anchor_left = 0.12
-	btn.anchor_right = 0.88
-	btn.anchor_top = 0.84
-	btn.anchor_bottom = 0.97
+	btn.set_anchors_preset(Control.PRESET_FULL_RECT)
 	btn.flat = true
 	btn.focus_mode = Control.FOCUS_NONE
 	var empty := StyleBoxEmpty.new()
@@ -95,6 +91,7 @@ func _show() -> void:
 		var img_size: Vector2 = tex.get_size()
 		if img_size.x > 0 and img_size.y > 0:
 			var scale_f: float = min(vp_size.x * 0.85 / img_size.x, vp_size.y * 0.85 / img_size.y)
+			scale_f *= 0.60
 			_wrapper.custom_minimum_size = img_size * scale_f
 
 	visible = true

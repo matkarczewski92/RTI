@@ -725,6 +725,43 @@ func get_biome_resource_max(biome_id: String, resource_id: String) -> int:
 	return _apply_storage_multiplier(resource_id, base_max)
 
 
+func increase_resource_max(resource_id: String, amount: int) -> int:
+	if resource_id != "food" and resource_id != "water":
+		return 0
+
+	var safe_amount: int = max(0, amount)
+	if safe_amount <= 0:
+		return 0
+
+	_update_global_resources(Time.get_unix_time_from_system())
+	var br_value: Variant = GameState.get_value("biome_resources", {})
+	var br: Dictionary = {}
+	if typeof(br_value) == TYPE_DICTIONARY:
+		br = (br_value as Dictionary).duplicate(true)
+
+	var defaults: Dictionary = GameState.get_default_biome_resources() if GameState.has_method("get_default_biome_resources") else {}
+	for biome_id in HABITAT_BIOMES:
+		var biome: Dictionary = {}
+		var biome_value: Variant = br.get(biome_id, {})
+		if typeof(biome_value) == TYPE_DICTIONARY:
+			biome = (biome_value as Dictionary).duplicate(true)
+		elif defaults.has(biome_id) and typeof(defaults.get(biome_id)) == TYPE_DICTIONARY:
+			biome = (defaults.get(biome_id) as Dictionary).duplicate(true)
+
+		var max_key: String = resource_id + "_max"
+		var current_key: String = resource_id + "_current"
+		biome[max_key] = max(1, int(biome.get(max_key, 100))) + safe_amount
+		biome[current_key] = int(clamp(int(biome.get(current_key, 0)), 0, int(biome[max_key])))
+		br[biome_id] = biome
+
+	GameState.set_value("biome_resources", br)
+	var legacy_max_key: String = resource_id + "_max"
+	var legacy_current_key: String = resource_id + "_current"
+	GameState.set_value(legacy_max_key, max(1, int(GameState.get_value(legacy_max_key, 100))) + safe_amount)
+	GameState.set_value(legacy_current_key, int(clamp(int(GameState.get_value(legacy_current_key, 0)), 0, int(GameState.get_value(legacy_max_key, 100)))))
+	return safe_amount
+
+
 func get_shop_config(resource_id: String) -> Dictionary:
 	var shop_value: Variant = _care_actions_config.get("shop", {})
 	if typeof(shop_value) != TYPE_DICTIONARY:

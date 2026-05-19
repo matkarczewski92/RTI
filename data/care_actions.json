@@ -45,8 +45,8 @@
 			"resource_cost": 5,
 			"cooldown_seconds": 20,
 			"cost_upgrade_id": "better_food",
-			"regen_interval_seconds": 100,
-			"regen_interval_seconds_offline": 600,
+			"regen_interval_seconds": 30,
+			"regen_interval_seconds_offline": 60,
 			"regen_amount": 1
 		},
 		"water": {
@@ -56,8 +56,8 @@
 			"resource_cost": 5,
 			"cooldown_seconds": 20,
 			"cost_upgrade_id": "better_water",
-			"regen_interval_seconds": 100,
-			"regen_interval_seconds_offline": 600,
+			"regen_interval_seconds": 30,
+			"regen_interval_seconds_offline": 60,
 			"regen_amount": 1
 		},
 		"clean": {

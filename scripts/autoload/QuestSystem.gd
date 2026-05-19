@@ -179,10 +179,16 @@ func claim_quest_reward(quest_id: String) -> Dictionary:
 	var reward_type: String = str(quest.get("reward_type", "repticash"))
 	var reward_amount: float = float(quest.get("reward_amount", 0.0))
 	var reward_xp: float = float(quest.get("reward_xp", 0.0))
+	var reward_food_max: int = max(0, int(quest.get("reward_food_max", 0)))
+	var reward_water_max: int = max(0, int(quest.get("reward_water_max", 0)))
 	if reward_amount > 0.0:
 		EconomySystem.add_currency(reward_type, reward_amount)
 	if reward_xp > 0.0:
 		EconomySystem.add_currency("xp", reward_xp)
+	if reward_food_max > 0:
+		reward_food_max = _grant_resource_capacity_reward("food", reward_food_max)
+	if reward_water_max > 0:
+		reward_water_max = _grant_resource_capacity_reward("water", reward_water_max)
 
 	var claimed: Array = GameState.get_value("claimed_quests", []) as Array
 	claimed.append(quest_id)
@@ -193,7 +199,22 @@ func claim_quest_reward(quest_id: String) -> Dictionary:
 		GameState.set_value("completed_quests", completed)
 	SaveSystem.save_game()
 	quest_claimed.emit(quest_id)
-	return {"success": true, "reward_type": reward_type, "reward_amount": reward_amount, "reward_xp": reward_xp}
+	return {
+		"success": true,
+		"reward_type": reward_type,
+		"reward_amount": reward_amount,
+		"reward_xp": reward_xp,
+		"reward_food_max": reward_food_max,
+		"reward_water_max": reward_water_max
+	}
+
+
+func _grant_resource_capacity_reward(resource_id: String, amount: int) -> int:
+	if amount <= 0:
+		return 0
+	if not ReptileSystem.has_method("increase_resource_max"):
+		return 0
+	return int(ReptileSystem.call("increase_resource_max", resource_id, amount))
 
 
 func notify_event(event_type: String, payload: Dictionary = {}) -> void:

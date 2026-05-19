@@ -3831,6 +3831,7 @@ func _format_quest_reward_text(state: Dictionary) -> String:
 	var reward_xp: float = float(state.get("reward_xp", 0.0))
 	if reward_xp > 0.0:
 		pieces.append(_format_reward_amount(reward_xp) + " XP")
+	_append_quest_capacity_reward_pieces(pieces, state)
 	return _localized_text("quests.reward", "Reward") + ": " + _join_reward_pieces(pieces, " + ")
 
 
@@ -3842,7 +3843,17 @@ func _format_quest_claim_text(result: Dictionary) -> String:
 	var reward_xp: float = float(result.get("reward_xp", 0.0))
 	if reward_xp > 0.0:
 		pieces.append("+" + _format_reward_amount(reward_xp) + " XP")
+	_append_quest_capacity_reward_pieces(pieces, result)
 	return _join_reward_pieces(pieces, "  ")
+
+
+func _append_quest_capacity_reward_pieces(pieces: Array[String], source: Dictionary) -> void:
+	var reward_food_max: int = max(0, int(source.get("reward_food_max", 0)))
+	if reward_food_max > 0:
+		pieces.append(_localized_text("quests.reward_food_max", "Food cap +{amount}").replace("{amount}", str(reward_food_max)))
+	var reward_water_max: int = max(0, int(source.get("reward_water_max", 0)))
+	if reward_water_max > 0:
+		pieces.append(_localized_text("quests.reward_water_max", "Water cap +{amount}").replace("{amount}", str(reward_water_max)))
 
 
 func _format_reward_amount(value: float) -> String:
