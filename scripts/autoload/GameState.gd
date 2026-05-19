@@ -19,7 +19,7 @@ func _ready() -> void:
 
 func get_default_settings() -> Dictionary:
 	return {
-		"language": "pl",
+		"language": "en",
 		"music_enabled": true,
 		"sfx_enabled": true,
 		"vibration_enabled": true
@@ -211,7 +211,7 @@ func get_default_save_data() -> Dictionary:
 		"food_regen_interval_seconds": 600,
 		"water_regen_interval_seconds": 600,
 		"biome_resources": get_default_biome_resources(),
-		"language": "pl",
+		"language": "en",
 		"settings": get_default_settings(),
 		"unlocked_biomes": [DEFAULT_BIOME_ID],
 		"biomes": {},
@@ -309,7 +309,7 @@ func normalize_save_data(data: Dictionary) -> Dictionary:
 	normalized["save_version"] = CURRENT_SAVE_VERSION
 	normalized["created_at"] = _safe_timestamp(normalized.get("created_at", now), now)
 	normalized["last_saved_at"] = _safe_timestamp(normalized.get("last_saved_at", 0), 0)
-	normalized["language"] = _normalize_language(str(normalized.get("language", "pl")))
+	normalized["language"] = _normalize_language(str(normalized.get("language", "en")))
 	var incoming_settings: Variant = normalized.get("settings", {})
 	normalized["settings"] = _merge_dictionary(get_default_settings(), incoming_settings)
 	var settings_language: String = normalized["language"]
@@ -469,12 +469,12 @@ func set_value(key: String, value: Variant) -> void:
 
 
 func get_language() -> String:
-	return _normalize_language(str(state.get("language", "pl")))
+	return _normalize_language(str(state.get("language", "en")))
 
 
 func set_language(language: String) -> void:
 	language = _normalize_language(language)
-	if state.get("language", "pl") == language:
+	if state.get("language", "en") == language:
 		var existing_settings: Dictionary = get_settings()
 		existing_settings["language"] = language
 		state["settings"] = existing_settings
@@ -490,7 +490,7 @@ func set_language(language: String) -> void:
 
 func get_settings() -> Dictionary:
 	var settings: Dictionary = _merge_dictionary(get_default_settings(), state.get("settings", {}))
-	settings["language"] = _normalize_language(str(settings.get("language", state.get("language", "pl"))))
+	settings["language"] = _normalize_language(str(settings.get("language", state.get("language", "en"))))
 	return settings
 
 

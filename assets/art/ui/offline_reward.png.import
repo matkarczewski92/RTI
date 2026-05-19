@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c2658jgfpn547"
-path="res://.godot/imported/emp_play.png-ac528392dac6e0dd31361d121e47cd58.ctex"
+uid="uid://mrf386wyc87v"
+path="res://.godot/imported/offline_reward.png-34db392ea6a26160cd323804b1daaf2d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/ui/icons/menu/emp_play.png"
-dest_files=["res://.godot/imported/emp_play.png-ac528392dac6e0dd31361d121e47cd58.ctex"]
+source_file="res://assets/art/ui/offline_reward.png"
+dest_files=["res://.godot/imported/offline_reward.png-34db392ea6a26160cd323804b1daaf2d.ctex"]
 
 [params]
 

@@ -31,9 +31,9 @@
 		"amount_per_interval": 1.0
 	},
 	"decay_offline": {
-		"happiness_interval_seconds": 300,
-		"hunger_interval_seconds": 440,
-		"hydration_interval_seconds": 440,
+		"happiness_interval_seconds": 600,
+		"hunger_interval_seconds": 600,
+		"hydration_interval_seconds": 600,
 		"cleanliness_interval_seconds": 600,
 		"amount_per_interval": 1.0
 	},

@@ -33,6 +33,24 @@ const SLOT_HITBOX_PAD := 40.0   # extra px added to max(icon_size, habitat_size)
 const SLOT_ICON_DEFAULT := 80.0
 const SLOT_HABITAT_DEFAULT := 80.0
 
+# ─── UI Scale Constants — Full HD portrait 1080×1920 ──────────────────────────
+# Tuning: adjust these constants to change layout across all Incubator overlays.
+const TITLE_FONT_SIZE      := 45   # overlay / modal titles
+const SECTION_FONT_SIZE    := 34   # section / column headers
+const ROW_TITLE_FONT_SIZE  := 32   # card / row primary names
+const BODY_FONT_SIZE       := 25   # body text, descriptions, progress
+const META_FONT_SIZE       := 22   # small metadata: biome, source, time, odds
+const BUTTON_FONT_SIZE     := 25   # button labels
+const BUTTON_HEIGHT        := 88   # standard action / confirm button height
+const BACK_BTN_MIN_W       := 253  # Back / Cancel / Close button min width
+const ICON_SIZE_CARD       := 140  # portrait icon in list cards (storage, select)
+const ICON_SIZE_QUALITY    := 140  # egg icon in quality 2×2 grid
+const ICON_SIZE_UPGRADE    := 113  # upgrade card icon
+const CARD_CONTENT_MARGIN  := 22   # PanelContainer content_margin_* for cards
+const LIST_SEPARATION      := 15   # VBoxContainer separation between cards
+const CARD_SEPARATION      := 9    # inner card VBoxContainer separation
+# ──────────────────────────────────────────────────────────────────────────────
+
 var _config: Dictionary = {}
 var _layout: Dictionary = {}
 var _breeding_slot_nodes: Dictionary = {}    # index (int) → Control
@@ -288,7 +306,7 @@ func _add_play_area() -> void:
 	if breeding_defs.size() > 0:
 		var first_y: float = float((breeding_defs[0] as Dictionary).get("y", 185))
 		_add_section_label(play_area, "incubator.breeding_chambers", "Breeding Chambers",
-			360.0, first_y - 46.0, play_ref_h)
+			360.0, first_y - 46.0 - play_ref_h * 0.05, play_ref_h)
 
 	# Breeding chamber slots
 	for i in range(breeding_defs.size()):
@@ -301,7 +319,7 @@ func _add_play_area() -> void:
 	if incubation_defs.size() > 0:
 		var first_y: float = float((incubation_defs[0] as Dictionary).get("y", 720))
 		_add_section_label(play_area, "incubator.incubation_containers", "Incubation Containers",
-			360.0, first_y - 46.0, play_ref_h)
+			360.0, first_y - 46.0 - play_ref_h * 0.10, play_ref_h)
 
 	# Incubation container slots
 	for i in range(incubation_defs.size()):
@@ -319,7 +337,7 @@ func _add_section_label(parent: Control, key: String, fallback: String,
 	var label := Label.new()
 	label.text = _localized_text(key, fallback)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 17)
+	label.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	label.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 0.92))
 	label.add_theme_color_override("font_shadow_color", Color(0.02, 0.01, 0.0, 0.95))
 	label.add_theme_constant_override("shadow_offset_x", 1)
@@ -338,17 +356,20 @@ func _add_section_label(parent: Control, key: String, fallback: String,
 
 func _add_slot(parent: Control, slot_def: Dictionary, index: int,
 		slot_type: String, play_ref_h: float) -> Control:
-	var x_ref := float(slot_def.get("x", 360))
-	var y_ref := float(slot_def.get("y", 640))
 	var icon_size := float(slot_def.get("icon_size", SLOT_ICON_DEFAULT))
 	var habitat_size := float(slot_def.get("habitat_size", SLOT_HABITAT_DEFAULT))
-	var hitbox_half := (icon_size + SLOT_HITBOX_PAD) * 0.5
+	# Hitbox centered on icon_x/y, sized to icon_size + 30
+	var raw_x := float(slot_def.get("x", 360))
+	var raw_y := float(slot_def.get("y", 640))
+	var x_ref := float(slot_def.get("icon_x", raw_x))
+	var y_ref := float(slot_def.get("icon_y", raw_y))
+	var hitbox_half := (icon_size + 30.0) * 0.5
 
-	# Separate centers for the small icon and the habitat graphic (relative to hitbox center)
-	var icon_ox := float(slot_def.get("icon_x", x_ref)) - x_ref
-	var icon_oy := float(slot_def.get("icon_y", y_ref)) - y_ref
-	var habitat_ox := float(slot_def.get("habitat_x", x_ref)) - x_ref
-	var habitat_oy := float(slot_def.get("habitat_y", y_ref)) - y_ref
+	# Offsets relative to hitbox center (icon center)
+	var icon_ox := 0.0
+	var icon_oy := 0.0
+	var habitat_ox := float(slot_def.get("habitat_x", raw_x)) - x_ref
+	var habitat_oy := float(slot_def.get("habitat_y", raw_y)) - y_ref
 
 	var ax := x_ref / LAYOUT_REF_W
 	var ay := (y_ref - PLAY_AREA_REF_TOP) / play_ref_h
@@ -389,7 +410,7 @@ func _add_slot(parent: Control, slot_def: Dictionary, index: int,
 	timer_label.name = "TimerLabel"
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	timer_label.add_theme_font_size_override("font_size", 14)
+	timer_label.add_theme_font_size_override("font_size", 17)
 	timer_label.add_theme_color_override("font_color", Color(0.96, 0.93, 0.76, 1.0))
 	timer_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.90))
 	timer_label.add_theme_constant_override("shadow_offset_x", 1)
@@ -625,7 +646,7 @@ func _add_storage_overlay() -> void:
 	title.text = _localized_text("incubator_storage_title", "Storage")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	title.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	outer.add_child(title)
 
@@ -656,7 +677,7 @@ func _add_storage_overlay() -> void:
 	var close_btn := Button.new()
 	close_btn.text = _localized_text("incubator_egg_back", "Back")
 	close_btn.focus_mode = Control.FOCUS_NONE
-	close_btn.custom_minimum_size = Vector2(140, 44)
+	close_btn.custom_minimum_size = Vector2(BACK_BTN_MIN_W, BUTTON_HEIGHT)
 	close_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	close_btn.pressed.connect(func() -> void: _storage_overlay.visible = false)
 	close_row.add_child(close_btn)
@@ -704,7 +725,7 @@ func _populate_storage_overlay() -> void:
 func _add_storage_header(parent: VBoxContainer, key: String, fallback: String) -> void:
 	var lbl := Label.new()
 	lbl.text = _localized_text(key, fallback)
-	lbl.add_theme_font_size_override("font_size", 18)
+	lbl.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	lbl.add_theme_color_override("font_color", Color(0.95, 0.83, 0.38, 1.0))
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(lbl)
@@ -789,17 +810,17 @@ func _make_storage_reptile_card(entry: Dictionary) -> Control:
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 10)
 	card.add_child(row)
-	row.add_child(_make_breeding_portrait(_get_instance_portrait_path(inst), Vector2(74, 74)))
+	row.add_child(_make_breeding_portrait(_get_instance_portrait_path(inst), Vector2(ICON_SIZE_CARD, ICON_SIZE_CARD)))
 
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 3)
+	info.add_theme_constant_override("separation", CARD_SEPARATION)
 	row.add_child(info)
 
 	var name_lbl := Label.new()
 	name_lbl.text = _localized_species_name(str(inst.get("reptile_id", ""))) + " - " + _get_variant_display_name(inst)
 	name_lbl.clip_text = true
-	name_lbl.add_theme_font_size_override("font_size", 14)
+	name_lbl.add_theme_font_size_override("font_size", ROW_TITLE_FONT_SIZE)
 	name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(name_lbl)
@@ -807,7 +828,7 @@ func _make_storage_reptile_card(entry: Dictionary) -> Control:
 	var meta_lbl := Label.new()
 	var sex_text: String = _localized_text("sex." + str(inst.get("sex", "male")), str(inst.get("sex", "male")))
 	meta_lbl.text = _localized_rarity(rarity) + " | " + sex_text + " | " + _localized_storage_source(str(entry.get("source", inst.get("source", ""))))
-	meta_lbl.add_theme_font_size_override("font_size", 12)
+	meta_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	meta_lbl.add_theme_color_override("font_color", _rarity_color(rarity))
 	meta_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(meta_lbl)
@@ -816,7 +837,7 @@ func _make_storage_reptile_card(entry: Dictionary) -> Control:
 	if cooldown > 0:
 		var cooldown_lbl := Label.new()
 		cooldown_lbl.text = _localized_text("incubator.cooldown_label", "Cooldown") + ": " + _format_countdown(cooldown)
-		cooldown_lbl.add_theme_font_size_override("font_size", 11)
+		cooldown_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
 		cooldown_lbl.add_theme_color_override("font_color", Color(1.0, 0.80, 0.35, 0.95))
 		cooldown_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		info.add_child(cooldown_lbl)
@@ -824,8 +845,8 @@ func _make_storage_reptile_card(entry: Dictionary) -> Control:
 	var btn := Button.new()
 	btn.text = _localized_text("incubator_storage_return_to_pool", "Return to Pool")
 	btn.focus_mode = Control.FOCUS_NONE
-	btn.custom_minimum_size = Vector2(120, 42)
-	btn.add_theme_font_size_override("font_size", 11)
+	btn.custom_minimum_size = Vector2(150, BUTTON_HEIGHT)
+	btn.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	btn.pressed.connect(func() -> void:
 		BreedingSystem.return_reptile_from_storage(instance_id)
@@ -844,17 +865,17 @@ func _make_storage_egg_group_card(group: Dictionary) -> Control:
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 10)
 	card.add_child(row)
-	row.add_child(_make_breeding_portrait(str(group.get("visual_asset", EGG_PATH)), Vector2(72, 72)))
+	row.add_child(_make_breeding_portrait(str(group.get("visual_asset", EGG_PATH)), Vector2(ICON_SIZE_CARD, ICON_SIZE_CARD)))
 
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 4)
+	info.add_theme_constant_override("separation", CARD_SEPARATION)
 	row.add_child(info)
 
 	var name_lbl := Label.new()
 	name_lbl.text = str(group.get("egg_name", ""))
 	name_lbl.clip_text = true
-	name_lbl.add_theme_font_size_override("font_size", 15)
+	name_lbl.add_theme_font_size_override("font_size", ROW_TITLE_FONT_SIZE)
 	name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(name_lbl)
@@ -870,7 +891,7 @@ func _make_storage_egg_group_card(group: Dictionary) -> Control:
 	for line in lines:
 		var lbl := Label.new()
 		lbl.text = str(line)
-		lbl.add_theme_font_size_override("font_size", 12)
+		lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 		lbl.add_theme_color_override("font_color", Color(0.78, 0.71, 0.58, 0.95))
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		info.add_child(lbl)
@@ -878,7 +899,7 @@ func _make_storage_egg_group_card(group: Dictionary) -> Control:
 	var details_btn := Button.new()
 	details_btn.text = _localized_text("incubator_storage_details", "Details")
 	details_btn.focus_mode = Control.FOCUS_NONE
-	details_btn.custom_minimum_size = Vector2(104, 40)
+	details_btn.custom_minimum_size = Vector2(130, BUTTON_HEIGHT)
 	details_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	details_btn.pressed.connect(func() -> void:
 		_show_toast_raw(str(group.get("egg_name", "")) + " | " + _format_source_summary(group.get("source_counts", {})))
@@ -905,18 +926,18 @@ func _make_egg_select_group_card(group: Dictionary) -> Control:
 	var sp_portrait: String = _get_species_portrait_path(sp_id)
 	if sp_portrait == PLUS_ICON_PATH:
 		sp_portrait = str(group.get("visual_asset", EGG_PATH))
-	top_row.add_child(_make_breeding_portrait(sp_portrait, Vector2(66, 66)))
+	top_row.add_child(_make_breeding_portrait(sp_portrait, Vector2(82, 82)))
 
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 3)
+	info.add_theme_constant_override("separation", CARD_SEPARATION)
 	top_row.add_child(info)
 
 	var species_name_lbl := Label.new()
 	species_name_lbl.text = _localized_species_name(sp_id)
 	species_name_lbl.clip_text = true
 	species_name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	species_name_lbl.add_theme_font_size_override("font_size", 14)
+	species_name_lbl.add_theme_font_size_override("font_size", ROW_TITLE_FONT_SIZE)
 	species_name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
 	species_name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(species_name_lbl)
@@ -924,21 +945,21 @@ func _make_egg_select_group_card(group: Dictionary) -> Control:
 	var egg_name_lbl := Label.new()
 	egg_name_lbl.text = str(group.get("egg_name", ""))
 	egg_name_lbl.clip_text = true
-	egg_name_lbl.add_theme_font_size_override("font_size", 11)
+	egg_name_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
 	egg_name_lbl.add_theme_color_override("font_color", Color(0.72, 0.66, 0.54, 0.90))
 	egg_name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(egg_name_lbl)
 
 	var count_lbl := Label.new()
 	count_lbl.text = _localized_text("incubator_egg_available", "Available: {count}").replace("{count}", str(int(group.get("count", 0))))
-	count_lbl.add_theme_font_size_override("font_size", 12)
+	count_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	count_lbl.add_theme_color_override("font_color", Color(0.82, 0.77, 0.62, 1.0))
 	count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(count_lbl)
 
 	var time_lbl := Label.new()
 	time_lbl.text = _localized_text("incubator_egg_incubation_time", "Incubation time: {time}").replace("{time}", _format_hours(int(group.get("incubation_time_hours", 0))))
-	time_lbl.add_theme_font_size_override("font_size", 12)
+	time_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	time_lbl.add_theme_color_override("font_color", Color(0.72, 0.66, 0.54, 1.0))
 	time_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(time_lbl)
@@ -946,7 +967,7 @@ func _make_egg_select_group_card(group: Dictionary) -> Control:
 	var source_lbl := Label.new()
 	source_lbl.text = _format_source_summary(group.get("source_counts", {}))
 	source_lbl.clip_text = true
-	source_lbl.add_theme_font_size_override("font_size", 11)
+	source_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
 	source_lbl.add_theme_color_override("font_color", Color(0.72, 0.66, 0.54, 0.95))
 	source_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.add_child(source_lbl)
@@ -954,7 +975,7 @@ func _make_egg_select_group_card(group: Dictionary) -> Control:
 	var select_btn := Button.new()
 	select_btn.text = _localized_text("incubator_egg_select", "Select")
 	select_btn.focus_mode = Control.FOCUS_NONE
-	select_btn.custom_minimum_size = Vector2(0, 40)
+	select_btn.custom_minimum_size = Vector2(0, BUTTON_HEIGHT)
 	select_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	select_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	select_btn.pressed.connect(func() -> void:
@@ -977,17 +998,17 @@ func _make_selected_egg_header(group: Dictionary) -> Control:
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 12)
 	card.add_child(row)
-	row.add_child(_make_breeding_portrait(str(group.get("visual_asset", EGG_PATH)), Vector2(78, 78)))
+	row.add_child(_make_breeding_portrait(str(group.get("visual_asset", EGG_PATH)), Vector2(96, 96)))
 
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 4)
+	info.add_theme_constant_override("separation", CARD_SEPARATION)
 	row.add_child(info)
 
 	var name_lbl := Label.new()
 	name_lbl.text = str(group.get("egg_name", ""))
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	name_lbl.add_theme_font_size_override("font_size", 16)
+	name_lbl.add_theme_font_size_override("font_size", ROW_TITLE_FONT_SIZE)
 	name_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.50, 1.0))
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(name_lbl)
@@ -1003,7 +1024,7 @@ func _make_selected_egg_header(group: Dictionary) -> Control:
 	for line in lines:
 		var lbl := Label.new()
 		lbl.text = str(line)
-		lbl.add_theme_font_size_override("font_size", 12)
+		lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 		lbl.add_theme_color_override("font_color", Color(0.82, 0.77, 0.62, 1.0))
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		info.add_child(lbl)
@@ -1016,7 +1037,7 @@ func _make_storage_empty_label(text: String) -> Label:
 	lbl.text = text
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	lbl.add_theme_color_override("font_color", Color(0.65, 0.60, 0.50, 1.0))
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return lbl
@@ -1066,7 +1087,7 @@ func _add_select_overlay() -> void:
 	title.name = "SelectTitle"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 20)
+	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	title.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	outer.add_child(title)
 
@@ -1098,7 +1119,7 @@ func _add_select_overlay() -> void:
 	cancel_btn.name = "SelectCancel"
 	cancel_btn.text = _localized_text("incubator.cancel", "Cancel")
 	cancel_btn.focus_mode = Control.FOCUS_NONE
-	cancel_btn.custom_minimum_size = Vector2(130, 42)
+	cancel_btn.custom_minimum_size = Vector2(BACK_BTN_MIN_W, BUTTON_HEIGHT)
 	cancel_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	cancel_btn.pressed.connect(func() -> void:
 		_select_step = 0
@@ -1228,24 +1249,24 @@ func _make_species_group_card(group: Dictionary) -> Control:
 	var species_id: String = str(group.get("species_id", ""))
 	var card := PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.custom_minimum_size = Vector2(0, 174)
+	card.custom_minimum_size = Vector2(0, 200)   # CARD_MIN_HEIGHT — species group card
 	card.add_theme_stylebox_override("panel", _make_breeding_card_style(false, false))
 
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 10)
 	card.add_child(row)
-	row.add_child(_make_breeding_portrait(str(group.get("portrait_path", "")), Vector2(82, 82)))
+	row.add_child(_make_breeding_portrait(str(group.get("portrait_path", "")), Vector2(96, 96)))
 
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 4)
+	info.add_theme_constant_override("separation", CARD_SEPARATION)
 	row.add_child(info)
 
 	var name_lbl := Label.new()
 	name_lbl.text = _localized_species_name(species_id)
 	name_lbl.clip_text = true
-	name_lbl.add_theme_font_size_override("font_size", 16)
+	name_lbl.add_theme_font_size_override("font_size", ROW_TITLE_FONT_SIZE)
 	name_lbl.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(name_lbl)
@@ -1257,7 +1278,7 @@ func _make_species_group_card(group: Dictionary) -> Control:
 	]:
 		var lbl := Label.new()
 		lbl.text = str(line)
-		lbl.add_theme_font_size_override("font_size", 12)
+		lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 		lbl.add_theme_color_override("font_color", Color(0.78, 0.71, 0.58, 0.95))
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		info.add_child(lbl)
@@ -1265,7 +1286,7 @@ func _make_species_group_card(group: Dictionary) -> Control:
 	var btn := Button.new()
 	btn.text = _localized_text("incubator_breeding_select", "Select")
 	btn.focus_mode = Control.FOCUS_NONE
-	btn.custom_minimum_size = Vector2(0, 36)
+	btn.custom_minimum_size = Vector2(0, BUTTON_HEIGHT)
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	btn.pressed.connect(func() -> void: _show_pair_selection(species_id))
 	info.add_child(btn)
@@ -1279,13 +1300,13 @@ func _make_pair_species_header(species_id: String) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	header.add_child(row)
-	row.add_child(_make_breeding_portrait(_get_species_portrait_path(species_id, _get_available_instances()), Vector2(74, 74)))
+	row.add_child(_make_breeding_portrait(_get_species_portrait_path(species_id, _get_available_instances()), Vector2(ICON_SIZE_CARD, ICON_SIZE_CARD)))
 
 	var label := Label.new()
 	label.text = _localized_species_name(species_id)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	label.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(label)
@@ -1304,13 +1325,13 @@ func _make_parent_column(title_key: String, fallback: String, instances: Array, 
 	var title := Label.new()
 	title.text = _localized_text(title_key, fallback)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 15)
+	title.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	title.add_theme_color_override("font_color", Color(0.95, 0.83, 0.38, 1.0))
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(title)
 
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0, 268)
+	scroll.custom_minimum_size = Vector2(0, 350)   # PARENT_COL_SCROLL_H — min height of female/male scroll list
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -1333,7 +1354,7 @@ func _make_parent_card(inst: Dictionary, sex: String) -> Control:
 	var rarity: String = str(inst.get("rarity", "common"))
 	var btn := Button.new()
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	btn.custom_minimum_size = Vector2(0, 108)
+	btn.custom_minimum_size = Vector2(0, 130)   # PARENT_CARD_HEIGHT — reptile card in selection column
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	btn.add_theme_stylebox_override("normal", _make_breeding_card_style(selected, false))
@@ -1358,19 +1379,19 @@ func _make_parent_card(inst: Dictionary, sex: String) -> Control:
 	row.add_theme_constant_override("separation", 8)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	btn.add_child(row)
-	row.add_child(_make_breeding_portrait(_get_instance_portrait_path(inst), Vector2(58, 58)))
+	row.add_child(_make_breeding_portrait(_get_instance_portrait_path(inst), Vector2(70, 70)))
 
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.alignment = BoxContainer.ALIGNMENT_CENTER
-	info.add_theme_constant_override("separation", 3)
+	info.add_theme_constant_override("separation", CARD_SEPARATION)
 	info.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(info)
 
 	var name_lbl := Label.new()
 	name_lbl.text = _get_reptile_card_name(inst)
 	name_lbl.clip_text = true
-	name_lbl.add_theme_font_size_override("font_size", 12)
+	name_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(name_lbl)
@@ -1378,14 +1399,14 @@ func _make_parent_card(inst: Dictionary, sex: String) -> Control:
 	var rarity_lbl := Label.new()
 	rarity_lbl.text = _get_variant_display_name(inst) + " - " + _localized_rarity(rarity)
 	rarity_lbl.clip_text = true
-	rarity_lbl.add_theme_font_size_override("font_size", 11)
+	rarity_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
 	rarity_lbl.add_theme_color_override("font_color", _rarity_color(rarity))
 	rarity_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(rarity_lbl)
 
 	var sex_lbl := Label.new()
 	sex_lbl.text = _localized_text("sex." + sex, sex)
-	sex_lbl.add_theme_font_size_override("font_size", 10)
+	sex_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
 	sex_lbl.add_theme_color_override("font_color", Color(0.76, 0.70, 0.58, 0.95))
 	sex_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(sex_lbl)
@@ -1402,7 +1423,7 @@ func _make_prediction_panel() -> Control:
 
 	var title := Label.new()
 	title.text = _localized_text("incubator_breeding_predicted_results", "Predicted Results")
-	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_font_size_override("font_size", ROW_TITLE_FONT_SIZE)
 	title.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(title)
@@ -1411,7 +1432,7 @@ func _make_prediction_panel() -> Control:
 		var hint := Label.new()
 		hint.text = _localized_text("incubator_breeding_select_female_and_male", "Select one female and one male.")
 		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		hint.add_theme_font_size_override("font_size", 12)
+		hint.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 		hint.add_theme_color_override("font_color", Color(0.74, 0.68, 0.56, 0.95))
 		hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		column.add_child(hint)
@@ -1425,28 +1446,28 @@ func _make_prediction_panel() -> Control:
 	var rates: Dictionary = prediction.get("rates", {}) as Dictionary
 	var odds := Label.new()
 	odds.text = _localized_text("incubator_breeding_odds", "Odds") + ": " + _format_rates(rates)
-	odds.add_theme_font_size_override("font_size", 12)
+	odds.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	odds.add_theme_color_override("font_color", Color(0.82, 0.76, 0.62, 1.0))
 	odds.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(odds)
 
 	var success := Label.new()
 	success.text = _localized_text("incubator_breeding_success_chance", "Success chance") + ": " + _format_breeding_percent(float(prediction.get("success_chance", 0.0))) + "%  |  " + _localized_text("incubator_breeding_failure_risk", "Failure risk") + ": " + _format_breeding_percent(float(prediction.get("failure_risk", 0.0))) + "%"
-	success.add_theme_font_size_override("font_size", 12)
+	success.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	success.add_theme_color_override("font_color", Color(0.66, 0.90, 0.58, 1.0))
 	success.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(success)
 
 	var level_bonus := Label.new()
 	level_bonus.text = LocalizationSystem.tr_key("reptile_breeding_bonus").replace("{points}", _format_breeding_percent(float(prediction.get("level_failure_reduction", 0.0))))
-	level_bonus.add_theme_font_size_override("font_size", 12)
+	level_bonus.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	level_bonus.add_theme_color_override("font_color", Color(0.72, 0.84, 0.62, 1.0))
 	level_bonus.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(level_bonus)
 
 	var eggs := Label.new()
 	eggs.text = _localized_text("incubator_breeding_egg_count_range", "Egg count: 1-5")
-	eggs.add_theme_font_size_override("font_size", 12)
+	eggs.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	eggs.add_theme_color_override("font_color", Color(0.82, 0.76, 0.62, 1.0))
 	eggs.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(eggs)
@@ -1466,7 +1487,7 @@ func _make_duration_selector() -> Control:
 	var note := Label.new()
 	note.text = _localized_text("incubator_breeding_long_bonus", "Long Breeding increases the chance for Ultra Rare and Exceptional.")
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.add_theme_font_size_override("font_size", 11)
+	note.add_theme_font_size_override("font_size", META_FONT_SIZE)
 	note.add_theme_color_override("font_color", Color(0.74, 0.68, 0.56, 0.95))
 	note.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(note)
@@ -1476,12 +1497,12 @@ func _make_duration_selector() -> Control:
 func _make_duration_toggle(is_long: bool) -> Button:
 	var btn := Button.new()
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	btn.custom_minimum_size = Vector2(0, 54)
+	btn.custom_minimum_size = Vector2(0, 60)   # DURATION_TOGGLE_H
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.toggle_mode = true
 	btn.button_pressed = _select_is_long == is_long
 	btn.text = _localized_text("incubator_breeding_long_48h" if is_long else "incubator_breeding_fast_24h", "Long Breeding - 48h" if is_long else "Fast Breeding - 24h")
-	btn.add_theme_font_size_override("font_size", 12)
+	btn.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	btn.pressed.connect(func() -> void:
 		_select_is_long = is_long
@@ -1497,7 +1518,7 @@ func _make_pair_action_row(can_start: bool) -> Control:
 	row.add_theme_constant_override("separation", 8)
 	var back := Button.new()
 	back.text = _localized_text("incubator_breeding_back", "Back")
-	back.custom_minimum_size = Vector2(110, 44)
+	back.custom_minimum_size = Vector2(130, BUTTON_HEIGHT)
 	back.focus_mode = Control.FOCUS_NONE
 	back.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	back.pressed.connect(func() -> void: _populate_species_select_step())
@@ -1505,7 +1526,7 @@ func _make_pair_action_row(can_start: bool) -> Control:
 
 	var cancel := Button.new()
 	cancel.text = _localized_text("incubator_breeding_cancel", "Cancel")
-	cancel.custom_minimum_size = Vector2(110, 44)
+	cancel.custom_minimum_size = Vector2(130, BUTTON_HEIGHT)
 	cancel.focus_mode = Control.FOCUS_NONE
 	cancel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	cancel.pressed.connect(_cancel_select_overlay)
@@ -1513,7 +1534,7 @@ func _make_pair_action_row(can_start: bool) -> Control:
 
 	var start := Button.new()
 	start.text = _localized_text("incubator_breeding_start", "Start Breeding")
-	start.custom_minimum_size = Vector2(150, 44)
+	start.custom_minimum_size = Vector2(180, BUTTON_HEIGHT)
 	start.focus_mode = Control.FOCUS_NONE
 	start.disabled = not can_start or _select_start_in_progress
 	start.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -1653,14 +1674,14 @@ func _make_duration_option(title_text: String, info_text: String, rates: Diction
 
 	var t := Label.new()
 	t.text = title_text
-	t.add_theme_font_size_override("font_size", 16)
+	t.add_theme_font_size_override("font_size", ROW_TITLE_FONT_SIZE)
 	t.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(t)
 
 	var info := Label.new()
 	info.text = info_text
-	info.add_theme_font_size_override("font_size", 12)
+	info.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	info.add_theme_color_override("font_color", Color(0.72, 0.65, 0.50, 0.90))
 	info.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(info)
@@ -1672,7 +1693,7 @@ func _make_duration_option(title_text: String, info_text: String, rates: Diction
 	rt += "E:" + str(int(round(float(rates.get("exceptional", 0))))) + "%"
 	var rl := Label.new()
 	rl.text = rt
-	rl.add_theme_font_size_override("font_size", 11)
+	rl.add_theme_font_size_override("font_size", META_FONT_SIZE)
 	rl.add_theme_color_override("font_color", Color(0.60, 0.55, 0.45, 0.85))
 	rl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(rl)
@@ -1681,8 +1702,8 @@ func _make_duration_option(title_text: String, info_text: String, rates: Diction
 	btn.text = _localized_text("incubator.start_breeding", "Start Breeding")
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	btn.custom_minimum_size = Vector2(0, 36)
-	btn.add_theme_font_size_override("font_size", 13)
+	btn.custom_minimum_size = Vector2(0, BUTTON_HEIGHT)
+	btn.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
 	btn.pressed.connect(func() -> void: _confirm_breeding(is_long))
 	vbox.add_child(btn)
 	return panel
@@ -1703,7 +1724,7 @@ func _add_list_empty(list: VBoxContainer, key: String, fallback: String) -> void
 	var lbl := Label.new()
 	lbl.text = _localized_text(key, fallback)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	lbl.add_theme_color_override("font_color", Color(0.65, 0.60, 0.50, 1.0))
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	list.add_child(lbl)
@@ -1724,7 +1745,7 @@ func _make_reptile_row(inst: Dictionary, on_press: Callable) -> Control:
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	btn.add_theme_font_size_override("font_size", 13)
+	btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	btn.text = display + " [" + sex_lbl[0] + "] — " + _localized_rarity(rarity)
 	btn.add_theme_color_override("font_color", _rarity_color(rarity))
 
@@ -2252,7 +2273,7 @@ func _add_incubation_panel() -> void:
 	_incubation_panel_title.name = "IPTitle"
 	_incubation_panel_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_incubation_panel_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_incubation_panel_title.add_theme_font_size_override("font_size", 20)
+	_incubation_panel_title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	_incubation_panel_title.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	outer.add_child(_incubation_panel_title)
 
@@ -2283,7 +2304,7 @@ func _add_incubation_panel() -> void:
 	_incubation_panel_close_btn.name = "IPClose"
 	_incubation_panel_close_btn.text = _localized_text("incubation.close", "Close")
 	_incubation_panel_close_btn.focus_mode = Control.FOCUS_NONE
-	_incubation_panel_close_btn.custom_minimum_size = Vector2(130, 42)
+	_incubation_panel_close_btn.custom_minimum_size = Vector2(BACK_BTN_MIN_W, BUTTON_HEIGHT)
 	_incubation_panel_close_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	_incubation_panel_close_btn.pressed.connect(func() -> void:
 		_incubation_panel.visible = false
@@ -2392,7 +2413,7 @@ func _ip_show_count_select() -> void:
 
 	var minus_btn := Button.new()
 	minus_btn.text = "−"
-	minus_btn.custom_minimum_size = Vector2(48, 42)
+	minus_btn.custom_minimum_size = Vector2(64, BUTTON_HEIGHT)   # COUNT_STEPPER_SIZE
 	minus_btn.focus_mode = Control.FOCUS_NONE
 	minus_btn.disabled = _incubation_panel_count <= 1
 	minus_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -2405,15 +2426,15 @@ func _ip_show_count_select() -> void:
 	var count_lbl := Label.new()
 	count_lbl.text = _localized_text("incubator_egg_count", "Egg Count") + "\n" + str(_incubation_panel_count)
 	count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	count_lbl.custom_minimum_size = Vector2(120, 0)
-	count_lbl.add_theme_font_size_override("font_size", 18)
+	count_lbl.custom_minimum_size = Vector2(140, 0)
+	count_lbl.add_theme_font_size_override("font_size", 22)   # COUNT_LABEL_FONT_SIZE
 	count_lbl.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	count_row.add_child(count_lbl)
 
 	var plus_btn := Button.new()
 	plus_btn.text = "+"
-	plus_btn.custom_minimum_size = Vector2(48, 42)
+	plus_btn.custom_minimum_size = Vector2(64, BUTTON_HEIGHT)   # COUNT_STEPPER_SIZE
 	plus_btn.focus_mode = Control.FOCUS_NONE
 	plus_btn.disabled = _incubation_panel_count >= max_count
 	plus_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -2446,7 +2467,7 @@ func _ip_show_count_select() -> void:
 	var back_btn := Button.new()
 	back_btn.text = _localized_text("incubator_egg_back", "Back")
 	back_btn.focus_mode = Control.FOCUS_NONE
-	back_btn.custom_minimum_size = Vector2(100, 40)
+	back_btn.custom_minimum_size = Vector2(120, BUTTON_HEIGHT)
 	back_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	back_btn.pressed.connect(func() -> void:
 		_incubation_panel_step = 0
@@ -2457,7 +2478,7 @@ func _ip_show_count_select() -> void:
 	var cancel_btn := Button.new()
 	cancel_btn.text = _localized_text("incubator_egg_cancel", "Cancel")
 	cancel_btn.focus_mode = Control.FOCUS_NONE
-	cancel_btn.custom_minimum_size = Vector2(100, 40)
+	cancel_btn.custom_minimum_size = Vector2(120, BUTTON_HEIGHT)
 	cancel_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	cancel_btn.pressed.connect(func() -> void:
 		_incubation_load_in_progress = false
@@ -2469,7 +2490,7 @@ func _ip_show_count_select() -> void:
 	var confirm_btn := Button.new()
 	confirm_btn.text = _localized_text("incubator_egg_place_in_container", "Place in Container")
 	confirm_btn.focus_mode = Control.FOCUS_NONE
-	confirm_btn.custom_minimum_size = Vector2(160, 40)
+	confirm_btn.custom_minimum_size = Vector2(190, BUTTON_HEIGHT)
 	confirm_btn.disabled = _incubation_load_in_progress
 	confirm_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var ids_slice: Array = _incubation_panel_available_ids.slice(0, _incubation_panel_count)
@@ -2657,8 +2678,8 @@ func _ip_show_ready(container: Dictionary) -> void:
 	hatch_btn.text = _localized_text("incubation.hatch", "Wykluj")
 	hatch_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hatch_btn.focus_mode = Control.FOCUS_NONE
-	hatch_btn.custom_minimum_size = Vector2(0, 44)
-	hatch_btn.add_theme_font_size_override("font_size", 15)
+	hatch_btn.custom_minimum_size = Vector2(0, BUTTON_HEIGHT)
+	hatch_btn.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
 	hatch_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	hatch_btn.pressed.connect(func() -> void:
 		hatch_btn.disabled = true
@@ -2682,7 +2703,7 @@ func _make_ip_info_label(text: String, color: Color = Color(0.80, 0.75, 0.62, 1.
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	lbl.add_theme_color_override("font_color", color)
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return lbl
@@ -2693,8 +2714,8 @@ func _make_ip_action_btn(text: String, callback: Callable) -> Button:
 	btn.text = text
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn.focus_mode = Control.FOCUS_NONE
-	btn.custom_minimum_size = Vector2(0, 44)
-	btn.add_theme_font_size_override("font_size", 14)
+	btn.custom_minimum_size = Vector2(0, BUTTON_HEIGHT)
+	btn.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	btn.pressed.connect(callback)
 	return btn
@@ -2750,7 +2771,7 @@ func _add_egg_shop_overlay() -> void:
 	title.text = _localized_text("egg_shop.title", "Egg Shop")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	title.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	outer.add_child(title)
 	_egg_shop_title_label = title
@@ -2782,7 +2803,7 @@ func _add_egg_shop_overlay() -> void:
 	var close_btn := Button.new()
 	close_btn.text = _localized_text("button.back", "Back")
 	close_btn.focus_mode = Control.FOCUS_NONE
-	close_btn.custom_minimum_size = Vector2(130, 42)
+	close_btn.custom_minimum_size = Vector2(BACK_BTN_MIN_W, BUTTON_HEIGHT)
 	close_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	close_btn.pressed.connect(func() -> void:
 		_egg_shop_step = 0
@@ -2872,18 +2893,18 @@ func _make_egg_shop_species_card(species: Dictionary, _qualities: Dictionary, _q
 	var portrait_path: String = _get_species_portrait_path(sp_id)
 	if portrait_path == PLUS_ICON_PATH:
 		portrait_path = str(species.get("visual_asset", EGG_PATH))
-	hbox.add_child(_make_breeding_portrait(portrait_path, Vector2(64, 64)))
+	hbox.add_child(_make_breeding_portrait(portrait_path, Vector2(82, 82)))
 
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	info.add_theme_constant_override("separation", 3)
+	info.add_theme_constant_override("separation", CARD_SEPARATION)
 	hbox.add_child(info)
 
 	var sp_name_lbl := Label.new()
 	sp_name_lbl.text = _localized_species_name(sp_id)
 	sp_name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	sp_name_lbl.add_theme_font_size_override("font_size", 15)
+	sp_name_lbl.add_theme_font_size_override("font_size", ROW_TITLE_FONT_SIZE)
 	sp_name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
 	sp_name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(sp_name_lbl)
@@ -2891,7 +2912,7 @@ func _make_egg_shop_species_card(species: Dictionary, _qualities: Dictionary, _q
 	var egg_name_lbl := Label.new()
 	egg_name_lbl.text = egg_name
 	egg_name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	egg_name_lbl.add_theme_font_size_override("font_size", 11)
+	egg_name_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
 	egg_name_lbl.add_theme_color_override("font_color", Color(0.72, 0.66, 0.54, 0.85))
 	egg_name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(egg_name_lbl)
@@ -2900,7 +2921,7 @@ func _make_egg_shop_species_card(species: Dictionary, _qualities: Dictionary, _q
 		var biome_lbl := Label.new()
 		biome_lbl.text = _localized_text("biome." + biome_id, biome_id.capitalize())
 		biome_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		biome_lbl.add_theme_font_size_override("font_size", 10)
+		biome_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
 		biome_lbl.add_theme_color_override("font_color", Color(0.55, 0.72, 0.45, 0.85))
 		biome_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		info.add_child(biome_lbl)
@@ -2909,7 +2930,7 @@ func _make_egg_shop_species_card(species: Dictionary, _qualities: Dictionary, _q
 	var time_text: String = _localized_text("incubator_egg_incubation_time", "Incubation time: {time}")
 	time_lbl.text = time_text.replace("{time}", str(inc_hours) + "h")
 	time_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	time_lbl.add_theme_font_size_override("font_size", 10)
+	time_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
 	time_lbl.add_theme_color_override("font_color", Color(0.68, 0.63, 0.50, 0.85))
 	time_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(time_lbl)
@@ -2918,7 +2939,7 @@ func _make_egg_shop_species_card(species: Dictionary, _qualities: Dictionary, _q
 	var from_text: String = _localized_text("egg_shop.from_price", "From: {price} R$")
 	price_lbl.text = from_text.replace("{price}", str(min_price))
 	price_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	price_lbl.add_theme_font_size_override("font_size", 12)
+	price_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	price_lbl.add_theme_color_override("font_color", Color(0.95, 0.83, 0.38, 1.0))
 	price_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(price_lbl)
@@ -2926,7 +2947,7 @@ func _make_egg_shop_species_card(species: Dictionary, _qualities: Dictionary, _q
 	var select_btn := Button.new()
 	select_btn.text = _localized_text("incubator_egg_select", "Select")
 	select_btn.focus_mode = Control.FOCUS_NONE
-	select_btn.custom_minimum_size = Vector2(80, 36)
+	select_btn.custom_minimum_size = Vector2(100, BUTTON_HEIGHT)
 	select_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	select_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var sp_copy: Dictionary = species.duplicate()
@@ -2949,7 +2970,7 @@ func _populate_egg_shop_qualities() -> void:
 	var back_btn := Button.new()
 	back_btn.text = "← " + _localized_text("incubator_egg_back", "Back")
 	back_btn.focus_mode = Control.FOCUS_NONE
-	back_btn.custom_minimum_size = Vector2(100, 36)
+	back_btn.custom_minimum_size = Vector2(BACK_BTN_MIN_W, BUTTON_HEIGHT)
 	back_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	back_btn.pressed.connect(func() -> void:
 		_egg_shop_step = 0
@@ -3007,15 +3028,15 @@ func _make_species_quality_card(species: Dictionary, quality_id: String, qdef: D
 	cs.border_color = badge_color
 	cs.set_border_width_all(2)
 	cs.set_corner_radius_all(10)
-	cs.content_margin_left = 8
-	cs.content_margin_right = 8
-	cs.content_margin_top = 8
-	cs.content_margin_bottom = 8
+	cs.content_margin_left = 12
+	cs.content_margin_right = 12
+	cs.content_margin_top = 12
+	cs.content_margin_bottom = 12
 	card.add_theme_stylebox_override("panel", cs)
 
 	var vbox := VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_theme_constant_override("separation", 4)
+	vbox.add_theme_constant_override("separation", CARD_SEPARATION)
 	card.add_child(vbox)
 
 	var icon_row := HBoxContainer.new()
@@ -3023,7 +3044,7 @@ func _make_species_quality_card(species: Dictionary, quality_id: String, qdef: D
 	vbox.add_child(icon_row)
 
 	var icon := TextureRect.new()
-	icon.custom_minimum_size = Vector2(64, 64)
+	icon.custom_minimum_size = Vector2(ICON_SIZE_QUALITY, ICON_SIZE_QUALITY)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -3036,7 +3057,7 @@ func _make_species_quality_card(species: Dictionary, quality_id: String, qdef: D
 	name_lbl.text = egg_name
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_lbl.add_theme_font_size_override("font_size", 11)
+	name_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	name_lbl.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -3050,15 +3071,15 @@ func _make_species_quality_card(species: Dictionary, quality_id: String, qdef: D
 	var bs := StyleBoxFlat.new()
 	bs.bg_color = badge_color
 	bs.set_corner_radius_all(6)
-	bs.content_margin_left = 6
-	bs.content_margin_right = 6
-	bs.content_margin_top = 2
-	bs.content_margin_bottom = 2
+	bs.content_margin_left = 8
+	bs.content_margin_right = 8
+	bs.content_margin_top = 4
+	bs.content_margin_bottom = 4
 	badge.add_theme_stylebox_override("panel", bs)
 	badge_row.add_child(badge)
 	var badge_lbl := Label.new()
 	badge_lbl.text = quality_label
-	badge_lbl.add_theme_font_size_override("font_size", 10)
+	badge_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
 	badge_lbl.add_theme_color_override("font_color", Color.WHITE)
 	badge_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	badge.add_child(badge_lbl)
@@ -3067,7 +3088,7 @@ func _make_species_quality_card(species: Dictionary, quality_id: String, qdef: D
 	time_lbl.text = _localized_text("egg_shop.incubation_time", "Time:") + " " + str(inc_hours) + "h"
 	time_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	time_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	time_lbl.add_theme_font_size_override("font_size", 10)
+	time_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
 	time_lbl.add_theme_color_override("font_color", Color(0.68, 0.63, 0.50, 0.85))
 	time_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(time_lbl)
@@ -3076,7 +3097,7 @@ func _make_species_quality_card(species: Dictionary, quality_id: String, qdef: D
 	price_lbl.text = str(price) + " R$"
 	price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	price_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	price_lbl.add_theme_font_size_override("font_size", 13)
+	price_lbl.add_theme_font_size_override("font_size", 18)   # QUALITY_PRICE_FONT_SIZE
 	price_lbl.add_theme_color_override("font_color", Color(0.95, 0.83, 0.38, 1.0))
 	price_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(price_lbl)
@@ -3089,7 +3110,7 @@ func _make_species_quality_card(species: Dictionary, quality_id: String, qdef: D
 	odds_lbl.text = "C:" + c_pct + "% R:" + r_pct + "%\nUR:" + ur_pct + "% E:" + e_pct + "%"
 	odds_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	odds_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	odds_lbl.add_theme_font_size_override("font_size", 10)
+	odds_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
 	odds_lbl.add_theme_color_override("font_color", Color(0.60, 0.55, 0.45, 0.85))
 	odds_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(odds_lbl)
@@ -3098,7 +3119,7 @@ func _make_species_quality_card(species: Dictionary, quality_id: String, qdef: D
 	buy_btn.text = _localized_text("egg_shop.buy", "Buy")
 	buy_btn.focus_mode = Control.FOCUS_NONE
 	buy_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	buy_btn.custom_minimum_size = Vector2(0, 32)
+	buy_btn.custom_minimum_size = Vector2(0, BUTTON_HEIGHT)
 	buy_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var sid: String = species_id
 	var qid: String = quality_id
@@ -3161,7 +3182,7 @@ func _add_hatch_results_overlay() -> void:
 	title.text = _localized_text("hatch.title", "Hatching Results")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	title.add_theme_color_override("font_color", Color(1.0, 0.88, 0.30, 1.0))
 	outer.add_child(title)
 
@@ -3170,7 +3191,7 @@ func _add_hatch_results_overlay() -> void:
 	subtitle.text = _localized_text("hatch.subtitle", "New reptiles hatched!")
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	subtitle.add_theme_font_size_override("font_size", 14)
+	subtitle.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	subtitle.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55, 1.0))
 	outer.add_child(subtitle)
 
@@ -3201,8 +3222,8 @@ func _add_hatch_results_overlay() -> void:
 	ok_btn.name = "HROkBtn"
 	ok_btn.text = _localized_text("hatch.ok", "OK")
 	ok_btn.focus_mode = Control.FOCUS_NONE
-	ok_btn.custom_minimum_size = Vector2(160, 46)
-	ok_btn.add_theme_font_size_override("font_size", 16)
+	ok_btn.custom_minimum_size = Vector2(180, BUTTON_HEIGHT)
+	ok_btn.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
 	ok_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	ok_btn.pressed.connect(func() -> void: _hatch_results_overlay.visible = false)
 	ok_row.add_child(ok_btn)
@@ -3236,7 +3257,7 @@ func _show_hatch_results(results: Array) -> void:
 	added_lbl.text = _localized_text("hatch.added_to_storage", "Added to storage")
 	added_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	added_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	added_lbl.add_theme_font_size_override("font_size", 13)
+	added_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	added_lbl.add_theme_color_override("font_color", Color(0.60, 0.82, 0.55, 1.0))
 	added_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.add_child(added_lbl)
@@ -3267,7 +3288,7 @@ func _make_hatch_result_card(r: Dictionary, _lang: String) -> Control:
 	card.add_child(hbox)
 
 	var portrait := TextureRect.new()
-	portrait.custom_minimum_size = Vector2(60, 60)
+	portrait.custom_minimum_size = Vector2(80, 80)
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -3278,7 +3299,7 @@ func _make_hatch_result_card(r: Dictionary, _lang: String) -> Control:
 
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 3)
+	info.add_theme_constant_override("separation", CARD_SEPARATION)
 	hbox.add_child(info)
 
 	var species_id: String = str(r.get("species_id", ""))
@@ -3303,7 +3324,7 @@ func _make_hatch_result_card(r: Dictionary, _lang: String) -> Control:
 	var name_lbl := Label.new()
 	name_lbl.text = species_name + " — " + variant_name
 	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_lbl.add_theme_font_size_override("font_size", 14)
+	name_lbl.add_theme_font_size_override("font_size", ROW_TITLE_FONT_SIZE)
 	name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(name_lbl)
@@ -3312,7 +3333,7 @@ func _make_hatch_result_card(r: Dictionary, _lang: String) -> Control:
 	var sex_key: String = "sex." + str(r.get("sex", "male"))
 	var sex_text: String = _localized_text(sex_key, str(r.get("sex", "male")))
 	rarity_lbl.text = _localized_rarity(rarity) + "  •  " + sex_text
-	rarity_lbl.add_theme_font_size_override("font_size", 12)
+	rarity_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	rarity_lbl.add_theme_color_override("font_color", border_col)
 	rarity_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(rarity_lbl)
@@ -3320,14 +3341,14 @@ func _make_hatch_result_card(r: Dictionary, _lang: String) -> Control:
 	if rarity == "exceptional":
 		var hl_lbl := Label.new()
 		hl_lbl.text = _localized_text("hatch.exceptional", "Exceptional hatch!")
-		hl_lbl.add_theme_font_size_override("font_size", 12)
+		hl_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 		hl_lbl.add_theme_color_override("font_color", Color(1.0, 0.80, 0.20, 1.0))
 		hl_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		info.add_child(hl_lbl)
 	elif rarity == "ultra_rare":
 		var hl_lbl := Label.new()
 		hl_lbl.text = _localized_text("hatch.ultra_rare", "Ultra Rare hatch!")
-		hl_lbl.add_theme_font_size_override("font_size", 12)
+		hl_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 		hl_lbl.add_theme_color_override("font_color", Color(0.80, 0.40, 1.0, 1.0))
 		hl_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		info.add_child(hl_lbl)
@@ -3335,7 +3356,7 @@ func _make_hatch_result_card(r: Dictionary, _lang: String) -> Control:
 	if is_new:
 		var disc_lbl := Label.new()
 		disc_lbl.text = _localized_text("hatch.new_discovery", "New discovery!")
-		disc_lbl.add_theme_font_size_override("font_size", 12)
+		disc_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 		disc_lbl.add_theme_color_override("font_color", Color(0.30, 0.95, 0.50, 1.0))
 		disc_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		info.add_child(disc_lbl)
@@ -3388,7 +3409,7 @@ func _add_upgrades_overlay() -> void:
 	title.text = _localized_text("incubator.upgrades_title", "Incubator Upgrades")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	title.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	outer.add_child(title)
 
@@ -3418,7 +3439,7 @@ func _add_upgrades_overlay() -> void:
 	var close_btn := Button.new()
 	close_btn.text = _localized_text("button.back", "Back")
 	close_btn.focus_mode = Control.FOCUS_NONE
-	close_btn.custom_minimum_size = Vector2(130, 42)
+	close_btn.custom_minimum_size = Vector2(BACK_BTN_MIN_W, BUTTON_HEIGHT)
 	close_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	close_btn.pressed.connect(func() -> void: _upgrades_overlay.visible = false)
 	close_row.add_child(close_btn)
@@ -3484,7 +3505,7 @@ func _make_incubator_upgrade_card(upgrade: Dictionary) -> Control:
 	main_vbox.add_child(top_row)
 
 	var icon := TextureRect.new()
-	icon.custom_minimum_size = Vector2(52, 52)
+	icon.custom_minimum_size = Vector2(ICON_SIZE_UPGRADE, ICON_SIZE_UPGRADE)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -3501,7 +3522,7 @@ func _make_incubator_upgrade_card(upgrade: Dictionary) -> Control:
 	var name_lbl := Label.new()
 	name_lbl.text = _localized_text(str(upgrade.get("name_key", "")), upgrade_id)
 	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_lbl.add_theme_font_size_override("font_size", 14)
+	name_lbl.add_theme_font_size_override("font_size", ROW_TITLE_FONT_SIZE)
 	name_lbl.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	name_desc_vbox.add_child(name_lbl)
@@ -3509,7 +3530,7 @@ func _make_incubator_upgrade_card(upgrade: Dictionary) -> Control:
 	var desc_lbl := Label.new()
 	desc_lbl.text = _localized_text(str(upgrade.get("description_key", "")), "")
 	desc_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	desc_lbl.add_theme_font_size_override("font_size", 11)
+	desc_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
 	desc_lbl.add_theme_color_override("font_color", Color(0.68, 0.62, 0.50, 0.85))
 	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -3517,7 +3538,7 @@ func _make_incubator_upgrade_card(upgrade: Dictionary) -> Control:
 
 	var level_lbl := Label.new()
 	level_lbl.text = _localized_text("upgrade.level_label", "Level") + ": " + str(level) + "/" + str(max_level)
-	level_lbl.add_theme_font_size_override("font_size", 12)
+	level_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	level_lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.60, 1.0))
 	level_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	main_vbox.add_child(level_lbl)
@@ -3526,7 +3547,7 @@ func _make_incubator_upgrade_card(upgrade: Dictionary) -> Control:
 	if not effect_text.is_empty():
 		var effect_lbl := Label.new()
 		effect_lbl.text = effect_text
-		effect_lbl.add_theme_font_size_override("font_size", 13)
+		effect_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 		effect_lbl.add_theme_color_override("font_color", Color(0.55, 0.88, 0.55, 1.0))
 		effect_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		main_vbox.add_child(effect_lbl)
@@ -3543,14 +3564,14 @@ func _make_incubator_upgrade_card(upgrade: Dictionary) -> Control:
 	if is_maxed:
 		var max_lbl := Label.new()
 		max_lbl.text = _localized_text("ui.upgrade_max", "MAX")
-		max_lbl.add_theme_font_size_override("font_size", 13)
+		max_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 		max_lbl.add_theme_color_override("font_color", Color(0.30, 0.90, 0.40, 1.0))
 		max_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		buy_row.add_child(max_lbl)
 	else:
 		var cost_lbl := Label.new()
 		cost_lbl.text = str(cost) + " R$"
-		cost_lbl.add_theme_font_size_override("font_size", 13)
+		cost_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 		cost_lbl.add_theme_color_override("font_color", Color(0.95, 0.83, 0.38, 1.0))
 		cost_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		buy_row.add_child(cost_lbl)
@@ -3560,8 +3581,8 @@ func _make_incubator_upgrade_card(upgrade: Dictionary) -> Control:
 		buy_btn.text = _localized_text("button.buy", "Kup")
 		buy_btn.focus_mode = Control.FOCUS_NONE
 		buy_btn.disabled = not can_afford
-		buy_btn.custom_minimum_size = Vector2(70, 32)
-		buy_btn.add_theme_font_size_override("font_size", 12)
+		buy_btn.custom_minimum_size = Vector2(90, BUTTON_HEIGHT)
+		buy_btn.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
 		buy_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		var uid: String = upgrade_id
 		buy_btn.pressed.connect(func() -> void:
@@ -3641,7 +3662,7 @@ func _add_quests_overlay() -> void:
 	title.text = _localized_text("task_category_incubator_name", "Incubator") + " - " + _localized_text("quests.title", "Quests")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	title.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	outer.add_child(title)
 
@@ -3671,7 +3692,7 @@ func _add_quests_overlay() -> void:
 	var close_btn := Button.new()
 	close_btn.text = _localized_text("button.back", "Back")
 	close_btn.focus_mode = Control.FOCUS_NONE
-	close_btn.custom_minimum_size = Vector2(130, 42)
+	close_btn.custom_minimum_size = Vector2(BACK_BTN_MIN_W, BUTTON_HEIGHT)
 	close_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	close_btn.pressed.connect(func() -> void: _quests_overlay.visible = false)
 	close_row.add_child(close_btn)
@@ -3715,7 +3736,7 @@ func _make_quest_empty_label(text: String) -> Label:
 	lbl.text = text
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lbl.add_theme_font_size_override("font_size", 15)
+	lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	lbl.add_theme_color_override("font_color", Color(0.76, 0.70, 0.58, 0.95))
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return lbl
@@ -3732,10 +3753,10 @@ func _make_incubator_quest_card(state: Dictionary) -> Control:
 	cs.border_color = Color(0.30, 0.75, 0.35, 0.85) if completed else Color(0.60, 0.45, 0.22, 0.75)
 	cs.set_border_width_all(2)
 	cs.set_corner_radius_all(10)
-	cs.content_margin_left = 10
-	cs.content_margin_right = 10
-	cs.content_margin_top = 10
-	cs.content_margin_bottom = 10
+	cs.content_margin_left = CARD_CONTENT_MARGIN
+	cs.content_margin_right = CARD_CONTENT_MARGIN
+	cs.content_margin_top = CARD_CONTENT_MARGIN
+	cs.content_margin_bottom = CARD_CONTENT_MARGIN
 	card.add_theme_stylebox_override("panel", cs)
 
 	var row := HBoxContainer.new()
@@ -3745,13 +3766,13 @@ func _make_incubator_quest_card(state: Dictionary) -> Control:
 
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 5)
+	info.add_theme_constant_override("separation", CARD_SEPARATION)
 	row.add_child(info)
 
 	var title := Label.new()
 	title.text = _localized_text(str(state.get("title_key", "")), str(state.get("id", "")))
 	title.clip_text = true
-	title.add_theme_font_size_override("font_size", 15)
+	title.add_theme_font_size_override("font_size", ROW_TITLE_FONT_SIZE)
 	title.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(title)
@@ -3759,7 +3780,7 @@ func _make_incubator_quest_card(state: Dictionary) -> Control:
 	var desc := Label.new()
 	desc.text = _localized_text(str(state.get("description_key", "")), "")
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc.add_theme_font_size_override("font_size", 11)
+	desc.add_theme_font_size_override("font_size", META_FONT_SIZE)
 	desc.add_theme_color_override("font_color", Color(0.68, 0.62, 0.50, 0.88))
 	desc.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(desc)
@@ -3769,27 +3790,27 @@ func _make_incubator_quest_card(state: Dictionary) -> Control:
 	var displayed_current: int = target if completed else current
 	var progress := Label.new()
 	progress.text = _localized_text("quests.progress", "Progress") + ": " + str(displayed_current) + "/" + str(target)
-	progress.add_theme_font_size_override("font_size", 12)
+	progress.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	progress.add_theme_color_override("font_color", Color(0.95, 0.83, 0.38, 1.0))
 	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(progress)
 
 	var reward := Label.new()
 	reward.text = _format_quest_reward_text(state)
-	reward.add_theme_font_size_override("font_size", 12)
+	reward.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	reward.add_theme_color_override("font_color", Color(0.55, 0.88, 0.55, 1.0))
 	reward.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(reward)
 
 	var action_col := VBoxContainer.new()
-	action_col.custom_minimum_size = Vector2(104, 0)
+	action_col.custom_minimum_size = Vector2(130, 0)   # QUEST_ACTION_COL_W
 	action_col.alignment = BoxContainer.ALIGNMENT_CENTER
 	action_col.add_theme_constant_override("separation", 6)
 	row.add_child(action_col)
 
 	var status := Label.new()
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	status.add_theme_font_size_override("font_size", 12)
+	status.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	status.add_theme_color_override("font_color", Color(0.78, 0.72, 0.60, 1.0))
 	status.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	action_col.add_child(status)
@@ -3801,7 +3822,7 @@ func _make_incubator_quest_card(state: Dictionary) -> Control:
 		var claim_btn := Button.new()
 		claim_btn.text = _localized_text("quests.claim", "Claim")
 		claim_btn.focus_mode = Control.FOCUS_NONE
-		claim_btn.custom_minimum_size = Vector2(96, 34)
+		claim_btn.custom_minimum_size = Vector2(120, BUTTON_HEIGHT)
 		claim_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		var quest_id: String = str(state.get("id", ""))
 		claim_btn.pressed.connect(func() -> void:

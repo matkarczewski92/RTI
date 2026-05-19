@@ -122,6 +122,17 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/western_hognose_snake_common.png"
 	},
 	{
+		"id": "emerald_tree_skink",
+		"name_key": "reptile.emerald_tree_skink.name",
+		"biome_id": "dry_prairie",
+		"preferred_habitat_type": "jungle",
+		"base_cost": 3400,
+		"base_income_per_minute": 112,
+		"default_variant_id": "emerald_tree_skink_common",
+		"portrait_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_common.png",
+		"icon_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_common.png"
+	},
+	{
 		"id": "prairie_rattlesnake",
 		"name_key": "reptile.prairie_rattlesnake.name",
 		"biome_id": "dry_prairie",

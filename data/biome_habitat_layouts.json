@@ -17,7 +17,7 @@
         {
           "slot_id": "green_meadow_slot_1",
           "x": 330,
-          "y": 439.5,
+          "y": 419.5,
           "slot_width": 390,
           "slot_height": 330,
           "empty_width": 180,
@@ -25,7 +25,7 @@
           "purchased_width": 409.5,
           "purchased_height": 409.5,
           "empty_offset_x": 0,
-          "empty_offset_y": 3,
+          "empty_offset_y": -10,
           "purchased_offset_x": -15,
           "purchased_offset_y": -30
         },
@@ -62,7 +62,7 @@
         {
           "slot_id": "green_meadow_slot_4",
           "x": 750,
-          "y": 615,
+          "y": 585,
           "slot_width": 390,
           "slot_height": 330,
           "empty_width": 180,
@@ -70,14 +70,14 @@
           "purchased_width": 409.5,
           "purchased_height": 409.5,
           "empty_offset_x": 3,
-          "empty_offset_y": 0,
+          "empty_offset_y": -30,
           "purchased_offset_x": 0,
           "purchased_offset_y": -24
         },
         {
           "slot_id": "green_meadow_slot_5",
           "x": 739.5,
-          "y": 1048.5,
+          "y": 1058.5,
           "slot_width": 390,
           "slot_height": 330,
           "empty_width": 180,
@@ -92,7 +92,7 @@
         {
           "slot_id": "green_meadow_slot_6",
           "x": 750,
-          "y": 1390.5,
+          "y": 1360.5,
           "slot_width": 390,
           "slot_height": 330,
           "empty_width": 180,

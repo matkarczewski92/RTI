@@ -29,7 +29,8 @@
       "Bash(python3 -c \"from PIL import Image; img = Image.open\\('assets/art/ui/small_design/build_habitat.png'\\); print\\(img.size\\)\")",
       "Bash(powershell -command 'Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\('\\\\''__CMDSUB_OUTPUT__/assets/art/ui/small_design/build_habitat.png'\\\\''\\); Write-Host $img.Width $img.Height; $img.Dispose\\(\\)')",
       "PowerShell(Add-Type -AssemblyName System.Drawing; $path = \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\\\\assets\\\\art\\\\ui\\\\small_design\\\\build_habitat.png\"; $img = [System.Drawing.Image]::FromFile\\($path\\); Write-Host \"Width: $\\($img.Width\\) Height: $\\($img.Height\\)\"; $img.Dispose\\(\\))",
-      "PowerShell(Add-Type -AssemblyName System.Drawing; $path = \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\\\\assets\\\\art\\\\ui\\\\small_design\\\\project_build_habutat.png\"; $img = [System.Drawing.Image]::FromFile\\($path\\); Write-Host \"Width: $\\($img.Width\\) Height: $\\($img.Height\\)\"; $img.Dispose\\(\\))"
+      "PowerShell(Add-Type -AssemblyName System.Drawing; $path = \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\\\\assets\\\\art\\\\ui\\\\small_design\\\\project_build_habutat.png\"; $img = [System.Drawing.Image]::FromFile\\($path\\); Write-Host \"Width: $\\($img.Width\\) Height: $\\($img.Height\\)\"; $img.Dispose\\(\\))",
+      "Bash(node -e ' *)"
     ]
   }
 }

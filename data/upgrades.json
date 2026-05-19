@@ -63,7 +63,7 @@
 		"id": "upgrade_worker_efficiency",
 		"name_key": "upgrade.worker_efficiency.name",
 		"description_key": "upgrade.worker_efficiency.desc",
-		"icon_path": "res://assets/art/ui/icons/menu/emp_team.png",
+		"icon_path": "res://assets/art/workers/emp_team.png",
 		"type": "workers",
 		"base_cost": 1000,
 		"cost_multiplier": 1.8,

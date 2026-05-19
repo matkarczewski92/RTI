@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bdbkskqoipm3u"
-path="res://.godot/imported/emp_team.png-e84bd589cfd70622cd3d5a3db5ea26d9.ctex"
+uid="uid://dnv71646d2k16"
+path="res://.godot/imported/emerald_tree_skink_ultra_rare.png-d1a5915bbb5628b62642a17b441e1340.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/ui/icons/menu/emp_team.png"
-dest_files=["res://.godot/imported/emp_team.png-e84bd589cfd70622cd3d5a3db5ea26d9.ctex"]
+source_file="res://assets/art/reptiles_dry_praire/emerald_tree_skink_ultra_rare.png"
+dest_files=["res://.godot/imported/emerald_tree_skink_ultra_rare.png-d1a5915bbb5628b62642a17b441e1340.ctex"]
 
 [params]
 

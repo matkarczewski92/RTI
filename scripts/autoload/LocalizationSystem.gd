@@ -1,8 +1,8 @@
 extends Node
 
 const TRANSLATIONS_PATH := "res://data/translations.json"
-const DEFAULT_LANGUAGE := "pl"
-const FALLBACK_LANGUAGE := "en"
+const DEFAULT_LANGUAGE := "en"
+const FALLBACK_LANGUAGE := "pl"
 
 var translations: Dictionary = {}
 var missing_key_warnings: Dictionary = {}

@@ -82,6 +82,13 @@
       "egg_name_en": "Western Hognose Snake Eggs",
       "enabled_in_egg_shop": true
     },
+    "emerald_tree_skink": {
+      "biome_id": "dry_prairie",
+      "incubation_time_hours": 26,
+      "egg_name_pl": "Jaja scynka szmaragdowego",
+      "egg_name_en": "Emerald Tree Skink Eggs",
+      "enabled_in_egg_shop": true
+    },
     "prairie_rattlesnake": {
       "biome_id": "dry_prairie",
       "incubation_time_hours": 36,

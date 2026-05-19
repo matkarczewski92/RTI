@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dqlqs760blhmx"
-path="res://.godot/imported/emp_food.png-468f69b71190c3a506e64deb65655c5f.ctex"
+uid="uid://c56pr2j155csr"
+path="res://.godot/imported/emerald_tree_skink_shadow.png-8e30e5eb2f74ef498d24dc5097e5e804.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/ui/icons/menu/emp_food.png"
-dest_files=["res://.godot/imported/emp_food.png-468f69b71190c3a506e64deb65655c5f.ctex"]
+source_file="res://assets/art/reptiles_dry_praire/emerald_tree_skink_shadow.png"
+dest_files=["res://.godot/imported/emerald_tree_skink_shadow.png-8e30e5eb2f74ef498d24dc5097e5e804.ctex"]
 
 [params]
 

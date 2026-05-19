@@ -2659,6 +2659,19 @@
 	"variant.prairie_rattlesnake.exceptional.name": { "pl": "Grzechotnik Preriowy", "en": "Prairie Rattlesnake" },
 	"variant.prairie_rattlesnake.ultra_rare.name": { "pl": "Grzechotnik Preriowy", "en": "Prairie Rattlesnake" },
 	"variant.prairie_rattlesnake.shadow.name": { "pl": "Grzechotnik Preriowy", "en": "Prairie Rattlesnake" },
+	"reptile.emerald_tree_skink.name": {
+		"pl": "Scynk Szmaragdowy",
+		"en": "Emerald Tree Skink"
+	},
+	"reptile.emerald_tree_skink.description": {
+		"pl": "Zwinny, nadrzewny scynk o intensywnie zielonym ubarwieniu. W suchym biomie najlepiej odnajduje się w zacienionych habitatach dżunglowych.",
+		"en": "A fast, tree-dwelling skink with bright green coloration. In the dry biome, it thrives best in shaded jungle habitats."
+	},
+	"variant.emerald_tree_skink.common.name": { "pl": "Scynk Szmaragdowy", "en": "Emerald Tree Skink" },
+	"variant.emerald_tree_skink.rare.name": { "pl": "Scynk Szmaragdowy", "en": "Emerald Tree Skink" },
+	"variant.emerald_tree_skink.exceptional.name": { "pl": "Scynk Szmaragdowy", "en": "Emerald Tree Skink" },
+	"variant.emerald_tree_skink.ultra_rare.name": { "pl": "Scynk Szmaragdowy", "en": "Emerald Tree Skink" },
+	"variant.emerald_tree_skink.shadow.name": { "pl": "Scynk Szmaragdowy", "en": "Emerald Tree Skink" },
 	"biome.locked_level_message": {
 		"pl": "Osiągnij wymagany poziom, aby odblokować ten biom.",
 		"en": "Reach the required level to unlock this biome."
@@ -2689,6 +2702,8 @@
 	"achievement.complete_bullsnake_collection.desc": { "pl": "Odkryj wszystkie warianty Wąża Byka.", "en": "Discover all Bullsnake variants." },
 	"achievement.complete_prairie_rattlesnake_collection.title": { "pl": "Kolekcja Grzechotnika", "en": "Prairie Rattlesnake Collection" },
 	"achievement.complete_prairie_rattlesnake_collection.desc": { "pl": "Odkryj wszystkie warianty Grzechotnika Preriowego.", "en": "Discover all Prairie Rattlesnake variants." },
+	"achievement.complete_emerald_tree_skink_collection.title": { "pl": "Kolekcja Scynka Szmaragdowego", "en": "Emerald Tree Skink Collection" },
+	"achievement.complete_emerald_tree_skink_collection.desc": { "pl": "Odkryj wszystkie warianty Scynka Szmaragdowego.", "en": "Discover all Emerald Tree Skink variants." },
 	"achievement.own_ten_reptiles.title": { "pl": "Dziesięcioro Gadów", "en": "Ten Reptiles" },
 	"achievement.own_ten_reptiles.desc": { "pl": "Posiadaj łącznie 10 gadów.", "en": "Own a total of 10 reptiles." },
 	"care.not_enough_food": {

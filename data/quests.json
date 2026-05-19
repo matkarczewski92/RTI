@@ -483,8 +483,8 @@
     "sort_order": 230,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 10,
-    "reward_water_max": 10
+    "reward_food_max": 5,
+    "reward_water_max": 5
   },
   {
     "id": "complete_5_care_actions",
@@ -527,7 +527,7 @@
     "reward_type": "repticash",
     "reward_amount": 650,
     "reward_xp": 450,
-    "reward_food_max": 10,
+    "reward_food_max": 5,
     "sort_order": 255,
     "is_active": true,
     "is_hidden": false
@@ -576,8 +576,8 @@
     "sort_order": 280,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 10,
-    "reward_water_max": 10
+    "reward_food_max": 5,
+    "reward_water_max": 5
   },
   {
     "id": "complete_50_care_actions",
@@ -590,7 +590,7 @@
     "reward_type": "repticash",
     "reward_amount": 1000,
     "reward_xp": 700,
-    "reward_water_max": 10,
+    "reward_water_max": 5,
     "sort_order": 285,
     "is_active": true,
     "is_hidden": false
@@ -654,7 +654,7 @@
     "sort_order": 310,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 10
+    "reward_food_max": 5
   },
   {
     "id": "earn_25000_rs",
@@ -667,7 +667,7 @@
     "reward_type": "repticash",
     "reward_amount": 2000,
     "reward_xp": 900,
-    "reward_water_max": 10,
+    "reward_water_max": 5,
     "sort_order": 315,
     "is_active": true,
     "is_hidden": false
@@ -746,7 +746,7 @@
     "sort_order": 350,
     "is_active": true,
     "is_hidden": false,
-    "reward_water_max": 10
+    "reward_water_max": 5
   },
   {
     "id": "reach_level_10",
@@ -762,8 +762,8 @@
     "sort_order": 360,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 10,
-    "reward_water_max": 10
+    "reward_food_max": 5,
+    "reward_water_max": 5
   },
   {
     "id": "own_five_habitats",
@@ -791,7 +791,7 @@
     "reward_type": "repticash",
     "reward_amount": 1100,
     "reward_xp": 850,
-    "reward_food_max": 10,
+    "reward_food_max": 5,
     "sort_order": 375,
     "is_active": true,
     "is_hidden": false
@@ -930,8 +930,8 @@
     "sort_order": 420,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 10,
-    "reward_water_max": 10
+    "reward_food_max": 5,
+    "reward_water_max": 5
   },
   {
     "id": "complete_100_care_actions",
@@ -944,8 +944,8 @@
     "reward_type": "repticash",
     "reward_amount": 2000,
     "reward_xp": 1200,
-    "reward_food_max": 10,
-    "reward_water_max": 10,
+    "reward_food_max": 5,
+    "reward_water_max": 5,
     "sort_order": 425,
     "is_active": true,
     "is_hidden": false
@@ -961,7 +961,7 @@
     "reward_type": "repticash",
     "reward_amount": 2200,
     "reward_xp": 1500,
-    "reward_water_max": 10,
+    "reward_water_max": 5,
     "sort_order": 430,
     "is_active": true,
     "is_hidden": false
@@ -977,7 +977,7 @@
     "reward_type": "repticash",
     "reward_amount": 3500,
     "reward_xp": 1400,
-    "reward_food_max": 10,
+    "reward_food_max": 5,
     "sort_order": 435,
     "is_active": true,
     "is_hidden": false
@@ -993,8 +993,8 @@
     "reward_type": "repticash",
     "reward_amount": 2200,
     "reward_xp": 1500,
-    "reward_food_max": 10,
-    "reward_water_max": 10,
+    "reward_food_max": 5,
+    "reward_water_max": 5,
     "sort_order": 440,
     "is_active": true,
     "is_hidden": false
@@ -1010,8 +1010,8 @@
     "reward_type": "repticash",
     "reward_amount": 4500,
     "reward_xp": 2500,
-    "reward_food_max": 10,
-    "reward_water_max": 10,
+    "reward_food_max": 5,
+    "reward_water_max": 5,
     "sort_order": 445,
     "is_active": true,
     "is_hidden": false
@@ -1027,8 +1027,8 @@
     "reward_type": "repticash",
     "reward_amount": 6500,
     "reward_xp": 2200,
-    "reward_food_max": 10,
-    "reward_water_max": 10,
+    "reward_food_max": 5,
+    "reward_water_max": 5,
     "sort_order": 450,
     "is_active": true,
     "is_hidden": false
@@ -1107,7 +1107,7 @@
     "sort_order": 540,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 10
+    "reward_food_max": 5
   },
   {
     "id": "incubator_start_first_pairing",
@@ -1183,7 +1183,7 @@
     "sort_order": 590,
     "is_active": true,
     "is_hidden": false,
-    "reward_water_max": 10
+    "reward_water_max": 5
   },
   {
     "id": "incubator_collect_3_eggs_from_pairing",
@@ -1214,8 +1214,8 @@
     "sort_order": 610,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 10,
-    "reward_water_max": 10
+    "reward_food_max": 5,
+    "reward_water_max": 5
   },
   {
     "id": "incubator_start_first_incubation",
@@ -1261,8 +1261,8 @@
     "sort_order": 640,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 10,
-    "reward_water_max": 10
+    "reward_food_max": 5,
+    "reward_water_max": 5
   },
   {
     "id": "incubator_run_6_containers",
@@ -1278,8 +1278,8 @@
     "sort_order": 650,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 10,
-    "reward_water_max": 10
+    "reward_food_max": 5,
+    "reward_water_max": 5
   },
   {
     "id": "incubator_water_before_pause",
@@ -1355,7 +1355,7 @@
     "sort_order": 700,
     "is_active": true,
     "is_hidden": false,
-    "reward_water_max": 10
+    "reward_water_max": 5
   },
   {
     "id": "incubator_hatch_ultra_rare",
@@ -1371,7 +1371,7 @@
     "sort_order": 710,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 10
+    "reward_food_max": 5
   },
   {
     "id": "incubator_hatch_exceptional",
@@ -1387,8 +1387,8 @@
     "sort_order": 720,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 10,
-    "reward_water_max": 10
+    "reward_food_max": 5,
+    "reward_water_max": 5
   },
   {
     "id": "incubator_hatch_50_reptiles",
@@ -1404,7 +1404,7 @@
     "sort_order": 730,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 10,
-    "reward_water_max": 10
+    "reward_food_max": 5,
+    "reward_water_max": 5
   }
 ]

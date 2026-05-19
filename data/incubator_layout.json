@@ -3,20 +3,20 @@
   "comment": "x/y: hitbox center in 720x1280 reference coords. Play area y=84..1108. icon_x/y: center for the small plus/status icon. habitat_x/y: center for the in-progress graphic. icon_size/habitat_size: display size in px. All coords in reference pixels.",
   "incubator": {
     "breeding_chambers": [
-      { "id": 1, "x": 230, "y": 205, "icon_x": 230, "icon_y": 205, "habitat_x": 230, "habitat_y": 205, "icon_size": 40, "habitat_size": 240 },
-      { "id": 2, "x": 495, "y": 250, "icon_x": 495, "icon_y": 250, "habitat_x": 495, "habitat_y": 250, "icon_size": 40, "habitat_size": 240 },
-      { "id": 3, "x": 230, "y": 325, "icon_x": 230, "icon_y": 365, "habitat_x": 230, "habitat_y": 325, "icon_size": 40, "habitat_size": 240 },
-      { "id": 4, "x": 500, "y": 325, "icon_x": 500, "icon_y": 365, "habitat_x": 500, "habitat_y": 325, "icon_size": 40, "habitat_size": 240 },
-      { "id": 5, "x": 230, "y": 510, "icon_x": 230, "icon_y": 510, "habitat_x": 230, "habitat_y": 480, "icon_size": 40, "habitat_size": 240 },
-      { "id": 6, "x": 505, "y": 510, "icon_x": 505, "icon_y": 510, "habitat_x": 505, "habitat_y": 480, "icon_size": 40, "habitat_size": 240 }
+      { "id": 1, "x": 230, "y": 265, "icon_x": 230, "icon_y": 290, "habitat_x": 225, "habitat_y": 195, "icon_size": 40, "habitat_size": 400 },
+      { "id": 2, "x": 495, "y": 330, "icon_x": 485, "icon_y": 290, "habitat_x": 490, "habitat_y": 232, "icon_size": 40, "habitat_size": 400 },
+      { "id": 3, "x": 220, "y": 415, "icon_x": 220, "icon_y": 390, "habitat_x": 222, "habitat_y": 315, "icon_size": 40, "habitat_size": 400 },
+      { "id": 4, "x": 510, "y": 415, "icon_x": 490, "icon_y": 390, "habitat_x": 495, "habitat_y": 315, "icon_size": 40, "habitat_size": 400 },
+      { "id": 5, "x": 230, "y": 510, "icon_x": 215, "icon_y": 510, "habitat_x": 215, "habitat_y": 435, "icon_size": 40, "habitat_size": 400 },
+      { "id": 6, "x": 505, "y": 510, "icon_x": 500, "icon_y": 510, "habitat_x": 500, "habitat_y": 435, "icon_size": 40, "habitat_size": 400 }
     ],
     "incubation_containers": [
-      { "id": 1, "x": 215, "y": 750,  "icon_x": 215, "icon_y": 750,  "habitat_x": 215, "habitat_y": 750,  "icon_size": 40, "habitat_size": 210 },
-      { "id": 2, "x": 505, "y": 750,  "icon_x": 505, "icon_y": 750,  "habitat_x": 505, "habitat_y": 750,  "icon_size": 40, "habitat_size": 210 },
-      { "id": 3, "x": 210, "y": 910,  "icon_x": 210, "icon_y": 910,  "habitat_x": 210, "habitat_y": 910,  "icon_size": 40, "habitat_size": 210 },
-      { "id": 4, "x": 510, "y": 910,  "icon_x": 510, "icon_y": 910,  "habitat_x": 510, "habitat_y": 910,  "icon_size": 40, "habitat_size": 210 },
-      { "id": 5, "x": 205, "y": 1085, "icon_x": 205, "icon_y": 1085, "habitat_x": 205, "habitat_y": 1085, "icon_size": 40, "habitat_size": 210 },
-      { "id": 6, "x": 515, "y": 1085, "icon_x": 515, "icon_y": 1085, "habitat_x": 515, "habitat_y": 1085, "icon_size": 40, "habitat_size": 210 }
+      { "id": 1, "x": 215, "y": 750,  "icon_x": 215, "icon_y": 725,  "habitat_x": 215, "habitat_y": 699,  "icon_size": 40, "habitat_size": 315 },
+      { "id": 2, "x": 505, "y": 750,  "icon_x": 505, "icon_y": 725,  "habitat_x": 515, "habitat_y": 699,  "icon_size": 40, "habitat_size": 315 },
+      { "id": 3, "x": 210, "y": 910,  "icon_x": 210, "icon_y": 860,  "habitat_x": 205, "habitat_y": 845,  "icon_size": 40, "habitat_size": 315 },
+      { "id": 4, "x": 510, "y": 910,  "icon_x": 510, "icon_y": 860,  "habitat_x": 515, "habitat_y": 845,  "icon_size": 40, "habitat_size": 315 },
+      { "id": 5, "x": 205, "y": 1085, "icon_x": 200, "icon_y": 1015, "habitat_x": 200, "habitat_y": 990, "icon_size": 40, "habitat_size": 315 },
+      { "id": 6, "x": 515, "y": 1085, "icon_x": 520, "icon_y": 1015, "habitat_x": 520, "habitat_y": 990, "icon_size": 40, "habitat_size": 315 }
     ]
   }
 }

@@ -588,6 +588,66 @@
 		"obtain_method": "shadow_drop"
 	},
 	{
+		"id": "emerald_tree_skink_common",
+		"reptile_id": "emerald_tree_skink",
+		"rarity": "common",
+		"name_key": "variant.emerald_tree_skink.common.name",
+		"portrait_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_common.png",
+		"icon_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_common.png",
+		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
+		"income_multiplier": 1.0,
+		"obtain_method": "default"
+	},
+	{
+		"id": "emerald_tree_skink_rare",
+		"reptile_id": "emerald_tree_skink",
+		"rarity": "rare",
+		"name_key": "variant.emerald_tree_skink.rare.name",
+		"portrait_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_rare.png",
+		"icon_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_rare.png",
+		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
+		"income_multiplier": 1.1,
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "emerald_tree_skink_exceptional",
+		"reptile_id": "emerald_tree_skink",
+		"rarity": "exceptional",
+		"name_key": "variant.emerald_tree_skink.exceptional.name",
+		"portrait_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_exceptional.png",
+		"icon_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_exceptional.png",
+		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
+		"income_multiplier": 1.25,
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "emerald_tree_skink_ultra_rare",
+		"reptile_id": "emerald_tree_skink",
+		"rarity": "ultra_rare",
+		"name_key": "variant.emerald_tree_skink.ultra_rare.name",
+		"portrait_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_ultra_rare.png",
+		"icon_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_ultra_rare.png",
+		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
+		"income_multiplier": 1.5,
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "emerald_tree_skink_shadow",
+		"reptile_id": "emerald_tree_skink",
+		"rarity": "shadow",
+		"name_key": "variant.emerald_tree_skink.shadow.name",
+		"portrait_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_shadow.png",
+		"icon_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_shadow.png",
+		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
+		"income_multiplier": 2.0,
+		"obtain_method": "shadow_drop"
+	},
+	{
 		"id": "prairie_rattlesnake_common",
 		"reptile_id": "prairie_rattlesnake",
 		"rarity": "common",

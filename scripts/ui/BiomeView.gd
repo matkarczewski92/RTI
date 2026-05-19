@@ -12,6 +12,7 @@ const OFFLINE_INCOME_POPUP_SCRIPT := preload("res://scripts/ui/OfflineIncomePopu
 const SETTINGS_MODAL_SCRIPT := preload("res://scripts/ui/SettingsModal.gd")
 
 const BACKGROUND_PATH := "res://assets/art/biomes/green_meadow_background.png"
+const ASSIGN_CARD_BG_PATH := "res://assets/art/ui/small_design/blank_card_background.png"
 const BIOMES_CONFIG_PATH := "res://data/biomes.json"
 const LOGO_PATH := "res://assets/art/ui/logo.png"
 const EDIT_ICON_PATH := "res://assets/art/ui/icons/menu/edit_icon.png"
@@ -30,8 +31,42 @@ const WATER_ACTION_ICON_PATH := "res://assets/art/ui/icons/menu/wather_add.png"
 const CLEAN_ACTION_ICON_PATH := "res://assets/art/ui/icons/menu/clean_add.png"
 const COOLDOWN_ICON_PATH := "res://assets/art/ui/icons/menu/cooldown.png"
 const ALERT_ICON_PATH := "res://assets/art/ui/icons/menu/alert.png"
-const WORKERS_ICON_PATH := "res://assets/art/ui/icons/menu/emp_team.png"
+const WORKERS_ICON_PATH := "res://assets/art/workers/emp_team.png"
 const UPGRADE_BUTTON_ICON_PATH := "res://assets/art/ui/icons/menu/upgrade_button.png"
+const WORKERS_DESIGN_DIR := "res://assets/art/workers/"
+const WORKERS_BG_PATH := WORKERS_DESIGN_DIR + "workers_background.png"
+const WORKERS_TITLE_PL_PATH := WORKERS_DESIGN_DIR + "workers_pl.png"
+const WORKERS_TITLE_EN_PATH := WORKERS_DESIGN_DIR + "workers_en.png"
+const WORKERS_CARD_BG_PATH := WORKERS_DESIGN_DIR + "workers_tab_background.png"
+const WORKERS_REF_SIZE := Vector2(941, 1472)
+const WORKERS_MAX_VIEWPORT_RATIO := Vector2(0.70, 0.86)
+const WORKERS_CLOSE_ANCHOR_MIN := Vector2(0.899, 0.020)
+const WORKERS_CLOSE_ANCHOR_MAX := Vector2(0.945, 0.108)
+const WORKERS_TITLE_ANCHOR_MIN := Vector2(0.025, -0.030)
+const WORKERS_TITLE_ANCHOR_MAX := Vector2(0.9633, 0.0735)
+const WORKERS_SCROLL_ANCHOR_MIN := Vector2(0.025, 0.112)
+const WORKERS_SCROLL_ANCHOR_MAX := Vector2(0.975, 0.965)
+const WORKERS_CARD_MIN_SIZE := Vector2(0, 465)
+const WORKERS_CARD_TEXTURE_MARGIN := Vector2(96, 72)
+const WORKERS_LIST_SEPARATION := Vector2(1, 0)
+const WORKERS_CARD_ICON_POS := Vector2(64, 108)
+const WORKERS_ICON_SIZE := Vector2(170, 170)
+const WORKERS_CARD_NAME_POS := Vector2(218, 56)
+const WORKERS_CARD_NAME_SIZE := Vector2(365, 42)
+const WORKERS_CARD_DESC_POS := Vector2(228, 100)
+const WORKERS_CARD_DESC_SIZE := Vector2(365, 78)
+const WORKERS_CARD_STATUS_POS := Vector2(228, 190)
+const WORKERS_CARD_STATUS_SIZE := Vector2(365, 46)
+const WORKERS_CARD_EFFECT_POS := Vector2(228, 246)
+const WORKERS_CARD_EFFECT_SIZE := Vector2(392, 72)
+const WORKERS_CARD_COST_POS := Vector2(148, 320)
+const WORKERS_CARD_COST_SIZE := Vector2(182, 54)
+const WORKERS_CARD_BUTTON_POS := Vector2(398, 325)
+const WORKERS_ACTION_BUTTON_SIZE := Vector2(144, 63)
+const WORKERS_TEXT_NAME_SIZE := 32
+const WORKERS_TEXT_DESC_SIZE := 20
+const WORKERS_TEXT_INFO_SIZE := 20
+const WORKERS_COST_TEXT_SIZE := 25
 const UPGRADES_DESIGN_DIR := "res://assets/art/ui/upgrades_design/"
 const UPGRADES_BG_PATH          := UPGRADES_DESIGN_DIR + "background.png"
 const UPGRADES_TITLE_PL_PATH    := UPGRADES_DESIGN_DIR + "upgrades_pl.png"
@@ -106,7 +141,7 @@ const SHOP_REPTILE_TEXT_BONUS := 10
 const SHOP_REPTILE_PORTRAIT_SIZE := Vector2(246, 246)
 const SHOP_REPTILE_HABITAT_ICON_SIZE := Vector2(98, 98)
 const SHOP_REPTILE_RARITY_ICON_SIZE := Vector2(24, 24)
-const SHOP_REPTILE_DROPDOWN_SIZE := Vector2(175, 54)
+const SHOP_REPTILE_DROPDOWN_SIZE := Vector2(158, 49)
 const SHOP_REPTILE_BUY_BUTTON_SIZE := Vector2(213, 75)
 const SHOP_REPTILE_BUTTON_TEXT_BONUS := 8
 const QUESTS_DESIGN_DIR := "res://assets/art/ui/quests_design/"
@@ -136,10 +171,12 @@ const QUEST_SCROLL_RIGHT_ANCHOR  := 0.887
 const QUEST_SCROLL_BOTTOM_ANCHOR := 0.985
 
 # Kafelek pojedynczego questa
-const QUEST_CARD_MIN_HEIGHT    := 354  # minimalna wysokość kafelka (+32%)
-const QUEST_CARD_MARGIN        := 14   # wewnętrzny margines kafelka z każdej strony (px)
-const QUEST_CARD_TEXT_INDENT   := 12   # wcięcie tekstów po lewej (px)
-const QUEST_LIST_SEPARATION    := 8    # odstęp między kafelkami questów (px)
+const QUEST_CARD_MIN_HEIGHT    := 344  # minimalna wysokość kafelka (+32%)
+const QUEST_CARD_MARGIN        := 16   # wewnętrzny margines kafelka z każdej strony (px)
+const QUEST_CARD_TEXT_INDENT   := 16   # wcięcie tekstów po lewej (px)
+const QUEST_CARD_CONTENT_ANCHOR_MIN := Vector2(0.01, 0.01)
+const QUEST_CARD_CONTENT_ANCHOR_MAX := Vector2(1.11, 1.01)
+const QUEST_LIST_SEPARATION    := 2    # odstęp między kafelkami questów (px)
 
 # Rozmiary tekstu wewnątrz kafelka (pt)
 const QUEST_TEXT_TITLE_SIZE    := 29
@@ -606,6 +643,11 @@ func _setup_care_update_timer() -> void:
 	care_update_timer.autostart = true
 	care_update_timer.timeout.connect(_on_care_update_timer_timeout)
 	add_child(care_update_timer)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN or what == NOTIFICATION_APPLICATION_RESUMED:
+		ReptileSystem.apply_time_updates(true, true)
 
 
 func _on_care_update_timer_timeout() -> void:
@@ -1448,55 +1490,72 @@ func _show_reptile_assignment_popup(habitat_id: String) -> void:
 	reptile_selection_modal.add_child(center)
 
 	var viewport_size: Vector2 = get_viewport_rect().size
-	var modal_width: float = min(max(viewport_size.x * 0.9, 560.0), viewport_size.x - 40.0)
+	var modal_width: float = min(max(viewport_size.x * 0.92, 620.0), viewport_size.x - 24.0)
 	var panel: PanelContainer = PanelContainer.new()
-	panel.custom_minimum_size = Vector2(modal_width, 610)
-	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
+	panel.custom_minimum_size = Vector2(modal_width, 936)
+	var panel_bg_tex: Texture2D = AssetPaths.load_texture(ASSIGN_CARD_BG_PATH)
+	if panel_bg_tex != null:
+		var panel_style: StyleBoxTexture = StyleBoxTexture.new()
+		panel_style.texture = panel_bg_tex
+		panel_style.draw_center = true
+		panel_style.texture_margin_left = 48.0
+		panel_style.texture_margin_right = 48.0
+		panel_style.texture_margin_top = 40.0
+		panel_style.texture_margin_bottom = 40.0
+		panel.add_theme_stylebox_override("panel", panel_style)
+	else:
+		panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
 	center.add_child(panel)
 
 	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_top", 16)
-	margin.add_theme_constant_override("margin_bottom", 18)
+	margin.add_theme_constant_override("margin_left", 29)
+	margin.add_theme_constant_override("margin_right", 29)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_bottom", 29)
 	panel.add_child(margin)
 
 	var column: VBoxContainer = VBoxContainer.new()
-	column.add_theme_constant_override("separation", 12)
+	column.add_theme_constant_override("separation", 19)
 	margin.add_child(column)
 
 	var header: HBoxContainer = HBoxContainer.new()
-	header.add_theme_constant_override("separation", 10)
+	header.add_theme_constant_override("separation", 17)
 	column.add_child(header)
 
-	var title: Label = _make_popup_label(LocalizationSystem.tr_key("ui.choose_reptile"), 21)
+	var title: Label = _make_popup_label(LocalizationSystem.tr_key("ui.choose_reptile"), 34)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_apply_label_color(title, POPUP_TEXT_PRIMARY)
 	header.add_child(title)
 
-	var close_button: Button = Button.new()
-	close_button.text = LocalizationSystem.tr_key("ui.close")
-	close_button.custom_minimum_size = Vector2(88, 42)
-	_apply_button_text_color(close_button, POPUP_TEXT_PRIMARY)
+	var close_button: TextureButton = TextureButton.new()
+	close_button.custom_minimum_size = Vector2(65, 65)
+	close_button.ignore_texture_size = true
+	close_button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	var close_tex: Texture2D = AssetPaths.load_texture("res://assets/art/ui/reptile_mgm/close.png")
+	close_button.texture_normal = close_tex
+	close_button.texture_hover = close_tex
+	close_button.texture_pressed = close_tex
+	close_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.pressed.connect(_close_reptile_selection_modal)
 	header.add_child(close_button)
 
-	var subtitle: Label = _make_popup_label(LocalizationSystem.tr_key("ui.available_reptiles"), 13)
+	var subtitle: Label = _make_popup_label(LocalizationSystem.tr_key("ui.available_reptiles"), 20)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_apply_label_color(subtitle, POPUP_TEXT_SECONDARY)
 	column.add_child(subtitle)
 
 	var scroll: ScrollContainer = ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0, 450)
+	scroll.custom_minimum_size = Vector2(0, 696)
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
 
 	var list: VBoxContainer = VBoxContainer.new()
-	list.add_theme_constant_override("separation", 8)
-	list.custom_minimum_size = Vector2(max(0.0, modal_width - 36.0), 0)
-	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 14)
+	list.custom_minimum_size = Vector2(max(0.0, modal_width - 58.0) * 0.866, 0)
+	list.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	scroll.add_child(list)
 
 	var instances: Array = ReptileSystem.get_owned_unassigned_reptiles()
@@ -1511,10 +1570,6 @@ func _show_reptile_assignment_popup(habitat_id: String) -> void:
 
 		var instance: Dictionary = instance_value as Dictionary
 		list.add_child(_make_assignable_reptile_card(instance, habitat_id))
-
-	column.add_child(_make_popup_button("ui.cancel", func() -> void:
-		_close_reptile_selection_modal()
-	))
 
 
 func _show_no_available_reptiles_popup() -> void:
@@ -1579,50 +1634,50 @@ func _show_no_available_reptiles_popup() -> void:
 
 func _make_assignable_reptile_card(instance: Dictionary, habitat_id: String) -> Control:
 	var card: PanelContainer = PanelContainer.new()
-	card.custom_minimum_size = Vector2(0, 140)
+	card.custom_minimum_size = Vector2(0, 216)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.add_theme_stylebox_override("panel", _make_card_style())
 
 	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.add_theme_constant_override("margin_left", 19)
+	margin.add_theme_constant_override("margin_right", 19)
+	margin.add_theme_constant_override("margin_top", 19)
+	margin.add_theme_constant_override("margin_bottom", 19)
 	card.add_child(margin)
 
 	var row: HBoxContainer = HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 14)
+	row.add_theme_constant_override("separation", 22)
 	margin.add_child(row)
 
 	var reptile_id: String = str(instance.get("reptile_id", ""))
 	var reptile: Dictionary = ReptileSystem.get_reptile(reptile_id)
 	var variant: Dictionary = ReptileSystem.get_owned_animal_variant(instance)
 
-	var icon: TextureRect = _make_fixed_texture(ReptileSystem.get_owned_animal_image_path(instance), Vector2(88, 88))
+	var icon: TextureRect = _make_fixed_texture(ReptileSystem.get_owned_animal_image_path(instance), Vector2(144, 144))
 	row.add_child(icon)
 
 	var info: VBoxContainer = VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 4)
+	info.add_theme_constant_override("separation", 7)
 	row.add_child(info)
 
 	var name_label: Label = Label.new()
 	name_label.text = _get_reptile_display_name(instance, reptile)
 	name_label.clip_text = true
-	name_label.add_theme_font_size_override("font_size", 15)
+	name_label.add_theme_font_size_override("font_size", 24)
 	_apply_label_color(name_label, POPUP_TEXT_PRIMARY)
 	info.add_child(name_label)
 
 	var species_label: Label = Label.new()
 	species_label.text = LocalizationSystem.tr_key(str(reptile.get("name_key", reptile_id)))
 	species_label.clip_text = true
-	species_label.add_theme_font_size_override("font_size", 12)
+	species_label.add_theme_font_size_override("font_size", 19)
 	_apply_label_color(species_label, POPUP_TEXT_SECONDARY)
 	info.add_child(species_label)
 
 	var rarity_row: HBoxContainer = HBoxContainer.new()
-	rarity_row.add_theme_constant_override("separation", 6)
+	rarity_row.add_theme_constant_override("separation", 10)
 	info.add_child(rarity_row)
 	var display_rarity: String = str(instance.get("rarity", str(variant.get("rarity", "common"))))
 	var rarity_icon_path: String = ReptileSystem.RARITY_ICON_PATHS.get(display_rarity, str(variant.get("rarity_icon_path", "")))
@@ -1631,14 +1686,14 @@ func _make_assignable_reptile_card(instance: Dictionary, habitat_id: String) -> 
 	var rarity: Label = Label.new()
 	rarity.text = LocalizationSystem.tr_key(ReptileSystem.get_rarity_label_key(display_rarity))
 	rarity.clip_text = true
-	rarity.add_theme_font_size_override("font_size", 12)
+	rarity.add_theme_font_size_override("font_size", 19)
 	_apply_label_color(rarity, POPUP_TEXT_ACCENT)
 	rarity_row.add_child(rarity)
 
 	var sex_label: Label = Label.new()
 	sex_label.text = LocalizationSystem.tr_key("ui.sex") + ": " + _get_localized_sex(str(instance.get("sex", "male")))
 	sex_label.clip_text = true
-	sex_label.add_theme_font_size_override("font_size", 12)
+	sex_label.add_theme_font_size_override("font_size", 19)
 	_apply_label_color(sex_label, POPUP_TEXT_SECONDARY)
 	info.add_child(sex_label)
 
@@ -1650,18 +1705,19 @@ func _make_assignable_reptile_card(instance: Dictionary, habitat_id: String) -> 
 		var habitat_label: Label = Label.new()
 		habitat_label.text = LocalizationSystem.tr_key("habitat.best_type") + ": " + LocalizationSystem.tr_key(ReptileSystem.get_habitat_type_label_key(preferred_type)) + " | " + LocalizationSystem.tr_key("habitat.compatibility_income") + ": " + str(compatibility) + "%"
 		habitat_label.clip_text = true
-		habitat_label.add_theme_font_size_override("font_size", 11)
+		habitat_label.add_theme_font_size_override("font_size", 18)
 		_apply_label_color(habitat_label, POPUP_TEXT_SECONDARY)
 		info.add_child(habitat_label)
 
 	var action_area: CenterContainer = CenterContainer.new()
-	action_area.custom_minimum_size = Vector2(104, 0)
+	action_area.custom_minimum_size = Vector2(156, 0)
 	action_area.size_flags_horizontal = Control.SIZE_SHRINK_END
 	row.add_child(action_area)
 
 	var button: Button = Button.new()
 	button.text = LocalizationSystem.tr_key("ui.place_reptile")
-	button.custom_minimum_size = Vector2(96, 48)
+	button.custom_minimum_size = Vector2(144, 72)
+	button.add_theme_font_size_override("font_size", 22)
 	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.25, 0.58, 0.24, 1.0)))
 	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.30, 0.66, 0.29, 1.0)))
 	button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.20, 0.48, 0.19, 1.0)))
@@ -1911,7 +1967,8 @@ func _make_shop_reptile_card(reptile: Dictionary) -> Control:
 	sex_selector.add_theme_stylebox_override("pressed", _make_button_style(Color(0.16, 0.08, 0.04, 0.96)))
 	sex_selector.add_theme_color_override("font_color", BUTTON_TEXT_COLOR)
 	sex_selector.add_theme_color_override("font_hover_color", BUTTON_TEXT_COLOR)
-	sex_selector.add_theme_font_size_override("font_size", 12 + SHOP_REPTILE_TEXT_BONUS)
+	sex_selector.add_theme_font_size_override("font_size", int(round((12 + SHOP_REPTILE_TEXT_BONUS) * 0.9)))
+	sex_selector.get_popup().add_theme_font_size_override("font_size", int(round((12 + SHOP_REPTILE_TEXT_BONUS) * 1.35)))
 	_position_shop_control(sex_selector, Vector2(0.365, 0.740), SHOP_REPTILE_DROPDOWN_SIZE)
 	card.add_child(sex_selector)
 
@@ -2003,9 +2060,10 @@ func _make_shop_reptile_card_fallback(reptile: Dictionary) -> Control:
 	sex_row.add_child(sex_label)
 
 	var sex_selector: OptionButton = OptionButton.new()
-	sex_selector.custom_minimum_size = Vector2(122, 34)
+	sex_selector.custom_minimum_size = Vector2(110, 31)
 	sex_selector.add_item(LocalizationSystem.tr_key("ui.male"), 0)
 	sex_selector.add_item(LocalizationSystem.tr_key("ui.female"), 1)
+	sex_selector.get_popup().add_theme_font_size_override("font_size", 30)
 	sex_row.add_child(sex_selector)
 
 	var action_area: VBoxContainer = VBoxContainer.new()
@@ -3639,54 +3697,92 @@ func _show_workers_view() -> void:
 	workers_view.anchor_top = 0.0
 	workers_view.anchor_right = 1.0
 	workers_view.anchor_bottom = 1.0
-	workers_view.offset_top = TOP_BAR_HEIGHT + 10
-	workers_view.offset_bottom = -(BOTTOM_NAV_HEIGHT + 8)
+	workers_view.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(workers_view)
 
-	var panel: PanelContainer = PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
+	if not _workers_design_assets_available():
+		_show_workers_view_fallback_content(workers_view)
+		return
+
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var safe_top: float = float(TOP_BAR_HEIGHT) + 6.0
+	var safe_bottom: float = viewport_size.y - float(BOTTOM_NAV_HEIGHT) - 8.0
+	var available_height: float = max(360.0, safe_bottom - safe_top)
+	var max_width: float = viewport_size.x * WORKERS_MAX_VIEWPORT_RATIO.x
+	var max_height: float = available_height * WORKERS_MAX_VIEWPORT_RATIO.y
+	var background_ratio: float = WORKERS_REF_SIZE.x / WORKERS_REF_SIZE.y
+	var panel_width: float = min(max_width, max_height * background_ratio)
+	var panel_height: float = panel_width / background_ratio
+	var panel_left: float = (viewport_size.x - panel_width) * 0.5
+	var panel_top: float = ((safe_top + safe_bottom) * 0.5) - (panel_height * 0.5)
+
+	var panel: Control = Control.new()
+	panel.name = "WorkersDesignPanel"
+	panel.anchor_left = 0.0
+	panel.anchor_top = 0.0
+	panel.anchor_right = 0.0
+	panel.anchor_bottom = 0.0
+	panel.offset_left = panel_left
+	panel.offset_top = panel_top
+	panel.offset_right = panel_left + panel_width
+	panel.offset_bottom = panel_top + panel_height
 	workers_view.add_child(panel)
 
-	var margin: MarginContainer = MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_top", 16)
-	margin.add_theme_constant_override("margin_bottom", 16)
-	panel.add_child(margin)
+	var background: TextureRect = TextureRect.new()
+	background.name = "WorkersDesignBackground"
+	background.texture = AssetPaths.load_texture(WORKERS_BG_PATH)
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_SCALE
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(background)
 
-	var column: VBoxContainer = VBoxContainer.new()
-	column.add_theme_constant_override("separation", 12)
-	margin.add_child(column)
-
-	var header: HBoxContainer = HBoxContainer.new()
-	header.add_theme_constant_override("separation", 10)
-	column.add_child(header)
-
-	var title: Label = _make_popup_label(LocalizationSystem.tr_key("nav.workers"), 24)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_apply_label_color(title, POPUP_TEXT_PRIMARY)
-	header.add_child(title)
+	var title_art: TextureRect = TextureRect.new()
+	title_art.name = "WorkersTitleArt"
+	title_art.texture = AssetPaths.load_texture(_get_workers_title_path())
+	title_art.anchor_left = WORKERS_TITLE_ANCHOR_MIN.x
+	title_art.anchor_top = WORKERS_TITLE_ANCHOR_MIN.y
+	title_art.anchor_right = WORKERS_TITLE_ANCHOR_MAX.x
+	title_art.anchor_bottom = WORKERS_TITLE_ANCHOR_MAX.y
+	title_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	title_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	title_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(title_art)
 
 	var close_button: Button = Button.new()
-	close_button.text = LocalizationSystem.tr_key("ui.close")
-	close_button.custom_minimum_size = Vector2(96, 42)
+	close_button.name = "WorkersCloseHitbox"
+	close_button.text = ""
+	close_button.flat = true
+	close_button.anchor_left = WORKERS_CLOSE_ANCHOR_MIN.x
+	close_button.anchor_top = WORKERS_CLOSE_ANCHOR_MIN.y
+	close_button.anchor_right = WORKERS_CLOSE_ANCHOR_MAX.x
+	close_button.anchor_bottom = WORKERS_CLOSE_ANCHOR_MAX.y
+	close_button.focus_mode = Control.FOCUS_NONE
+	close_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	close_button.add_theme_stylebox_override("normal", _make_transparent_button_style())
+	close_button.add_theme_stylebox_override("hover", _make_transparent_button_style())
+	close_button.add_theme_stylebox_override("pressed", _make_transparent_button_style())
 	close_button.pressed.connect(_close_workers_view)
-	_apply_button_text_color(close_button, POPUP_TEXT_PRIMARY)
-	header.add_child(close_button)
+	panel.add_child(close_button)
 
 	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.name = "WorkersScroll"
+	scroll.anchor_left = WORKERS_SCROLL_ANCHOR_MIN.x
+	scroll.anchor_top = WORKERS_SCROLL_ANCHOR_MIN.y
+	scroll.anchor_right = WORKERS_SCROLL_ANCHOR_MAX.x
+	scroll.anchor_bottom = WORKERS_SCROLL_ANCHOR_MAX.y
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(scroll)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	panel.add_child(scroll)
 
 	var list: VBoxContainer = VBoxContainer.new()
+	list.name = "WorkersList"
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list.mouse_filter = Control.MOUSE_FILTER_PASS
-	list.add_theme_constant_override("separation", 10)
+	list.add_theme_constant_override("separation", int(WORKERS_LIST_SEPARATION.x))
 	scroll.add_child(list)
+	_make_scroll_safe(list)
 	_populate_workers_list(list)
 
 
@@ -4146,6 +4242,23 @@ func _get_upgrades_buy_button_path() -> String:
 	return UPGRADES_BUY_EN_PATH if GameState.get_language() == "en" else UPGRADES_BUY_PL_PATH
 
 
+func _workers_design_assets_available() -> bool:
+	var paths: Array[String] = [
+		WORKERS_BG_PATH,
+		_get_workers_title_path(),
+		WORKERS_CARD_BG_PATH
+	]
+	for path in paths:
+		if AssetPaths.find_texture_path(path).is_empty():
+			push_warning("Workers design asset missing: " + path)
+			return false
+	return true
+
+
+func _get_workers_title_path() -> String:
+	return WORKERS_TITLE_EN_PATH if GameState.get_language() == "en" else WORKERS_TITLE_PL_PATH
+
+
 func _shop_design_assets_available() -> bool:
 	var paths: Array[String] = [
 		_get_shop_background_path(),
@@ -4192,6 +4305,55 @@ func _get_quests_title_path() -> String:
 
 func _get_quests_claim_button_path() -> String:
 	return QUESTS_CLAIM_EN_PATH if GameState.get_language() == "en" else QUESTS_CLAIM_PL_PATH
+
+
+func _show_workers_view_fallback_content(parent: Control) -> void:
+	var panel: PanelContainer = PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
+	parent.add_child(panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	panel.add_child(margin)
+
+	var column: VBoxContainer = VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	margin.add_child(column)
+
+	var header: HBoxContainer = HBoxContainer.new()
+	header.add_theme_constant_override("separation", 10)
+	column.add_child(header)
+
+	var title: Label = _make_popup_label(LocalizationSystem.tr_key("nav.workers"), 24)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_label_color(title, POPUP_TEXT_PRIMARY)
+	header.add_child(title)
+
+	var close_button: Button = Button.new()
+	close_button.text = LocalizationSystem.tr_key("ui.close")
+	close_button.custom_minimum_size = Vector2(96, 42)
+	close_button.pressed.connect(_close_workers_view)
+	_apply_button_text_color(close_button, POPUP_TEXT_PRIMARY)
+	header.add_child(close_button)
+
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	column.add_child(scroll)
+
+	var list: VBoxContainer = VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.mouse_filter = Control.MOUSE_FILTER_PASS
+	list.add_theme_constant_override("separation", 10)
+	scroll.add_child(list)
+	_populate_workers_list(list)
 
 
 func _show_quests_view_fallback_content(parent: Control) -> void:
@@ -4535,6 +4697,17 @@ func _populate_workers_list(parent: VBoxContainer) -> void:
 		parent.add_child(_make_worker_card(worker_value as Dictionary))
 
 
+func _set_workers_card_rect(control: Control, rect_position: Vector2, rect_size: Vector2) -> void:
+	control.anchor_left = 0.0
+	control.anchor_top = 0.0
+	control.anchor_right = 0.0
+	control.anchor_bottom = 0.0
+	control.offset_left = rect_position.x
+	control.offset_top = rect_position.y
+	control.offset_right = rect_position.x + rect_size.x
+	control.offset_bottom = rect_position.y + rect_size.y
+
+
 func _make_worker_card(worker: Dictionary) -> Control:
 	var worker_id: String = str(worker.get("id", ""))
 	var level: int = WorkerSystem.get_worker_level(worker_id)
@@ -4542,87 +4715,70 @@ func _make_worker_card(worker: Dictionary) -> Control:
 	var next_cost: int = WorkerSystem.get_next_cost(worker_id)
 	var at_max: bool = level >= max_level
 
-	var card: PanelContainer = PanelContainer.new()
-	card.custom_minimum_size = Vector2(0, 196)
+	var card: Control = Control.new()
+	card.custom_minimum_size = WORKERS_CARD_MIN_SIZE
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.add_theme_stylebox_override("panel", _make_card_style())
 
-	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
-	card.add_child(margin)
+	var background: Panel = Panel.new()
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	background.add_theme_stylebox_override("panel", _make_workers_card_style())
+	card.add_child(background)
 
-	var row: HBoxContainer = HBoxContainer.new()
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 18)
-	margin.add_child(row)
-
-	var icon_column: CenterContainer = CenterContainer.new()
-	icon_column.custom_minimum_size = Vector2(148, 148)
-	icon_column.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	icon_column.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(icon_column)
-
-	var worker_icon: TextureRect = _make_fixed_texture(str(worker.get("icon_path", "")), Vector2(136, 136))
-	worker_icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	worker_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	icon_column.add_child(worker_icon)
-
-	var info: VBoxContainer = VBoxContainer.new()
-	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 4)
-	row.add_child(info)
+	var worker_icon: TextureRect = _make_fixed_texture(str(worker.get("icon_path", "")), WORKERS_ICON_SIZE)
+	_set_workers_card_rect(worker_icon, WORKERS_CARD_ICON_POS, WORKERS_ICON_SIZE)
+	card.add_child(worker_icon)
 
 	var name_label: Label = Label.new()
 	name_label.text = LocalizationSystem.tr_key(str(worker.get("name_key", worker_id)))
 	name_label.clip_text = true
-	name_label.add_theme_font_size_override("font_size", 16)
+	name_label.add_theme_font_size_override("font_size", WORKERS_TEXT_NAME_SIZE)
 	_apply_label_color(name_label, POPUP_TEXT_PRIMARY)
-	info.add_child(name_label)
+	_set_workers_card_rect(name_label, WORKERS_CARD_NAME_POS, WORKERS_CARD_NAME_SIZE)
+	card.add_child(name_label)
 
 	var desc_label: Label = Label.new()
 	desc_label.text = LocalizationSystem.tr_key(str(worker.get("description_key", worker_id)))
 	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc_label.add_theme_font_size_override("font_size", 12)
+	desc_label.add_theme_font_size_override("font_size", WORKERS_TEXT_DESC_SIZE)
 	_apply_label_color(desc_label, POPUP_TEXT_SECONDARY)
-	info.add_child(desc_label)
+	_set_workers_card_rect(desc_label, WORKERS_CARD_DESC_POS, WORKERS_CARD_DESC_SIZE)
+	card.add_child(desc_label)
 
 	var status_label: Label = Label.new()
 	status_label.text = _format_worker_status(worker_id, level)
-	status_label.add_theme_font_size_override("font_size", 12)
+	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status_label.add_theme_font_size_override("font_size", WORKERS_TEXT_INFO_SIZE)
 	_apply_label_color(status_label, POPUP_TEXT_ACCENT)
-	info.add_child(status_label)
+	_set_workers_card_rect(status_label, WORKERS_CARD_STATUS_POS, WORKERS_CARD_STATUS_SIZE)
+	card.add_child(status_label)
 
 	var effect_label: Label = Label.new()
 	effect_label.text = _format_worker_effect_summary(worker_id, worker, level)
 	effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	effect_label.add_theme_font_size_override("font_size", 12)
+	effect_label.add_theme_font_size_override("font_size", WORKERS_TEXT_INFO_SIZE)
 	_apply_label_color(effect_label, POPUP_TEXT_SUCCESS if level > 0 else POPUP_TEXT_SECONDARY)
-	info.add_child(effect_label)
-
-	var action_area: VBoxContainer = VBoxContainer.new()
-	action_area.custom_minimum_size = Vector2(128, 0)
-	action_area.alignment = BoxContainer.ALIGNMENT_CENTER
-	action_area.add_theme_constant_override("separation", 6)
-	row.add_child(action_area)
+	_set_workers_card_rect(effect_label, WORKERS_CARD_EFFECT_POS, WORKERS_CARD_EFFECT_SIZE)
+	card.add_child(effect_label)
 
 	var cost_label: Label = Label.new()
 	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cost_label.add_theme_font_size_override("font_size", 12)
-	_apply_label_color(cost_label, POPUP_TEXT_ACCENT)
+	cost_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	cost_label.add_theme_font_size_override("font_size", WORKERS_COST_TEXT_SIZE)
+	_apply_label_color(cost_label, POPUP_TEXT_SUCCESS)
 	cost_label.text = LocalizationSystem.tr_key("ui.worker_max") if at_max else LocalizationSystem.tr_key("ui.worker_cost") + ": " + LocalizationSystem.tr_key("currency.repticash") + " " + str(next_cost)
-	action_area.add_child(cost_label)
+	_set_workers_card_rect(cost_label, WORKERS_CARD_COST_POS, WORKERS_CARD_COST_SIZE)
+	card.add_child(cost_label)
 
-	var action_button: Button = _make_owned_card_action_button("ui.worker_upgrade" if level > 0 else "ui.worker_buy")
+	var action_button: Button = _make_workers_action_button("ui.worker_upgrade" if level > 0 else "ui.worker_buy")
 	action_button.disabled = at_max or (next_cost > 0 and not EconomySystem.can_afford("repticash", next_cost))
 	action_button.mouse_default_cursor_shape = Control.CURSOR_ARROW if action_button.disabled else Control.CURSOR_POINTING_HAND
 	action_button.add_theme_stylebox_override("disabled", _make_button_style(Color(0.45, 0.45, 0.42, 0.75)))
+	_set_workers_card_rect(action_button, WORKERS_CARD_BUTTON_POS, WORKERS_ACTION_BUTTON_SIZE)
 	action_button.pressed.connect(func() -> void:
 		_try_buy_or_upgrade_worker(worker_id)
 	)
-	action_area.add_child(action_button)
+	card.add_child(action_button)
 
 	_make_scroll_safe(card)
 	return card
@@ -4713,7 +4869,12 @@ func _make_quest_card(state: Dictionary) -> Control:
 		card.add_child(bg_panel)
 
 	var margin: MarginContainer = MarginContainer.new()
+	margin.name = "QuestCardContent"
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.anchor_left = QUEST_CARD_CONTENT_ANCHOR_MIN.x
+	margin.anchor_top = QUEST_CARD_CONTENT_ANCHOR_MIN.y
+	margin.anchor_right = QUEST_CARD_CONTENT_ANCHOR_MAX.x
+	margin.anchor_bottom = QUEST_CARD_CONTENT_ANCHOR_MAX.y
 	margin.add_theme_constant_override("margin_left", QUEST_CARD_MARGIN)
 	margin.add_theme_constant_override("margin_right", QUEST_CARD_MARGIN)
 	margin.add_theme_constant_override("margin_top", QUEST_CARD_MARGIN)
@@ -6325,7 +6486,8 @@ func _make_label_visually_bold(label: Label) -> void:
 func _make_popup_button(key: String, callback: Callable) -> Button:
 	var button := Button.new()
 	button.text = LocalizationSystem.tr_key(key)
-	button.custom_minimum_size = Vector2(0, 44)
+	button.custom_minimum_size = Vector2(0, 67)
+	button.add_theme_font_size_override("font_size", 22)
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	button.focus_mode = Control.FOCUS_ALL
 	_apply_button_text_color(button, POPUP_TEXT_PRIMARY)
@@ -6460,6 +6622,21 @@ func _make_card_style() -> StyleBoxFlat:
 	return style
 
 
+func _make_workers_card_style() -> StyleBox:
+	var texture: Texture2D = AssetPaths.load_texture(WORKERS_CARD_BG_PATH)
+	if texture == null:
+		return _make_card_style()
+
+	var style: StyleBoxTexture = StyleBoxTexture.new()
+	style.texture = texture
+	style.draw_center = true
+	style.texture_margin_left = WORKERS_CARD_TEXTURE_MARGIN.x
+	style.texture_margin_right = WORKERS_CARD_TEXTURE_MARGIN.x
+	style.texture_margin_top = WORKERS_CARD_TEXTURE_MARGIN.y
+	style.texture_margin_bottom = WORKERS_CARD_TEXTURE_MARGIN.y
+	return style
+
+
 func _make_animals_single_card_style() -> StyleBox:
 	var texture: Texture2D = AssetPaths.load_texture(ANIMALS_SINGLE_CARD_BG_PATH)
 	if texture == null:
@@ -6524,6 +6701,19 @@ func _make_owned_card_action_button(label_key: String) -> Button:
 	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.30, 0.66, 0.29, 1.0)))
 	button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.20, 0.48, 0.19, 1.0)))
 	button.add_theme_font_size_override("font_size", _animals_text_size(13))
+	_apply_button_text_color(button, BUTTON_TEXT_COLOR)
+	return button
+
+
+func _make_workers_action_button(label_key: String) -> Button:
+	var button: Button = Button.new()
+	button.custom_minimum_size = WORKERS_ACTION_BUTTON_SIZE
+	button.text = LocalizationSystem.tr_key(label_key)
+	button.focus_mode = Control.FOCUS_NONE
+	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.25, 0.58, 0.12, 1.0)))
+	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.31, 0.68, 0.16, 1.0)))
+	button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.18, 0.45, 0.09, 1.0)))
+	button.add_theme_font_size_override("font_size", 24)
 	_apply_button_text_color(button, BUTTON_TEXT_COLOR)
 	return button
 

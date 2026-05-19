@@ -23,6 +23,8 @@ const SETTINGS_SIZE := Vector2(470.6, 135.5)
 
 signal play_pressed
 
+const VERSION_STRING := "v. 0.1.0 - pre-release-beta"
+
 var background: TextureRect
 var ui_layer: Control
 var play_button: TextureButton
@@ -30,6 +32,7 @@ var polish_button: TextureButton
 var english_button: TextureButton
 var settings_button: TextureButton
 var settings_modal: Control
+var version_label: Label
 
 
 func _ready() -> void:
@@ -68,6 +71,25 @@ func _build_layout() -> void:
 
 	settings_button = _make_texture_button("SettingsButton", Callable(self, "_open_existing_settings_flow"))
 	_add_fallback_label(settings_button, "SettingsFallbackLabel")
+
+	version_label = Label.new()
+	version_label.name = "VersionLabel"
+	version_label.text = VERSION_STRING
+	version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	version_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	version_label.anchor_left = 0.0
+	version_label.anchor_right = 1.0
+	version_label.anchor_top = 1.0
+	version_label.anchor_bottom = 1.0
+	version_label.offset_top = -48.0
+	version_label.offset_bottom = -8.0
+	version_label.add_theme_font_size_override("font_size", 24)
+	version_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.55))
+	version_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.6))
+	version_label.add_theme_constant_override("shadow_offset_x", 1)
+	version_label.add_theme_constant_override("shadow_offset_y", 1)
+	version_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui_layer.add_child(version_label)
 
 	_layout_buttons()
 
@@ -116,6 +138,9 @@ func _layout_buttons() -> void:
 
 	_layout_fallback_label(play_button, scale, 42)
 	_layout_fallback_label(settings_button, scale, 28)
+
+	if version_label != null:
+		version_label.add_theme_font_size_override("font_size", max(14, int(round(24.0 * scale))))
 
 
 func _position_control(control: Control, reference_center: Vector2, reference_size: Vector2, origin: Vector2, scale: float) -> void:

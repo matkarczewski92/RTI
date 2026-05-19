@@ -5,8 +5,11 @@ signal onboarding_task_changed(task_id: String)
 
 const TASKS_PATH := "res://data/onboarding_tasks.json"
 const MODAL_BACKGROUND_PATH := "res://assets/art/ui/small_design/blank_card_background.png"
+const TUTORIAL_BUBBLE_ICON_PATH := "res://assets/art/ui/icons/tutorial_ico.png"
 const BOTTOM_NAV_HEIGHT := 226.157092875
-const BUBBLE_SIZE := Vector2(108, 108)
+const BUBBLE_SIZE := Vector2(155, 155)
+const BUBBLE_BASE_MARGIN := Vector2(10, -2)
+const BUBBLE_VIEWPORT_SHIFT := Vector2(0.02, 0.05)
 
 var tasks: Array = []
 var modal_root: Control
@@ -451,16 +454,25 @@ func _update_bubble() -> void:
 	if bubble_button == null:
 		bubble_button = Button.new()
 		bubble_button.name = "OnboardingBubble"
-		bubble_button.text = "?"
+		bubble_button.text = ""
+		bubble_button.flat = true
 		bubble_button.custom_minimum_size = BUBBLE_SIZE
 		bubble_button.focus_mode = Control.FOCUS_NONE
 		bubble_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		bubble_button.add_theme_font_size_override("font_size", 72)
-		bubble_button.add_theme_stylebox_override("normal", _make_bubble_style(Color(0.88, 0.63, 0.24, 0.96)))
-		bubble_button.add_theme_stylebox_override("hover", _make_bubble_style(Color(0.96, 0.72, 0.30, 1.0)))
-		bubble_button.add_theme_stylebox_override("pressed", _make_bubble_style(Color(0.70, 0.46, 0.16, 1.0)))
+		bubble_button.add_theme_stylebox_override("normal", _make_transparent_button_style())
+		bubble_button.add_theme_stylebox_override("hover", _make_transparent_button_style())
+		bubble_button.add_theme_stylebox_override("pressed", _make_transparent_button_style())
 		bubble_button.pressed.connect(_on_bubble_pressed)
 		add_child(bubble_button)
+
+		var bubble_icon: TextureRect = TextureRect.new()
+		bubble_icon.name = "OnboardingBubbleIcon"
+		bubble_icon.texture = load(TUTORIAL_BUBBLE_ICON_PATH)
+		bubble_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bubble_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bubble_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		bubble_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bubble_button.add_child(bubble_icon)
 
 		bubble_dot = _make_bubble_dot()
 		bubble_button.add_child(bubble_dot)
@@ -474,14 +486,17 @@ func _update_bubble() -> void:
 func _position_bubble() -> void:
 	if bubble_button == null:
 		return
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	var margin_right: float = BUBBLE_BASE_MARGIN.x + (viewport_size.x * BUBBLE_VIEWPORT_SHIFT.x)
+	var margin_bottom: float = BUBBLE_BASE_MARGIN.y + (viewport_size.y * BUBBLE_VIEWPORT_SHIFT.y)
 	bubble_button.anchor_left = 1.0
 	bubble_button.anchor_top = 1.0
 	bubble_button.anchor_right = 1.0
 	bubble_button.anchor_bottom = 1.0
-	bubble_button.offset_left = -(BUBBLE_SIZE.x + 24.0)
-	bubble_button.offset_right = -24.0
-	bubble_button.offset_top = -(BOTTOM_NAV_HEIGHT + BUBBLE_SIZE.y + 22.0)
-	bubble_button.offset_bottom = -(BOTTOM_NAV_HEIGHT + 22.0)
+	bubble_button.offset_left = -(BUBBLE_SIZE.x + margin_right)
+	bubble_button.offset_right = -margin_right
+	bubble_button.offset_top = -(BOTTOM_NAV_HEIGHT + BUBBLE_SIZE.y + margin_bottom)
+	bubble_button.offset_bottom = -(BOTTOM_NAV_HEIGHT + margin_bottom)
 
 
 func _on_bubble_pressed() -> void:
@@ -611,6 +626,14 @@ func _make_action_button(label_key: String, color: Color) -> Button:
 	return button
 
 
+func _make_transparent_button_style() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(1.0, 1.0, 1.0, 0.0)
+	style.border_color = Color(1.0, 1.0, 1.0, 0.0)
+	style.set_corner_radius_all(0)
+	return style
+
+
 func _make_button_style(color: Color) -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = color
@@ -621,16 +644,6 @@ func _make_button_style(color: Color) -> StyleBoxFlat:
 	style.content_margin_right = 12
 	style.content_margin_top = 8
 	style.content_margin_bottom = 8
-	return style
-
-
-func _make_bubble_style(color: Color) -> StyleBoxFlat:
-	var style: StyleBoxFlat = _make_button_style(color)
-	style.set_corner_radius_all(28)
-	style.border_color = Color(0.33, 0.21, 0.08, 0.85)
-	style.set_border_width_all(3)
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.35)
-	style.shadow_size = 8
 	return style
 
 

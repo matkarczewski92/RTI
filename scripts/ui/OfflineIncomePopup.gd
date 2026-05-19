@@ -1,20 +1,43 @@
 extends CanvasLayer
 
-const CLOCK_ICON_PATH := "res://assets/art/ui/icons/menu/clock.png"
-const CURRENCY_ICON_PATH := "res://assets/art/ui/icons/menu/currency.png"
-const CHEST_ICON_PATH := "res://assets/art/ui/icons/menu/chest.png"
-const ACCEPT_ICON_PATH := "res://assets/art/ui/icons/menu/accept.png"
+const OFFLINE_REWARD_BG_PATH := "res://assets/art/ui/offline_reward.png"
+const OFFLINE_REWARD_REF_SIZE := Vector2(1086, 1448)
+const OFFLINE_REWARD_VIEWPORT_MAX_RATIO := Vector2(0.598, 0.572)
+const OFFLINE_TITLE_RECT := Rect2(172, 416, 742, 110)
+const OFFLINE_MESSAGE_RECT := Rect2(260, 555, 566, 108)
+const OFFLINE_TIME_LABEL_RECT := Rect2(354, 704, 300, 74)
+const OFFLINE_TIME_VALUE_RECT := Rect2(666, 704, 210, 74)
+const OFFLINE_REWARD_LABEL_RECT := Rect2(354, 840, 300, 74)
+const OFFLINE_REWARD_VALUE_RECT := Rect2(666, 840, 210, 74)
+const OFFLINE_CAP_RECT := Rect2(270, 930, 546, 34)
+const OFFLINE_CLAIM_TEXT_RECT := Rect2(364, 1210, 360, 92)
+const OFFLINE_CLAIM_HITBOX_RECT := Rect2(268, 958, 552, 300)
+const OFFLINE_TITLE_FONT_SIZE := 72
+const OFFLINE_MESSAGE_FONT_SIZE := 38
+const OFFLINE_ROW_LABEL_FONT_SIZE := 42
+const OFFLINE_ROW_VALUE_FONT_SIZE := 50
+const OFFLINE_CAP_FONT_SIZE := 24
+const OFFLINE_CLAIM_FONT_SIZE := 58
 
 var overlay: Control
-var panel: PanelContainer
+var panel: Control
+var background: TextureRect
+var title_label: Label
+var message_label: Label
+var time_label: Label
 var time_value_label: Label
+var reward_label: Label
 var reward_value_label: Label
 var cap_label: Label
+var claim_text_label: Label
+var claim_hitbox: Button
+var _panel_scale: float = 1.0
 
 
 func _ready() -> void:
 	layer = 80
 	_build_popup()
+	get_viewport().size_changed.connect(_layout_popup)
 	hide()
 	if EconomySystem.has_signal("offline_income_calculated"):
 		EconomySystem.offline_income_calculated.connect(_on_offline_income_calculated)
@@ -35,117 +58,137 @@ func _build_popup() -> void:
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.add_child(dim)
 
-	var center := CenterContainer.new()
-	center.name = "Center"
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	overlay.add_child(center)
+	panel = Control.new()
+	panel.name = "OfflineRewardPanel"
+	overlay.add_child(panel)
 
-	panel = PanelContainer.new()
-	panel.name = "Panel"
-	panel.custom_minimum_size = Vector2(360, 0)
-	panel.add_theme_stylebox_override("panel", _make_panel_style())
-	center.add_child(panel)
+	background = TextureRect.new()
+	background.name = "OfflineRewardBackground"
+	background.texture = _load_texture(OFFLINE_REWARD_BG_PATH)
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_SCALE
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(background)
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 26)
-	margin.add_theme_constant_override("margin_right", 26)
-	margin.add_theme_constant_override("margin_top", 24)
-	margin.add_theme_constant_override("margin_bottom", 24)
-	panel.add_child(margin)
+	title_label = _make_ref_label(_tr("offline.title"), OFFLINE_TITLE_FONT_SIZE, Color(0.30, 0.16, 0.05, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+	panel.add_child(title_label)
 
-	var content := VBoxContainer.new()
-	content.alignment = BoxContainer.ALIGNMENT_CENTER
-	content.add_theme_constant_override("separation", 14)
-	margin.add_child(content)
+	message_label = _make_ref_label(_tr("offline.message"), OFFLINE_MESSAGE_FONT_SIZE, Color(0.23, 0.13, 0.06, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+	message_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	panel.add_child(message_label)
 
-	var chest := _make_icon(CHEST_ICON_PATH, Vector2(78, 78))
-	if chest != null:
-		content.add_child(chest)
+	time_label = _make_ref_label(_tr("offline.time"), OFFLINE_ROW_LABEL_FONT_SIZE, Color(0.24, 0.13, 0.05, 1.0), HORIZONTAL_ALIGNMENT_LEFT)
+	panel.add_child(time_label)
 
-	var title := Label.new()
-	title.text = _tr("offline.title")
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 26)
-	title.add_theme_color_override("font_color", Color(0.16, 0.11, 0.07, 1.0))
-	content.add_child(title)
+	time_value_label = _make_ref_label("", OFFLINE_ROW_VALUE_FONT_SIZE, Color(0.10, 0.42, 0.08, 1.0), HORIZONTAL_ALIGNMENT_RIGHT)
+	panel.add_child(time_value_label)
 
-	var message := Label.new()
-	message.text = _tr("offline.message")
-	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	message.add_theme_color_override("font_color", Color(0.29, 0.22, 0.15, 1.0))
-	content.add_child(message)
+	reward_label = _make_ref_label(_tr("offline.reward"), OFFLINE_ROW_LABEL_FONT_SIZE, Color(0.24, 0.13, 0.05, 1.0), HORIZONTAL_ALIGNMENT_LEFT)
+	panel.add_child(reward_label)
 
-	content.add_child(_make_info_row(CLOCK_ICON_PATH, _tr("offline.time"), true))
-	content.add_child(_make_info_row(CURRENCY_ICON_PATH, _tr("offline.reward"), false))
+	reward_value_label = _make_ref_label("", OFFLINE_ROW_VALUE_FONT_SIZE, Color(0.10, 0.42, 0.08, 1.0), HORIZONTAL_ALIGNMENT_RIGHT)
+	panel.add_child(reward_value_label)
 
-	cap_label = Label.new()
-	cap_label.text = _tr("offline.cap_applied")
-	cap_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cap_label.add_theme_font_size_override("font_size", 13)
-	cap_label.add_theme_color_override("font_color", Color(0.48, 0.32, 0.08, 1.0))
-	content.add_child(cap_label)
+	cap_label = _make_ref_label("", OFFLINE_CAP_FONT_SIZE, Color(0.48, 0.32, 0.08, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+	cap_label.visible = false
+	panel.add_child(cap_label)
 
-	var claim_block := VBoxContainer.new()
-	claim_block.name = "ClaimBlock"
-	claim_block.alignment = BoxContainer.ALIGNMENT_CENTER
-	claim_block.add_theme_constant_override("separation", 8)
-	content.add_child(claim_block)
+	claim_text_label = _make_ref_label(_tr("offline.claim"), OFFLINE_CLAIM_FONT_SIZE, Color(0.98, 0.94, 0.82, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+	claim_text_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	claim_text_label.add_theme_color_override("font_shadow_color", Color(0.12, 0.07, 0.03, 0.95))
+	claim_text_label.add_theme_constant_override("shadow_offset_y", 4)
+	panel.add_child(claim_text_label)
 
-	var claim_icon := TextureButton.new()
-	claim_icon.name = "ClaimIconButton"
-	claim_icon.texture_normal = _load_icon(ACCEPT_ICON_PATH)
-	claim_icon.texture_hover = claim_icon.texture_normal
-	claim_icon.texture_pressed = claim_icon.texture_normal
-	claim_icon.custom_minimum_size = Vector2(96, 96)
-	claim_icon.ignore_texture_size = true
-	claim_icon.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-	claim_icon.mouse_filter = Control.MOUSE_FILTER_STOP
-	claim_icon.pressed.connect(_on_claim_pressed)
-	claim_block.add_child(claim_icon)
+	claim_hitbox = Button.new()
+	claim_hitbox.name = "ClaimHitbox"
+	claim_hitbox.text = ""
+	claim_hitbox.flat = true
+	claim_hitbox.focus_mode = Control.FOCUS_NONE
+	claim_hitbox.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	claim_hitbox.add_theme_stylebox_override("normal", _make_transparent_button_style())
+	claim_hitbox.add_theme_stylebox_override("hover", _make_transparent_button_style())
+	claim_hitbox.add_theme_stylebox_override("pressed", _make_transparent_button_style())
+	claim_hitbox.pressed.connect(_on_claim_pressed)
+	panel.add_child(claim_hitbox)
 
-	var claim_label := Button.new()
-	claim_label.name = "ClaimLabelButton"
-	claim_label.text = _tr("offline.claim")
-	claim_label.flat = true
-	claim_label.custom_minimum_size = Vector2(180, 34)
-	claim_label.add_theme_font_size_override("font_size", 24)
-	claim_label.add_theme_color_override("font_color", Color(0.16, 0.11, 0.07, 1.0))
-	claim_label.add_theme_color_override("font_hover_color", Color(0.34, 0.22, 0.09, 1.0))
-	claim_label.add_theme_color_override("font_pressed_color", Color(0.10, 0.32, 0.12, 1.0))
-	claim_label.pressed.connect(_on_claim_pressed)
-	claim_block.add_child(claim_label)
+	_layout_popup()
 
 
-func _make_info_row(icon_path: String, label_text: String, is_time_row: bool) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 10)
-	row.custom_minimum_size = Vector2(300, 34)
+func _layout_popup() -> void:
+	if panel == null:
+		return
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	_panel_scale = min(
+		(viewport_size.x * OFFLINE_REWARD_VIEWPORT_MAX_RATIO.x) / OFFLINE_REWARD_REF_SIZE.x,
+		(viewport_size.y * OFFLINE_REWARD_VIEWPORT_MAX_RATIO.y) / OFFLINE_REWARD_REF_SIZE.y
+	)
+	var panel_size: Vector2 = OFFLINE_REWARD_REF_SIZE * _panel_scale
+	var panel_pos: Vector2 = (viewport_size - panel_size) * 0.5
+	panel.anchor_left = 0.0
+	panel.anchor_top = 0.0
+	panel.anchor_right = 0.0
+	panel.anchor_bottom = 0.0
+	panel.offset_left = panel_pos.x
+	panel.offset_top = panel_pos.y
+	panel.offset_right = panel_pos.x + panel_size.x
+	panel.offset_bottom = panel_pos.y + panel_size.y
 
-	var icon := _make_icon(icon_path, Vector2(30, 30))
-	if icon != null:
-		row.add_child(icon)
+	_set_ref_rect(title_label, OFFLINE_TITLE_RECT)
+	_set_ref_rect(message_label, OFFLINE_MESSAGE_RECT)
+	_set_ref_rect(time_label, OFFLINE_TIME_LABEL_RECT)
+	_set_ref_rect(time_value_label, OFFLINE_TIME_VALUE_RECT)
+	_set_ref_rect(reward_label, OFFLINE_REWARD_LABEL_RECT)
+	_set_ref_rect(reward_value_label, OFFLINE_REWARD_VALUE_RECT)
+	_set_ref_rect(cap_label, OFFLINE_CAP_RECT)
+	_set_ref_rect(claim_text_label, OFFLINE_CLAIM_TEXT_RECT)
+	_set_ref_rect(claim_hitbox, OFFLINE_CLAIM_HITBOX_RECT)
+	_apply_ref_font_sizes()
 
+
+func _set_ref_rect(control: Control, rect: Rect2) -> void:
+	if control == null:
+		return
+	control.anchor_left = 0.0
+	control.anchor_top = 0.0
+	control.anchor_right = 0.0
+	control.anchor_bottom = 0.0
+	control.offset_left = rect.position.x * _panel_scale
+	control.offset_top = rect.position.y * _panel_scale
+	control.offset_right = (rect.position.x + rect.size.x) * _panel_scale
+	control.offset_bottom = (rect.position.y + rect.size.y) * _panel_scale
+
+
+func _make_ref_label(text: String, font_size: int, color: Color, alignment: int) -> Label:
 	var label := Label.new()
-	label.text = label_text + ":"
-	label.custom_minimum_size = Vector2(125, 0)
-	label.add_theme_color_override("font_color", Color(0.30, 0.22, 0.13, 1.0))
-	row.add_child(label)
+	label.text = text
+	label.horizontal_alignment = alignment
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.clip_text = true
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
 
-	var value := Label.new()
-	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	value.custom_minimum_size = Vector2(105, 0)
-	value.add_theme_color_override("font_color", Color(0.12, 0.28, 0.10, 1.0))
-	row.add_child(value)
 
-	if is_time_row:
-		time_value_label = value
-	else:
-		reward_value_label = value
-
-	return row
+func _apply_ref_font_sizes() -> void:
+	if title_label != null:
+		title_label.add_theme_font_size_override("font_size", max(1, int(round(OFFLINE_TITLE_FONT_SIZE * _panel_scale))))
+	if message_label != null:
+		message_label.add_theme_font_size_override("font_size", max(1, int(round(OFFLINE_MESSAGE_FONT_SIZE * _panel_scale))))
+	if time_label != null:
+		time_label.add_theme_font_size_override("font_size", max(1, int(round(OFFLINE_ROW_LABEL_FONT_SIZE * _panel_scale))))
+	if reward_label != null:
+		reward_label.add_theme_font_size_override("font_size", max(1, int(round(OFFLINE_ROW_LABEL_FONT_SIZE * _panel_scale))))
+	if time_value_label != null:
+		time_value_label.add_theme_font_size_override("font_size", max(1, int(round(OFFLINE_ROW_VALUE_FONT_SIZE * _panel_scale))))
+	if reward_value_label != null:
+		reward_value_label.add_theme_font_size_override("font_size", max(1, int(round(OFFLINE_ROW_VALUE_FONT_SIZE * _panel_scale))))
+	if cap_label != null:
+		cap_label.add_theme_font_size_override("font_size", max(1, int(round(OFFLINE_CAP_FONT_SIZE * _panel_scale))))
+	if claim_text_label != null:
+		claim_text_label.add_theme_font_size_override("font_size", max(1, int(round(OFFLINE_CLAIM_FONT_SIZE * _panel_scale))))
+		claim_text_label.add_theme_constant_override("shadow_offset_y", max(1, int(round(4.0 * _panel_scale))))
 
 
 func _on_offline_income_calculated(amount: float, seconds: int) -> void:
@@ -161,6 +204,7 @@ func _on_offline_income_calculated(amount: float, seconds: int) -> void:
 		cap_label.visible = seconds >= max_offline_seconds
 		cap_label.text = _tr("ui.offline_cap_applied").replace("{time}", _format_duration(max_offline_seconds))
 
+	_layout_popup()
 	show()
 
 
@@ -194,34 +238,16 @@ func _tr(key: String) -> String:
 	return key
 
 
-func _load_icon(path: String) -> Texture2D:
+func _load_texture(path: String) -> Texture2D:
 	if ResourceLoader.exists(path):
 		return load(path) as Texture2D
-	push_warning("Offline income icon missing: " + path)
+	push_warning("Offline income texture missing: " + path)
 	return null
 
 
-func _make_icon(path: String, size: Vector2) -> TextureRect:
-	var texture := _load_icon(path)
-	if texture == null:
-		return null
-
-	var icon := TextureRect.new()
-	icon.texture = texture
-	icon.custom_minimum_size = size
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return icon
-
-
-func _make_panel_style() -> StyleBoxFlat:
+func _make_transparent_button_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.94, 0.88, 0.76, 0.98)
-	style.border_color = Color(0.50, 0.32, 0.14, 0.90)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(14)
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.28)
-	style.shadow_size = 12
-	style.shadow_offset = Vector2(0, 6)
+	style.bg_color = Color(1.0, 1.0, 1.0, 0.0)
+	style.border_color = Color(1.0, 1.0, 1.0, 0.0)
+	style.set_corner_radius_all(0)
 	return style

@@ -630,6 +630,21 @@
 		"repeatable": false
 	},
 	{
+		"id": "complete_emerald_tree_skink_collection",
+		"title_key": "achievement.complete_emerald_tree_skink_collection.title",
+		"description_key": "achievement.complete_emerald_tree_skink_collection.desc",
+		"icon_path": "res://assets/art/ui/icons/achievements/complete_geco_collection.png",
+		"category": "collection",
+		"requirement_type": "reptile_collection",
+		"requirement_target": "emerald_tree_skink",
+		"requirement_value": 0,
+		"reward_type": "repticash",
+		"reward_amount": 1100,
+		"reward_xp": 300,
+		"sort_order": 365,
+		"repeatable": false
+	},
+	{
 		"id": "own_ten_reptiles",
 		"title_key": "achievement.own_ten_reptiles.title",
 		"description_key": "achievement.own_ten_reptiles.desc",
