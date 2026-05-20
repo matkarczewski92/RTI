@@ -421,7 +421,7 @@ const MGMT_POPUP_BTN_SIZE := Vector2(910.0, 112.0)
 const MGMT_POPUP_BTN_FONT_SIZE := 40
 const LOGO_SIZE := Vector2(150, 112)
 const NAME_MAX_LENGTH := 16
-const GALLERY_REPTILE_IDS := ["leopard_gecko", "bearded_dragon", "corn_snake", "steppe_tortoise", "small_monitor", "chameleon", "bullsnake", "collared_lizard", "western_earless_lizard", "ornate_box_turtle", "western_hognose_snake", "prairie_rattlesnake"]
+const GALLERY_REPTILE_IDS := ["leopard_gecko", "bearded_dragon", "corn_snake", "steppe_tortoise", "small_monitor", "chameleon", "sand_lizard", "garter_snake", "bullsnake", "collared_lizard", "western_earless_lizard", "ornate_box_turtle", "western_hognose_snake", "prairie_rattlesnake"]
 const GALLERY_RARITIES := ["common", "rare", "ultra_rare", "exceptional",]
 
 var habitat_data: Array = []
@@ -509,6 +509,7 @@ func _ready() -> void:
 			QuestSystem.quest_completed.connect(_on_quest_state_changed)
 		if QuestSystem.has_signal("quest_claimed") and not QuestSystem.quest_claimed.is_connected(_on_quest_state_changed):
 			QuestSystem.quest_claimed.connect(_on_quest_state_changed)
+	get_viewport().size_changed.connect(_apply_responsive_layout)
 	call_deferred("_notify_biome_opened")
 
 
@@ -721,6 +722,15 @@ func _setup_care_update_timer() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_IN or what == NOTIFICATION_APPLICATION_RESUMED:
 		ReptileSystem.apply_time_updates(true, true)
+	elif what == NOTIFICATION_WM_SIZE_CHANGED:
+		_apply_responsive_layout()
+
+
+func _apply_responsive_layout() -> void:
+	if not is_inside_tree():
+		return
+	if _is_biome_scrollable and _scroll_map_layer != null:
+		_compute_scroll_max()
 
 
 func _on_care_update_timer_timeout() -> void:
@@ -923,15 +933,14 @@ func _add_workers_shortcut() -> void:
 	# Workers button is always a static element on the screen (like top bar / bottom nav).
 	# Position is defined in biome_habitat_layouts.json via x_from_right / y_from_bottom.
 	var wb := _biome_workers_config
-	var cover_sc := _get_background_cover_scale()
-	var cover_orig := _get_background_cover_origin(cover_sc)
+	var _wb_vp := get_viewport_rect().size
 	var wb_xr := float(wb.get("x_from_right", 900))
 	var wb_yb := float(wb.get("y_from_bottom", 435))
-	var wb_w := float(wb.get("width", 318)) * cover_sc
-	var wb_h := float(wb.get("height", 318)) * cover_sc
-	var wb_icon_w := float(wb.get("icon_width", wb.get("width", 318))) * cover_sc
-	var wb_icon_h := float(wb.get("icon_height", wb.get("height", 318))) * cover_sc
-	var center := cover_orig + Vector2(_layout_reference_size.x - wb_xr, _layout_reference_size.y - wb_yb) * cover_sc
+	var wb_w := float(wb.get("width", 318))
+	var wb_h := float(wb.get("height", 318))
+	var wb_icon_w := float(wb.get("icon_width", wb.get("width", 318)))
+	var wb_icon_h := float(wb.get("icon_height", wb.get("height", 318)))
+	var center := Vector2(_wb_vp.x - wb_xr, _wb_vp.y - wb_yb)
 
 	var button: Button = Button.new()
 	button.name = "WorkersShortcut"
@@ -3285,8 +3294,9 @@ func _show_shop_view() -> void:
 	shop_view.anchor_top = 0.0
 	shop_view.anchor_right = 1.0
 	shop_view.anchor_bottom = 1.0
-	shop_view.offset_top = TOP_BAR_HEIGHT + 2
-	shop_view.offset_bottom = -(BOTTOM_NAV_HEIGHT + 6)
+	var _shop_extra_y: float = max(0.0, get_viewport_rect().size.y - LAYOUT_REF_H) * 0.5
+	shop_view.offset_top = TOP_BAR_HEIGHT + 2 + _shop_extra_y
+	shop_view.offset_bottom = -(BOTTOM_NAV_HEIGHT + 6) - _shop_extra_y
 	add_child(shop_view)
 	_notify_quest_event("screen_opened", {"screen": "shop"})
 
@@ -3491,7 +3501,12 @@ func _show_animals_view(tab_id: String = "owned") -> void:
 	var available_top: float = TOP_BAR_HEIGHT + ANIMALS_PANEL_TOP_GAP
 	var available_bottom: float = viewport_size.y - BOTTOM_NAV_HEIGHT - ANIMALS_PANEL_BOTTOM_GAP
 	var available_height: float = max(1.0, available_bottom - available_top)
-	var panel_scale: float = min(viewport_size.x / ANIMALS_REF_SIZE.x, available_height / ANIMALS_REF_SIZE.y)
+	var ref_available_height: float = LAYOUT_REF_H - TOP_BAR_HEIGHT - BOTTOM_NAV_HEIGHT
+	var capped_height: float = min(available_height, ref_available_height)
+	var panel_scale: float = min(
+		viewport_size.x / (ANIMALS_REF_SIZE.x * ANIMALS_WINDOW_EXTRA_W),
+		capped_height / (ANIMALS_REF_SIZE.y * ANIMALS_WINDOW_EXTRA_H)
+	)
 	var panel_size: Vector2 = Vector2(
 		ANIMALS_REF_SIZE.x * panel_scale * ANIMALS_WINDOW_EXTRA_W,
 		ANIMALS_REF_SIZE.y * panel_scale * ANIMALS_WINDOW_EXTRA_H
@@ -3853,8 +3868,9 @@ func _show_quests_view() -> void:
 	quests_view.anchor_top = 0.0
 	quests_view.anchor_right = 1.0
 	quests_view.anchor_bottom = 1.0
-	quests_view.offset_top = TOP_BAR_HEIGHT + 2
-	quests_view.offset_bottom = -(BOTTOM_NAV_HEIGHT + 6)
+	var _quests_extra_y: float = max(0.0, get_viewport_rect().size.y - LAYOUT_REF_H) * 0.5
+	quests_view.offset_top = TOP_BAR_HEIGHT + 2 + _quests_extra_y
+	quests_view.offset_bottom = -(BOTTOM_NAV_HEIGHT + 6) - _quests_extra_y
 	add_child(quests_view)
 
 	if not _quests_design_assets_available():
@@ -4050,10 +4066,13 @@ func _show_upgrades_view() -> void:
 	upgrades_view.anchor_top = 0.0
 	upgrades_view.anchor_right = 1.0
 	upgrades_view.anchor_bottom = 1.0
-	var _upg_avail_h: float = get_viewport_rect().size.y - float(TOP_BAR_HEIGHT) - 2.0 - float(BOTTOM_NAV_HEIGHT) - 6.0
+	var _upg_full_avail_h: float = get_viewport_rect().size.y - float(TOP_BAR_HEIGHT) - 2.0 - float(BOTTOM_NAV_HEIGHT) - 6.0
+	var _upg_ref_avail_h: float = LAYOUT_REF_H - float(TOP_BAR_HEIGHT) - 2.0 - float(BOTTOM_NAV_HEIGHT) - 6.0
+	var _upg_avail_h: float = min(_upg_full_avail_h, _upg_ref_avail_h)
+	var _upg_extra_y: float = max(0.0, _upg_full_avail_h - _upg_ref_avail_h) * 0.5
 	var _upg_h_extra: float = _upg_avail_h * UPGRADES_VIEW_EXTRA_H_FRAC * 0.5
-	upgrades_view.offset_top = float(TOP_BAR_HEIGHT) + 2.0 - _upg_h_extra
-	upgrades_view.offset_bottom = -float(BOTTOM_NAV_HEIGHT) - 6.0 + _upg_h_extra
+	upgrades_view.offset_top = float(TOP_BAR_HEIGHT) + 2.0 - _upg_h_extra + _upg_extra_y
+	upgrades_view.offset_bottom = -float(BOTTOM_NAV_HEIGHT) - 6.0 + _upg_h_extra - _upg_extra_y
 	add_child(upgrades_view)
 
 	var background: TextureRect = TextureRect.new()
@@ -5380,12 +5399,14 @@ func _make_owned_reptile_card(instance: Dictionary) -> Control:
 		)
 		action_area.add_child(assign_button)
 
-		var release_button: Button = _make_release_action_button("animals.release")
+		var sell_price: int = ReptileSystem.calculate_sell_price(instance)
+		var sell_button: Button = _make_release_action_button("animals.sell")
+		sell_button.text = LocalizationSystem.tr_key("animals.sell") + "\nR$ " + str(sell_price)
 		var iid: String = str(instance.get("instance_id", ""))
-		release_button.pressed.connect(func() -> void:
-			_confirm_release_reptile(iid)
+		sell_button.pressed.connect(func() -> void:
+			_confirm_sell_reptile(iid)
 		)
-		action_area.add_child(release_button)
+		action_area.add_child(sell_button)
 
 	_make_scroll_safe(card)
 	return card
@@ -6213,10 +6234,114 @@ func _show_styled_confirmation_popup(title_key: String, message_key: String, con
 	actions.add_child(confirm_button)
 
 
+func _show_styled_confirmation_popup_raw(title: String, message: String, confirm_key: String, cancel_key: String, callback: Callable) -> void:
+	_close_confirmation_modal()
+
+	confirmation_modal = Control.new()
+	confirmation_modal.name = "ConfirmationModal"
+	_add_to_ui_modal_layer(confirmation_modal)
+
+	var overlay: ColorRect = _make_modal_dim_overlay(0.46)
+	confirmation_modal.add_child(overlay)
+
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.offset_left = 24
+	center.offset_right = -24
+	center.offset_top = TOP_BAR_HEIGHT * 0.5
+	center.offset_bottom = -(BOTTOM_NAV_HEIGHT * 0.35)
+	confirmation_modal.add_child(center)
+
+	var panel: PanelContainer = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(430, 270)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
+	center.add_child(panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 22)
+	margin.add_theme_constant_override("margin_right", 22)
+	margin.add_theme_constant_override("margin_top", 20)
+	margin.add_theme_constant_override("margin_bottom", 20)
+	panel.add_child(margin)
+
+	var column: VBoxContainer = VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	margin.add_child(column)
+
+	if not title.is_empty():
+		var title_label: Label = _make_popup_label(title, 21)
+		_apply_label_color(title_label, POPUP_TEXT_PRIMARY)
+		column.add_child(title_label)
+
+	var message_label: Label = _make_popup_label(message, 15)
+	_apply_label_color(message_label, POPUP_TEXT_PRIMARY)
+	column.add_child(message_label)
+
+	var actions: HBoxContainer = HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 10)
+	column.add_child(actions)
+
+	var cancel_button: Button = _make_popup_button(cancel_key, func() -> void:
+		_close_confirmation_modal()
+	)
+	cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_button_text_color(cancel_button, POPUP_TEXT_PRIMARY)
+	actions.add_child(cancel_button)
+
+	var confirm_button_raw: Button = _make_popup_button(confirm_key, func() -> void:
+		_close_confirmation_modal()
+		callback.call()
+	)
+	confirm_button_raw.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_primary_action_button(confirm_button_raw)
+	actions.add_child(confirm_button_raw)
+
+
 func _confirm_remove_reptile(habitat_id: String) -> void:
 	_show_confirmation_popup("habitat.remove_reptile_confirm", "habitat.remove_reptile", func() -> void:
 		_try_remove_reptile_from_habitat(habitat_id)
 	)
+
+
+func _confirm_sell_reptile(instance_id: String) -> void:
+	var instances: Dictionary = ReptileSystem.get_owned_reptile_instances()
+	if not instances.has(instance_id):
+		_show_message_popup("animals.sell_error_unavailable")
+		return
+	var instance_value: Variant = instances.get(instance_id)
+	if typeof(instance_value) != TYPE_DICTIONARY:
+		_show_message_popup("animals.sell_error_unavailable")
+		return
+	var instance: Dictionary = instance_value as Dictionary
+	if _is_reptile_instance_assigned(instance):
+		_show_message_popup("animals.sell_error_assigned")
+		return
+
+	var sell_price: int = ReptileSystem.calculate_sell_price(instance)
+	var reptile_id: String = str(instance.get("reptile_id", ""))
+	var reptile: Dictionary = ReptileSystem.get_reptile(reptile_id)
+	var reptile_name: String = _get_reptile_display_name(instance, reptile)
+	var body: String = LocalizationSystem.tr_key("animals.sell_confirm_body").format({"name": reptile_name, "price": str(sell_price)})
+
+	_show_styled_confirmation_popup_raw(
+		LocalizationSystem.tr_key("animals.sell_confirm_title"),
+		body,
+		"animals.sell",
+		"ui.cancel",
+		func() -> void: _try_sell_reptile(instance_id)
+	)
+
+
+func _try_sell_reptile(instance_id: String) -> void:
+	var result: Dictionary = ReptileSystem.sell_reptile_instance(instance_id)
+	if not bool(result.get("success", false)):
+		_show_message_popup(str(result.get("message_key", "animals.sell_error_unavailable")))
+		return
+	var sell_price: int = int(result.get("sell_price", 0))
+	_show_animals_view("owned")
+	var toast_text: String = LocalizationSystem.tr_key("animals.sell_success").format({"price": str(sell_price)})
+	_show_toast_raw(toast_text)
 
 
 func _confirm_release_reptile(instance_id: String) -> void:
@@ -7328,7 +7453,10 @@ func _get_sorted_owned_instances() -> Array:
 	for instance_id in instances.keys():
 		var instance_value: Variant = instances.get(instance_id)
 		if typeof(instance_value) == TYPE_DICTIONARY:
-			result.append(instance_value as Dictionary)
+			var inst: Dictionary = instance_value as Dictionary
+			if str(inst.get("breeding_state", "none")) == "breeding":
+				continue
+			result.append(inst)
 
 	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		var a_assigned: bool = _is_reptile_instance_assigned(a)

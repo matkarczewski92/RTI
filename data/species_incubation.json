@@ -47,6 +47,20 @@
       "egg_name_en": "Chameleon Eggs",
       "enabled_in_egg_shop": true
     },
+    "sand_lizard": {
+      "biome_id": "green_meadow",
+      "incubation_time_hours": 16,
+      "egg_name_pl": "Jaja jaszczurki zwinki",
+      "egg_name_en": "Sand Lizard Eggs",
+      "enabled_in_egg_shop": true
+    },
+    "garter_snake": {
+      "biome_id": "green_meadow",
+      "incubation_time_hours": 20,
+      "egg_name_pl": "Jaja wąża pończosznika",
+      "egg_name_en": "Garter Snake Eggs",
+      "enabled_in_egg_shop": true
+    },
     "bullsnake": {
       "biome_id": "dry_prairie",
       "incubation_time_hours": 20,

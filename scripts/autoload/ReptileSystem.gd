@@ -48,6 +48,7 @@ const RARITY_ICON_PATHS: Dictionary = {
 
 var reptiles: Array = []
 var variants: Array = []
+var _rarity_multipliers: Dictionary = {}
 var _care_actions_config: Dictionary = {}
 var _reptile_leveling_config: Dictionary = {}
 
@@ -65,7 +66,7 @@ func _initialize_runtime_state() -> void:
 
 func load_data() -> void:
 	reptiles = _load_array(REPTILES_PATH)
-	variants = _load_array(VARIANTS_PATH)
+	_load_variants_file()
 	_care_actions_config = _load_care_actions_config()
 	_reptile_leveling_config = _load_reptile_leveling_config()
 
@@ -585,15 +586,18 @@ func get_happiness_multiplier(happiness: Variant) -> float:
 
 
 func get_rarity_income_multiplier(rarity: String) -> float:
-	match normalize_rarity(rarity):
+	var normalized: String = normalize_rarity(rarity)
+	if _rarity_multipliers.has(normalized):
+		return float(_rarity_multipliers[normalized])
+	match normalized:
 		"rare":
-			return 1.10
+			return 1.3
 		"exceptional":
-			return 1.25
+			return 2.912
 		"ultra_rare":
-			return 1.50
+			return 1.82
 		_:
-			return 1.00
+			return 1.0
 
 
 func get_variant_income_multiplier(variant: Dictionary) -> float:
@@ -1262,6 +1266,8 @@ func assign_reptile_to_habitat(instance_id: String, habitat_id: String, biome_id
 	var current_habitat: Variant = instance.get("habitat_id", null)
 	if current_habitat != null and not str(current_habitat).is_empty():
 		return {"success": false, "message_key": "ui.habitat_occupied"}
+	if str(instance.get("breeding_state", "none")) == "breeding":
+		return {"success": false, "message_key": "ui.reptile_unavailable"}
 
 	var habitats: Dictionary = _get_habitats_state()
 	var habitat_value: Variant = habitats.get(habitat_id, {})
@@ -1434,6 +1440,62 @@ func release_reptile_instance(instance_id: String) -> Dictionary:
 	return {"success": true}
 
 
+func calculate_sell_price(instance: Dictionary) -> int:
+	var reptile_id: String = str(instance.get("reptile_id", ""))
+	var rarity: String = normalize_rarity(str(instance.get("rarity", "common")))
+	var level: int = get_reptile_level(instance)
+
+	var reptile: Dictionary = get_reptile(reptile_id)
+	var base_cost: int
+	if reptile.is_empty():
+		push_warning("ReptileSystem.calculate_sell_price: no reptile data for '%s', using fallback price" % reptile_id)
+		base_cost = 100
+	else:
+		base_cost = int(reptile.get("base_cost", 100))
+
+	var common_price: int = base_cost
+	var rare_price: int = base_cost * 10
+
+	var rarity_base: int
+	match rarity:
+		"common":
+			rarity_base = common_price
+		"rare":
+			rarity_base = rare_price
+		"ultra_rare":
+			rarity_base = rare_price * 2
+		"exceptional", "shadow":
+			rarity_base = rare_price * 10
+		_:
+			rarity_base = common_price
+
+	var sell_price: int = max(1, roundi(float(rarity_base) * pow(1.1, level - 1)))
+	return sell_price
+
+
+func sell_reptile_instance(instance_id: String) -> Dictionary:
+	var instances: Dictionary = get_owned_reptile_instances()
+	if not instances.has(instance_id):
+		return {"success": false, "message_key": "animals.sell_error_unavailable"}
+	var instance_value: Variant = instances.get(instance_id)
+	if typeof(instance_value) != TYPE_DICTIONARY:
+		return {"success": false, "message_key": "animals.sell_error_unavailable"}
+	var instance: Dictionary = _normalize_owned_instance(instance_value as Dictionary)
+	if not _id_or_empty(instance.get("habitat_id", null)).is_empty():
+		return {"success": false, "message_key": "animals.sell_error_assigned"}
+	if str(instance.get("breeding_state", "none")) == "breeding":
+		return {"success": false, "message_key": "animals.sell_error_breeding"}
+
+	var sell_price: int = calculate_sell_price(instance)
+	EconomySystem.add_currency("repticash", sell_price)
+	instances.erase(instance_id)
+	GameState.set_value("owned_reptile_instances", instances)
+	SaveSystem.save_game()
+	_notify_achievement_progress_changed()
+	reptile_released.emit(instance_id)
+	return {"success": true, "sell_price": sell_price}
+
+
 func start_habitat_upgrade(habitat_id: String) -> Dictionary:
 	var now: int = Time.get_unix_time_from_system()
 	_update_habitat_timers(now)
@@ -1534,6 +1596,32 @@ func mark_variant_discovered(variant_id: String) -> bool:
 	return not was_discovered
 
 
+func _repair_orphaned_breeding_states(instances: Dictionary) -> bool:
+	var chambers_val: Variant = GameState.get_value("breeding_chambers", {})
+	var chambers: Dictionary = chambers_val as Dictionary if typeof(chambers_val) == TYPE_DICTIONARY else {}
+	var active_ids: Array = []
+	for chamber_val in chambers.values():
+		if typeof(chamber_val) != TYPE_DICTIONARY:
+			continue
+		var ch: Dictionary = chamber_val as Dictionary
+		active_ids.append(str(ch.get("instance_id_a", "")))
+		active_ids.append(str(ch.get("instance_id_b", "")))
+
+	var changed: bool = false
+	for instance_id in instances.keys():
+		var iv: Variant = instances.get(instance_id)
+		if typeof(iv) != TYPE_DICTIONARY:
+			continue
+		var inst: Dictionary = iv as Dictionary
+		if str(inst.get("breeding_state", "none")) == "breeding" and not active_ids.has(instance_id):
+			inst["breeding_state"] = "none"
+			inst["breeding_partner_id"] = null
+			inst["breeding_started_at"] = 0
+			instances[instance_id] = inst
+			changed = true
+	return changed
+
+
 func migrate_save_state() -> bool:
 	var changed: bool = false
 	if _migrate_global_care_resources():
@@ -1542,6 +1630,8 @@ func migrate_save_state() -> bool:
 		changed = true
 
 	var instances: Dictionary = get_owned_reptile_instances()
+	if _repair_orphaned_breeding_states(instances):
+		changed = true
 	for instance_id in instances.keys():
 		var instance_value: Variant = instances.get(instance_id)
 		if typeof(instance_value) != TYPE_DICTIONARY:
@@ -1769,6 +1859,24 @@ func _unassign_instance_from_habitat(instance_id: String, habitat_id: String, in
 	habitat["variant_id"] = ""
 
 
+func clear_breeding_parent_habitat(instance_id: String, instances: Dictionary) -> void:
+	var instance_value: Variant = instances.get(instance_id, null)
+	if typeof(instance_value) != TYPE_DICTIONARY:
+		return
+	var instance: Dictionary = instance_value as Dictionary
+	var habitat_id: String = _id_or_empty(instance.get("habitat_id", null))
+	if habitat_id.is_empty():
+		return
+	var habitats: Dictionary = _get_habitats_state()
+	var habitat_value: Variant = habitats.get(habitat_id, null)
+	if typeof(habitat_value) != TYPE_DICTIONARY:
+		return
+	var habitat: Dictionary = habitat_value as Dictionary
+	_unassign_instance_from_habitat(instance_id, habitat_id, instances, habitat)
+	habitats[habitat_id] = habitat
+	GameState.set_value("habitats", habitats)
+
+
 func _migrate_global_care_resources() -> bool:
 	var changed: bool = false
 	var now: int = Time.get_unix_time_from_system()
@@ -1877,6 +1985,9 @@ func _update_owned_reptile_needs(now: int, is_offline: bool = false) -> bool:
 			continue
 
 		var instance: Dictionary = _normalize_owned_instance(instance_value as Dictionary)
+		if str(instance.get("breeding_state", "none")) == "breeding":
+			continue
+
 		var last_timestamp: int = _timestamp_from_value(instance.get("last_needs_update_timestamp", now))
 		if last_timestamp <= 0:
 			instance["last_needs_update_timestamp"] = now
@@ -2100,8 +2211,6 @@ func _normalize_variant(variant: Dictionary) -> Dictionary:
 		normalized["icon_path"] = str(normalized.get("portrait_path", ""))
 	if str(normalized.get("rarity_icon_path", "")).is_empty():
 		normalized["rarity_icon_path"] = get_rarity_icon_path(rarity)
-	if not normalized.has("income_multiplier"):
-		normalized["income_multiplier"] = _get_default_income_multiplier(rarity)
 	if str(normalized.get("obtain_method", "")).is_empty():
 		normalized["obtain_method"] = "default" if rarity == "common" else "future_drop"
 
@@ -2142,7 +2251,6 @@ func _make_rarity_fallback_variant(reptile_id: String, rarity: String) -> Dictio
 		"icon_path": str(source_variant.get("icon_path", source_variant.get("portrait_path", reptile.get("icon_path", "")))),
 		"gallery_shadow_path": str(source_variant.get("gallery_shadow_path", "res://assets/art/reptiles/gallery/" + reptile_id + "_shadow.png")),
 		"rarity_icon_path": get_rarity_icon_path(normalized_rarity),
-		"income_multiplier": _get_default_income_multiplier(normalized_rarity),
 		"obtain_method": "fallback"
 	})
 
@@ -2234,15 +2342,7 @@ func _id_or_empty(value: Variant) -> String:
 
 
 func _get_default_income_multiplier(rarity: String) -> float:
-	match normalize_rarity(rarity):
-		"rare":
-			return 1.1
-		"exceptional":
-			return 1.25
-		"ultra_rare":
-			return 1.5
-		_:
-			return 1.0
+	return get_rarity_income_multiplier(rarity)
 
 
 func _get_habitats_state() -> Dictionary:
@@ -2420,6 +2520,29 @@ func _get_effective_cooldown(action_id: String, base_cooldown: int) -> int:
 			cooldown_multiplier = float(upgrade_system.call("get_action_cooldown_multiplier", action_id))
 
 	return max(1, roundi(float(cooldown) * cooldown_multiplier))
+
+
+func _load_variants_file() -> void:
+	var file: FileAccess = FileAccess.open(VARIANTS_PATH, FileAccess.READ)
+	if file == null:
+		push_warning("Missing data file: " + VARIANTS_PATH)
+		return
+
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if typeof(parsed) == TYPE_ARRAY:
+		variants = parsed as Array
+		return
+	if typeof(parsed) != TYPE_DICTIONARY:
+		push_warning("Invalid data file: " + VARIANTS_PATH)
+		return
+
+	var data: Dictionary = parsed as Dictionary
+	var multipliers: Variant = data.get("rarity_multipliers", {})
+	if typeof(multipliers) == TYPE_DICTIONARY:
+		_rarity_multipliers = multipliers as Dictionary
+	var variants_value: Variant = data.get("variants", [])
+	if typeof(variants_value) == TYPE_ARRAY:
+		variants = variants_value as Array
 
 
 func _load_array(path: String) -> Array:

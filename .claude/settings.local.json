@@ -30,7 +30,15 @@
       "Bash(powershell -command 'Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\('\\\\''__CMDSUB_OUTPUT__/assets/art/ui/small_design/build_habitat.png'\\\\''\\); Write-Host $img.Width $img.Height; $img.Dispose\\(\\)')",
       "PowerShell(Add-Type -AssemblyName System.Drawing; $path = \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\\\\assets\\\\art\\\\ui\\\\small_design\\\\build_habitat.png\"; $img = [System.Drawing.Image]::FromFile\\($path\\); Write-Host \"Width: $\\($img.Width\\) Height: $\\($img.Height\\)\"; $img.Dispose\\(\\))",
       "PowerShell(Add-Type -AssemblyName System.Drawing; $path = \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\\\\assets\\\\art\\\\ui\\\\small_design\\\\project_build_habutat.png\"; $img = [System.Drawing.Image]::FromFile\\($path\\); Write-Host \"Width: $\\($img.Width\\) Height: $\\($img.Height\\)\"; $img.Dispose\\(\\))",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "PowerShell(cd \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\"; Get-ChildItem -Recurse -File | Where-Object {$_.Extension -in '.tscn', '.gd', '.godot'} | Select-Object -ExpandProperty FullName | Sort-Object)",
+      "PowerShell(\\(Get-Content \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\\\\scripts\\\\ui\\\\BiomeView.gd\" | Measure-Object -Line\\).Lines)",
+      "Bash(xargs grep -l \"offline\\\\|last_active\\\\|pending_offline\")",
+      "PowerShell(Get-ChildItem -Path \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\" -Recurse -Directory | Select-Object -First 30 | ForEach-Object { $_.FullName })",
+      "Bash(Get-ChildItem -Path \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\" -Recurse -Filter \"*.json\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Get-ChildItem -Path \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)"
     ]
   }
 }

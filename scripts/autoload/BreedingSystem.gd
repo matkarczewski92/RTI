@@ -242,6 +242,8 @@ func start_breeding(
 
 	ReptileSystem._grant_reptile_xp_in_instances(instances, instance_id_a, ReptileSystem.get_reptile_xp_reward("breeding_started"), "breeding_started")
 	ReptileSystem._grant_reptile_xp_in_instances(instances, instance_id_b, ReptileSystem.get_reptile_xp_reward("breeding_started"), "breeding_started")
+	ReptileSystem.clear_breeding_parent_habitat(instance_id_a, instances)
+	ReptileSystem.clear_breeding_parent_habitat(instance_id_b, instances)
 	_set_instance_breeding(instance_id_a, instance_id_b, instances)
 	_set_instance_breeding(instance_id_b, instance_id_a, instances)
 	GameState.set_value("owned_reptile_instances", instances)

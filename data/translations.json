@@ -131,6 +131,14 @@
 		"pl": "Kameleon",
 		"en": "Chameleon"
 	},
+	"reptile.sand_lizard.name": {
+		"pl": "Jaszczurka zwinka",
+		"en": "Sand Lizard"
+	},
+	"reptile.garter_snake.name": {
+		"pl": "Wąż pończosznik",
+		"en": "Garter Snake"
+	},
 	"rarity.common": {
 		"pl": "Zwyk\u0142y",
 		"en": "Common"
@@ -204,6 +212,14 @@
 	"variant.chameleon.rare.name": { "pl": "Rzadki", "en": "Rare" },
 	"variant.chameleon.exceptional.name": { "pl": "Wyjątkowy", "en": "Exceptional" },
 	"variant.chameleon.ultra_rare.name": { "pl": "Ultra rzadki", "en": "Ultra Rare" },
+	"variant.sand_lizard.common.name": { "pl": "Zwykła", "en": "Common" },
+	"variant.sand_lizard.rare.name": { "pl": "Rzadka", "en": "Rare" },
+	"variant.sand_lizard.exceptional.name": { "pl": "Wyjątkowa", "en": "Exceptional" },
+	"variant.sand_lizard.ultra_rare.name": { "pl": "Ultra rzadka", "en": "Ultra Rare" },
+	"variant.garter_snake.common.name": { "pl": "Zwykły", "en": "Common" },
+	"variant.garter_snake.rare.name": { "pl": "Rzadki", "en": "Rare" },
+	"variant.garter_snake.exceptional.name": { "pl": "Wyjątkowy", "en": "Exceptional" },
+	"variant.garter_snake.ultra_rare.name": { "pl": "Ultra rzadki", "en": "Ultra Rare" },
 	"nav.biome": {
 		"pl": "Biom",
 		"en": "Biome"
@@ -299,6 +315,34 @@
 	"animals.reptile_not_found": {
 		"pl": "Nie znaleziono zwierzęcia.",
 		"en": "Animal not found."
+	},
+	"animals.sell": {
+		"pl": "Sprzedaj",
+		"en": "Sell"
+	},
+	"animals.sell_confirm_title": {
+		"pl": "Sprzedać gada?",
+		"en": "Sell reptile?"
+	},
+	"animals.sell_confirm_body": {
+		"pl": "Czy na pewno chcesz sprzedać: {name} za R$ {price}? Tej operacji nie można cofnąć.",
+		"en": "Are you sure you want to sell: {name} for R$ {price}? This action cannot be undone."
+	},
+	"animals.sell_success": {
+		"pl": "Sprzedano gada za R$ {price}.",
+		"en": "Reptile sold for R$ {price}."
+	},
+	"animals.sell_error_unavailable": {
+		"pl": "Nie można sprzedać tego gada.",
+		"en": "This reptile cannot be sold."
+	},
+	"animals.sell_error_assigned": {
+		"pl": "Najpierw usuń gada z habitatu.",
+		"en": "Remove the reptile from its habitat first."
+	},
+	"animals.sell_error_breeding": {
+		"pl": "Ten gad jest teraz w inkubatorze.",
+		"en": "This reptile is currently in the incubator."
 	},
 	"animals.status": {
 		"pl": "Status",

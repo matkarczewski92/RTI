@@ -1,4 +1,11 @@
-[
+{
+	"rarity_multipliers": {
+		"common": 1.0,
+		"rare": 1.3,
+		"ultra_rare": 1.82,
+		"exceptional": 2.912
+	},
+	"variants": [
 	{
 		"id": "leopard_gecko_common",
 		"reptile_id": "leopard_gecko",
@@ -8,7 +15,6 @@
 		"icon_path": "res://assets/art/reptiles/icons/leopard_gecko_icon_common.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/leopard_gecko_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
-		"income_multiplier": 1.0,
 		"obtain_method": "default"
 	},
 	{
@@ -20,7 +26,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/leopard_gecko_portrait_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/leopard_gecko_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
-		"income_multiplier": 1.1,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -32,7 +37,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/leopard_gecko_portrait_exceptional.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/leopard_gecko_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
-		"income_multiplier": 1.25,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -44,7 +48,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/leopard_gecko_portrait_ultra_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/leopard_gecko_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 1.5,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -56,7 +59,6 @@
 		"icon_path": "res://assets/art/reptiles/icons/bearded_dragon_icon_common.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/bearded_dragon_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
-		"income_multiplier": 1.0,
 		"obtain_method": "default"
 	},
 	{
@@ -68,7 +70,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/bearded_dragon_portrait_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/bearded_dragon_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
-		"income_multiplier": 1.1,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -80,7 +81,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/bearded_dragon_portrait_exceptional.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/bearded_dragon_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
-		"income_multiplier": 1.25,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -92,7 +92,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/bearded_dragon_portrait_ultra_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/bearded_dragon_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 1.5,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -104,7 +103,6 @@
 		"icon_path": "res://assets/art/reptiles/icons/corn_snake_icon_common.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/corn_snake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
-		"income_multiplier": 1.0,
 		"obtain_method": "default"
 	},
 	{
@@ -116,7 +114,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/corn_snake_portrait_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/corn_snake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
-		"income_multiplier": 1.1,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -128,7 +125,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/corn_snake_portrait_exceptional.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/corn_snake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
-		"income_multiplier": 1.25,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -140,7 +136,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/corn_snake_portrait_ultra_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/corn_snake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 1.5,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -152,7 +147,6 @@
 		"icon_path": "res://assets/art/reptiles/icons/steppe_tortoise_icon_common.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/steppe_tortoise_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
-		"income_multiplier": 1.0,
 		"obtain_method": "default"
 	},
 	{
@@ -164,7 +158,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/steppe_tortoise_portrait_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/steppe_tortoise_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
-		"income_multiplier": 1.1,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -176,7 +169,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/steppe_tortoise_portrait_exceptional.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/steppe_tortoise_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
-		"income_multiplier": 1.25,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -188,7 +180,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/steppe_tortoise_portrait_ultra_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/steppe_tortoise_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 1.5,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -200,7 +191,6 @@
 		"icon_path": "res://assets/art/reptiles/icons/small_monitor_icon_common.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/small_monitor_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
-		"income_multiplier": 1.0,
 		"obtain_method": "default"
 	},
 	{
@@ -212,7 +202,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/small_monitor_portrait_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/small_monitor_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
-		"income_multiplier": 1.1,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -224,7 +213,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/small_monitor_portrait_exceptional.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/small_monitor_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
-		"income_multiplier": 1.25,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -236,7 +224,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/small_monitor_portrait_ultra_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/small_monitor_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 1.5,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -248,7 +235,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/chameleon_common.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/chameleon_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
-		"income_multiplier": 1.0,
 		"obtain_method": "default"
 	},
 	{
@@ -260,7 +246,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/chameleon_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/chameleon_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
-		"income_multiplier": 1.1,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -272,7 +257,6 @@
 		"icon_path": "res://assets/art/reptiles/portraits/chameleon_exceptional.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/chameleon_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
-		"income_multiplier": 1.25,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -284,7 +268,94 @@
 		"icon_path": "res://assets/art/reptiles/portraits/chameleon_ultra_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/chameleon_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 1.5,
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "sand_lizard_common",
+		"reptile_id": "sand_lizard",
+		"rarity": "common",
+		"name_key": "variant.sand_lizard.common.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/sand_lizard_common.png",
+		"icon_path": "res://assets/art/reptiles/portraits/sand_lizard_common.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/sand_lizard_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
+		"obtain_method": "default"
+	},
+	{
+		"id": "sand_lizard_rare",
+		"reptile_id": "sand_lizard",
+		"rarity": "rare",
+		"name_key": "variant.sand_lizard.rare.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/sand_lizard_rare.png",
+		"icon_path": "res://assets/art/reptiles/portraits/sand_lizard_rare.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/sand_lizard_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "sand_lizard_exceptional",
+		"reptile_id": "sand_lizard",
+		"rarity": "exceptional",
+		"name_key": "variant.sand_lizard.exceptional.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/sand_lizard_exceptional.png",
+		"icon_path": "res://assets/art/reptiles/portraits/sand_lizard_exceptional.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/sand_lizard_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "sand_lizard_ultra_rare",
+		"reptile_id": "sand_lizard",
+		"rarity": "ultra_rare",
+		"name_key": "variant.sand_lizard.ultra_rare.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/sand_lizard_ultra_rare.png",
+		"icon_path": "res://assets/art/reptiles/portraits/sand_lizard_ultra_rare.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/sand_lizard_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "garter_snake_common",
+		"reptile_id": "garter_snake",
+		"rarity": "common",
+		"name_key": "variant.garter_snake.common.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/garter_snake_common.png",
+		"icon_path": "res://assets/art/reptiles/portraits/garter_snake_common.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/garter_snake_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
+		"obtain_method": "default"
+	},
+	{
+		"id": "garter_snake_rare",
+		"reptile_id": "garter_snake",
+		"rarity": "rare",
+		"name_key": "variant.garter_snake.rare.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/garter_snake_rare.png",
+		"icon_path": "res://assets/art/reptiles/portraits/garter_snake_rare.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/garter_snake_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "garter_snake_exceptional",
+		"reptile_id": "garter_snake",
+		"rarity": "exceptional",
+		"name_key": "variant.garter_snake.exceptional.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/garter_snake_exceptional.png",
+		"icon_path": "res://assets/art/reptiles/portraits/garter_snake_exceptional.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/garter_snake_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
+		"obtain_method": "future_drop"
+	},
+	{
+		"id": "garter_snake_ultra_rare",
+		"reptile_id": "garter_snake",
+		"rarity": "ultra_rare",
+		"name_key": "variant.garter_snake.ultra_rare.name",
+		"portrait_path": "res://assets/art/reptiles/portraits/garter_snake_ultra_rare.png",
+		"icon_path": "res://assets/art/reptiles/portraits/garter_snake_ultra_rare.png",
+		"gallery_shadow_path": "res://assets/art/reptiles/gallery/garter_snake_shadow.png",
+		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
 		"obtain_method": "future_drop"
 	},
 	{
@@ -296,7 +367,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/bullsnake_common.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/bullsnake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
-		"income_multiplier": 1.0,
 		"obtain_method": "default"
 	},
 	{
@@ -308,7 +378,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/bullsnake_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/bullsnake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
-		"income_multiplier": 1.1,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -320,7 +389,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/bullsnake_exceptional.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/bullsnake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
-		"income_multiplier": 1.25,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -332,7 +400,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/bullsnake_ultra_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/bullsnake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 1.5,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -344,7 +411,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/bullsnake_shadow.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/bullsnake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 2.0,
 		"obtain_method": "shadow_drop"
 	},
 	{
@@ -356,7 +422,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/collared_lizard_common.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/collared_lizard_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
-		"income_multiplier": 1.0,
 		"obtain_method": "default"
 	},
 	{
@@ -368,7 +433,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/collared_lizard_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/collared_lizard_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
-		"income_multiplier": 1.1,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -380,7 +444,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/collared_lizard_exceptional.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/collared_lizard_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
-		"income_multiplier": 1.25,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -392,7 +455,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/collared_lizard_ultra_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/collared_lizard_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 1.5,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -404,7 +466,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/collared_lizard_shadow.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/collared_lizard_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 2.0,
 		"obtain_method": "shadow_drop"
 	},
 	{
@@ -416,7 +477,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/western_earless_lizard_common.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/western_earless_lizard_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
-		"income_multiplier": 1.0,
 		"obtain_method": "default"
 	},
 	{
@@ -428,7 +488,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/western_earless_lizard_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/western_earless_lizard_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
-		"income_multiplier": 1.1,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -440,7 +499,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/western_earless_lizard_exceptional.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/western_earless_lizard_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
-		"income_multiplier": 1.25,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -452,7 +510,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/western_earless_lizard_ultra_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/western_earless_lizard_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 1.5,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -464,7 +521,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/western_earless_lizard_shadow.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/western_earless_lizard_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 2.0,
 		"obtain_method": "shadow_drop"
 	},
 	{
@@ -476,7 +532,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/ornate_box_turtle_common.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/ornate_box_turtle_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
-		"income_multiplier": 1.0,
 		"obtain_method": "default"
 	},
 	{
@@ -488,7 +543,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/ornate_box_turtle_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/ornate_box_turtle_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
-		"income_multiplier": 1.1,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -500,7 +554,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/ornate_box_turtle_exceptional.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/ornate_box_turtle_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
-		"income_multiplier": 1.25,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -512,7 +565,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/ornate_box_turtle_ultra_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/ornate_box_turtle_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 1.5,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -524,7 +576,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/ornate_box_turtle_shadow.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/ornate_box_turtle_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 2.0,
 		"obtain_method": "shadow_drop"
 	},
 	{
@@ -536,7 +587,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/western_hognose_snake_common.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/western_hognose_snake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
-		"income_multiplier": 1.0,
 		"obtain_method": "default"
 	},
 	{
@@ -548,7 +598,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/western_hognose_snake_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/western_hognose_snake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
-		"income_multiplier": 1.1,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -560,7 +609,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/western_hognose_snake_exceptional.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/western_hognose_snake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
-		"income_multiplier": 1.25,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -572,7 +620,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/western_hognose_snake_ultra_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/western_hognose_snake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 1.5,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -584,7 +631,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/western_hognose_snake_shadow.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/western_hognose_snake_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 2.0,
 		"obtain_method": "shadow_drop"
 	},
 	{
@@ -596,7 +642,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_common.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
-		"income_multiplier": 1.0,
 		"obtain_method": "default"
 	},
 	{
@@ -608,7 +653,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
-		"income_multiplier": 1.1,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -620,7 +664,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_exceptional.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
-		"income_multiplier": 1.25,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -632,7 +675,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_ultra_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 1.5,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -644,7 +686,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_shadow.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/emerald_tree_skink_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 2.0,
 		"obtain_method": "shadow_drop"
 	},
 	{
@@ -656,7 +697,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/prairie_rattlesnake _common.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/prairie_rattlesnake _shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_common.png",
-		"income_multiplier": 1.0,
 		"obtain_method": "default"
 	},
 	{
@@ -668,7 +708,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/prairie_rattlesnake _rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/prairie_rattlesnake _shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
-		"income_multiplier": 1.1,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -680,7 +719,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/prairie_rattlesnake _exceptional.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/prairie_rattlesnake _shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
-		"income_multiplier": 1.25,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -692,7 +730,6 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/prairie_rattlesnake _ultra_rare.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/prairie_rattlesnake _shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 1.5,
 		"obtain_method": "future_drop"
 	},
 	{
@@ -704,7 +741,7 @@
 		"icon_path": "res://assets/art/reptiles_dry_praire/prairie_rattlesnake _shadow.png",
 		"gallery_shadow_path": "res://assets/art/reptiles_dry_praire/prairie_rattlesnake _shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
-		"income_multiplier": 2.0,
 		"obtain_method": "shadow_drop"
 	}
-]
+	]
+}

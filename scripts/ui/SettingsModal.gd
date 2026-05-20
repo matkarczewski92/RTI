@@ -26,6 +26,7 @@ var toggle_status_labels: Dictionary = {}
 var toggle_buttons: Dictionary = {}
 var reset_confirmation_modal: Control
 var missing_icon_warnings: Dictionary = {}
+var _settings_panel: PanelContainer = null
 
 
 func _ready() -> void:
@@ -36,6 +37,23 @@ func _ready() -> void:
 	_refresh_from_state()
 	if not GameState.language_changed.is_connected(_on_language_changed):
 		GameState.language_changed.connect(_on_language_changed)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_SIZE_CHANGED:
+		_reposition_panel()
+
+
+func _reposition_panel() -> void:
+	if _settings_panel == null or not is_inside_tree():
+		return
+	var panel_w := _settings_panel.custom_minimum_size.x
+	var panel_h := _settings_panel.custom_minimum_size.y
+	var vp := get_viewport_rect().size
+	_settings_panel.offset_left = (vp.x - panel_w) * 0.5
+	_settings_panel.offset_top = (vp.y - panel_h) * 0.5
+	_settings_panel.offset_right = (vp.x + panel_w) * 0.5
+	_settings_panel.offset_bottom = (vp.y + panel_h) * 0.5
 
 
 func _build_layout() -> void:
@@ -61,6 +79,7 @@ func _build_layout() -> void:
 	panel.offset_bottom = (vp.y + panel_h) * 0.5
 	panel.add_theme_stylebox_override("panel", _make_panel_style())
 	add_child(panel)
+	_settings_panel = panel
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 24)

@@ -46,3 +46,19 @@ Aktualizacja poprawia czytelność, wygodę obsługi, spójność wizualną, ró
 
 ## v0.1.2
 
+# EN
+- Added full responsive layout support for devices with non-standard aspect ratios (e.g. Samsung S24 Ultra, tall Android phones).
+- Offline income is now 50% lower than the equivalent online rate (25% of normal income), making active play more rewarding.
+- Offline income time cap remains at 4 hours by default and can be extended via the offline cap upgrade (up to 14 hours at max level).
+- Added two new reptile species to the Green Meadow biome: Sand Lizard and Garter Snake, each available in the Shop, Egg Shop, Incubator, and Gallery.
+- Rebalanced base income for all reptile species and rarity variants: Common income reduced to 60% of previous values; Rare, Ultra Rare, and Exceptional multipliers increased to reward rarer variants more meaningfully.
+- Fixed a bug where reptiles placed in the Incubator for breeding were still visible in habitats and could be fed, cared for, or sold during the breeding process.
+
+
+# PL
+- Dodano pełną obsługę responsywnego layoutu dla urządzeń z niestandardowymi proporcjami ekranu (np. Samsung S24 Ultra, wysokie telefony Android).
+- Dochód offline jest teraz o 50% niższy niż w trybie aktywnym (25% normalnego dochodu), co premiuje aktywną grę.
+- Limit czasu naliczania dochodu offline wynosi domyślnie 4 godziny i może być zwiększany ulepszeniem do maksymalnie 14 godzin.
+- Dodano dwa nowe gatunki gadów do biomu Zielona Łąka: Jaszczurkę zwinkę i Węża pończosznika — dostępne w Sklepie, Egg Shopie, Inkubatorze i Galerii.
+- Przeprojektowano balans dochodu bazowego dla wszystkich gadów i rzadkości: dochód Common obniżono do 60% poprzedniej wartości; mnożniki Rare, Ultra Rare i Exceptional zwiększono, aby bardziej opłacało się zdobywać rzadsze warianty.
+- Naprawiono błąd, w którym gady umieszczone w Inkubatorze były nadal widoczne w habitatach i można było je karmić, pielęgnować lub sprzedawać w trakcie procesu hodowli.

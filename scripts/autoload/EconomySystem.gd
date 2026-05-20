@@ -13,6 +13,7 @@ const LEVEL_PROGRESSION_PATH := "res://data/level_progression.json"
 const INCOME_TICK_SECONDS := 60.0
 const MAX_OFFLINE_SECONDS := 14400
 const MIN_OFFLINE_SECONDS := 30
+const OFFLINE_INCOME_MULTIPLIER := 0.5
 
 var economy_data: Dictionary = {}
 var _level_progression: Dictionary = {}
@@ -346,7 +347,7 @@ func _calculate_offline_income_on_resume() -> void:
 		_clear_pending_offline_income(now)
 		return
 
-	var raw_reward: float = total_income_per_min * (float(effective_seconds) / 60.0)
+	var raw_reward: float = total_income_per_min * (float(effective_seconds) / 60.0) * OFFLINE_INCOME_MULTIPLIER
 	var reward: float = float(round(raw_reward))
 	if reward <= 0.0:
 		_clear_pending_offline_income(now)
