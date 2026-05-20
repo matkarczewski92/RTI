@@ -23,7 +23,7 @@ const SETTINGS_SIZE := Vector2(470.6, 135.5)
 
 signal play_pressed
 
-const VERSION_STRING := "v. 0.1.0 - pre-release-beta"
+const VERSION_STRING := "v. 0.1.1 - pre-release-beta"
 
 var background: TextureRect
 var ui_layer: Control

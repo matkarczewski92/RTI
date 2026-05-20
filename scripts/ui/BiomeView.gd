@@ -463,6 +463,20 @@ var _toast_label: Label
 var _toast_timer: SceneTreeTimer
 var _upgrade_purchase_in_progress: bool = false
 
+# --- Scrollable biome state ---
+var _is_biome_scrollable: bool = false
+var _scroll_map_layer: Control = null
+var _scroll_viewport_ctrl: Control = null
+var _scroll_offset: float = 0.0
+var _scroll_max: float = 0.0
+var _scroll_drag_active: bool = false
+var _scroll_drag_start: Vector2 = Vector2.ZERO
+var _scroll_drag_start_offset: float = 0.0
+var _scroll_was_drag: bool = false
+var _scroll_bottom_notified: bool = false
+const SCROLL_DRAG_THRESHOLD := 8.0
+const SCROLL_WHEEL_STEP := 120.0
+
 
 func _ready() -> void:
 	_load_biome_config()
@@ -510,6 +524,7 @@ func _load_biome_config() -> void:
 	for entry in data:
 		if typeof(entry) == TYPE_DICTIONARY and str(entry.get("id", "")) == biome_id:
 			_biome_config = entry as Dictionary
+			_is_biome_scrollable = bool(_biome_config.get("scrollable", false))
 			return
 
 
@@ -586,6 +601,57 @@ func _get_background_cover_origin(scale: float) -> Vector2:
 	return LayoutScale.cover_origin(get_viewport_rect().size, scale, _layout_reference_size)
 
 
+# Returns the scale factor that fits the 1080-wide reference space to the viewport width.
+# Used for scrollable biomes so the background fills the screen width exactly.
+func _get_map_fit_scale() -> float:
+	var vp := get_viewport_rect().size
+	if _layout_reference_size.x <= 0.0 or vp.x <= 0.0:
+		return 1.0
+	return vp.x / _layout_reference_size.x
+
+
+# Creates the clipped scroll viewport and the inner map layer that slides up/down.
+# Background, habitat slots, and workers shortcut are children of _scroll_map_layer.
+func _build_scroll_map_layer() -> void:
+	var vp := get_viewport_rect().size
+	_scroll_map_layer = Control.new()
+	_scroll_map_layer.name = "ScrollMapLayer"
+	_scroll_map_layer.anchor_left = 0.0
+	_scroll_map_layer.anchor_top = 0.0
+	_scroll_map_layer.anchor_right = 0.0
+	_scroll_map_layer.anchor_bottom = 0.0
+	_scroll_map_layer.offset_left = 0.0
+	_scroll_map_layer.offset_top = 0.0
+	_scroll_map_layer.offset_right = vp.x
+	_scroll_map_layer.offset_bottom = vp.y
+	_scroll_map_layer.mouse_filter = Control.MOUSE_FILTER_PASS
+	add_child(_scroll_map_layer)
+
+
+# Sets scroll position in pixels, clamped to [0, _scroll_max].
+func _scroll_to(offset: float) -> void:
+	_scroll_offset = clamp(offset, 0.0, _scroll_max)
+	if _scroll_map_layer != null:
+		var map_h := _scroll_map_layer.custom_minimum_size.y
+		_scroll_map_layer.offset_top = -_scroll_offset
+		_scroll_map_layer.offset_bottom = map_h - _scroll_offset
+	if not _scroll_bottom_notified and _scroll_max > 0.0 and _scroll_offset >= _scroll_max - 20.0:
+		_scroll_bottom_notified = true
+		OnboardingSystem.notify_event("biome_scrolled_to_bottom")
+
+
+# Recomputes the maximum scroll offset based on map layer vs viewport heights.
+# Called deferred so that the viewport has had a chance to process its layout.
+func _compute_scroll_max() -> void:
+	if _scroll_map_layer == null:
+		_scroll_max = 0.0
+		return
+	var map_h := _scroll_map_layer.custom_minimum_size.y
+	var view_h := get_viewport_rect().size.y
+	_scroll_max = max(0.0, map_h - view_h)
+	_scroll_to(_scroll_offset)
+
+
 func _rebuild_layout() -> void:
 	_load_biome_config()
 	_load_biome_layout()
@@ -629,6 +695,13 @@ func _rebuild_layout() -> void:
 	_toast_label = null
 	_toast_timer = null
 	_upgrade_purchase_in_progress = false
+	_scroll_map_layer = null
+	_scroll_viewport_ctrl = null
+	_scroll_offset = 0.0
+	_scroll_max = 0.0
+	_scroll_drag_active = false
+	_scroll_was_drag = false
+	_scroll_bottom_notified = false
 	_build_layout()
 	_setup_care_update_timer()
 
@@ -715,7 +788,11 @@ func _on_language_changed(_language: String) -> void:
 
 
 func _build_layout() -> void:
-	_add_background()
+	if _is_biome_scrollable:
+		_build_scroll_map_layer()
+		_add_scrollable_background(str(_biome_config.get("background_path", BACKGROUND_PATH)))
+	else:
+		_add_background()
 	_add_top_bar()
 	_add_progress_bars_widget()
 	_add_map_area()
@@ -727,13 +804,17 @@ func _build_layout() -> void:
 
 
 func _add_background() -> void:
+	var bg_path: String = str(_biome_config.get("background_path", BACKGROUND_PATH))
+
+	# Always: full-screen static backdrop covering the entire screen including
+	# the areas behind top bar and bottom nav, so there are no black strips.
 	var background: TextureRect = TextureRect.new()
 	background.name = "BiomeBackground"
-	var bg_path: String = str(_biome_config.get("background_path", BACKGROUND_PATH))
 	background.texture = AssetPaths.load_texture(bg_path)
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(background)
 
 	if background.texture != null:
@@ -743,8 +824,61 @@ func _add_background() -> void:
 	fallback.name = "BackgroundFallback"
 	fallback.color = Color(0.45, 0.75, 0.45, 1.0)
 	fallback.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(fallback)
 	move_child(fallback, 0)
+
+
+# Adds the scrollable background into the map layer, sized to fit the viewport width
+# with proportional height. Updates the map layer and scroll limits accordingly.
+func _add_scrollable_background(bg_path: String) -> void:
+	if _scroll_map_layer == null:
+		return
+
+	var texture: Texture2D = AssetPaths.load_texture(bg_path)
+	var vp := get_viewport_rect().size
+	var bg_w := vp.x
+	var bg_h: float
+	if texture != null and texture.get_width() > 0:
+		bg_h = float(texture.get_height()) * (vp.x / float(texture.get_width()))
+	else:
+		bg_h = vp.y * 2.0  # fallback when image unavailable
+
+	var background := TextureRect.new()
+	background.name = "BiomeBackground"
+	background.texture = texture
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_SCALE
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	background.anchor_left = 0.0
+	background.anchor_top = 0.0
+	background.anchor_right = 0.0
+	background.anchor_bottom = 0.0
+	background.offset_left = 0.0
+	background.offset_top = 0.0
+	background.offset_right = bg_w
+	background.offset_bottom = bg_h
+	_scroll_map_layer.add_child(background)
+
+	if texture == null:
+		var fallback := ColorRect.new()
+		fallback.name = "BackgroundFallback"
+		fallback.color = Color(0.35, 0.62, 0.35, 1.0)
+		fallback.anchor_left = 0.0
+		fallback.anchor_top = 0.0
+		fallback.anchor_right = 0.0
+		fallback.anchor_bottom = 0.0
+		fallback.offset_right = bg_w
+		fallback.offset_bottom = bg_h
+		fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_scroll_map_layer.add_child(fallback)
+		_scroll_map_layer.move_child(fallback, 0)
+
+	# Resize the map layer to the background dimensions and recalculate scroll range.
+	_scroll_map_layer.offset_right = bg_w
+	_scroll_map_layer.offset_bottom = bg_h
+	_scroll_map_layer.custom_minimum_size = Vector2(bg_w, bg_h)
+	_compute_scroll_max()
 
 
 func _add_top_bar() -> void:
@@ -786,16 +920,18 @@ func _add_top_logo() -> void:
 
 
 func _add_workers_shortcut() -> void:
+	# Workers button is always a static element on the screen (like top bar / bottom nav).
+	# Position is defined in biome_habitat_layouts.json via x_from_right / y_from_bottom.
 	var wb := _biome_workers_config
-	var cover_scale := _get_background_cover_scale()
-	var cover_origin := _get_background_cover_origin(cover_scale)
+	var cover_sc := _get_background_cover_scale()
+	var cover_orig := _get_background_cover_origin(cover_sc)
 	var wb_xr := float(wb.get("x_from_right", 900))
 	var wb_yb := float(wb.get("y_from_bottom", 435))
-	var wb_w := float(wb.get("width", 318)) * cover_scale
-	var wb_h := float(wb.get("height", 318)) * cover_scale
-	var wb_icon_w := float(wb.get("icon_width", wb.get("width", 318))) * cover_scale
-	var wb_icon_h := float(wb.get("icon_height", wb.get("height", 318))) * cover_scale
-	var center := cover_origin + Vector2(_layout_reference_size.x - wb_xr, _layout_reference_size.y - wb_yb) * cover_scale
+	var wb_w := float(wb.get("width", 318)) * cover_sc
+	var wb_h := float(wb.get("height", 318)) * cover_sc
+	var wb_icon_w := float(wb.get("icon_width", wb.get("width", 318))) * cover_sc
+	var wb_icon_h := float(wb.get("icon_height", wb.get("height", 318))) * cover_sc
+	var center := cover_orig + Vector2(_layout_reference_size.x - wb_xr, _layout_reference_size.y - wb_yb) * cover_sc
 
 	var button: Button = Button.new()
 	button.name = "WorkersShortcut"
@@ -869,6 +1005,12 @@ func _show_settings_screen() -> void:
 
 
 func _add_map_area() -> void:
+	if _is_biome_scrollable:
+		# Habitat slots go directly into the scrollable map layer.
+		if _scroll_map_layer != null:
+			_add_habitat_slots(_scroll_map_layer)
+		return
+
 	var play_area := Control.new()
 	play_area.name = "PlayArea"
 	play_area.anchor_left = 0.0
@@ -1132,8 +1274,14 @@ func _add_habitat_slots(parent: Control) -> void:
 	var default_empty_h := 195.0
 	var default_purchased_w := 409.5
 	var default_purchased_h := 409.5
-	var cover_scale := _get_background_cover_scale()
-	var cover_origin := _get_background_cover_origin(cover_scale)
+
+	# Choose the correct scale and origin based on whether the biome scrolls.
+	# Scrollable: fit-to-width scale, positions relative to the map layer (no origin offset).
+	# Static: cover scale, positions relative to the play area (subtract play_area_screen_top).
+	var use_map_scale := _is_biome_scrollable
+	var map_sc := _get_map_fit_scale()
+	var cover_sc := _get_background_cover_scale()
+	var cover_orig := _get_background_cover_origin(cover_sc)
 	var play_area_screen_top := float(TOP_BAR_HEIGHT + TOP_PROGRESS_BARS_HEIGHT + 4)
 
 	var count: int = min(habitat_data.size(), _biome_layout_slots.size())
@@ -1147,15 +1295,20 @@ func _add_habitat_slots(parent: Control) -> void:
 
 		var x_ref := float(slot_data.get("x", _layout_reference_size.x * 0.5))
 		var y_ref := float(slot_data.get("y", _layout_reference_size.y * 0.5))
-		var slot_center := cover_origin + Vector2(x_ref, y_ref) * cover_scale - Vector2(0.0, play_area_screen_top)
+		var pos_scale := map_sc if use_map_scale else cover_sc
+		var slot_center: Vector2
+		if use_map_scale:
+			slot_center = Vector2(x_ref * pos_scale, y_ref * pos_scale)
+		else:
+			slot_center = cover_orig + Vector2(x_ref, y_ref) * cover_sc - Vector2(0.0, play_area_screen_top)
 		var slot_scale := float(slot_data.get("scale", 1.0))
 
-		var slot_w := float(slot_data.get("slot_width",  default_slot_w * slot_scale)) * cover_scale
-		var slot_h := float(slot_data.get("slot_height", default_slot_h * slot_scale)) * cover_scale
-		var empty_w := float(slot_data.get("empty_width",  default_empty_w * slot_scale)) * cover_scale
-		var empty_h := float(slot_data.get("empty_height", default_empty_h * slot_scale)) * cover_scale
-		var purchased_w := float(slot_data.get("purchased_width",  default_purchased_w * slot_scale)) * cover_scale
-		var purchased_h := float(slot_data.get("purchased_height", default_purchased_h * slot_scale)) * cover_scale
+		var slot_w := float(slot_data.get("slot_width",  default_slot_w * slot_scale)) * pos_scale
+		var slot_h := float(slot_data.get("slot_height", default_slot_h * slot_scale)) * pos_scale
+		var empty_w := float(slot_data.get("empty_width",  default_empty_w * slot_scale)) * pos_scale
+		var empty_h := float(slot_data.get("empty_height", default_empty_h * slot_scale)) * pos_scale
+		var purchased_w := float(slot_data.get("purchased_width",  default_purchased_w * slot_scale)) * pos_scale
+		var purchased_h := float(slot_data.get("purchased_height", default_purchased_h * slot_scale)) * pos_scale
 
 		var slot_size     := Vector2(slot_w, slot_h)
 		var empty_size    := Vector2(empty_w, empty_h)
@@ -1164,11 +1317,11 @@ func _add_habitat_slots(parent: Control) -> void:
 		var empty_offset := Vector2(
 			float(slot_data.get("empty_offset_x", 0)),
 			float(slot_data.get("empty_offset_y", 0))
-		) * cover_scale
+		) * pos_scale
 		var purchased_offset := Vector2(
 			float(slot_data.get("purchased_offset_x", 0)),
 			float(slot_data.get("purchased_offset_y", -21))
-		) * cover_scale
+		) * pos_scale
 
 		var slot: Control = HABITAT_SLOT_SCENE.instantiate() as Control
 		var habitat_id: String = str(habitat.get("id", ""))
@@ -1201,7 +1354,96 @@ func _add_habitat_slots(parent: Control) -> void:
 		habitat_slots[habitat_id] = slot
 
 
+func _is_any_overlay_open() -> bool:
+	if action_popup != null and is_instance_valid(action_popup):
+		return true
+	if feedback_modal != null and is_instance_valid(feedback_modal):
+		return true
+	if confirmation_modal != null and is_instance_valid(confirmation_modal):
+		return true
+	if reptile_selection_modal != null and is_instance_valid(reptile_selection_modal):
+		return true
+	if management_modal != null and is_instance_valid(management_modal):
+		return true
+	if habitat_purchase_modal != null and is_instance_valid(habitat_purchase_modal):
+		return true
+	if variant_discovery_modal != null and is_instance_valid(variant_discovery_modal):
+		return true
+	if naming_modal != null and is_instance_valid(naming_modal):
+		return true
+	if shop_view != null and is_instance_valid(shop_view):
+		return true
+	if animals_view != null and is_instance_valid(animals_view):
+		return true
+	if quests_view != null and is_instance_valid(quests_view):
+		return true
+	if workers_view != null and is_instance_valid(workers_view):
+		return true
+	if upgrades_view != null and is_instance_valid(upgrades_view):
+		return true
+	if settings_modal != null and is_instance_valid(settings_modal):
+		return true
+	return false
+
+
+func _input(event: InputEvent) -> void:
+	if not _is_biome_scrollable:
+		return
+	if _is_any_overlay_open():
+		_scroll_drag_active = false
+		return
+
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT:
+			if mb.pressed:
+				_scroll_drag_start = mb.position
+				_scroll_drag_start_offset = _scroll_offset
+				_scroll_drag_active = true
+				_scroll_was_drag = false
+			else:
+				_scroll_drag_active = false
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
+			_scroll_to(_scroll_offset - SCROLL_WHEEL_STEP)
+			get_viewport().set_input_as_handled()
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
+			_scroll_to(_scroll_offset + SCROLL_WHEEL_STEP)
+			get_viewport().set_input_as_handled()
+
+	elif event is InputEventMouseMotion:
+		if _scroll_drag_active:
+			var delta_y := (event as InputEventMouseMotion).position.y - _scroll_drag_start.y
+			if not _scroll_was_drag and absf(delta_y) > SCROLL_DRAG_THRESHOLD:
+				_scroll_was_drag = true
+			if _scroll_was_drag:
+				_scroll_to(_scroll_drag_start_offset - delta_y)
+				get_viewport().set_input_as_handled()
+
+	elif event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_scroll_drag_start = touch.position
+			_scroll_drag_start_offset = _scroll_offset
+			_scroll_drag_active = true
+			_scroll_was_drag = false
+		else:
+			_scroll_drag_active = false
+
+	elif event is InputEventScreenDrag:
+		if _scroll_drag_active:
+			var delta_y := (event as InputEventScreenDrag).position.y - _scroll_drag_start.y
+			if not _scroll_was_drag and absf(delta_y) > SCROLL_DRAG_THRESHOLD:
+				_scroll_was_drag = true
+			if _scroll_was_drag:
+				_scroll_to(_scroll_drag_start_offset - delta_y)
+				get_viewport().set_input_as_handled()
+
+
 func _on_habitat_pressed(habitat_id: String) -> void:
+	# Ignore habitat taps that were part of a scroll drag gesture.
+	if _scroll_was_drag:
+		return
+
 	var habitat: Dictionary = _get_habitat_data(habitat_id)
 	if habitat.is_empty():
 		return

@@ -46,18 +46,21 @@ func _build_layout() -> void:
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(overlay)
 
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.offset_left = 24
-	center.offset_right = -24
-	center.offset_top = 54
-	center.offset_bottom = -54
-	add_child(center)
-
+	var panel_w := 560.0
+	var panel_h := 1025.0
+	var vp := get_viewport_rect().size
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(560, 820)
+	panel.custom_minimum_size = Vector2(panel_w, panel_h)
+	panel.anchor_left = 0.0
+	panel.anchor_top = 0.0
+	panel.anchor_right = 0.0
+	panel.anchor_bottom = 0.0
+	panel.offset_left = (vp.x - panel_w) * 0.5
+	panel.offset_top = (vp.y - panel_h) * 0.5
+	panel.offset_right = (vp.x + panel_w) * 0.5
+	panel.offset_bottom = (vp.y + panel_h) * 0.5
 	panel.add_theme_stylebox_override("panel", _make_panel_style())
-	center.add_child(panel)
+	add_child(panel)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 24)
@@ -497,6 +500,10 @@ func _execute_dev_command(command: String) -> String:
 		GameState.set_value("repticash", float(GameState.get_value("repticash", 0)) + 5000.0)
 		GameState.state_changed.emit()
 		return "+5000 repticash"
+	elif cmd == "add_500000_money":
+		GameState.set_value("repticash", float(GameState.get_value("repticash", 0)) + 500000.0)
+		GameState.state_changed.emit()
+		return "+500000 repticash"
 	elif cmd == "skip_all_build_in_progress":
 		var habitats: Variant = GameState.get_value("habitats", {})
 		if typeof(habitats) == TYPE_DICTIONARY:

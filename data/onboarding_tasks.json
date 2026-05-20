@@ -24,6 +24,18 @@
     "skippable": true
   },
   {
+    "id": "explore_biome_scroll",
+    "order": 25,
+    "title_key": "onboarding.explore_biome_scroll.title",
+    "body_key": "onboarding.explore_biome_scroll.body",
+    "action_key": "onboarding.explore_biome_scroll.action",
+    "target_ui_key": "biome_scroll",
+    "completion_event": "biome_scrolled_to_bottom",
+    "completion_amount": 1,
+    "reward": {"coins": 400, "xp": 60},
+    "skippable": true
+  },
+  {
     "id": "open_shop",
     "order": 30,
     "title_key": "onboarding.open_shop.title",

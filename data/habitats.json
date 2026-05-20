@@ -30,6 +30,36 @@
 		"slot_index": 6
 	},
 	{
+		"id": "green_meadow_slot_7",
+		"biome_id": "green_meadow",
+		"slot_index": 7
+	},
+	{
+		"id": "green_meadow_slot_8",
+		"biome_id": "green_meadow",
+		"slot_index": 8
+	},
+	{
+		"id": "green_meadow_slot_9",
+		"biome_id": "green_meadow",
+		"slot_index": 9
+	},
+	{
+		"id": "green_meadow_slot_10",
+		"biome_id": "green_meadow",
+		"slot_index": 10
+	},
+	{
+		"id": "green_meadow_slot_11",
+		"biome_id": "green_meadow",
+		"slot_index": 11
+	},
+	{
+		"id": "green_meadow_slot_12",
+		"biome_id": "green_meadow",
+		"slot_index": 12
+	},
+	{
 		"id": "dry_prairie_slot_1",
 		"biome_id": "dry_prairie",
 		"slot_index": 1
@@ -58,5 +88,40 @@
 		"id": "dry_prairie_slot_6",
 		"biome_id": "dry_prairie",
 		"slot_index": 6
+	},
+	{
+		"id": "dry_prairie_slot_7",
+		"biome_id": "dry_prairie",
+		"slot_index": 7
+	},
+	{
+		"id": "dry_prairie_slot_8",
+		"biome_id": "dry_prairie",
+		"slot_index": 8
+	},
+	{
+		"id": "dry_prairie_slot_9",
+		"biome_id": "dry_prairie",
+		"slot_index": 9
+	},
+	{
+		"id": "dry_prairie_slot_10",
+		"biome_id": "dry_prairie",
+		"slot_index": 10
+	},
+	{
+		"id": "dry_prairie_slot_11",
+		"biome_id": "dry_prairie",
+		"slot_index": 11
+	},
+	{
+		"id": "dry_prairie_slot_12",
+		"biome_id": "dry_prairie",
+		"slot_index": 12
+	},
+	{
+		"id": "dry_prairie_slot_13",
+		"biome_id": "dry_prairie",
+		"slot_index": 13
 	}
 ]

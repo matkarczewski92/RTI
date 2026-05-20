@@ -5,7 +5,7 @@ Nowe wpisy powinny znajdować sie na samym dole/końcu.  NIE DODAWAJ NOWEJ WERSJ
 
 
 ## v0.1.1
-EN
+# EN
 This update improves offline balance, background behavior, adds new content, and refreshes several key interface elements.
 
 - Added a new reptile to the Dry Prairie biome for the Jungle habitat.
@@ -20,10 +20,12 @@ This update improves offline balance, background behavior, adds new content, and
 - Added Emerald Tree Skink (Scynk Szmaragdowy) as a new reptile species in the Dry Prairie biome.
 - Added collection achievement for discovering all Emerald Tree Skink variants.
 - Improved the gender selection UI on reptile cards in the shop.
+- Expanded the biome view with vertical scrolling support, allowing more habitat slots to be added to each biome.
 
 This update improves readability, usability, visual consistency, content variety, and the overall offline gameplay experience.
 
-PL
+
+# PL 
 Ta aktualizacja poprawia balans trybu offline, działanie gry w tle, dodaje nową zawartość oraz odświeża kilka kluczowych elementów interfejsu.
 
 - Zbalansowano spadek statystyk w trybie offline: statystyki gadów zmniejszają się teraz wolniej i bardziej przewidywalnie, gdy gracz jest poza grą.
@@ -37,5 +39,10 @@ Ta aktualizacja poprawia balans trybu offline, działanie gry w tle, dodaje now�
 - Dodano Scynka Szmaragdowego (Emerald Tree Skink) jako nowy gatunek gada w biomie Dry Prairie.
 - Dodano osiągnięcie kolekcjonerskie za odkrycie wszystkich wariantów Scynka Szmaragdowego.
 - Poprawiono UI wyboru płci w kartach gadów w sklepie.
+- Rozszerzono widok biomu o obsługę przewijania w pionie, co pozwala dodawać więcej pól habitatów do każdego biomu.
 
 Aktualizacja poprawia czytelność, wygodę obsługi, spójność wizualną, różnorodność zawartości oraz ogólne doświadczenie rozgrywki offline.
+
+
+## v0.1.2
+
