@@ -3785,6 +3785,7 @@ func _egg_shop_biome_order(biome_id: String) -> int:
 	match biome_id:
 		"green_meadow": return 0
 		"dry_prairie":  return 1
+		"house":        return 2
 		_:              return 99
 
 

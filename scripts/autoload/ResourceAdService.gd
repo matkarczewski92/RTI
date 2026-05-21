@@ -9,6 +9,8 @@ const DEFAULT_ADD_RESOURCES_ICON_PATH := "res://assets/art/ui/icons/add_resource
 const WINDOW_STARTED_KEY := "resource_ads_window_started_at"
 const USED_COUNT_KEY := "resource_ads_used_count"
 const REWARD_TIMESTAMPS_KEY := "resource_ads_reward_timestamps"
+const DEFAULT_MONEY_REWARD_LEVEL_5_AMOUNT := 10000
+const DEFAULT_MONEY_REWARD_LEVEL_11_AMOUNT := 25000
 
 const ERROR_KEY_MAP := {
 	"rewarded_speedup_error_no_internet": "resource_ads_error_no_internet",
@@ -25,6 +27,8 @@ var _add_resources_icon_height: int = 96
 var _limit_count: int = 5
 var _limit_window_hours: int = 24
 var _money_reward_amount: int = 1000
+var _money_reward_level_5_amount: int = DEFAULT_MONEY_REWARD_LEVEL_5_AMOUNT
+var _money_reward_level_11_amount: int = DEFAULT_MONEY_REWARD_LEVEL_11_AMOUNT
 
 var _request_active: bool = false
 var _reward_callback_fired: bool = false
@@ -60,6 +64,8 @@ func _load_config() -> void:
 	_limit_count = max(1, int(_config.get("resource_ads_limit_count", _limit_count)))
 	_limit_window_hours = max(1, int(_config.get("resource_ads_limit_window_hours", _limit_window_hours)))
 	_money_reward_amount = max(1, int(_config.get("money_reward_amount", _money_reward_amount)))
+	_money_reward_level_5_amount = max(1, int(_config.get("money_reward_level_5_amount", _money_reward_level_5_amount)))
+	_money_reward_level_11_amount = max(1, int(_config.get("money_reward_level_11_amount", _money_reward_level_11_amount)))
 
 
 func get_add_resources_icon_path() -> String:
@@ -75,7 +81,7 @@ func get_limit_count() -> int:
 
 
 func get_money_reward_amount() -> int:
-	return _money_reward_amount
+	return _get_money_reward_amount_for_level(_get_player_level())
 
 
 func get_used_count() -> int:
@@ -159,12 +165,13 @@ func request_resource_reward(
 func _apply_reward(action_id: String, biome_id: String) -> Dictionary:
 	match action_id:
 		"money":
-			EconomySystem.add_currency("repticash", float(_money_reward_amount))
+			var reward_amount: int = get_money_reward_amount()
+			EconomySystem.add_currency("repticash", float(reward_amount))
 			return {
 				"success": true,
 				"action_id": action_id,
 				"success_key": "resource_ads_reward_money_success",
-				"amount": _money_reward_amount
+				"amount": reward_amount
 			}
 		"food", "water":
 			var target_biome_id: String = biome_id
@@ -239,6 +246,18 @@ func _normalize_action_id(action_id: String) -> String:
 			return action_id
 		_:
 			return ""
+
+
+func _get_money_reward_amount_for_level(player_level: int) -> int:
+	if player_level > 10:
+		return _money_reward_level_11_amount
+	if player_level > 4:
+		return _money_reward_level_5_amount
+	return _money_reward_amount
+
+
+func _get_player_level() -> int:
+	return max(1, int(GameState.get_value("level", GameState.get_value("player_level", 1))))
 
 
 func _map_error_key(error_key: String) -> String:

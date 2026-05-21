@@ -16,6 +16,8 @@
     "resource_ads_limit_count": 5,
     "resource_ads_limit_window_hours": 24,
     "money_reward_amount": 1000,
+    "money_reward_level_5_amount": 10000,
+    "money_reward_level_11_amount": 25000,
     "rewards": [
       {
         "min_remaining_minutes_exclusive": 30,

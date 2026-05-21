@@ -4,6 +4,7 @@ signal achievement_completed(achievement_id: String)
 signal achievement_claimed(achievement_id: String)
 
 const ACHIEVEMENTS_PATH := "res://data/collection_achievements.json"
+const BIOMES_PATH := "res://data/biomes.json"
 
 var achievements: Array = []
 
@@ -122,10 +123,21 @@ func get_achievement_progress(achievement: Dictionary) -> Dictionary:
 			target = max(1, int(collection_progress.get("target", requirement_value)))
 		"biome_discovered_count":
 			current = _get_biome_discovered_variant_count(requirement_target)
+		"biome_discovered_species_count":
+			current = _get_biome_discovered_species_count(requirement_target)
+		"discovered_reptile_species":
+			current = 1 if _is_reptile_species_discovered(requirement_target) else 0
+			target = 1
+		"discovered_reptile_species_set":
+			current = _get_required_reptile_species_discovered_count(achievement)
 		"purchased_habitats_count":
 			current = _get_purchased_habitats_count()
 		"occupied_habitats_count":
 			current = _get_occupied_habitats_count()
+		"biome_habitats_filled_and_maxed":
+			var biome_habitat_progress: Dictionary = _get_biome_filled_and_maxed_habitat_progress(requirement_target)
+			current = int(biome_habitat_progress.get("current", 0))
+			target = max(1, int(biome_habitat_progress.get("target", requirement_value)))
 		"habitats_at_level_count":
 			current = _get_habitats_at_level_count(max(1, int(requirement_target)))
 		"lifetime_currency_earned":
@@ -306,6 +318,54 @@ func _get_biome_discovered_variant_count(biome_id: String) -> int:
 	return count
 
 
+func _get_biome_discovered_species_count(biome_id: String) -> int:
+	var species_ids: Dictionary = {}
+	for variant_id in _get_discovered_variant_ids():
+		var variant: Dictionary = ReptileSystem.get_variant(str(variant_id))
+		var reptile_id: String = str(variant.get("reptile_id", ""))
+		var reptile: Dictionary = ReptileSystem.get_reptile(reptile_id)
+		if str(reptile.get("biome_id", "")) == biome_id:
+			species_ids[reptile_id] = true
+
+	for instance_value in ReptileSystem.get_owned_reptile_instances().values():
+		if typeof(instance_value) != TYPE_DICTIONARY:
+			continue
+		var instance_reptile_id: String = str((instance_value as Dictionary).get("reptile_id", ""))
+		var instance_reptile: Dictionary = ReptileSystem.get_reptile(instance_reptile_id)
+		if str(instance_reptile.get("biome_id", "")) == biome_id:
+			species_ids[instance_reptile_id] = true
+
+	return species_ids.size()
+
+
+func _get_required_reptile_species_discovered_count(achievement: Dictionary) -> int:
+	var required_value: Variant = achievement.get("required_reptile_ids", [])
+	if typeof(required_value) != TYPE_ARRAY:
+		return 0
+
+	var count := 0
+	for reptile_id_value in (required_value as Array):
+		if _is_reptile_species_discovered(str(reptile_id_value)):
+			count += 1
+	return count
+
+
+func _is_reptile_species_discovered(reptile_id: String) -> bool:
+	if reptile_id.is_empty():
+		return false
+
+	for variant_id in _get_discovered_variant_ids():
+		var variant: Dictionary = ReptileSystem.get_variant(str(variant_id))
+		if str(variant.get("reptile_id", "")) == reptile_id:
+			return true
+
+	for instance_value in ReptileSystem.get_owned_reptile_instances().values():
+		if typeof(instance_value) == TYPE_DICTIONARY and str((instance_value as Dictionary).get("reptile_id", "")) == reptile_id:
+			return true
+
+	return false
+
+
 func _get_purchased_habitats_count() -> int:
 	var count := 0
 	var habitats_value: Variant = GameState.get_value("habitats", {})
@@ -334,6 +394,66 @@ func _get_occupied_habitats_count() -> int:
 		if not reptile_id.is_empty():
 			count += 1
 	return count
+
+
+func _get_biome_filled_and_maxed_habitat_progress(biome_id: String) -> Dictionary:
+	var target := _get_biome_habitat_slot_count(biome_id)
+	var max_level := 1
+	if ReptileSystem.has_method("get_habitat_max_level"):
+		max_level = max(1, int(ReptileSystem.call("get_habitat_max_level")))
+
+	var count := 0
+	var habitats_value: Variant = GameState.get_value("habitats", {})
+	if typeof(habitats_value) != TYPE_DICTIONARY:
+		return {"current": 0, "target": max(1, target)}
+
+	for habitat_value in (habitats_value as Dictionary).values():
+		if typeof(habitat_value) != TYPE_DICTIONARY:
+			continue
+		var habitat: Dictionary = habitat_value as Dictionary
+		if str(habitat.get("biome_id", "")) != biome_id:
+			continue
+		if not bool(habitat.get("purchased", false)):
+			continue
+		if bool(habitat.get("is_building", false)) or bool(habitat.get("is_upgrading", false)):
+			continue
+		if int(habitat.get("habitat_level", 1)) < max_level:
+			continue
+		if _habitat_assigned_reptile_id(habitat).is_empty():
+			continue
+		count += 1
+
+	return {"current": count, "target": max(1, target)}
+
+
+func _get_biome_habitat_slot_count(biome_id: String) -> int:
+	var file: FileAccess = FileAccess.open(BIOMES_PATH, FileAccess.READ)
+	if file == null:
+		return 1
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(parsed) != TYPE_ARRAY:
+		return 1
+
+	for biome_value in (parsed as Array):
+		if typeof(biome_value) != TYPE_DICTIONARY:
+			continue
+		var biome: Dictionary = biome_value as Dictionary
+		if str(biome.get("id", "")) == biome_id:
+			return max(1, int(biome.get("habitat_slots", 1)))
+	return 1
+
+
+func _habitat_assigned_reptile_id(habitat: Dictionary) -> String:
+	var instance_id: String = str(habitat.get("reptile_instance_id", ""))
+	if instance_id.is_empty() or instance_id == "<null>" or instance_id.to_lower() == "null":
+		instance_id = str(habitat.get("animal_instance_id", ""))
+	if not instance_id.is_empty() and instance_id != "<null>" and instance_id.to_lower() != "null":
+		return instance_id
+	var reptile_id: String = str(habitat.get("reptile_id", ""))
+	if reptile_id == "<null>" or reptile_id.to_lower() == "null":
+		return ""
+	return reptile_id
 
 
 func _get_habitats_at_level_count(required_level: int) -> int:

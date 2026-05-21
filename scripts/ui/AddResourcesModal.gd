@@ -13,6 +13,7 @@ var biome_id: String = GameState.DEFAULT_BIOME_ID
 var _counter_label: Label
 var _feedback_label: Label
 var _option_buttons: Dictionary = {}
+var _option_labels: Dictionary = {}
 var _limit_overlay: Control
 var _limit_overlay_label: Label
 var _countdown_timer: Timer
@@ -190,7 +191,7 @@ func _make_option_button(action_id: String, icon_path: String, text_key: String)
 	row.add_child(icon)
 
 	var label := Label.new()
-	label.text = LocalizationSystem.tr_key(text_key)
+	label.text = _format_resource_ad_text(LocalizationSystem.tr_key(text_key), action_id)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -203,6 +204,7 @@ func _make_option_button(action_id: String, icon_path: String, text_key: String)
 	row.add_child(label)
 
 	_option_buttons[action_id] = button
+	_option_labels[action_id] = label
 	return button
 
 
@@ -215,7 +217,7 @@ func _on_option_pressed(action_id: String) -> void:
 	_set_all_options_disabled(true)
 	_feedback_label.text = ""
 	var success_callback := func(result: Dictionary) -> void:
-		_set_feedback(str(result.get("success_key", "")))
+		_set_feedback(str(result.get("success_key", "")), int(result.get("amount", 0)))
 		_refresh_state()
 
 	var error_callback := func(error_key: String) -> void:
@@ -240,6 +242,7 @@ func _refresh_state(_arg1: Variant = null, _arg2: Variant = null) -> void:
 	var limit_reached: bool = ResourceAdService.is_limit_reached()
 	var busy: bool = ResourceAdService.is_request_active()
 	_set_all_options_disabled(limit_reached or busy)
+	_refresh_dynamic_option_texts()
 
 	if _limit_overlay != null:
 		_limit_overlay.visible = limit_reached
@@ -255,13 +258,28 @@ func _set_all_options_disabled(disabled: bool) -> void:
 			button.disabled = disabled
 
 
-func _set_feedback(key: String) -> void:
+func _set_feedback(key: String, amount: int = 0) -> void:
 	if _feedback_label == null:
 		return
 	if key.is_empty():
 		_feedback_label.text = ""
 	else:
-		_feedback_label.text = LocalizationSystem.tr_key(key)
+		_feedback_label.text = _format_resource_ad_text(LocalizationSystem.tr_key(key), "", amount)
+
+
+func _refresh_dynamic_option_texts() -> void:
+	var money_label: Label = _option_labels.get("money", null) as Label
+	if money_label != null:
+		money_label.text = _format_resource_ad_text(LocalizationSystem.tr_key("resource_ads_money_option"), "money")
+
+
+func _format_resource_ad_text(text: String, action_id: String = "", amount: int = 0) -> String:
+	if not text.contains("{amount}"):
+		return text
+	var reward_amount: int = amount
+	if reward_amount <= 0 and action_id == "money":
+		reward_amount = ResourceAdService.get_money_reward_amount()
+	return text.replace("{amount}", _format_amount(float(reward_amount)))
 
 
 func _connect_service_signals() -> void:
@@ -279,6 +297,33 @@ func _format_time(seconds: int) -> String:
 	if hours > 0:
 		return str(hours) + " h"
 	return str(max(1, minutes)) + " min"
+
+
+func _format_amount(amount: float) -> String:
+	var formatted: String = ""
+	if is_equal_approx(amount, round(amount)):
+		formatted = str(int(round(amount)))
+	else:
+		formatted = "%.1f" % amount
+
+	var parts: PackedStringArray = formatted.split(".", false, 1)
+	var integer_part: String = parts[0]
+	var sign: String = ""
+	if integer_part.begins_with("-"):
+		sign = "-"
+		integer_part = integer_part.substr(1)
+
+	var grouped: String = ""
+	var digit_count: int = 0
+	for i in range(integer_part.length() - 1, -1, -1):
+		if digit_count > 0 and digit_count % 3 == 0:
+			grouped = " " + grouped
+		grouped = integer_part.substr(i, 1) + grouped
+		digit_count += 1
+
+	if parts.size() > 1:
+		return sign + grouped + "." + parts[1]
+	return sign + grouped
 
 
 func _close() -> void:

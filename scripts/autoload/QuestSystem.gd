@@ -300,7 +300,9 @@ func is_claimed(quest_id: String) -> bool:
 func _make_quest_state(quest: Dictionary) -> Dictionary:
 	var progress: Dictionary = _calculate_progress(quest)
 	var quest_id: String = str(quest.get("id", ""))
-	var completed: bool = int(progress.get("current", 0)) >= int(progress.get("target", 1))
+	var prerequisites_met: bool = _are_prerequisites_met(quest)
+	var accessible: bool = _is_quest_accessible(quest)
+	var completed: bool = accessible and prerequisites_met and int(progress.get("current", 0)) >= int(progress.get("target", 1))
 	var claimed: bool = is_claimed(quest_id)
 	var state: Dictionary = quest.duplicate(true)
 	state["current"] = int(progress.get("current", 0))
@@ -308,11 +310,16 @@ func _make_quest_state(quest: Dictionary) -> Dictionary:
 	state["completed"] = completed
 	state["claimed"] = claimed
 	state["claimable"] = completed and not claimed
-	state["prerequisites_met"] = _are_prerequisites_met(quest)
+	state["prerequisites_met"] = prerequisites_met
+	state["accessible"] = accessible
 	return state
 
 
 func _is_quest_visible(quest: Dictionary) -> bool:
+	if not _is_quest_accessible(quest):
+		return false
+	if bool(quest.get("hide_until_prerequisites_met", false)):
+		return _are_prerequisites_met(quest)
 	if not bool(quest.get("is_onboarding", false)):
 		return true
 	return _are_prerequisites_met(quest)
@@ -337,13 +344,17 @@ func _are_prerequisites_met(quest: Dictionary) -> bool:
 
 
 func _is_quest_completed(quest_id: String) -> bool:
-	var completed_value: Variant = GameState.get_value("completed_quests", [])
-	if typeof(completed_value) == TYPE_ARRAY and (completed_value as Array).has(quest_id):
-		return true
-
 	var quest: Dictionary = _get_quest(quest_id)
 	if quest.is_empty():
 		return false
+	if not _is_quest_accessible(quest):
+		return false
+	if not _are_prerequisites_met(quest):
+		return false
+
+	var completed_value: Variant = GameState.get_value("completed_quests", [])
+	if typeof(completed_value) == TYPE_ARRAY and (completed_value as Array).has(quest_id):
+		return true
 
 	var progress: Dictionary = _calculate_progress(quest)
 	return int(progress.get("current", 0)) >= int(progress.get("target", 1))
@@ -354,19 +365,31 @@ func _calculate_progress(quest: Dictionary) -> Dictionary:
 	var requirement_target: String = str(quest.get("requirement_target", ""))
 	var target: int = max(1, int(quest.get("requirement_value", 1)))
 	var current := 0
+	if not _is_quest_accessible(quest):
+		return {"current": 0, "target": target}
 	match requirement_type:
 		"purchased_habitats_count":
 			current = _get_purchased_habitats_count()
+		"purchased_habitats_count_in_biome":
+			current = _get_purchased_habitats_count(requirement_target)
 		"usable_habitats_count":
 			current = _get_usable_habitats_count()
 		"screen_opened":
 			current = _get_counter("screen:" + requirement_target)
+		"biome_unlocked":
+			current = 1 if _is_biome_unlocked(requirement_target) else 0
 		"owned_reptiles_count":
 			current = ReptileSystem.get_owned_reptile_count()
+		"owned_reptile_species_count":
+			current = _get_owned_reptile_species_count(quest)
 		"owned_reptiles_with_sex_count":
 			current = _get_owned_reptiles_with_sex_count(requirement_target)
 		"assigned_reptiles_count":
 			current = _get_assigned_reptiles_count()
+		"species_assignments_count":
+			current = _get_species_assignments_count(quest)
+		"habitat_types_covered_by_biome_reptiles":
+			current = _get_habitat_types_covered_count(quest)
 		"named_reptiles_count":
 			current = _get_named_reptiles_count()
 		"discovered_variants_count":
@@ -468,13 +491,47 @@ func _get_quest(quest_id: String) -> Dictionary:
 	return {}
 
 
-func _get_purchased_habitats_count() -> int:
+func _is_quest_accessible(quest: Dictionary) -> bool:
+	var required_dlc: String = str(quest.get("requires_dlc", ""))
+	if not required_dlc.is_empty() and not _is_biome_unlocked(required_dlc):
+		return false
+
+	var required_biome: String = str(quest.get("requires_biome", ""))
+	if required_biome.is_empty():
+		required_biome = str(quest.get("biome_id", ""))
+	var requires_biome_unlocked: bool = bool(quest.get("requires_biome_unlocked", false)) \
+		or bool(quest.get("is_paid_content", false)) \
+		or not required_dlc.is_empty()
+	if requires_biome_unlocked and not required_biome.is_empty():
+		return _is_biome_unlocked(required_biome)
+
+	return true
+
+
+func _is_biome_unlocked(biome_id: String) -> bool:
+	if biome_id.is_empty():
+		return true
+	if biome_id == GameState.DEFAULT_BIOME_ID:
+		return true
+
+	var unlocked_value: Variant = GameState.get_value("unlocked_biomes", [])
+	if typeof(unlocked_value) != TYPE_ARRAY:
+		return false
+	return (unlocked_value as Array).has(biome_id)
+
+
+func _get_purchased_habitats_count(biome_id: String = "") -> int:
 	var count := 0
 	var habitats_value: Variant = GameState.get_value("habitats", {})
 	if typeof(habitats_value) != TYPE_DICTIONARY:
 		return count
 	for habitat_value in (habitats_value as Dictionary).values():
-		if typeof(habitat_value) == TYPE_DICTIONARY and bool((habitat_value as Dictionary).get("purchased", false)):
+		if typeof(habitat_value) != TYPE_DICTIONARY:
+			continue
+		var habitat: Dictionary = habitat_value as Dictionary
+		if not biome_id.is_empty() and str(habitat.get("biome_id", "")) != biome_id:
+			continue
+		if bool(habitat.get("purchased", false)):
 			count += 1
 	return count
 
@@ -531,6 +588,109 @@ func _get_discovered_variant_count() -> int:
 		if bool(discovered):
 			count += 1
 	return count
+
+
+func _get_species_assignments_count(quest: Dictionary) -> int:
+	var assignments_value: Variant = quest.get("required_assignments", [])
+	if typeof(assignments_value) != TYPE_ARRAY:
+		return 0
+
+	var biome_id: String = str(quest.get("biome_id", ""))
+	if biome_id.is_empty():
+		biome_id = str(quest.get("requires_biome", ""))
+
+	var count := 0
+	for assignment_value in (assignments_value as Array):
+		if typeof(assignment_value) != TYPE_DICTIONARY:
+			continue
+		var assignment: Dictionary = assignment_value as Dictionary
+		var reptile_id: String = str(assignment.get("reptile_id", ""))
+		var habitat_type: String = ReptileSystem.normalize_habitat_type(str(assignment.get("habitat_type", "")))
+		if _has_species_assigned_to_habitat_type(reptile_id, habitat_type, biome_id):
+			count += 1
+	return count
+
+
+func _get_habitat_types_covered_count(quest: Dictionary) -> int:
+	var required_types_value: Variant = quest.get("required_habitat_types", [])
+	if typeof(required_types_value) != TYPE_ARRAY:
+		return 0
+
+	var biome_id: String = str(quest.get("biome_id", ""))
+	if biome_id.is_empty():
+		biome_id = str(quest.get("requires_biome", ""))
+
+	var count := 0
+	for type_value in (required_types_value as Array):
+		var habitat_type: String = ReptileSystem.normalize_habitat_type(str(type_value))
+		if _has_any_biome_reptile_assigned_to_habitat_type(biome_id, habitat_type):
+			count += 1
+	return count
+
+
+func _get_owned_reptile_species_count(quest: Dictionary) -> int:
+	var required_species_value: Variant = quest.get("required_reptile_ids", [])
+	if typeof(required_species_value) != TYPE_ARRAY:
+		return 0
+
+	var count := 0
+	for reptile_id_value in (required_species_value as Array):
+		if _owns_reptile_species(str(reptile_id_value)):
+			count += 1
+	return count
+
+
+func _has_species_assigned_to_habitat_type(reptile_id: String, habitat_type: String, biome_id: String = "") -> bool:
+	if reptile_id.is_empty() or habitat_type.is_empty():
+		return false
+
+	var habitats_value: Variant = GameState.get_value("habitats", {})
+	if typeof(habitats_value) != TYPE_DICTIONARY:
+		return false
+
+	for habitat_value in (habitats_value as Dictionary).values():
+		if typeof(habitat_value) != TYPE_DICTIONARY:
+			continue
+		var habitat: Dictionary = habitat_value as Dictionary
+		if not biome_id.is_empty() and str(habitat.get("biome_id", "")) != biome_id:
+			continue
+		if ReptileSystem.normalize_habitat_type(str(habitat.get("habitat_type", ""))) != habitat_type:
+			continue
+		if str(habitat.get("reptile_id", "")) == reptile_id:
+			return true
+	return false
+
+
+func _has_any_biome_reptile_assigned_to_habitat_type(biome_id: String, habitat_type: String) -> bool:
+	if biome_id.is_empty() or habitat_type.is_empty():
+		return false
+
+	var habitats_value: Variant = GameState.get_value("habitats", {})
+	if typeof(habitats_value) != TYPE_DICTIONARY:
+		return false
+
+	for habitat_value in (habitats_value as Dictionary).values():
+		if typeof(habitat_value) != TYPE_DICTIONARY:
+			continue
+		var habitat: Dictionary = habitat_value as Dictionary
+		if str(habitat.get("biome_id", "")) != biome_id:
+			continue
+		if ReptileSystem.normalize_habitat_type(str(habitat.get("habitat_type", ""))) != habitat_type:
+			continue
+		var reptile_id: String = str(habitat.get("reptile_id", ""))
+		if not reptile_id.is_empty() and ReptileSystem.is_reptile_available_in_biome(reptile_id, biome_id):
+			return true
+	return false
+
+
+func _owns_reptile_species(reptile_id: String) -> bool:
+	if reptile_id.is_empty():
+		return false
+
+	for instance_value in ReptileSystem.get_owned_reptile_instances().values():
+		if typeof(instance_value) == TYPE_DICTIONARY and str((instance_value as Dictionary).get("reptile_id", "")) == reptile_id:
+			return true
+	return false
 
 
 func _get_total_care_actions_count() -> int:

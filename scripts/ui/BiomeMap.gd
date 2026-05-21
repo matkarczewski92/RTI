@@ -313,27 +313,44 @@ func _on_dry_prairie_pressed() -> void:
 
 
 func _get_biome_unlock_level(target_biome_id: String) -> int:
+	var entry: Dictionary = _get_biome_entry(target_biome_id)
+	if entry.is_empty():
+		return 0
+	var req: Variant = entry.get("unlock_requirements", {})
+	if typeof(req) == TYPE_DICTIONARY:
+		return int((req as Dictionary).get("level", 0))
+	return 0
+
+
+func _get_biome_entry(target_biome_id: String) -> Dictionary:
 	var file := FileAccess.open("res://data/biomes.json", FileAccess.READ)
 	if file == null:
-		return 0
+		return {}
 	var data: Variant = JSON.parse_string(file.get_as_text())
 	file.close()
 	if typeof(data) != TYPE_ARRAY:
-		return 0
+		return {}
 	for entry in data:
 		if typeof(entry) != TYPE_DICTIONARY:
 			continue
 		if str(entry.get("id", "")) == target_biome_id:
-			var req: Variant = entry.get("unlock_requirements", {})
-			if typeof(req) == TYPE_DICTIONARY:
-				return int((req as Dictionary).get("level", 0))
-	return 0
+			return entry as Dictionary
+	return {}
+
+
+func _is_biome_paid(target_biome_id: String) -> bool:
+	var entry: Dictionary = _get_biome_entry(target_biome_id)
+	if entry.is_empty():
+		return false
+	return str(entry.get("type", "")) == "paid" or not str(entry.get("requires_dlc", "")).is_empty() or bool(entry.get("is_paid", false))
 
 
 func _is_biome_accessible(target_biome_id: String) -> bool:
 	var unlocked_value: Variant = GameState.get_value("unlocked_biomes", [])
 	if typeof(unlocked_value) == TYPE_ARRAY and (unlocked_value as Array).has(target_biome_id):
 		return true
+	if _is_biome_paid(target_biome_id):
+		return false
 
 	var req_level: int = _get_biome_unlock_level(target_biome_id)
 	var current_level: int = int(GameState.get_value("level", 1))
@@ -344,6 +361,8 @@ func _on_house_pressed() -> void:
 	var req_level: int = _get_biome_unlock_level("house")
 	if _is_biome_accessible("house"):
 		biome_selected.emit("house")
+	elif _is_biome_paid("house"):
+		_show_feedback("biome.unavailable", "Biome unavailable")
 	else:
 		_show_feedback("biome.locked_level_message", "Reach level " + str(req_level) + " to unlock!")
 

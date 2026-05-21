@@ -180,7 +180,8 @@ func get_default_biome_resources() -> Dictionary:
 	}
 	return {
 		"green_meadow": biome_default.duplicate(true),
-		"dry_prairie": biome_default.duplicate(true)
+		"dry_prairie": biome_default.duplicate(true),
+		"house": biome_default.duplicate(true)
 	}
 
 

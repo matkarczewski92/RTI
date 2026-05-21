@@ -433,7 +433,7 @@ const MGMT_POPUP_BTN_SIZE := Vector2(910.0, 112.0)
 const MGMT_POPUP_BTN_FONT_SIZE := 40
 const LOGO_SIZE := Vector2(150, 112)
 const NAME_MAX_LENGTH := 16
-const GALLERY_REPTILE_IDS := ["leopard_gecko", "bearded_dragon", "corn_snake", "steppe_tortoise", "small_monitor", "chameleon", "sand_lizard", "garter_snake", "bullsnake", "collared_lizard", "western_earless_lizard", "ornate_box_turtle", "western_hognose_snake", "prairie_rattlesnake"]
+const GALLERY_REPTILE_IDS := ["leopard_gecko", "bearded_dragon", "corn_snake", "steppe_tortoise", "small_monitor", "chameleon", "sand_lizard", "garter_snake", "bullsnake", "collared_lizard", "western_earless_lizard", "ornate_box_turtle", "western_hognose_snake", "prairie_rattlesnake", "crested_gecko", "ball_python", "amur_snake", "greek_tortoise", "uromastyx", "veiled_chameleon", "green_iguana"]
 const GALLERY_RARITIES := ["common", "rare", "ultra_rare", "exceptional",]
 
 var habitat_data: Array = []
@@ -1434,10 +1434,13 @@ func _add_habitat_slots(parent: Control) -> void:
 		var empty_h := float(slot_data.get("empty_height", default_empty_h * slot_scale)) * pos_scale
 		var purchased_w := float(slot_data.get("purchased_width",  default_purchased_w * slot_scale)) * pos_scale
 		var purchased_h := float(slot_data.get("purchased_height", default_purchased_h * slot_scale)) * pos_scale
+		var animal_w := float(slot_data.get("animal_width", 0)) * pos_scale
+		var animal_h := float(slot_data.get("animal_height", 0)) * pos_scale
 
 		var slot_size     := Vector2(slot_w, slot_h)
 		var empty_size    := Vector2(empty_w, empty_h)
 		var purchased_size := Vector2(purchased_w, purchased_h)
+		var animal_size := Vector2(animal_w, animal_h)
 
 		var empty_offset_ref := Vector2(
 			float(slot_data.get("empty_offset_x", 0)),
@@ -1449,6 +1452,10 @@ func _add_habitat_slots(parent: Control) -> void:
 		)
 		var empty_offset := empty_offset_ref * pos_scale + visual_center_offset
 		var purchased_offset := purchased_offset_ref * pos_scale + visual_center_offset
+		var animal_offset := Vector2(
+			float(slot_data.get("animal_x", 0)),
+			float(slot_data.get("animal_y", 0))
+		) * pos_scale
 
 		var slot: Control = HABITAT_SLOT_SCENE.instantiate() as Control
 		var habitat_id: String = str(habitat.get("id", ""))
@@ -1467,6 +1474,8 @@ func _add_habitat_slots(parent: Control) -> void:
 		slot.offset_right = slot_center.x + slot_size.x * 0.5
 		slot.offset_bottom = slot_center.y + slot_size.y * 0.5
 		slot.call("set_visual_tuning", empty_size, purchased_size, empty_offset, purchased_offset)
+		if slot.has_method("set_animal_visual_tuning"):
+			slot.call("set_animal_visual_tuning", animal_size, animal_offset)
 		slot.call("setup", habitat_id, slot_index, state)
 		if slot.has_method("set_empty_texture"):
 			var art_folder: String = str(_biome_config.get("habitat_art_folder", "res://assets/art/habitats/"))

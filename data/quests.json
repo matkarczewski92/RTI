@@ -1034,6 +1034,179 @@
     "is_hidden": false
   },
   {
+    "id": "house_task_10_unlock_house",
+    "title_key": "quest.house_task_10_unlock_house.title",
+    "description_key": "quest.house_task_10_unlock_house.desc",
+    "category": "house_tasks",
+    "biome_id": "house",
+    "requires_biome": "house",
+    "requires_biome_unlocked": true,
+    "requires_dlc": "house",
+    "is_paid_content": true,
+    "requirement_type": "biome_unlocked",
+    "requirement_target": "house",
+    "requirement_value": 1,
+    "reward_type": "repticash",
+    "reward_amount": 1200,
+    "reward_xp": 700,
+    "sort_order": 460,
+    "is_active": true,
+    "is_hidden": false
+  },
+  {
+    "id": "house_task_11_first_home_habitat",
+    "title_key": "quest.house_task_11_first_home_habitat.title",
+    "description_key": "quest.house_task_11_first_home_habitat.desc",
+    "category": "house_tasks",
+    "biome_id": "house",
+    "requires_biome": "house",
+    "requires_biome_unlocked": true,
+    "requires_dlc": "house",
+    "is_paid_content": true,
+    "requirement_type": "purchased_habitats_count_in_biome",
+    "requirement_target": "house",
+    "requirement_value": 1,
+    "reward_type": "repticash",
+    "reward_amount": 1400,
+    "reward_xp": 850,
+    "sort_order": 461,
+    "is_active": true,
+    "is_hidden": false,
+    "hide_until_prerequisites_met": true,
+    "prerequisite_quest_ids": [
+      "house_task_10_unlock_house"
+    ]
+  },
+  {
+    "id": "house_task_12_crested_gecko_jungle",
+    "title_key": "quest.house_task_12_crested_gecko_jungle.title",
+    "description_key": "quest.house_task_12_crested_gecko_jungle.desc",
+    "category": "house_tasks",
+    "biome_id": "house",
+    "requires_biome": "house",
+    "requires_biome_unlocked": true,
+    "requires_dlc": "house",
+    "is_paid_content": true,
+    "requirement_type": "species_assignments_count",
+    "requirement_target": "",
+    "requirement_value": 1,
+    "required_assignments": [
+      {
+        "reptile_id": "crested_gecko",
+        "habitat_type": "jungle"
+      }
+    ],
+    "reward_type": "repticash",
+    "reward_amount": 1600,
+    "reward_xp": 950,
+    "sort_order": 462,
+    "is_active": true,
+    "is_hidden": false,
+    "hide_until_prerequisites_met": true,
+    "prerequisite_quest_ids": [
+      "house_task_11_first_home_habitat"
+    ]
+  },
+  {
+    "id": "house_task_13_grassland_duo",
+    "title_key": "quest.house_task_13_grassland_duo.title",
+    "description_key": "quest.house_task_13_grassland_duo.desc",
+    "category": "house_tasks",
+    "biome_id": "house",
+    "requires_biome": "house",
+    "requires_biome_unlocked": true,
+    "requires_dlc": "house",
+    "is_paid_content": true,
+    "requirement_type": "species_assignments_count",
+    "requirement_target": "",
+    "requirement_value": 2,
+    "required_assignments": [
+      {
+        "reptile_id": "ball_python",
+        "habitat_type": "grass"
+      },
+      {
+        "reptile_id": "amur_snake",
+        "habitat_type": "grass"
+      }
+    ],
+    "reward_type": "repticash",
+    "reward_amount": 2200,
+    "reward_xp": 1300,
+    "sort_order": 463,
+    "is_active": true,
+    "is_hidden": false,
+    "hide_until_prerequisites_met": true,
+    "prerequisite_quest_ids": [
+      "house_task_12_crested_gecko_jungle"
+    ]
+  },
+  {
+    "id": "house_task_14_four_habitat_types",
+    "title_key": "quest.house_task_14_four_habitat_types.title",
+    "description_key": "quest.house_task_14_four_habitat_types.desc",
+    "category": "house_tasks",
+    "biome_id": "house",
+    "requires_biome": "house",
+    "requires_biome_unlocked": true,
+    "requires_dlc": "house",
+    "is_paid_content": true,
+    "requirement_type": "habitat_types_covered_by_biome_reptiles",
+    "requirement_target": "house",
+    "requirement_value": 4,
+    "required_habitat_types": [
+      "grass",
+      "jungle",
+      "sand",
+      "stone"
+    ],
+    "reward_type": "repticash",
+    "reward_amount": 3000,
+    "reward_xp": 1600,
+    "sort_order": 464,
+    "is_active": true,
+    "is_hidden": false,
+    "hide_until_prerequisites_met": true,
+    "prerequisite_quest_ids": [
+      "house_task_13_grassland_duo"
+    ]
+  },
+  {
+    "id": "house_task_15_home_keeper_collection",
+    "title_key": "quest.house_task_15_home_keeper_collection.title",
+    "description_key": "quest.house_task_15_home_keeper_collection.desc",
+    "category": "house_tasks",
+    "biome_id": "house",
+    "requires_biome": "house",
+    "requires_biome_unlocked": true,
+    "requires_dlc": "house",
+    "is_paid_content": true,
+    "requirement_type": "owned_reptile_species_count",
+    "requirement_target": "house",
+    "requirement_value": 7,
+    "required_reptile_ids": [
+      "crested_gecko",
+      "ball_python",
+      "amur_snake",
+      "greek_tortoise",
+      "uromastyx",
+      "veiled_chameleon",
+      "green_iguana"
+    ],
+    "reward_type": "repticash",
+    "reward_amount": 4200,
+    "reward_xp": 2200,
+    "reward_food_max": 5,
+    "reward_water_max": 5,
+    "sort_order": 465,
+    "is_active": true,
+    "is_hidden": false,
+    "hide_until_prerequisites_met": true,
+    "prerequisite_quest_ids": [
+      "house_task_14_four_habitat_types"
+    ]
+  },
+  {
     "id": "incubator_enter_first_time",
     "title_key": "task_incubator_enter_first_time_name",
     "description_key": "task_incubator_enter_first_time_desc",

@@ -164,5 +164,89 @@
 		"default_variant_id": "prairie_rattlesnake_common",
 		"portrait_path": "res://assets/art/reptiles_dry_praire/prairie_rattlesnake _common.png",
 		"icon_path": "res://assets/art/reptiles_dry_praire/prairie_rattlesnake _common.png"
+	},
+	{
+		"id": "crested_gecko",
+		"name_key": "reptile.crested_gecko.name",
+		"description_key": "reptile.crested_gecko.description",
+		"biome_id": "house",
+		"preferred_habitat_type": "jungle",
+		"base_cost": 900,
+		"base_income_per_minute": 7.4,
+		"default_variant_id": "crested_gecko_common",
+		"portrait_path": "res://assets/art/reptiles_house/crested_gecko_common.png",
+		"icon_path": "res://assets/art/reptiles_house/crested_gecko_common.png"
+	},
+	{
+		"id": "ball_python",
+		"name_key": "reptile.ball_python.name",
+		"description_key": "reptile.ball_python.description",
+		"biome_id": "house",
+		"preferred_habitat_type": "grass",
+		"base_cost": 1200,
+		"base_income_per_minute": 8.0,
+		"default_variant_id": "ball_python_common",
+		"portrait_path": "res://assets/art/reptiles_house/ball_python_common.png",
+		"icon_path": "res://assets/art/reptiles_house/ball_python_common.png"
+	},
+	{
+		"id": "amur_snake",
+		"name_key": "reptile.amur_snake.name",
+		"description_key": "reptile.amur_snake.description",
+		"biome_id": "house",
+		"preferred_habitat_type": "grass",
+		"base_cost": 1500,
+		"base_income_per_minute": 8.6,
+		"default_variant_id": "amur_snake_common",
+		"portrait_path": "res://assets/art/reptiles_house/amur_snake_common.png",
+		"icon_path": "res://assets/art/reptiles_house/amur_snake_common.png"
+	},
+	{
+		"id": "greek_tortoise",
+		"name_key": "reptile.greek_tortoise.name",
+		"description_key": "reptile.greek_tortoise.description",
+		"biome_id": "house",
+		"preferred_habitat_type": "stone",
+		"base_cost": 1800,
+		"base_income_per_minute": 7.1,
+		"default_variant_id": "greek_tortoise_common",
+		"portrait_path": "res://assets/art/reptiles_house/greek_tortoise_common.png",
+		"icon_path": "res://assets/art/reptiles_house/greek_tortoise_common.png"
+	},
+	{
+		"id": "uromastyx",
+		"name_key": "reptile.uromastyx.name",
+		"description_key": "reptile.uromastyx.description",
+		"biome_id": "house",
+		"preferred_habitat_type": "sand",
+		"base_cost": 2200,
+		"base_income_per_minute": 8.9,
+		"default_variant_id": "uromastyx_common",
+		"portrait_path": "res://assets/art/reptiles_house/uromastyx_common.png",
+		"icon_path": "res://assets/art/reptiles_house/uromastyx_common.png"
+	},
+	{
+		"id": "veiled_chameleon",
+		"name_key": "reptile.veiled_chameleon.name",
+		"description_key": "reptile.veiled_chameleon.description",
+		"biome_id": "house",
+		"preferred_habitat_type": "jungle",
+		"base_cost": 2600,
+		"base_income_per_minute": 9.8,
+		"default_variant_id": "veiled_chameleon_common",
+		"portrait_path": "res://assets/art/reptiles_house/veiled_chameleon_common.png",
+		"icon_path": "res://assets/art/reptiles_house/veiled_chameleon_common.png"
+	},
+	{
+		"id": "green_iguana",
+		"name_key": "reptile.green_iguana.name",
+		"description_key": "reptile.green_iguana.description",
+		"biome_id": "house",
+		"preferred_habitat_type": "jungle",
+		"base_cost": 3200,
+		"base_income_per_minute": 10.5,
+		"default_variant_id": "green_iguana_common",
+		"portrait_path": "res://assets/art/reptiles_house/green_iguana_common.png",
+		"icon_path": "res://assets/art/reptiles_house/green_iguana_common.png"
 	}
 ]

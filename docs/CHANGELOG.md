@@ -71,6 +71,7 @@ Nowe wpisy powinny znajdować sie na samym dole/końcu.  NIE DODAWAJ NOWEJ WERSJ
 - Reduced the probability of incubation and breeding failure.
 - Restricted the Egg Shop to only show reptiles from biomes the player has unlocked.
 - Various UI fixes and polish based on tester feedback.
+- Added AdMob rewarded-ad options for timer speed-ups and resource rewards.
 - Added optional rewarded-ad speed-ups for habitat construction, habitat upgrades, incubator pairings and egg incubation timers.
 - Enlarged building/upgrading status text on habitat slots for better readability on device.
 
@@ -80,3 +81,6 @@ Nowe wpisy powinny znajdować sie na samym dole/końcu.  NIE DODAWAJ NOWEJ WERSJ
 - Zmniejszono prawdopodobieństwo niepowodzenia inkubacji i łączenia.
 - Ograniczono widoczność gadów w sklepie jaj wyłącznie do odblokowanych biomów.
 - Ogólne poprawki UI wynikające z raportów testerów.
+- Dodano opcje reklam z nagrodą AdMob dla przyspieszeń liczników oraz nagród zasobów.
+- Dodano opcjonalne przyspieszenia za reklamę z nagrodą dla budowy habitatów, ulepszeń habitatów, łączeń w Inkubatorze i liczników inkubacji jaj.
+- Powiększono tekst statusu budowy i ulepszania na polach habitatów, aby był czytelniejszy na urządzeniu.

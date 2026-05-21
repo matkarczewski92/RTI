@@ -23,6 +23,8 @@ var empty_visual_size := Vector2(118, 118)
 var purchased_visual_size := Vector2(248, 248)
 var empty_visual_offset := Vector2.ZERO
 var purchased_visual_offset := Vector2(0, -14)
+var animal_visual_size := Vector2.ZERO
+var animal_visual_offset := Vector2.ZERO
 var visual_root: Control
 var background: TextureRect
 var fallback_panel: PanelContainer
@@ -71,6 +73,12 @@ func set_visual_tuning(
 	empty_visual_offset = new_empty_offset
 	purchased_visual_offset = new_purchased_offset
 	_refresh_visuals()
+
+
+func set_animal_visual_tuning(new_animal_size: Vector2, new_animal_offset: Vector2) -> void:
+	animal_visual_size = new_animal_size
+	animal_visual_offset = new_animal_offset
+	_apply_animal_geometry()
 
 
 func set_state(new_state: String) -> void:
@@ -136,6 +144,7 @@ func _build_layout() -> void:
 	reptile_icon.offset_right = 51
 	reptile_icon.offset_bottom = 39
 	visual_root.add_child(reptile_icon)
+	_apply_animal_geometry()
 
 	alert_icon = TextureRect.new()
 	alert_icon.name = "NeedAlertIcon"
@@ -387,6 +396,24 @@ func _apply_state_geometry() -> void:
 		speedup_button.offset_right = center.x + icon_size.x * 0.5
 		speedup_button.offset_bottom = center.y + icon_size.y * 0.5
 		speedup_button.custom_minimum_size = icon_size
+
+
+func _apply_animal_geometry() -> void:
+	if reptile_icon == null:
+		return
+
+	var icon_size := animal_visual_size
+	if icon_size.x <= 0.0:
+		icon_size.x = 102.0
+	if icon_size.y <= 0.0:
+		icon_size.y = 102.0
+
+	var default_center := Vector2(0.0, -12.0)
+	var center := default_center + animal_visual_offset
+	reptile_icon.offset_left = center.x - icon_size.x * 0.5
+	reptile_icon.offset_top = center.y - icon_size.y * 0.5
+	reptile_icon.offset_right = center.x + icon_size.x * 0.5
+	reptile_icon.offset_bottom = center.y + icon_size.y * 0.5
 
 
 func _refresh_text() -> void:

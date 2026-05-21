@@ -109,6 +109,55 @@
       "egg_name_pl": "Jaja grzechotnika preriowego",
       "egg_name_en": "Prairie Rattlesnake Eggs",
       "enabled_in_egg_shop": true
+    },
+    "crested_gecko": {
+      "biome_id": "house",
+      "incubation_time_hours": 18,
+      "egg_name_pl": "Jaja gekona orzęsionego",
+      "egg_name_en": "Crested Gecko Eggs",
+      "enabled_in_egg_shop": true
+    },
+    "ball_python": {
+      "biome_id": "house",
+      "incubation_time_hours": 22,
+      "egg_name_pl": "Jaja pytona królewskiego",
+      "egg_name_en": "Ball Python Eggs",
+      "enabled_in_egg_shop": true
+    },
+    "amur_snake": {
+      "biome_id": "house",
+      "incubation_time_hours": 20,
+      "egg_name_pl": "Jaja połoza amurskiego",
+      "egg_name_en": "Amur Rat Snake Eggs",
+      "enabled_in_egg_shop": true
+    },
+    "greek_tortoise": {
+      "biome_id": "house",
+      "incubation_time_hours": 30,
+      "egg_name_pl": "Jaja żółwia greckiego",
+      "egg_name_en": "Greek Tortoise Eggs",
+      "enabled_in_egg_shop": true
+    },
+    "uromastyx": {
+      "biome_id": "house",
+      "incubation_time_hours": 24,
+      "egg_name_pl": "Jaja biczogona",
+      "egg_name_en": "Uromastyx Eggs",
+      "enabled_in_egg_shop": true
+    },
+    "veiled_chameleon": {
+      "biome_id": "house",
+      "incubation_time_hours": 28,
+      "egg_name_pl": "Jaja kameleona jemeńskiego",
+      "egg_name_en": "Veiled Chameleon Eggs",
+      "enabled_in_egg_shop": true
+    },
+    "green_iguana": {
+      "biome_id": "house",
+      "incubation_time_hours": 32,
+      "egg_name_pl": "Jaja legwana zielonego",
+      "egg_name_en": "Green Iguana Eggs",
+      "enabled_in_egg_shop": true
     }
   }
 }

@@ -1818,6 +1818,7 @@ func _migrate_habitats_state(now: int) -> bool:
 
 	if changed:
 		GameState.set_value("habitats", habitats)
+		_notify_achievement_progress_changed()
 
 	return changed
 
@@ -1841,6 +1842,7 @@ func _update_habitat_timers(now: int) -> bool:
 
 	if changed:
 		GameState.set_value("habitats", habitats)
+		_notify_achievement_progress_changed()
 
 	return changed
 

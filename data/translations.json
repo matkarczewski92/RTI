@@ -151,6 +151,62 @@
 		"pl": "Wąż pończosznik",
 		"en": "Garter Snake"
 	},
+	"reptile.crested_gecko.name": {
+		"pl": "Gekon orzęsiony",
+		"en": "Crested Gecko"
+	},
+	"reptile.crested_gecko.description": {
+		"pl": "Niewielki gekon dobrze odnajdujący się w wilgotnym terrarium.",
+		"en": "A small gecko suited to a humid terrarium."
+	},
+	"reptile.ball_python.name": {
+		"pl": "Pyton królewski",
+		"en": "Ball Python"
+	},
+	"reptile.ball_python.description": {
+		"pl": "Spokojny wąż terraryjny o masywnej sylwetce.",
+		"en": "A calm terrarium snake with a sturdy build."
+	},
+	"reptile.amur_snake.name": {
+		"pl": "Połoz amurski",
+		"en": "Amur Rat Snake"
+	},
+	"reptile.amur_snake.description": {
+		"pl": "Aktywny połoz preferujący przestronne, stabilne warunki.",
+		"en": "An active rat snake that prefers stable, spacious conditions."
+	},
+	"reptile.greek_tortoise.name": {
+		"pl": "Żółw grecki",
+		"en": "Greek Tortoise"
+	},
+	"reptile.greek_tortoise.description": {
+		"pl": "Lądowy żółw lubiący ciepłe i suche terrarium.",
+		"en": "A terrestrial tortoise that prefers a warm, dry terrarium."
+	},
+	"reptile.uromastyx.name": {
+		"pl": "Biczogon",
+		"en": "Uromastyx"
+	},
+	"reptile.uromastyx.description": {
+		"pl": "Ciepłolubna jaszczurka pustynna dobrze czująca się w suchym terrarium.",
+		"en": "A heat-loving desert lizard suited to a dry terrarium."
+	},
+	"reptile.veiled_chameleon.name": {
+		"pl": "Kameleon jemeński",
+		"en": "Veiled Chameleon"
+	},
+	"reptile.veiled_chameleon.description": {
+		"pl": "Kameleon wymagający stabilnej wilgotności i pionowej przestrzeni.",
+		"en": "A chameleon that needs stable humidity and vertical space."
+	},
+	"reptile.green_iguana.name": {
+		"pl": "Legwan zielony",
+		"en": "Green Iguana"
+	},
+	"reptile.green_iguana.description": {
+		"pl": "Duży jaszczur wymagający przestronnego, zielonego habitatu.",
+		"en": "A large lizard that needs a spacious, green habitat."
+	},
 	"rarity.common": {
 		"pl": "Zwyk\u0142y",
 		"en": "Common"
@@ -166,6 +222,10 @@
 	"rarity.ultra_rare": {
 		"pl": "Ultra rzadki",
 		"en": "Ultra Rare"
+	},
+	"rarity.shadow": {
+		"pl": "Cień",
+		"en": "Shadow"
 	},
 	"variant.leopard_gecko.common.name": {
 		"pl": "Zwyk\u0142y",
@@ -232,6 +292,41 @@
 	"variant.garter_snake.rare.name": { "pl": "Rzadki", "en": "Rare" },
 	"variant.garter_snake.exceptional.name": { "pl": "Wyjątkowy", "en": "Exceptional" },
 	"variant.garter_snake.ultra_rare.name": { "pl": "Ultra rzadki", "en": "Ultra Rare" },
+	"variant.crested_gecko.common.name": { "pl": "Zwykły", "en": "Common" },
+	"variant.crested_gecko.rare.name": { "pl": "Rzadki", "en": "Rare" },
+	"variant.crested_gecko.ultra_rare.name": { "pl": "Ultra rzadki", "en": "Ultra Rare" },
+	"variant.crested_gecko.exceptional.name": { "pl": "Wyjątkowy", "en": "Exceptional" },
+	"variant.crested_gecko.shadow.name": { "pl": "Cień", "en": "Shadow" },
+	"variant.ball_python.common.name": { "pl": "Zwykły", "en": "Common" },
+	"variant.ball_python.rare.name": { "pl": "Rzadki", "en": "Rare" },
+	"variant.ball_python.ultra_rare.name": { "pl": "Ultra rzadki", "en": "Ultra Rare" },
+	"variant.ball_python.exceptional.name": { "pl": "Wyjątkowy", "en": "Exceptional" },
+	"variant.ball_python.shadow.name": { "pl": "Cień", "en": "Shadow" },
+	"variant.amur_snake.common.name": { "pl": "Zwykły", "en": "Common" },
+	"variant.amur_snake.rare.name": { "pl": "Rzadki", "en": "Rare" },
+	"variant.amur_snake.ultra_rare.name": { "pl": "Ultra rzadki", "en": "Ultra Rare" },
+	"variant.amur_snake.exceptional.name": { "pl": "Wyjątkowy", "en": "Exceptional" },
+	"variant.amur_snake.shadow.name": { "pl": "Cień", "en": "Shadow" },
+	"variant.greek_tortoise.common.name": { "pl": "Zwykły", "en": "Common" },
+	"variant.greek_tortoise.rare.name": { "pl": "Rzadki", "en": "Rare" },
+	"variant.greek_tortoise.ultra_rare.name": { "pl": "Ultra rzadki", "en": "Ultra Rare" },
+	"variant.greek_tortoise.exceptional.name": { "pl": "Wyjątkowy", "en": "Exceptional" },
+	"variant.greek_tortoise.shadow.name": { "pl": "Cień", "en": "Shadow" },
+	"variant.uromastyx.common.name": { "pl": "Zwykły", "en": "Common" },
+	"variant.uromastyx.rare.name": { "pl": "Rzadki", "en": "Rare" },
+	"variant.uromastyx.ultra_rare.name": { "pl": "Ultra rzadki", "en": "Ultra Rare" },
+	"variant.uromastyx.exceptional.name": { "pl": "Wyjątkowy", "en": "Exceptional" },
+	"variant.uromastyx.shadow.name": { "pl": "Cień", "en": "Shadow" },
+	"variant.veiled_chameleon.common.name": { "pl": "Zwykły", "en": "Common" },
+	"variant.veiled_chameleon.rare.name": { "pl": "Rzadki", "en": "Rare" },
+	"variant.veiled_chameleon.ultra_rare.name": { "pl": "Ultra rzadki", "en": "Ultra Rare" },
+	"variant.veiled_chameleon.exceptional.name": { "pl": "Wyjątkowy", "en": "Exceptional" },
+	"variant.veiled_chameleon.shadow.name": { "pl": "Cień", "en": "Shadow" },
+	"variant.green_iguana.common.name": { "pl": "Zwykła", "en": "Common" },
+	"variant.green_iguana.rare.name": { "pl": "Rzadka", "en": "Rare" },
+	"variant.green_iguana.ultra_rare.name": { "pl": "Ultra rzadka", "en": "Ultra Rare" },
+	"variant.green_iguana.exceptional.name": { "pl": "Wyjątkowa", "en": "Exceptional" },
+	"variant.green_iguana.shadow.name": { "pl": "Cień", "en": "Shadow" },
 	"nav.biome": {
 		"pl": "Biom",
 		"en": "Biome"
@@ -3609,6 +3704,39 @@
 	"ui.incubator_faster_incubation_effect": { "pl": "Czas inkubacji: -{value}%", "en": "Incubation time: -{value}%" },
 	"ui.incubator_humidity_longer_effect": { "pl": "Spadek wilgotności: -{value}%", "en": "Humidity decay: -{value}%" },
 	"ui.incubator_more_eggs_effect": { "pl": "Maks. jaj: {value}", "en": "Max eggs: {value}" },
+	"achievement.house_first_resident.title": { "pl": "Pierwszy lokator", "en": "First Resident" },
+	"achievement.house_first_resident.desc": { "pl": "Odblokuj pierwszego gada w biomie House.", "en": "Unlock your first reptile in the House biome." },
+	"achievement.house_royal_resident.title": { "pl": "Królewski lokator", "en": "Royal Resident" },
+	"achievement.house_royal_resident.desc": { "pl": "Odblokuj Pytona królewskiego w biomie House.", "en": "Unlock the Ball Python in the House biome." },
+	"achievement.house_amur_guardian.title": { "pl": "Amurski strażnik", "en": "Amur Guardian" },
+	"achievement.house_amur_guardian.desc": { "pl": "Odblokuj Połoza amurskiego w biomie House.", "en": "Unlock the Amur Rat Snake in the House biome." },
+	"achievement.house_calm_walker.title": { "pl": "Spokojny spacerowicz", "en": "Calm Walker" },
+	"achievement.house_calm_walker.desc": { "pl": "Odblokuj Żółwia greckiego w biomie House.", "en": "Unlock the Greek Tortoise in the House biome." },
+	"achievement.house_night_jumper.title": { "pl": "Nocny skoczek", "en": "Night Jumper" },
+	"achievement.house_night_jumper.desc": { "pl": "Odblokuj Gekona orzęsionego w biomie House.", "en": "Unlock the Crested Gecko in the House biome." },
+	"achievement.house_green_giant.title": { "pl": "Zielony gigant", "en": "Green Giant" },
+	"achievement.house_green_giant.desc": { "pl": "Odblokuj Legwana zielonego w biomie House.", "en": "Unlock the Green Iguana in the House biome." },
+	"achievement.house_master_of_camouflage.title": { "pl": "Mistrz kamuflażu", "en": "Master of Camouflage" },
+	"achievement.house_master_of_camouflage.desc": { "pl": "Odblokuj Kameleona jemeńskiego w biomie House.", "en": "Unlock the Veiled Chameleon in the House biome." },
+	"achievement.house_desert_spiky_resident.title": { "pl": "Pustynny kolczasty lokator", "en": "Desert Spiky Resident" },
+	"achievement.house_desert_spiky_resident.desc": { "pl": "Odblokuj Biczogona w biomie House.", "en": "Unlock the Uromastyx in the House biome." },
+	"achievement.house_home_collection.title": { "pl": "Domowa kolekcja", "en": "Home Collection" },
+	"achievement.house_home_collection.desc": { "pl": "Odblokuj wszystkie gatunki gadów w biomie House.", "en": "Unlock all reptile species in the House biome." },
+	"achievement.house_dream_shelp.title": { "pl": "Regał marzeń", "en": "Dream Shelf" },
+	"achievement.house_dream_shelp.desc": { "pl": "Zapełnij i rozwiń cały biom House.", "en": "Fill and upgrade the entire House biome." },
+	"biome.unavailable": { "pl": "Biom niedostępny", "en": "Biome unavailable" },
+	"quest.house_task_10_unlock_house.title": { "pl": "Domowy regał", "en": "Home Rack" },
+	"quest.house_task_10_unlock_house.desc": { "pl": "Odblokuj biom House.", "en": "Unlock the House biome." },
+	"quest.house_task_11_first_home_habitat.title": { "pl": "Pierwsze domowe terrarium", "en": "First Home Terrarium" },
+	"quest.house_task_11_first_home_habitat.desc": { "pl": "Kup pierwszy habitat w biomie House.", "en": "Buy your first habitat in the House biome." },
+	"quest.house_task_12_crested_gecko_jungle.title": { "pl": "Gekon na start", "en": "Gecko Starter" },
+	"quest.house_task_12_crested_gecko_jungle.desc": { "pl": "Umieść Gekona orzęsionego w habitacie dżunglowym.", "en": "Place a Crested Gecko in a jungle habitat." },
+	"quest.house_task_13_grassland_duo.title": { "pl": "Trawiasty duet", "en": "Grassland Duo" },
+	"quest.house_task_13_grassland_duo.desc": { "pl": "Umieść Pytona królewskiego i Połoza amurskiego w pasujących habitatach trawiastych.", "en": "Place a Ball Python and an Amur Rat Snake in matching grass habitats." },
+	"quest.house_task_14_four_habitat_types.title": { "pl": "Cztery typy habitatów", "en": "Four Habitat Types" },
+	"quest.house_task_14_four_habitat_types.desc": { "pl": "Posiadaj w House po jednym gadzie przypisanym do habitatu trawiastego, dżunglowego, pustynnego i kamiennego.", "en": "Own one House reptile assigned to each habitat type: grass, jungle, sand, and stone." },
+	"quest.house_task_15_home_keeper_collection.title": { "pl": "Kolekcja domowego terrarysty", "en": "Home Keeper Collection" },
+	"quest.house_task_15_home_keeper_collection.desc": { "pl": "Zdobądź wszystkie 7 gatunków z biomu House.", "en": "Own all 7 House biome species." },
 	"task_category_incubator_name": { "pl": "Inkubator", "en": "Incubator" },
 	"task_incubator_enter_first_time_name": { "pl": "Pierwszy krok do Inkubatora", "en": "First Step into the Incubator" },
 	"task_incubator_enter_first_time_desc": { "pl": "Wejdź do biomu Inkubatora po jego odblokowaniu.", "en": "Enter the Incubator biome after unlocking it." },
@@ -3681,11 +3809,11 @@
 	"rewarded_speedup_panel_text": { "pl": "KLIKNIJ TUTAJ BY OBEJRZEĆ REKLAMĘ I SKRÓCIĆ CZAS O {time}", "en": "CLICK HERE TO WATCH AN AD AND REDUCE TIME BY {time}" },
 	"resource_ads_title": { "pl": "Dodaj zasoby", "en": "Add resources" },
 	"resource_ads_counter": { "pl": "Reklamy z nagrodą: {used}/5", "en": "Rewarded ads: {used}/5" },
-	"resource_ads_money_option": { "pl": "Dodaj 1000 R$ oglądając reklamę", "en": "Add 1000 R$ by watching an ad" },
+	"resource_ads_money_option": { "pl": "Dodaj {amount} R$ oglądając reklamę", "en": "Add {amount} R$ by watching an ad" },
 	"resource_ads_food_option": { "pl": "Uzupełnij pojemnik jedzenia oglądając reklamę", "en": "Refill the food container by watching an ad" },
 	"resource_ads_water_option": { "pl": "Uzupełnij pojemnik wody oglądając reklamę", "en": "Refill the water container by watching an ad" },
 	"resource_ads_limit_reached": { "pl": "Wykorzystano limit. Następne reklamy możesz obejrzeć za {time}.", "en": "Limit reached. You can watch more ads in {time}." },
-	"resource_ads_reward_money_success": { "pl": "Dodano 1000 R$.", "en": "Added 1000 R$." },
+	"resource_ads_reward_money_success": { "pl": "Dodano {amount} R$.", "en": "Added {amount} R$." },
 	"resource_ads_reward_food_success": { "pl": "Uzupełniono pojemnik jedzenia.", "en": "Food container refilled." },
 	"resource_ads_reward_water_success": { "pl": "Uzupełniono pojemnik wody.", "en": "Water container refilled." },
 	"resource_ads_error_limit_reached": { "pl": "Wykorzystano limit reklam z nagrodą.", "en": "Rewarded ad limit reached." },
