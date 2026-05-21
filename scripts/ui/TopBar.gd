@@ -12,6 +12,7 @@ const SETTINGS_BUTTON_CENTER_RATIO := Vector2(1.0 - 0.05 - SETTINGS_BUTTON_SIZE_
 
 var art_path: String = ""
 var biome_id: String = "green_meadow"
+var top_bar_ui_positions: Dictionary = {}
 
 var cash_label: Label
 var xp_label: Label
@@ -34,6 +35,8 @@ func _build_layout() -> void:
 	art.name = "TopBarArt"
 	art.texture = AssetPaths.load_texture(art_path if not art_path.is_empty() else TOP_BAR_ART_PATH)
 	art.set_anchors_preset(Control.PRESET_FULL_RECT)
+	art.offset_top = 10
+	art.offset_bottom = 10
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -41,23 +44,23 @@ func _build_layout() -> void:
 
 	cash_label = _make_value_label(26, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(cash_label)
-	_position_relative(cash_label, Vector2(0.155, 0.65), Vector2(0.140, 0.34))
+	_position_relative(cash_label, _label_center("cash", 0.155, 0.65), _label_size("cash", 0.140, 0.34))
 
 	xp_label = _make_value_label(26, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(xp_label)
-	_position_relative(xp_label, Vector2(0.375, 0.65), Vector2(0.145, 0.34))
+	_position_relative(xp_label, _label_center("xp", 0.375, 0.65), _label_size("xp", 0.145, 0.34))
 
 	food_label = _make_value_label(26, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(food_label)
-	_position_relative(food_label, Vector2(0.595, 0.65), Vector2(0.125, 0.34))
+	_position_relative(food_label, _label_center("food", 0.595, 0.65), _label_size("food", 0.125, 0.34))
 
 	water_label = _make_value_label(26, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(water_label)
-	_position_relative(water_label, Vector2(0.805, 0.65), Vector2(0.120, 0.34))
-	
+	_position_relative(water_label, _label_center("water", 0.805, 0.65), _label_size("water", 0.120, 0.34))
+
 	level_label = _make_value_label(26, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(level_label)
-	_position_relative(level_label, Vector2(0.935, 0.72), Vector2(0.075, 0.34))
+	_position_relative(level_label, _label_center("level", 0.935, 0.72), _label_size("level", 0.075, 0.34))
 
 	var settings_button := TextureButton.new()
 	settings_button.name = "SettingsButton"
@@ -111,6 +114,20 @@ func _make_value_label(font_size: int, alignment: HorizontalAlignment) -> Label:
 	return label
 
 
+func _label_center(key: String, default_cx: float, default_cy: float) -> Vector2:
+	if top_bar_ui_positions.has(key):
+		var pos: Dictionary = top_bar_ui_positions[key] as Dictionary
+		return Vector2(float(pos.get("cx", default_cx)), float(pos.get("cy", default_cy)))
+	return Vector2(default_cx, default_cy)
+
+
+func _label_size(key: String, default_sw: float, default_sh: float) -> Vector2:
+	if top_bar_ui_positions.has(key):
+		var pos: Dictionary = top_bar_ui_positions[key] as Dictionary
+		return Vector2(float(pos.get("sw", default_sw)), float(pos.get("sh", default_sh)))
+	return Vector2(default_sw, default_sh)
+
+
 func _position_relative(control: Control, center_ratio: Vector2, size_ratio: Vector2) -> void:
 	control.anchor_left = center_ratio.x - size_ratio.x * 0.5
 	control.anchor_top = center_ratio.y - size_ratio.y * 0.5
@@ -123,7 +140,27 @@ func _position_relative(control: Control, center_ratio: Vector2, size_ratio: Vec
 
 
 func _format_amount(value: float) -> String:
+	var formatted: String = ""
 	if is_equal_approx(value, round(value)):
-		return str(int(round(value)))
+		formatted = str(int(round(value)))
+	else:
+		formatted = "%.1f" % value
 
-	return "%.1f" % value
+	var parts: PackedStringArray = formatted.split(".", false, 1)
+	var integer_part: String = parts[0]
+	var sign: String = ""
+	if integer_part.begins_with("-"):
+		sign = "-"
+		integer_part = integer_part.substr(1)
+
+	var grouped: String = ""
+	var digit_count: int = 0
+	for i in range(integer_part.length() - 1, -1, -1):
+		if digit_count > 0 and digit_count % 3 == 0:
+			grouped = " " + grouped
+		grouped = integer_part.substr(i, 1) + grouped
+		digit_count += 1
+
+	if parts.size() > 1:
+		return sign + grouped + "." + parts[1]
+	return sign + grouped

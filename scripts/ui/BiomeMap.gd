@@ -20,20 +20,26 @@ const INCUBATOR_PL_PATH := "res://assets/art/ui/biomes/incubator_pl.png"
 const INCUBATOR_EN_PATH := "res://assets/art/ui/biomes/incubator_en.png"
 const INCUBATOR_PL_UNLOCK_PATH := "res://assets/art/ui/biomes/incubator_pl_unlock.png"
 const INCUBATOR_EN_UNLOCK_PATH := "res://assets/art/ui/biomes/incubator_en_unlock.png"
+const HOUSE_PL_PATH := "res://assets/art/ui/biomes/house_biome_locked_pl.png"
+const HOUSE_EN_PATH := "res://assets/art/ui/biomes/house_biome_locked_en.png"
+const HOUSE_PL_UNLOCK_PATH := "res://assets/art/ui/biomes/house_biome_play_pl.png"
+const HOUSE_EN_UNLOCK_PATH := "res://assets/art/ui/biomes/house_biome_play_en.png"
 
 const GREEN_MEADOW_ID := "green_meadow"
 const REFERENCE_SIZE := Vector2(1080.0, 1920.0)
-const BACK_CENTER := Vector2(120.5, 140.1)
+const BACK_CENTER := Vector2(120.5, 102.0)
 const BACK_SIZE := Vector2(140.0, 138.9)
-const TITLE_CENTER := Vector2(561.2, 284.8)
+const TITLE_CENTER := Vector2(561.2, 189.0)
 const TITLE_SIZE := Vector2(826.4, 252.6)
-const GREEN_CARD_CENTER := Vector2(539.4, 650.0)
+const GREEN_CARD_CENTER := Vector2(539.4, 518.0)
 const GREEN_CARD_SIZE := Vector2(952.6, 344.5)
-const DRY_CARD_CENTER := Vector2(539.4, 1085.2)
+const DRY_CARD_CENTER := Vector2(539.4, 903.0)
 const DRY_CARD_SIZE := Vector2(952.6, 344.5)
-const NEW_CARD_CENTER := Vector2(539.4, 1451.5)
-const NEW_CARD_SIZE := Vector2(952.6, 321.5)
-const TOAST_REFERENCE_Y := 1750.0
+const HOUSE_CARD_CENTER := Vector2(539.4, 1288.0)
+const HOUSE_CARD_SIZE := Vector2(952.6, 344.5)
+const INCUBATOR_CARD_CENTER := Vector2(539.4, 1661.0)
+const INCUBATOR_CARD_SIZE := Vector2(952.6, 321.5)
+const TOAST_REFERENCE_Y := 1900.0
 
 var background: TextureRect
 var ui_layer: Control
@@ -42,6 +48,7 @@ var title_banner: TextureRect
 var title_fallback: Label
 var green_meadow_button: TextureButton
 var dry_prairie_button: TextureButton
+var house_button: TextureButton
 var incubator_button: TextureButton
 var toast_panel: PanelContainer
 var toast_label: Label
@@ -53,6 +60,8 @@ func _ready() -> void:
 	_refresh_language_assets()
 	if not GameState.language_changed.is_connected(_on_language_changed):
 		GameState.language_changed.connect(_on_language_changed)
+	if not GameState.state_changed.is_connected(_on_state_changed):
+		GameState.state_changed.connect(_on_state_changed)
 
 
 func _notification(what: int) -> void:
@@ -92,6 +101,9 @@ func _build_layout() -> void:
 
 	dry_prairie_button = _make_texture_button("DryPrairieButton", Callable(self, "_on_dry_prairie_pressed"))
 	_add_fallback_label(dry_prairie_button, "DryPrairieFallbackLabel")
+
+	house_button = _make_texture_button("HouseButton", Callable(self, "_on_house_pressed"))
+	_add_fallback_label(house_button, "HouseFallbackLabel")
 
 	incubator_button = _make_texture_button("IncubatorButton", Callable(self, "_on_incubator_pressed"))
 	_add_fallback_label(incubator_button, "IncubatorFallbackLabel")
@@ -174,11 +186,13 @@ func _layout_controls() -> void:
 	_position_control(title_banner, TITLE_CENTER, TITLE_SIZE, origin, scale)
 	_position_control(green_meadow_button, GREEN_CARD_CENTER, GREEN_CARD_SIZE, origin, scale)
 	_position_control(dry_prairie_button, DRY_CARD_CENTER, DRY_CARD_SIZE, origin, scale)
-	_position_control(incubator_button, NEW_CARD_CENTER, NEW_CARD_SIZE, origin, scale)
+	_position_control(house_button, HOUSE_CARD_CENTER, HOUSE_CARD_SIZE, origin, scale)
+	_position_control(incubator_button, INCUBATOR_CARD_CENTER, INCUBATOR_CARD_SIZE, origin, scale)
 
 	title_fallback.add_theme_font_size_override("font_size", max(22, int(round(42.0 * scale))))
 	_layout_button_fallback(green_meadow_button, 30, scale)
 	_layout_button_fallback(dry_prairie_button, 28, scale)
+	_layout_button_fallback(house_button, 28, scale)
 	_layout_button_fallback(incubator_button, 28, scale)
 	_layout_toast(origin, scale, viewport_size)
 
@@ -211,9 +225,7 @@ func _layout_toast(origin: Vector2, scale: float, viewport_size: Vector2) -> voi
 func _refresh_language_assets() -> void:
 	var is_polish := GameState.get_language() == "pl"
 
-	var dry_req_level: int = _get_biome_unlock_level("dry_prairie")
-	var current_level: int = int(GameState.get_value("level", 1))
-	var dry_prairie_unlocked: bool = dry_req_level <= 0 or current_level >= dry_req_level
+	var dry_prairie_unlocked: bool = _is_biome_accessible("dry_prairie")
 	var dry_prairie_asset: String
 	if dry_prairie_unlocked:
 		dry_prairie_asset = DRY_PRAIRIE_PL_UNLOCK_PATH if is_polish else DRY_PRAIRIE_EN_UNLOCK_PATH
@@ -223,8 +235,16 @@ func _refresh_language_assets() -> void:
 	_set_texture_rect(title_banner, TITLE_PL_PATH if is_polish else TITLE_EN_PATH, title_fallback, "biome.map_title", "Biome Map")
 	_set_button_texture(green_meadow_button, GREEN_MEADOW_PL_PATH if is_polish else GREEN_MEADOW_EN_PATH, "biome.green_meadow", "Green Meadow")
 	_set_button_texture(dry_prairie_button, dry_prairie_asset, "biome.dry_prairie", "Dry Prairie")
-	var incubator_req_level: int = _get_biome_unlock_level("incubator")
-	var incubator_unlocked: bool = incubator_req_level <= 0 or current_level >= incubator_req_level
+
+	var house_unlocked: bool = _is_biome_accessible("house")
+	var house_asset: String
+	if house_unlocked:
+		house_asset = HOUSE_PL_UNLOCK_PATH if is_polish else HOUSE_EN_UNLOCK_PATH
+	else:
+		house_asset = HOUSE_PL_PATH if is_polish else HOUSE_EN_PATH
+	_set_button_texture(house_button, house_asset, "biome.house", "Home Breeding")
+
+	var incubator_unlocked: bool = _is_biome_accessible("incubator")
 	var incubator_asset: String
 	if incubator_unlocked:
 		incubator_asset = INCUBATOR_PL_UNLOCK_PATH if is_polish else INCUBATOR_EN_UNLOCK_PATH
@@ -236,6 +256,7 @@ func _refresh_language_assets() -> void:
 	back_button.tooltip_text = _localized_text("button.back", "Back")
 	green_meadow_button.tooltip_text = _localized_text("biome.green_meadow", "Green Meadow")
 	dry_prairie_button.tooltip_text = _localized_text("biome.dry_prairie", "Dry Prairie")
+	house_button.tooltip_text = _localized_text("biome.house", "Home Breeding")
 	incubator_button.tooltip_text = _localized_text("biome.incubator", "Incubator")
 
 
@@ -285,8 +306,7 @@ func _on_green_meadow_pressed() -> void:
 
 func _on_dry_prairie_pressed() -> void:
 	var req_level: int = _get_biome_unlock_level("dry_prairie")
-	var current_level: int = int(GameState.get_value("level", 1))
-	if req_level <= 0 or current_level >= req_level:
+	if _is_biome_accessible("dry_prairie"):
 		biome_selected.emit("dry_prairie")
 	else:
 		_show_feedback("biome.locked_level_message", "Reach level " + str(req_level) + " to unlock!")
@@ -310,16 +330,37 @@ func _get_biome_unlock_level(target_biome_id: String) -> int:
 	return 0
 
 
+func _is_biome_accessible(target_biome_id: String) -> bool:
+	var unlocked_value: Variant = GameState.get_value("unlocked_biomes", [])
+	if typeof(unlocked_value) == TYPE_ARRAY and (unlocked_value as Array).has(target_biome_id):
+		return true
+
+	var req_level: int = _get_biome_unlock_level(target_biome_id)
+	var current_level: int = int(GameState.get_value("level", 1))
+	return req_level <= 0 or current_level >= req_level
+
+
+func _on_house_pressed() -> void:
+	var req_level: int = _get_biome_unlock_level("house")
+	if _is_biome_accessible("house"):
+		biome_selected.emit("house")
+	else:
+		_show_feedback("biome.locked_level_message", "Reach level " + str(req_level) + " to unlock!")
+
+
 func _on_incubator_pressed() -> void:
 	var req_level: int = _get_biome_unlock_level("incubator")
-	var current_level: int = int(GameState.get_value("level", 1))
-	if req_level <= 0 or current_level >= req_level:
+	if _is_biome_accessible("incubator"):
 		biome_selected.emit("incubator")
 	else:
 		_show_feedback("incubator.locked_message", "The Incubator unlocks at level 10.")
 
 
 func _on_language_changed(_language: String) -> void:
+	_refresh_language_assets()
+
+
+func _on_state_changed() -> void:
 	_refresh_language_assets()
 
 

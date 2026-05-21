@@ -1,0 +1,34 @@
+{
+  "codes": [
+    {
+      "code": "add_10000_money",
+      "name": "Add 10000 Money",
+      "effect": "Adds 10000 ReptiCash to the player balance."
+    },
+    {
+      "code": "add_10000_exp",
+      "name": "Add 10000 EXP",
+      "effect": "Adds 10000 XP to the player and can trigger level-up rewards."
+    },
+    {
+      "code": "skip_all_buildings",
+      "name": "Skip All Buildings",
+      "effect": "Immediately completes all active habitat build and upgrade timers."
+    },
+    {
+      "code": "skip_all_pairings",
+      "name": "Skip All Pairings",
+      "effect": "Immediately finishes all active breeding pairings and resolves them to ready or failed."
+    },
+    {
+      "code": "skip_all_incubations",
+      "name": "Skip All Incubations",
+      "effect": "Immediately completes all active incubations and marks eggs as ready to hatch."
+    },
+    {
+      "code": "add_house_access",
+      "name": "Add House Access",
+      "effect": "Adds the house biome to unlocked_biomes, granting immediate access to House."
+    }
+  ]
+}

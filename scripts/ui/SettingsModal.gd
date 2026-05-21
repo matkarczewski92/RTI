@@ -498,112 +498,123 @@ func _make_button_style(color: Color) -> StyleBoxFlat:
 
 
 func _execute_dev_command(command: String) -> String:
-	var cmd := command.strip_edges()
-	if cmd == "add_1000_exp":
-		GameState.set_value("xp", float(GameState.get_value("xp", 0)) + 1000.0)
-		GameState.state_changed.emit()
-		return "+1000 XP"
-	elif cmd == "add_5000_exp":
-		GameState.set_value("xp", float(GameState.get_value("xp", 0)) + 5000.0)
-		GameState.state_changed.emit()
-		return "+5000 XP"
-	elif cmd == "add_50000_exp":
-		GameState.set_value("xp", float(GameState.get_value("xp", 0)) + 50000.0)
-		GameState.state_changed.emit()
-		return "+50000 XP"
-	elif cmd == "add_1000_money":
-		GameState.set_value("repticash", float(GameState.get_value("repticash", 0)) + 1000.0)
-		GameState.state_changed.emit()
-		return "+1000 repticash"
-	elif cmd == "add_5000_money":
-		GameState.set_value("repticash", float(GameState.get_value("repticash", 0)) + 5000.0)
-		GameState.state_changed.emit()
-		return "+5000 repticash"
-	elif cmd == "add_500000_money":
-		GameState.set_value("repticash", float(GameState.get_value("repticash", 0)) + 500000.0)
-		GameState.state_changed.emit()
-		return "+500000 repticash"
-	elif cmd == "skip_all_build_in_progress":
-		var habitats: Variant = GameState.get_value("habitats", {})
-		if typeof(habitats) == TYPE_DICTIONARY:
-			for habitat_id in (habitats as Dictionary).keys():
-				var h: Variant = (habitats as Dictionary)[habitat_id]
-				if typeof(h) != TYPE_DICTIONARY:
-					continue
-				var hd := h as Dictionary
-				if bool(hd.get("is_building", false)):
-					hd["build_finish_at"] = 1
-				if bool(hd.get("is_upgrading", false)):
-					hd["upgrade_finish_at"] = 1
-		var reptile_system: Node = get_node_or_null("/root/ReptileSystem")
-		if reptile_system != null and reptile_system.has_method("apply_time_updates"):
-			reptile_system.call("apply_time_updates", false)
-		GameState.state_changed.emit()
-		return "Build skipped"
-	elif cmd == "skip_pairings":
-		var chambers_val: Variant = GameState.get_value("breeding_chambers", {})
-		if typeof(chambers_val) == TYPE_DICTIONARY:
-			for ckey in (chambers_val as Dictionary).keys():
-				var cv: Variant = (chambers_val as Dictionary)[ckey]
-				if typeof(cv) != TYPE_DICTIONARY:
-					continue
-				var cd: Dictionary = cv as Dictionary
-				if str(cd.get("state", "")) == "breeding":
-					cd["ends_at"] = 1
-					(chambers_val as Dictionary)[ckey] = cd
-			GameState.set_value("breeding_chambers", chambers_val)
-		var rs: Node = get_node_or_null("/root/ReptileSystem")
-		if rs != null and rs.has_method("apply_time_updates"):
-			rs.call("apply_time_updates", false)
-		GameState.state_changed.emit()
-		return "Pairings skipped"
-	elif cmd == "skip_incubations" or cmd == "skip_all_incubations":
-		var is_node: Node = get_node_or_null("/root/IncubationSystem")
-		if is_node != null and is_node.has_method("skip_all_incubations"):
-			is_node.call("skip_all_incubations")
-		SaveSystem.save_game()
-		GameState.state_changed.emit()
-		return "Incubations skipped"
-	elif cmd == "skip_all_connections":
-		var chambers_val: Variant = GameState.get_value("breeding_chambers", {})
-		if typeof(chambers_val) == TYPE_DICTIONARY:
-			var chambers: Dictionary = chambers_val as Dictionary
-			for ckey in chambers.keys():
-				var cv: Variant = chambers.get(ckey)
-				if typeof(cv) != TYPE_DICTIONARY:
-					continue
-				var cd: Dictionary = cv as Dictionary
-				if str(cd.get("state", "")) == "breeding":
-					cd["ends_at"] = 1
-					chambers[ckey] = cd
-			GameState.set_value("breeding_chambers", chambers)
-		var bs: Node = get_node_or_null("/root/BreedingSystem")
-		if bs != null and bs.has_method("tick_chambers"):
-			bs.call("tick_chambers")
-		SaveSystem.save_game()
-		GameState.state_changed.emit()
-		return "Connections skipped"
-	elif cmd == "reset_onboarding":
-		var onboarding_reset: Node = get_node_or_null("/root/OnboardingSystem")
-		if onboarding_reset != null and onboarding_reset.has_method("reset_onboarding"):
-			onboarding_reset.call("reset_onboarding", true)
-			return "Onboarding reset"
-		return "Onboarding unavailable"
-	elif cmd == "complete_onboarding":
-		var onboarding_complete: Node = get_node_or_null("/root/OnboardingSystem")
-		if onboarding_complete != null and onboarding_complete.has_method("complete_onboarding"):
-			onboarding_complete.call("complete_onboarding")
-			return "Onboarding completed"
-		return "Onboarding unavailable"
-	elif cmd == "start_onboarding":
-		var onboarding_start: Node = get_node_or_null("/root/OnboardingSystem")
-		if onboarding_start != null and onboarding_start.has_method("start_onboarding"):
-			onboarding_start.call("start_onboarding")
-			return "Onboarding started"
-		return "Onboarding unavailable"
-	elif cmd.is_empty():
+	var cmd := command.strip_edges().to_lower()
+	if cmd.is_empty():
 		return ""
-	return "Unknown: " + cmd
+
+	match cmd:
+		"add_10000_money":
+			EconomySystem.add_currency("repticash", 10000.0)
+			return "+10000 repticash"
+		"add_10000_exp":
+			EconomySystem.add_currency("xp", 10000.0)
+			return "+10000 XP"
+		"skip_all_buildings":
+			_skip_all_buildings()
+			return "Buildings skipped"
+		"skip_all_pairings":
+			_skip_all_pairings()
+			return "Pairings skipped"
+		"skip_all_incubations":
+			_skip_all_incubations()
+			return "Incubations skipped"
+		"add_house_access":
+			_grant_house_access()
+			return "House access granted"
+		_:
+			return "Unknown: " + cmd
+
+
+func _skip_all_buildings() -> void:
+	var habitats_value: Variant = GameState.get_value("habitats", {})
+	if typeof(habitats_value) != TYPE_DICTIONARY:
+		return
+
+	var habitats: Dictionary = (habitats_value as Dictionary).duplicate(true)
+	var changed: bool = false
+	for habitat_id in habitats.keys():
+		var habitat_value: Variant = habitats.get(habitat_id)
+		if typeof(habitat_value) != TYPE_DICTIONARY:
+			continue
+
+		var habitat: Dictionary = (habitat_value as Dictionary).duplicate(true)
+		var habitat_changed: bool = false
+		if bool(habitat.get("is_building", false)):
+			habitat["build_finish_at"] = 1
+			habitat_changed = true
+		if bool(habitat.get("is_upgrading", false)):
+			habitat["upgrade_finish_at"] = 1
+			habitat_changed = true
+		if habitat_changed:
+			habitats[habitat_id] = habitat
+			changed = true
+
+	if not changed:
+		return
+
+	GameState.set_value("habitats", habitats)
+	var reptile_system: Node = get_node_or_null("/root/ReptileSystem")
+	if reptile_system != null and reptile_system.has_method("apply_time_updates"):
+		reptile_system.call("apply_time_updates", true)
+	else:
+		SaveSystem.save_game()
+	GameState.state_changed.emit()
+
+
+func _skip_all_pairings() -> void:
+	var chambers_value: Variant = GameState.get_value("breeding_chambers", {})
+	if typeof(chambers_value) != TYPE_DICTIONARY:
+		return
+
+	var chambers: Dictionary = (chambers_value as Dictionary).duplicate(true)
+	var changed: bool = false
+	for chamber_key in chambers.keys():
+		var chamber_value: Variant = chambers.get(chamber_key)
+		if typeof(chamber_value) != TYPE_DICTIONARY:
+			continue
+
+		var chamber: Dictionary = (chamber_value as Dictionary).duplicate(true)
+		if str(chamber.get("state", "")) == "breeding":
+			chamber["ends_at"] = 1
+			chambers[chamber_key] = chamber
+			changed = true
+
+	if not changed:
+		return
+
+	GameState.set_value("breeding_chambers", chambers)
+	var breeding_system: Node = get_node_or_null("/root/BreedingSystem")
+	if breeding_system != null and breeding_system.has_method("tick_chambers"):
+		breeding_system.call("tick_chambers")
+	SaveSystem.save_game()
+	GameState.state_changed.emit()
+
+
+func _skip_all_incubations() -> void:
+	var incubation_system: Node = get_node_or_null("/root/IncubationSystem")
+	if incubation_system != null and incubation_system.has_method("skip_all_incubations"):
+		incubation_system.call("skip_all_incubations")
+	SaveSystem.save_game()
+	GameState.state_changed.emit()
+
+
+func _grant_house_access() -> void:
+	var unlocked_value: Variant = GameState.get_value("unlocked_biomes", [])
+	var unlocked: Array = []
+	if typeof(unlocked_value) == TYPE_ARRAY:
+		unlocked = (unlocked_value as Array).duplicate()
+
+	if not unlocked.has(GameState.DEFAULT_BIOME_ID):
+		unlocked.append(GameState.DEFAULT_BIOME_ID)
+	if not unlocked.has("house"):
+		unlocked.append("house")
+
+	GameState.set_value("unlocked_biomes", unlocked)
+	var achievement_system: Node = get_node_or_null("/root/AchievementSystem")
+	if achievement_system != null and achievement_system.has_method("notify_progress_changed"):
+		achievement_system.call("notify_progress_changed")
+	SaveSystem.save_game()
+	GameState.state_changed.emit()
 
 
 func _make_separator() -> HSeparator:

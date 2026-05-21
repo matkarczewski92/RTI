@@ -38,7 +38,9 @@
       "Bash(Get-ChildItem -Path \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\" -Recurse -Filter \"*.json\")",
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Get-ChildItem -Path \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\" -Recurse -Directory)",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "Bash(Select-String -Path \"e:\\\\AndroidApp\\\\Reptile Tycoon Idle\\\\scripts\\\\ui\\\\BiomeMap.gd\" -Pattern \"NEW_CARD|house_button|_on_house|HOUSE_CARD|INCUBATOR_CARD\")",
+      "Bash(Select-Object LineNumber, Line)"
     ]
   }
 }

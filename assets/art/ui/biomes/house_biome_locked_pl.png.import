@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cks4yvvwj7ge8"
-path="res://.godot/imported/dry_praire_background.png-52cef50f655b980dff6fdb575afcde0a.ctex"
+uid="uid://5ete0hothc4x"
+path="res://.godot/imported/house_biome_locked_pl.png-ad677a52b22e050ef72a9e8dace3ffe2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/biomes/dry_praire_background.png"
-dest_files=["res://.godot/imported/dry_praire_background.png-52cef50f655b980dff6fdb575afcde0a.ctex"]
+source_file="res://assets/art/ui/biomes/house_biome_locked_pl.png"
+dest_files=["res://.godot/imported/house_biome_locked_pl.png-ad677a52b22e050ef72a9e8dace3ffe2.ctex"]
 
 [params]
 

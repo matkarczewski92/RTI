@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c3raery3s4c2e"
-path="res://.godot/imported/empty.png-7b982aa3dadc4bea784663f4ec2a408d.ctex"
+uid="uid://ds8bh156w43"
+path="res://.godot/imported/house_biome_play_pl.png-3543e11b7bdfcef241a793c2794cfa07.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/habitats_home/empty.png"
-dest_files=["res://.godot/imported/empty.png-7b982aa3dadc4bea784663f4ec2a408d.ctex"]
+source_file="res://assets/art/ui/biomes/house_biome_play_pl.png"
+dest_files=["res://.godot/imported/house_biome_play_pl.png-3543e11b7bdfcef241a793c2794cfa07.ctex"]
 
 [params]
 

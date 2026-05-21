@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bm04unoqqlte7"
-path="res://.godot/imported/green_meadow_background.png-1e76c106b440c61dfd04182cb6b93e4a.ctex"
+uid="uid://dvqxiugaotlol"
+path="res://.godot/imported/in_progress — kopia.png-e3b6390fff328f318c214359a63c3681.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/biomes/green_meadow_background.png"
-dest_files=["res://.godot/imported/green_meadow_background.png-1e76c106b440c61dfd04182cb6b93e4a.ctex"]
+source_file="res://assets/art/habitats_home/in_progress — kopia.png"
+dest_files=["res://.godot/imported/in_progress — kopia.png-e3b6390fff328f318c214359a63c3681.ctex"]
 
 [params]
 

@@ -33,6 +33,7 @@ var upgrade_label: Label
 var occupied_icon_path := ""
 var empty_texture_path: String = EMPTY_TEXTURE_PATH
 var purchased_texture_path := PURCHASED_EMPTY_TEXTURE_PATH
+var hide_empty_background: bool = false
 var needs_attention := false
 var income_progress_value := 0.0
 var is_upgrading := false
@@ -88,7 +89,7 @@ func _build_layout() -> void:
 	background.name = "Background"
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	background.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	visual_root.add_child(background)
 
 	fallback_panel = PanelContainer.new()
@@ -212,10 +213,14 @@ func _refresh_visuals() -> void:
 		texture_path = purchased_texture_path if not purchased_texture_path.is_empty() else PURCHASED_EMPTY_TEXTURE_PATH
 
 	_apply_state_geometry()
-	var texture: Texture2D = AssetPaths.load_texture(texture_path)
-	background.texture = texture
-	background.visible = texture != null
-	fallback_panel.visible = texture == null
+	if hide_empty_background and slot_state == STATE_NOT_PURCHASED:
+		background.visible = false
+		fallback_panel.visible = false
+	else:
+		var texture: Texture2D = AssetPaths.load_texture(texture_path)
+		background.texture = texture
+		background.visible = texture != null
+		fallback_panel.visible = texture == null
 	plus_icon.visible = slot_state != STATE_OCCUPIED and not is_upgrading and plus_icon.texture != null
 	_apply_occupied_icon_texture()
 	reptile_icon.visible = slot_state == STATE_OCCUPIED and reptile_icon.texture != null
@@ -279,6 +284,11 @@ func _apply_occupied_icon_texture() -> void:
 	reptile_icon.visible = slot_state == STATE_OCCUPIED and reptile_icon.texture != null
 
 
+func set_hide_empty_background(value: bool) -> void:
+	hide_empty_background = value
+	_refresh_visuals()
+
+
 func _apply_state_geometry() -> void:
 	var visual_size := empty_visual_size
 	var visual_offset := empty_visual_offset
@@ -288,6 +298,10 @@ func _apply_state_geometry() -> void:
 		visual_size = purchased_visual_size
 		visual_offset = purchased_visual_offset
 		plus_half_size = 24
+	elif slot_state == STATE_NOT_PURCHASED and hide_empty_background:
+		visual_size = purchased_visual_size
+		visual_offset = purchased_visual_offset
+		plus_half_size = 36
 
 	visual_root.offset_left = -visual_size.x * 0.5 + visual_offset.x
 	visual_root.offset_top = -visual_size.y * 0.5 + visual_offset.y
@@ -298,6 +312,23 @@ func _apply_state_geometry() -> void:
 	plus_icon.offset_top = -plus_half_size
 	plus_icon.offset_right = plus_half_size
 	plus_icon.offset_bottom = plus_half_size
+
+	if touch_button != null:
+		if slot_state == STATE_NOT_PURCHASED and hide_empty_background:
+			touch_button.anchor_left = 0.5
+			touch_button.anchor_top = 0.5
+			touch_button.anchor_right = 0.5
+			touch_button.anchor_bottom = 0.5
+			touch_button.offset_left = -visual_size.x * 0.5 + visual_offset.x
+			touch_button.offset_top = -visual_size.y * 0.5 + visual_offset.y
+			touch_button.offset_right = visual_size.x * 0.5 + visual_offset.x
+			touch_button.offset_bottom = visual_size.y * 0.5 + visual_offset.y
+		else:
+			touch_button.set_anchors_preset(Control.PRESET_FULL_RECT)
+			touch_button.offset_left = 0.0
+			touch_button.offset_top = 0.0
+			touch_button.offset_right = 0.0
+			touch_button.offset_bottom = 0.0
 
 
 func _refresh_text() -> void:

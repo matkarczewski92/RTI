@@ -29,7 +29,7 @@ const WATER_XP_REWARD := 2
 const CLEAN_XP_REWARD := 3
 const PLAY_XP_REWARD := 0.1
 const HABITAT_TYPES: Array[String] = ["grass", "sand", "stone", "jungle"]
-const HABITAT_BIOMES: Array[String] = ["green_meadow", "dry_prairie"]
+const HABITAT_BIOMES: Array[String] = ["green_meadow", "dry_prairie", "house"]
 const DEFAULT_RESOURCE_REGEN_INTERVAL := 600
 const DEFAULT_RESOURCE_REGEN_AMOUNT := 1
 const HABITAT_MAX_LEVEL := 3
@@ -82,6 +82,14 @@ func get_available_reptiles(biome_id: String) -> Array:
 			result.append(reptile)
 
 	return result
+
+
+func is_reptile_available_in_biome(reptile_id: String, biome_id: String) -> bool:
+	var reptile: Dictionary = get_reptile(reptile_id)
+	if reptile.is_empty():
+		return false
+
+	return str(reptile.get("biome_id", "")) == biome_id
 
 
 func get_all_variants() -> Array:
@@ -1063,6 +1071,8 @@ func purchase_and_assign_reptile(reptile_id: String, habitat_id: String, biome_i
 	var reptile: Dictionary = get_reptile(reptile_id)
 	if reptile.is_empty():
 		return {"success": false, "message_key": "ui.reptile_unavailable"}
+	if not is_reptile_available_in_biome(reptile_id, biome_id):
+		return {"success": false, "message_key": "ui.reptile_wrong_biome"}
 
 	var price: int = get_reptile_purchase_price(reptile_id)
 	if price > 0 and not EconomySystem.can_afford("repticash", price):
@@ -1074,7 +1084,7 @@ func purchase_and_assign_reptile(reptile_id: String, habitat_id: String, biome_i
 		return {"success": false, "message_key": "ui.habitat_unavailable"}
 
 	var habitat: Dictionary = habitat_value as Dictionary
-	if not bool(habitat.get("purchased", false)):
+	if str(habitat.get("biome_id", biome_id)) != biome_id or not bool(habitat.get("purchased", false)):
 		return {"success": false, "message_key": "ui.habitat_unavailable"}
 	habitat = _normalize_habitat_state(habitat_id, habitat)
 	if bool(habitat.get("is_building", false)):
@@ -1237,7 +1247,7 @@ func purchase_reptile_from_shop(reptile_id: String, rarity: String, sex: String 
 	}
 
 
-func get_owned_unassigned_reptiles() -> Array:
+func get_owned_unassigned_reptiles(biome_id: String = "") -> Array:
 	var result: Array = []
 	var instances: Dictionary = get_owned_reptile_instances()
 	for instance_id in instances.keys():
@@ -1246,6 +1256,9 @@ func get_owned_unassigned_reptiles() -> Array:
 			continue
 
 		var instance: Dictionary = _normalize_owned_instance(instance_value as Dictionary)
+		if not biome_id.is_empty() and not is_reptile_available_in_biome(str(instance.get("reptile_id", "")), biome_id):
+			continue
+
 		var habitat_value: Variant = instance.get("habitat_id", null)
 		if habitat_value == null or str(habitat_value).is_empty():
 			result.append(instance)
@@ -1268,6 +1281,8 @@ func assign_reptile_to_habitat(instance_id: String, habitat_id: String, biome_id
 		return {"success": false, "message_key": "ui.habitat_occupied"}
 	if str(instance.get("breeding_state", "none")) == "breeding":
 		return {"success": false, "message_key": "ui.reptile_unavailable"}
+	if not is_reptile_available_in_biome(str(instance.get("reptile_id", "")), biome_id):
+		return {"success": false, "message_key": "ui.reptile_wrong_biome"}
 
 	var habitats: Dictionary = _get_habitats_state()
 	var habitat_value: Variant = habitats.get(habitat_id, {})

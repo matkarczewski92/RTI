@@ -60,6 +60,56 @@
 		"slot_index": 12
 	},
 	{
+		"id": "house_slot_1",
+		"biome_id": "house",
+		"slot_index": 1
+	},
+	{
+		"id": "house_slot_2",
+		"biome_id": "house",
+		"slot_index": 2
+	},
+	{
+		"id": "house_slot_3",
+		"biome_id": "house",
+		"slot_index": 3
+	},
+	{
+		"id": "house_slot_4",
+		"biome_id": "house",
+		"slot_index": 4
+	},
+	{
+		"id": "house_slot_5",
+		"biome_id": "house",
+		"slot_index": 5
+	},
+	{
+		"id": "house_slot_6",
+		"biome_id": "house",
+		"slot_index": 6
+	},
+	{
+		"id": "house_slot_7",
+		"biome_id": "house",
+		"slot_index": 7
+	},
+	{
+		"id": "house_slot_8",
+		"biome_id": "house",
+		"slot_index": 8
+	},
+	{
+		"id": "house_slot_9",
+		"biome_id": "house",
+		"slot_index": 9
+	},
+	{
+		"id": "house_slot_10",
+		"biome_id": "house",
+		"slot_index": 10
+	},
+	{
 		"id": "dry_prairie_slot_1",
 		"biome_id": "dry_prairie",
 		"slot_index": 1

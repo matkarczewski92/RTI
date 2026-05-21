@@ -10,8 +10,10 @@ const SETTINGS_MODAL_SCRIPT := preload("res://scripts/ui/SettingsModal.gd")
 const BACKGROUND_PATH := "res://assets/art/biomes/incubator_background.png"
 const TOP_BAR_ART_PATH := "res://assets/art/ui/top_bar_incubation.png"
 const BOTTOM_MENU_ART_PATH := "res://assets/art/ui/bottom_menu_incubation.png"
+const BIOMES_CONFIG_PATH := "res://data/biomes.json"
 const INCUBATOR_CONFIG_PATH := "res://data/incubator.json"
 const INCUBATOR_LAYOUT_PATH := "res://data/incubator_layout.json"
+const INCUBATOR_BIOME_ID := "incubator"
 
 const PLUS_ICON_PATH := "res://assets/art/incubator/empty_incubation_or_connection.png"
 const CONNECTION_IN_PROGRESS_PATH := "res://assets/art/incubator/in_progress_icons/incubation_connection_in_progress.png"
@@ -52,6 +54,7 @@ const CARD_SEPARATION      := 9    # inner card VBoxContainer separation
 # ──────────────────────────────────────────────────────────────────────────────
 
 var _config: Dictionary = {}
+var _biome_config: Dictionary = {}
 var _layout: Dictionary = {}
 var _breeding_slot_nodes: Dictionary = {}    # index (int) → Control
 var _incubation_slot_nodes: Dictionary = {}  # index (int) → Control
@@ -104,6 +107,7 @@ var _upgrades_overlay: Control
 func _ready() -> void:
 	ReptileSystem.sync_discovered_variants_from_owned_reptiles()
 	_load_config()
+	_load_biome_config()
 	_load_incubator_layout()
 	_build_layout()
 	_start_tick_timer()
@@ -122,6 +126,27 @@ func _load_config() -> void:
 	file.close()
 	if typeof(data) == TYPE_DICTIONARY:
 		_config = data as Dictionary
+
+
+func _load_biome_config() -> void:
+	_biome_config = {}
+	var file := FileAccess.open(BIOMES_CONFIG_PATH, FileAccess.READ)
+	if file == null:
+		return
+
+	var data: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(data) != TYPE_ARRAY:
+		return
+
+	var biomes: Array = data as Array
+	for entry in biomes:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var biome: Dictionary = entry as Dictionary
+		if str(biome.get("id", "")) == INCUBATOR_BIOME_ID:
+			_biome_config = biome
+			return
 
 
 func _load_incubator_layout() -> void:
@@ -246,7 +271,13 @@ func _add_top_bar() -> void:
 	var top_bar: Control = TOP_BAR_SCENE.instantiate() as Control
 	top_bar.name = "TopBar"
 	if "art_path" in top_bar:
-		top_bar.art_path = TOP_BAR_ART_PATH
+		top_bar.art_path = str(_biome_config.get("top_bar_path", TOP_BAR_ART_PATH))
+	if "biome_id" in top_bar:
+		top_bar.biome_id = INCUBATOR_BIOME_ID
+	if "top_bar_ui_positions" in top_bar:
+		var top_bar_positions: Variant = _biome_config.get("top_bar_ui_positions", {})
+		if typeof(top_bar_positions) == TYPE_DICTIONARY:
+			top_bar.top_bar_ui_positions = top_bar_positions as Dictionary
 	top_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	top_bar.offset_bottom = TOP_BAR_HEIGHT
 	if top_bar.has_signal("settings_pressed"):
@@ -659,7 +690,7 @@ func _add_storage_overlay() -> void:
 	scroll.name = "StorageScroll"
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_configure_scroll_container(scroll)
 	outer.add_child(scroll)
 
 	var content := VBoxContainer.new()
@@ -720,6 +751,7 @@ func _populate_storage_overlay() -> void:
 		for entry in reptiles:
 			if typeof(entry) == TYPE_DICTIONARY:
 				content.add_child(_make_storage_reptile_card(entry as Dictionary))
+	_make_scroll_safe(content)
 
 
 func _add_storage_header(parent: VBoxContainer, key: String, fallback: String) -> void:
@@ -1099,7 +1131,7 @@ func _add_select_overlay() -> void:
 	scroll.name = "SelectScroll"
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_configure_scroll_container(scroll)
 	outer.add_child(scroll)
 
 	var list := VBoxContainer.new()
@@ -1334,7 +1366,7 @@ func _make_parent_column(title_key: String, fallback: String, instances: Array, 
 	scroll.custom_minimum_size = Vector2(0, 350)   # PARENT_COL_SCROLL_H — min height of female/male scroll list
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_configure_scroll_container(scroll)
 	column.add_child(scroll)
 
 	var list := VBoxContainer.new()
@@ -1582,6 +1614,7 @@ func _populate_select_list_step1() -> void:
 	var candidates: Array = _get_available_instances()
 	if candidates.is_empty():
 		_add_list_empty(list, "incubator.no_reptiles_available", "No reptiles available.")
+		_make_scroll_safe(list)
 		return
 	for inst in candidates:
 		list.add_child(_make_reptile_row(inst, func(iid: String) -> void:
@@ -1594,6 +1627,7 @@ func _populate_select_list_step1() -> void:
 			_select_step = 2
 			_populate_select_list_step2()
 		))
+	_make_scroll_safe(list)
 
 
 func _populate_select_list_step2() -> void:
@@ -1609,6 +1643,7 @@ func _populate_select_list_step2() -> void:
 	var candidates: Array = _get_compatible_instances(_selected_instance_a, _select_reptile_id_filter, _select_sex_filter)
 	if candidates.is_empty():
 		_add_list_empty(list, "incubator.no_compatible_partner", "No compatible partner.")
+		_make_scroll_safe(list)
 		return
 	for inst in candidates:
 		list.add_child(_make_reptile_row(inst, func(iid: String) -> void:
@@ -1616,6 +1651,7 @@ func _populate_select_list_step2() -> void:
 			_select_step = 3
 			_populate_duration_step()
 		))
+	_make_scroll_safe(list)
 
 
 func _populate_duration_step() -> void:
@@ -1652,6 +1688,7 @@ func _populate_duration_step() -> void:
 		_localized_text("incubator.long_breeding", "Long (48h)"),
 		_localized_text("incubator.long_bonus_info", "+5pp to ultra rare and exceptional"),
 		BreedingSystem.get_drop_rates(ra, rb, true), true))
+	_make_scroll_safe(list)
 
 
 func _make_duration_option(title_text: String, info_text: String, rates: Dictionary, is_long: bool) -> Control:
@@ -1927,11 +1964,11 @@ func _get_egg_species_id(egg: Dictionary) -> String:
 
 func _get_egg_display_name(species_id: String, egg: Dictionary = {}) -> String:
 	var language: String = GameState.get_language()
-	var egg_name: String = str(egg.get("egg_name_" + language, ""))
-	if not egg_name.is_empty():
-		return egg_name
-	egg_name = IncubationSystem.get_egg_name(species_id, language)
+	var egg_name: String = IncubationSystem.get_egg_name(species_id, language)
 	if not egg_name.is_empty() and egg_name != species_id:
+		return egg_name
+	egg_name = str(egg.get("egg_name_" + language, ""))
+	if not egg_name.is_empty():
 		return egg_name
 	return _localized_species_name(species_id)
 
@@ -2045,6 +2082,12 @@ func _make_scroll_safe(root: Control) -> void:
 	for child in root.get_children():
 		if child is Control:
 			_make_scroll_safe(child as Control)
+
+
+func _configure_scroll_container(scroll: ScrollContainer) -> void:
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.mouse_filter = Control.MOUSE_FILTER_PASS
 
 
 func _format_countdown(seconds: int) -> String:
@@ -2285,7 +2328,7 @@ func _add_incubation_panel() -> void:
 	scroll.name = "IPScroll"
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_configure_scroll_container(scroll)
 	outer.add_child(scroll)
 
 	_incubation_panel_content = VBoxContainer.new()
@@ -2359,6 +2402,7 @@ func _populate_incubation_panel() -> void:
 		"ready_to_hatch":
 			_incubation_panel_title.text = _localized_text("incubation.ready_to_hatch", "Ready to hatch")
 			_ip_show_ready(container)
+	_make_scroll_safe(_incubation_panel_content)
 
 
 func _ip_show_species_select() -> void:
@@ -2784,7 +2828,7 @@ func _add_egg_shop_overlay() -> void:
 	scroll.name = "ESScroll"
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_configure_scroll_container(scroll)
 	outer.add_child(scroll)
 
 	var content := VBoxContainer.new()
@@ -2827,6 +2871,7 @@ func _populate_egg_shop() -> void:
 			var sp_id: String = str(_egg_shop_selected_species.get("species_id", ""))
 			_egg_shop_title_label.text = _localized_species_name(sp_id)
 		_populate_egg_shop_qualities()
+	_make_scroll_safe(_egg_shop_content)
 
 
 func _populate_egg_shop_species() -> void:
@@ -3203,7 +3248,7 @@ func _add_hatch_results_overlay() -> void:
 	scroll.name = "HRScroll"
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_configure_scroll_container(scroll)
 	outer.add_child(scroll)
 
 	var content := VBoxContainer.new()
@@ -3262,6 +3307,7 @@ func _show_hatch_results(results: Array) -> void:
 	added_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.add_child(added_lbl)
 
+	_make_scroll_safe(content)
 	_hatch_results_overlay.visible = true
 
 
@@ -3421,7 +3467,7 @@ func _add_upgrades_overlay() -> void:
 	scroll.name = "UPScroll"
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_configure_scroll_container(scroll)
 	outer.add_child(scroll)
 
 	var content := VBoxContainer.new()
@@ -3674,7 +3720,7 @@ func _add_quests_overlay() -> void:
 	scroll.name = "QScroll"
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_configure_scroll_container(scroll)
 	outer.add_child(scroll)
 
 	var content := VBoxContainer.new()

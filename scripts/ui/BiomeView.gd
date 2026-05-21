@@ -246,6 +246,7 @@ const REPTILE_MGMT_PLAY_PATH := "res://assets/art/ui/reptile_mgm/play.png"
 const REPTILE_MGMT_EXPORT_PATH := "res://assets/art/ui/reptile_mgm/export.png"
 const REPTILE_MGMT_UPGRADE_PATH := "res://assets/art/ui/reptile_mgm/upgrade.png"
 const HABITAT_OPTIONS_BG_PATH := "res://assets/art/ui/reptile_mgm/habitats_options_background.png"
+const HOUSE_HABITAT_OPTIONS_BG_PATH := "res://assets/art/ui/reptile_mgm/discovery_new.png"
 const HABITAT_OPTIONS_REFERENCE_SIZE := Vector2(983, 1417)
 const HABITAT_OPTIONS_WINDOW_SCALE := 0.665
 const HABITAT_OPTIONS_CENTER_OFFSET := Vector2.ZERO
@@ -264,6 +265,12 @@ const HABITAT_OPTIONS_BUY_BUTTON_CENTER_X := 785.0
 const HABITAT_OPTIONS_BUY_BUTTON_SIZE := Vector2(230.0, 108.0)
 const HABITAT_OPTIONS_CANCEL_CENTER := Vector2(491.5, 1366.0)
 const HABITAT_OPTIONS_CANCEL_SIZE := Vector2(690.0, 84.0)
+const HOUSE_HABITAT_OPTIONS_TITLE_CENTER := Vector2(491.5, 88.0)
+const HOUSE_HABITAT_OPTIONS_SUBTITLE_CENTER := Vector2(491.5, 150.0)
+const HOUSE_HABITAT_OPTION_CARD_CENTER_X := 491.5
+const HOUSE_HABITAT_OPTION_CARD_START_Y := 337.0
+const HOUSE_HABITAT_OPTION_CARD_STEP_Y := 266.0
+const HOUSE_HABITAT_OPTION_CARD_SIZE := Vector2(830.0, 230.0)
 const HABITAT_IN_PROGRESS_PATH := "res://assets/art/habitats/in_progress.png"
 const HABITATS_PATH := "res://data/habitats.json"
 const BIOME_HABITAT_LAYOUTS_PATH := "res://data/biome_habitat_layouts.json"
@@ -373,6 +380,8 @@ const DISCOVERY_POPUP_OK_REF_SIZE := Vector2(675.0, 100.0)
 const NAME_POPUP_BG_PATH := "res://assets/art/ui/small_design/name_change_background.png"
 const NAME_POPUP_REF_SIZE := Vector2(900, 660)
 const NAME_POPUP_WINDOW_SCALE := 0.70
+const NAME_POPUP_VERTICAL_OFFSET_RATIO := -0.20
+const NAME_POPUP_LEGACY_VERTICAL_OFFSET := -78.0
 const NAME_POPUP_TITLE_CENTER := Vector2(450.0, 88.0)
 const NAME_POPUP_TITLE_REF_SIZE := Vector2(760.0, 85.0)
 const NAME_POPUP_TITLE_FONT_SIZE := 38
@@ -707,6 +716,23 @@ func _rebuild_layout() -> void:
 	_setup_care_update_timer()
 
 
+func _rebuild_layout_preserving_scroll(scroll_offset: float) -> void:
+	_rebuild_layout()
+	if not _is_biome_scrollable:
+		return
+
+	_scroll_to(scroll_offset)
+	call_deferred("_restore_scroll_offset_after_rebuild", scroll_offset)
+
+
+func _restore_scroll_offset_after_rebuild(scroll_offset: float) -> void:
+	if not _is_biome_scrollable:
+		return
+
+	_compute_scroll_max()
+	_scroll_to(scroll_offset)
+
+
 func _setup_care_update_timer() -> void:
 	if care_update_timer != null:
 		care_update_timer.queue_free()
@@ -899,8 +925,11 @@ func _add_top_bar() -> void:
 		top_bar.art_path = top_bar_art
 	if "biome_id" in top_bar:
 		top_bar.biome_id = biome_id
+	if "top_bar_ui_positions" in top_bar and _biome_config.has("top_bar_ui_positions"):
+		top_bar.top_bar_ui_positions = _biome_config.get("top_bar_ui_positions") as Dictionary
 	top_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	top_bar.offset_bottom = TOP_BAR_HEIGHT
+	top_bar.offset_top = -5.0
+	top_bar.offset_bottom = TOP_BAR_HEIGHT - 5.0
 	if top_bar.has_signal("settings_pressed"):
 		top_bar.connect("settings_pressed", Callable(self, "_show_settings_screen"))
 	add_child(top_bar)
@@ -1252,6 +1281,9 @@ func _get_next_biome_unlock_data() -> Dictionary:
 		if typeof(biome_value) != TYPE_DICTIONARY:
 			continue
 		var biome: Dictionary = biome_value as Dictionary
+		var biome_id_value: String = str(biome.get("id", ""))
+		if _is_biome_unlocked_in_save(biome_id_value):
+			continue
 		var req_value: Variant = biome.get("unlock_requirements", {})
 		if typeof(req_value) != TYPE_DICTIONARY:
 			continue
@@ -1260,11 +1292,18 @@ func _get_next_biome_unlock_data() -> Dictionary:
 			continue
 		next_req_level = req_level
 		next_unlock = {
-			"id": str(biome.get("id", "")),
+			"id": biome_id_value,
 			"name_key": str(biome.get("name_key", "biome.new_biome")),
 			"req_level": req_level
 		}
 	return next_unlock
+
+
+func _is_biome_unlocked_in_save(target_biome_id: String) -> bool:
+	if target_biome_id.is_empty():
+		return false
+	var unlocked_value: Variant = GameState.get_value("unlocked_biomes", [])
+	return typeof(unlocked_value) == TYPE_ARRAY and (unlocked_value as Array).has(target_biome_id)
 
 
 func _get_effective_player_level(total_xp: float = -1.0) -> int:
@@ -1302,14 +1341,24 @@ func _add_habitat_slots(parent: Control) -> void:
 			continue
 		var slot_data: Dictionary = slot_def as Dictionary
 
-		var x_ref := float(slot_data.get("x", _layout_reference_size.x * 0.5))
-		var y_ref := float(slot_data.get("y", _layout_reference_size.y * 0.5))
+		var visual_ref := Vector2(
+			float(slot_data.get("x", _layout_reference_size.x * 0.5)),
+			float(slot_data.get("y", _layout_reference_size.y * 0.5))
+		)
+		var slot_ref := visual_ref + Vector2(
+			float(slot_data.get("slot_x", 0)),
+			float(slot_data.get("slot_y", 0))
+		)
 		var pos_scale := map_sc if use_map_scale else cover_sc
+		var visual_center: Vector2
 		var slot_center: Vector2
 		if use_map_scale:
-			slot_center = Vector2(x_ref * pos_scale, y_ref * pos_scale)
+			visual_center = visual_ref * pos_scale
+			slot_center = slot_ref * pos_scale
 		else:
-			slot_center = cover_orig + Vector2(x_ref, y_ref) * cover_sc - Vector2(0.0, play_area_screen_top)
+			visual_center = cover_orig + visual_ref * cover_sc - Vector2(0.0, play_area_screen_top)
+			slot_center = cover_orig + slot_ref * cover_sc - Vector2(0.0, play_area_screen_top)
+		var visual_center_offset := visual_center - slot_center
 		var slot_scale := float(slot_data.get("scale", 1.0))
 
 		var slot_w := float(slot_data.get("slot_width",  default_slot_w * slot_scale)) * pos_scale
@@ -1323,14 +1372,16 @@ func _add_habitat_slots(parent: Control) -> void:
 		var empty_size    := Vector2(empty_w, empty_h)
 		var purchased_size := Vector2(purchased_w, purchased_h)
 
-		var empty_offset := Vector2(
+		var empty_offset_ref := Vector2(
 			float(slot_data.get("empty_offset_x", 0)),
 			float(slot_data.get("empty_offset_y", 0))
-		) * pos_scale
-		var purchased_offset := Vector2(
+		)
+		var purchased_offset_ref := Vector2(
 			float(slot_data.get("purchased_offset_x", 0)),
 			float(slot_data.get("purchased_offset_y", -21))
-		) * pos_scale
+		)
+		var empty_offset := empty_offset_ref * pos_scale + visual_center_offset
+		var purchased_offset := purchased_offset_ref * pos_scale + visual_center_offset
 
 		var slot: Control = HABITAT_SLOT_SCENE.instantiate() as Control
 		var habitat_id: String = str(habitat.get("id", ""))
@@ -1352,7 +1403,10 @@ func _add_habitat_slots(parent: Control) -> void:
 		slot.call("setup", habitat_id, slot_index, state)
 		if slot.has_method("set_empty_texture"):
 			var art_folder: String = str(_biome_config.get("habitat_art_folder", "res://assets/art/habitats/"))
-			slot.call("set_empty_texture", art_folder + "habitat_slot_empty.png")
+			var empty_filename: String = str(_biome_config.get("habitat_slot_empty_filename", "habitat_slot_empty.png"))
+			slot.call("set_empty_texture", art_folder + empty_filename)
+		if slot.has_method("set_hide_empty_background") and not bool(_biome_config.get("show_empty_slot_background", true)):
+			slot.call("set_hide_empty_background", true)
 		if slot.has_method("set_habitat_texture"):
 			slot.call("set_habitat_texture", _get_habitat_texture_path(habitat_id))
 		if slot.has_method("set_upgrade_status"):
@@ -1469,9 +1523,11 @@ func _on_habitat_pressed(habitat_id: String) -> void:
 func _show_purchase_popup(habitat: Dictionary) -> void:
 	_close_habitat_purchase_modal()
 
-	var background_texture: Texture2D = AssetPaths.load_texture(HABITAT_OPTIONS_BG_PATH)
+	var is_house_options := biome_id == "house"
+	var background_path: String = HOUSE_HABITAT_OPTIONS_BG_PATH if is_house_options else HABITAT_OPTIONS_BG_PATH
+	var background_texture: Texture2D = AssetPaths.load_texture(background_path)
 	if background_texture == null:
-		push_warning("BiomeView: missing habitat options background: " + HABITAT_OPTIONS_BG_PATH)
+		push_warning("BiomeView: missing habitat options background: " + background_path)
 		_show_legacy_purchase_popup(habitat)
 		return
 
@@ -1504,15 +1560,20 @@ func _show_purchase_popup(habitat: Dictionary) -> void:
 	habitat_purchase_modal.add_child(background)
 	_position_reference_control(background, HABITAT_OPTIONS_REFERENCE_SIZE * 0.5, HABITAT_OPTIONS_REFERENCE_SIZE, reference_origin, reference_scale)
 
-	_add_habitat_options_label(habitat_purchase_modal, LocalizationSystem.tr_key("habitat.title"), HABITAT_OPTIONS_TITLE_CENTER, HABITAT_OPTIONS_TITLE_SIZE, 64, POPUP_TEXT_ACCENT, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, true)
-	_add_habitat_options_label(habitat_purchase_modal, LocalizationSystem.tr_key("habitat.choose_type"), HABITAT_OPTIONS_SUBTITLE_CENTER, HABITAT_OPTIONS_SUBTITLE_SIZE, 34, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, false)
+	var title_center: Vector2 = HOUSE_HABITAT_OPTIONS_TITLE_CENTER if is_house_options else HABITAT_OPTIONS_TITLE_CENTER
+	var subtitle_center: Vector2 = HOUSE_HABITAT_OPTIONS_SUBTITLE_CENTER if is_house_options else HABITAT_OPTIONS_SUBTITLE_CENTER
+	_add_habitat_options_label(habitat_purchase_modal, LocalizationSystem.tr_key("habitat.title"), title_center, HABITAT_OPTIONS_TITLE_SIZE, 64, POPUP_TEXT_ACCENT, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, true)
+	_add_habitat_options_label(habitat_purchase_modal, LocalizationSystem.tr_key("habitat.choose_type"), subtitle_center, HABITAT_OPTIONS_SUBTITLE_SIZE, 34, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, false)
 
 	if purchase_cost < 0:
 		_add_habitat_options_label(habitat_purchase_modal, LocalizationSystem.tr_key("ui.all_habitats_purchased"), Vector2(491.5, 720.0), Vector2(720.0, 120.0), 30, POPUP_TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_CENTER, reference_origin, reference_scale, false)
 	else:
 		var row_index: int = 0
 		for habitat_type in _get_habitat_options_order():
-			_add_habitat_option_row(habitat_purchase_modal, habitat_id, slot_index, habitat_type, purchase_cost, row_index, reference_origin, reference_scale)
+			if is_house_options:
+				_add_house_habitat_option_card(habitat_purchase_modal, habitat_id, slot_index, habitat_type, purchase_cost, row_index, reference_origin, reference_scale)
+			else:
+				_add_habitat_option_row(habitat_purchase_modal, habitat_id, slot_index, habitat_type, purchase_cost, row_index, reference_origin, reference_scale)
 			row_index += 1
 
 	_add_habitat_options_button(habitat_purchase_modal, LocalizationSystem.tr_key("ui.cancel"), HABITAT_OPTIONS_CANCEL_CENTER, HABITAT_OPTIONS_CANCEL_SIZE, 38, Callable(self, "_close_habitat_purchase_modal"), reference_origin, reference_scale)
@@ -1611,6 +1672,102 @@ func _add_habitat_option_row(parent: Control, habitat_id: String, slot_index: in
 
 	var buy_callable: Callable = Callable(self, "_on_habitat_option_buy_pressed").bind(habitat_id, slot_index, habitat_type)
 	_add_habitat_options_button(parent, LocalizationSystem.tr_key("ui.buy"), Vector2(HABITAT_OPTIONS_BUY_BUTTON_CENTER_X, row_button_y), HABITAT_OPTIONS_BUY_BUTTON_SIZE, 42, buy_callable, origin, scale)
+
+
+func _add_house_habitat_option_card(parent: Control, habitat_id: String, slot_index: int, habitat_type: String, purchase_cost: int, row_index: int, origin: Vector2, scale: float) -> void:
+	var card_center := Vector2(
+		HOUSE_HABITAT_OPTION_CARD_CENTER_X,
+		HOUSE_HABITAT_OPTION_CARD_START_Y + HOUSE_HABITAT_OPTION_CARD_STEP_Y * float(row_index)
+	)
+	var card: PanelContainer = PanelContainer.new()
+	card.mouse_filter = Control.MOUSE_FILTER_PASS
+	card.add_theme_stylebox_override("panel", _make_house_habitat_option_frame_style())
+	parent.add_child(card)
+	_position_reference_control(card, card_center, HOUSE_HABITAT_OPTION_CARD_SIZE, origin, scale)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.mouse_filter = Control.MOUSE_FILTER_PASS
+	margin.add_theme_constant_override("margin_left", max(1, int(round(24.0 * scale))))
+	margin.add_theme_constant_override("margin_right", max(1, int(round(24.0 * scale))))
+	margin.add_theme_constant_override("margin_top", max(1, int(round(18.0 * scale))))
+	margin.add_theme_constant_override("margin_bottom", max(1, int(round(16.0 * scale))))
+	card.add_child(margin)
+
+	var column: VBoxContainer = VBoxContainer.new()
+	column.add_theme_constant_override("separation", max(1, int(round(8.0 * scale))))
+	margin.add_child(column)
+
+	var preview: TextureRect = TextureRect.new()
+	preview.texture = AssetPaths.load_texture(_get_habitat_option_preview_path(habitat_type))
+	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	preview.custom_minimum_size = Vector2(0, max(1.0, 120.0 * scale))
+	preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(preview)
+
+	var info_row: HBoxContainer = HBoxContainer.new()
+	info_row.add_theme_constant_override("separation", max(1, int(round(16.0 * scale))))
+	info_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.add_child(info_row)
+
+	var text_column: VBoxContainer = VBoxContainer.new()
+	text_column.add_theme_constant_override("separation", max(1, int(round(2.0 * scale))))
+	text_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info_row.add_child(text_column)
+
+	var name_label: Label = Label.new()
+	name_label.text = LocalizationSystem.tr_key(ReptileSystem.get_habitat_type_label_key(habitat_type))
+	name_label.clip_text = true
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_label.add_theme_font_size_override("font_size", max(12, int(round(32.0 * scale))))
+	_apply_label_color(name_label, POPUP_TEXT_PRIMARY)
+	text_column.add_child(name_label)
+
+	var price_label: Label = Label.new()
+	price_label.text = LocalizationSystem.tr_key("currency.repticash") + " " + str(purchase_cost)
+	price_label.clip_text = true
+	price_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	price_label.add_theme_font_size_override("font_size", max(11, int(round(27.0 * scale))))
+	_apply_label_color(price_label, POPUP_TEXT_SUCCESS)
+	text_column.add_child(price_label)
+
+	var buy_button: Button = Button.new()
+	buy_button.text = LocalizationSystem.tr_key("ui.buy")
+	buy_button.custom_minimum_size = Vector2(max(1.0, 170.0 * scale), max(1.0, 62.0 * scale))
+	buy_button.add_theme_font_size_override("font_size", max(12, int(round(32.0 * scale))))
+	buy_button.disabled = purchase_cost > 0 and not EconomySystem.can_afford("repticash", purchase_cost)
+	buy_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.25, 0.58, 0.24, 1.0)))
+	buy_button.add_theme_stylebox_override("hover", _make_button_style(Color(0.30, 0.66, 0.29, 1.0)))
+	buy_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.20, 0.48, 0.19, 1.0)))
+	buy_button.add_theme_stylebox_override("disabled", _make_button_style(Color(0.45, 0.45, 0.42, 0.75)))
+	_apply_button_text_color(buy_button, BUTTON_TEXT_COLOR)
+	buy_button.pressed.connect(Callable(self, "_on_habitat_option_buy_pressed").bind(habitat_id, slot_index, habitat_type))
+	info_row.add_child(buy_button)
+
+
+func _make_house_habitat_option_frame_style() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(1.0, 1.0, 1.0, 0.0)
+	style.border_color = Color(0.37, 0.46, 0.16, 0.82)
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(14)
+	return style
+
+
+func _get_habitat_option_preview_path(habitat_type: String) -> String:
+	var folder: String = str(_biome_config.get("habitat_art_folder", "res://assets/art/habitats/"))
+	var normalized_type: String = ReptileSystem.normalize_habitat_type(habitat_type)
+	var visual_variants_cfg: Variant = _biome_config.get("habitat_visual_variants", null)
+	if visual_variants_cfg != null and typeof(visual_variants_cfg) == TYPE_DICTIONARY:
+		var filenames: Variant = (visual_variants_cfg as Dictionary).get(normalized_type, null)
+		if filenames != null and typeof(filenames) == TYPE_ARRAY:
+			var filenames_array: Array = filenames as Array
+			if filenames_array.size() > 0:
+				return folder + str(filenames_array[0])
+
+	return folder + normalized_type + "_basic.png"
 
 
 func _add_habitat_options_label(parent: Control, text: String, reference_center: Vector2, reference_size: Vector2, base_font_size: int, color: Color, alignment: HorizontalAlignment, origin: Vector2, scale: float, with_shadow: bool) -> Label:
@@ -1801,18 +1958,22 @@ func _show_reptile_assignment_popup(habitat_id: String) -> void:
 	scroll.custom_minimum_size = Vector2(0, 696)
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.mouse_filter = Control.MOUSE_FILTER_PASS
 	column.add_child(scroll)
 
 	var list: VBoxContainer = VBoxContainer.new()
 	list.add_theme_constant_override("separation", 14)
 	list.custom_minimum_size = Vector2(max(0.0, modal_width - 58.0) * 0.866, 0)
 	list.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	list.mouse_filter = Control.MOUSE_FILTER_PASS
 	scroll.add_child(list)
 
-	var instances: Array = ReptileSystem.get_owned_unassigned_reptiles()
+	var instances: Array = ReptileSystem.get_owned_unassigned_reptiles(biome_id)
 	if instances.is_empty():
 		_close_reptile_selection_modal()
-		_show_no_available_reptiles_popup()
+		_show_no_available_reptiles_popup("ui.no_available_reptiles_for_biome_message")
 		return
 
 	for instance_value in instances:
@@ -1823,64 +1984,124 @@ func _show_reptile_assignment_popup(habitat_id: String) -> void:
 		list.add_child(_make_assignable_reptile_card(instance, habitat_id))
 
 
-func _show_no_available_reptiles_popup() -> void:
+func _show_no_available_reptiles_popup(message_key: String = "ui.no_available_reptiles_message") -> void:
 	_close_reptile_selection_modal()
 
 	reptile_selection_modal = Control.new()
 	reptile_selection_modal.name = "NoAvailableReptilesModal"
 	reptile_selection_modal.set_anchors_preset(Control.PRESET_FULL_RECT)
+	reptile_selection_modal.z_index = 30
 	add_child(reptile_selection_modal)
 
 	var overlay: ColorRect = ColorRect.new()
+	overlay.name = "DimOverlay"
 	overlay.color = Color(0.04, 0.05, 0.04, 0.62)
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	reptile_selection_modal.add_child(overlay)
 
 	var center: CenterContainer = CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.offset_left = 24
-	center.offset_right = -24
+	center.offset_left = 20
+	center.offset_right = -20
 	center.offset_top = TOP_BAR_HEIGHT * 0.5
 	center.offset_bottom = -(BOTTOM_NAV_HEIGHT * 0.5)
 	reptile_selection_modal.add_child(center)
 
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var modal_width: float = min(max(viewport_size.x * 0.92, 620.0), viewport_size.x - 24.0)
 	var panel: PanelContainer = PanelContainer.new()
-	panel.custom_minimum_size = Vector2(420, 260)
-	panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
+	panel.custom_minimum_size = Vector2(modal_width, 936)
+	var panel_bg_tex: Texture2D = AssetPaths.load_texture(ASSIGN_CARD_BG_PATH)
+	if panel_bg_tex != null:
+		var panel_style: StyleBoxTexture = StyleBoxTexture.new()
+		panel_style.texture = panel_bg_tex
+		panel_style.draw_center = true
+		panel_style.texture_margin_left = 48.0
+		panel_style.texture_margin_right = 48.0
+		panel_style.texture_margin_top = 40.0
+		panel_style.texture_margin_bottom = 40.0
+		panel.add_theme_stylebox_override("panel", panel_style)
+	else:
+		panel.add_theme_stylebox_override("panel", _make_modal_panel_style())
 	center.add_child(panel)
 
 	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 20)
-	margin.add_theme_constant_override("margin_right", 20)
-	margin.add_theme_constant_override("margin_top", 18)
-	margin.add_theme_constant_override("margin_bottom", 18)
+	margin.add_theme_constant_override("margin_left", 29)
+	margin.add_theme_constant_override("margin_right", 29)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_bottom", 29)
 	panel.add_child(margin)
 
 	var column: VBoxContainer = VBoxContainer.new()
-	column.add_theme_constant_override("separation", 12)
+	column.add_theme_constant_override("separation", 19)
 	margin.add_child(column)
 
-	var title: Label = _make_popup_label(LocalizationSystem.tr_key("ui.no_available_reptiles"), 20)
-	_apply_label_color(title, POPUP_TEXT_PRIMARY)
-	column.add_child(title)
+	var header: HBoxContainer = HBoxContainer.new()
+	header.add_theme_constant_override("separation", 17)
+	column.add_child(header)
 
-	var message: Label = _make_popup_label(LocalizationSystem.tr_key("ui.no_available_reptiles_message"), 14)
+	var title: Label = _make_popup_label(LocalizationSystem.tr_key("ui.no_available_reptiles"), 34)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_label_color(title, POPUP_TEXT_PRIMARY)
+	header.add_child(title)
+
+	var close_button: TextureButton = TextureButton.new()
+	close_button.custom_minimum_size = Vector2(65, 65)
+	close_button.ignore_texture_size = true
+	close_button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	var close_tex: Texture2D = AssetPaths.load_texture(REPTILE_MGMT_CLOSE_PATH)
+	close_button.texture_normal = close_tex
+	close_button.texture_hover = close_tex
+	close_button.texture_pressed = close_tex
+	close_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	close_button.focus_mode = Control.FOCUS_NONE
+	close_button.pressed.connect(_close_reptile_selection_modal)
+	header.add_child(close_button)
+
+	var subtitle: Label = _make_popup_label(LocalizationSystem.tr_key("ui.available_reptiles"), 20)
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_apply_label_color(subtitle, POPUP_TEXT_SECONDARY)
+	column.add_child(subtitle)
+
+	var body: CenterContainer = CenterContainer.new()
+	body.custom_minimum_size = Vector2(0, 696)
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(body)
+
+	var empty_column: VBoxContainer = VBoxContainer.new()
+	empty_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	empty_column.add_theme_constant_override("separation", 18)
+	empty_column.custom_minimum_size = Vector2(min(520.0, modal_width - 96.0), 0)
+	body.add_child(empty_column)
+
+	var message: Label = _make_popup_label(LocalizationSystem.tr_key(message_key), 14)
+	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	message.add_theme_font_size_override("font_size", 18)
 	_apply_label_color(message, POPUP_TEXT_SECONDARY)
-	column.add_child(message)
+	empty_column.add_child(message)
 
 	var open_shop: Button = _make_popup_button("ui.open_shop", func() -> void:
 		_close_reptile_selection_modal()
 		_show_shop_view()
 	)
+	open_shop.custom_minimum_size = Vector2(360, 72)
 	open_shop.add_theme_stylebox_override("normal", _make_button_style(Color(0.25, 0.58, 0.24, 1.0)))
 	open_shop.add_theme_stylebox_override("hover", _make_button_style(Color(0.30, 0.66, 0.29, 1.0)))
 	open_shop.add_theme_stylebox_override("pressed", _make_button_style(Color(0.20, 0.48, 0.19, 1.0)))
 	_apply_button_text_color(open_shop, BUTTON_TEXT_COLOR)
-	column.add_child(open_shop)
+	empty_column.add_child(open_shop)
 
-	column.add_child(_make_popup_button("ui.cancel", func() -> void:
+	var cancel_button: Button = _make_popup_button("ui.cancel", func() -> void:
 		_close_reptile_selection_modal()
-	))
+	)
+	cancel_button.custom_minimum_size = Vector2(360, 72)
+	cancel_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.43, 0.41, 0.36, 1.0)))
+	cancel_button.add_theme_stylebox_override("hover", _make_button_style(Color(0.50, 0.48, 0.42, 1.0)))
+	cancel_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.34, 0.32, 0.28, 1.0)))
+	_apply_button_text_color(cancel_button, BUTTON_TEXT_COLOR)
+	empty_column.add_child(cancel_button)
 
 
 func _make_assignable_reptile_card(instance: Dictionary, habitat_id: String) -> Control:
@@ -1978,6 +2199,7 @@ func _make_assignable_reptile_card(instance: Dictionary, habitat_id: String) -> 
 	)
 	action_area.add_child(button)
 
+	_make_scroll_safe(card)
 	return card
 
 
@@ -5393,11 +5615,12 @@ func _make_owned_reptile_card(instance: Dictionary) -> Control:
 	action_area.add_child(manage_button)
 
 	if not is_assigned:
-		var assign_button: Button = _make_owned_card_action_button("animals.assign")
-		assign_button.pressed.connect(func() -> void:
-			_show_assign_instance_to_habitat_popup(str(instance.get("instance_id", "")))
-		)
-		action_area.add_child(assign_button)
+		if _is_owned_instance_from_current_biome(str(instance.get("instance_id", ""))):
+			var assign_button: Button = _make_owned_card_action_button("animals.assign")
+			assign_button.pressed.connect(func() -> void:
+				_show_assign_instance_to_habitat_popup(str(instance.get("instance_id", "")))
+			)
+			action_area.add_child(assign_button)
 
 		var sell_price: int = ReptileSystem.calculate_sell_price(instance)
 		var sell_button: Button = _make_release_action_button("animals.sell")
@@ -5865,6 +6088,10 @@ func _close_upgrades_view() -> void:
 
 
 func _show_assign_instance_to_habitat_popup(instance_id: String) -> void:
+	if not _is_owned_instance_from_current_biome(instance_id):
+		_show_message_popup("ui.reptile_wrong_biome")
+		return
+
 	_close_reptile_selection_modal()
 
 	reptile_selection_modal = Control.new()
@@ -5932,6 +6159,16 @@ func _show_assign_instance_to_habitat_popup(instance_id: String) -> void:
 	))
 
 
+func _is_owned_instance_from_current_biome(instance_id: String) -> bool:
+	var instances: Dictionary = ReptileSystem.get_owned_reptile_instances()
+	var instance_value: Variant = instances.get(instance_id, {})
+	if typeof(instance_value) != TYPE_DICTIONARY:
+		return false
+
+	var instance: Dictionary = instance_value as Dictionary
+	return ReptileSystem.is_reptile_available_in_biome(str(instance.get("reptile_id", "")), biome_id)
+
+
 func _make_assign_habitat_button(instance_id: String, habitat_id: String, slot_index: int) -> Button:
 	var button: Button = Button.new()
 	button.custom_minimum_size = Vector2(0, 46)
@@ -5967,8 +6204,11 @@ func _try_purchase_habitat(habitat_id: String, slot_index: int, habitat_type: St
 		_show_message_popup("ui.not_enough_currency")
 		return
 
+	var scroll_offset_before_purchase := _scroll_offset
 	var now: int = Time.get_unix_time_from_system()
 	var build_duration: int = ReptileSystem.get_habitat_build_duration_seconds(biome_id)
+	var vv_cfg: Variant = _biome_config.get("habitat_visual_variants", null)
+	var visual_variant: int = randi() % 2 if vv_cfg != null and typeof(vv_cfg) == TYPE_DICTIONARY else 0
 	var habitats: Dictionary = _get_habitats_state()
 	habitats[habitat_id] = {
 		"habitat_id": habitat_id,
@@ -5986,6 +6226,7 @@ func _try_purchase_habitat(habitat_id: String, slot_index: int, habitat_type: St
 		"upgrade_finish_at": 0,
 		"habitat_variant_id": "default",
 		"habitat_skin_id": "default",
+		"habitat_visual_variant": visual_variant,
 		"reptile_id": "",
 		"reptile_instance_id": "",
 		"animal_instance_id": ""
@@ -5998,6 +6239,8 @@ func _try_purchase_habitat(habitat_id: String, slot_index: int, habitat_type: St
 
 	if action_popup != null:
 		action_popup.hide()
+
+	_rebuild_layout_preserving_scroll(scroll_offset_before_purchase)
 
 
 func _ensure_ui_modal_layer() -> CanvasLayer:
@@ -6599,6 +6842,7 @@ func _show_reptile_name_popup(instance_id: String, edit_mode: bool) -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	var reference_scale: float = min(viewport_size.x / NAME_POPUP_REF_SIZE.x, viewport_size.y / NAME_POPUP_REF_SIZE.y) * NAME_POPUP_WINDOW_SCALE
 	var reference_origin: Vector2 = (viewport_size - NAME_POPUP_REF_SIZE * reference_scale) * 0.5
+	reference_origin.y += NAME_POPUP_REF_SIZE.y * NAME_POPUP_VERTICAL_OFFSET_RATIO * reference_scale
 
 	var background: TextureRect = TextureRect.new()
 	background.texture = background_texture
@@ -6696,8 +6940,8 @@ func _build_name_popup_legacy(instance_id: String, instance: Dictionary, reptile
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.offset_left = 24
 	center.offset_right = -24
-	center.offset_top = TOP_BAR_HEIGHT * 0.5
-	center.offset_bottom = -(BOTTOM_NAV_HEIGHT * 0.5)
+	center.offset_top = TOP_BAR_HEIGHT * 0.5 + NAME_POPUP_LEGACY_VERTICAL_OFFSET
+	center.offset_bottom = -(BOTTOM_NAV_HEIGHT * 0.5) + NAME_POPUP_LEGACY_VERTICAL_OFFSET
 	naming_modal.add_child(center)
 
 	var panel: PanelContainer = PanelContainer.new()
@@ -7456,6 +7700,8 @@ func _get_sorted_owned_instances() -> Array:
 			var inst: Dictionary = instance_value as Dictionary
 			if str(inst.get("breeding_state", "none")) == "breeding":
 				continue
+			if not ReptileSystem.is_reptile_available_in_biome(str(inst.get("reptile_id", "")), biome_id):
+				continue
 			result.append(inst)
 
 	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
@@ -7686,6 +7932,17 @@ func _get_habitat_texture_path(habitat_id: String) -> String:
 
 	var folder: String = str(_biome_config.get("habitat_art_folder", "res://assets/art/habitats/"))
 	var habitat_type: String = ReptileSystem.normalize_habitat_type(str(habitat.get("habitat_type", "grass")))
+
+	var visual_variants_cfg: Variant = _biome_config.get("habitat_visual_variants", null)
+	if visual_variants_cfg != null and typeof(visual_variants_cfg) == TYPE_DICTIONARY:
+		var vv: Dictionary = visual_variants_cfg as Dictionary
+		var filenames: Variant = vv.get(habitat_type, null)
+		if filenames != null and typeof(filenames) == TYPE_ARRAY:
+			var fn_arr: Array = filenames as Array
+			if fn_arr.size() > 0:
+				var idx: int = clampi(int(habitat.get("habitat_visual_variant", 0)), 0, fn_arr.size() - 1)
+				return folder + str(fn_arr[idx])
+
 	var level: int = ReptileSystem.normalize_habitat_level(habitat.get("habitat_level", 1))
 	var suffix: String = "basic"
 	match level:

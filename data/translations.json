@@ -107,6 +107,18 @@
 		"pl": "Ciep\u0142y, suchy biom do odblokowania p\u00f3\u017aniej.",
 		"en": "A warm, dry biome to unlock later."
 	},
+	"biome.house.name": {
+		"pl": "Domowa hodowla",
+		"en": "Home Breeding"
+	},
+	"biome.house": {
+		"pl": "Domowa hodowla",
+		"en": "Home Breeding"
+	},
+	"biome.house.description": {
+		"pl": "Pok\u00f3j hodowcy z terrariami i r\u00f3\u017cnymi gatunkami gad\u00f3w.",
+		"en": "A breeder's room filled with terrariums and reptile species."
+	},
 	"reptile.leopard_gecko.name": {
 		"pl": "Gekon lamparci",
 		"en": "Leopard Gecko"
@@ -800,6 +812,10 @@
 		"pl": "Nie masz \u017cadnego wolnego gada. Kup gada w sklepie.",
 		"en": "You do not have any available reptiles. Buy a reptile in the shop."
 	},
+	"ui.no_available_reptiles_for_biome_message": {
+		"pl": "Nie masz wolnego gada przypisanego do tego biomu. Kup gada w sklepie tego biomu.",
+		"en": "You do not have an available reptile assigned to this biome. Buy a reptile in this biome's shop."
+	},
 	"ui.open_shop": {
 		"pl": "Otw\u00f3rz sklep",
 		"en": "Open shop"
@@ -1319,6 +1335,10 @@
 	"ui.reptile_unavailable": {
 		"pl": "Ten gad jest niedost\u0119pny",
 		"en": "This reptile is unavailable"
+	},
+	"ui.reptile_wrong_biome": {
+		"pl": "Ten gad nie nale\u017cy do tego biomu",
+		"en": "This reptile does not belong to this biome"
 	},
 	"ui.habitat_unavailable": {
 		"pl": "Ten habitat jest niedost\u0119pny",
