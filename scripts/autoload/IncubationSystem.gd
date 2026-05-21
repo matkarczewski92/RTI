@@ -877,12 +877,22 @@ func hatch_batch(container_index: int) -> Dictionary:
 		if not consumed_ids.has(_egg_id(egg)):
 			remaining_eggs.append(egg)
 	storage["eggs"] = remaining_eggs
-	var storage_reptiles: Array = storage.get("reptiles", []) as Array
+	var hatched_ids: Dictionary = {}
 	for inst in new_instances:
 		var sid: String = str(inst.get("instance_id", ""))
-		print("[Hatch→Storage] id=", sid, " species=", inst.get("species_id", ""), " rarity=", inst.get("rarity", ""), " variant_id=", inst.get("variant_id", ""))
-		storage_reptiles.append({"instance_id": sid, "source": "incubation"})
-	storage["reptiles"] = storage_reptiles
+		hatched_ids[sid] = true
+		print("[Hatch->Pool] id=", sid, " species=", inst.get("species_id", ""), " rarity=", inst.get("rarity", ""), " variant_id=", inst.get("variant_id", ""))
+
+	var storage_reptiles: Array = storage.get("reptiles", []) as Array
+	var kept_storage_reptiles: Array = []
+	for reptile_entry in storage_reptiles:
+		if typeof(reptile_entry) != TYPE_DICTIONARY:
+			kept_storage_reptiles.append(reptile_entry)
+			continue
+		var entry: Dictionary = reptile_entry as Dictionary
+		if not hatched_ids.has(str(entry.get("instance_id", ""))):
+			kept_storage_reptiles.append(entry)
+	storage["reptiles"] = kept_storage_reptiles
 	_write_storage(storage)
 
 	containers = _read_containers()

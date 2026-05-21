@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://chi1awik1ex64"
-path="res://.godot/imported/incubation_connection_in_progress.png-116f739d2d08eb6d513a308d259f2971.ctex"
+uid="uid://1ysy456c5mrc"
+path="res://.godot/imported/incubator_background_long.png-5f9b3214416473c2b5c00352d7ce6876.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/incubator/in_progress_icons/incubation_connection_in_progress.png"
-dest_files=["res://.godot/imported/incubation_connection_in_progress.png-116f739d2d08eb6d513a308d259f2971.ctex"]
+source_file="res://assets/art/biomes/incubator_background_long.png"
+dest_files=["res://.godot/imported/incubator_background_long.png-5f9b3214416473c2b5c00352d7ce6876.ctex"]
 
 [params]
 

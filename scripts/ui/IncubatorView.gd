@@ -7,7 +7,7 @@ const TOP_BAR_SCENE := preload("res://scenes/ui/TopBar.tscn")
 const BOTTOM_NAV_SCENE := preload("res://scenes/ui/BottomNav.tscn")
 const SETTINGS_MODAL_SCRIPT := preload("res://scripts/ui/SettingsModal.gd")
 
-const BACKGROUND_PATH := "res://assets/art/biomes/incubator_background.png"
+const BACKGROUND_PATH := "res://assets/art/biomes/incubator_background_long.png"
 const TOP_BAR_ART_PATH := "res://assets/art/ui/top_bar_incubation.png"
 const BOTTOM_MENU_ART_PATH := "res://assets/art/ui/bottom_menu_incubation.png"
 const BIOMES_CONFIG_PATH := "res://data/biomes.json"
@@ -16,7 +16,7 @@ const INCUBATOR_LAYOUT_PATH := "res://data/incubator_layout.json"
 const INCUBATOR_BIOME_ID := "incubator"
 
 const PLUS_ICON_PATH := "res://assets/art/incubator/empty_incubation_or_connection.png"
-const CONNECTION_IN_PROGRESS_PATH := "res://assets/art/incubator/in_progress_icons/incubation_connection_in_progress.png"
+const CONNECTION_IN_PROGRESS_PATH := "res://assets/art/incubator/in_progress_icons/connection_in_progress.png"
 const INCUBATION_IN_PROGRESS_PATH := "res://assets/art/incubator/in_progress_icons/incubation_in_progress.png"
 
 const EGG_PATH := "res://assets/art/incubator/eggs/egg.png"
@@ -25,11 +25,15 @@ const EGG_SHOP_RARE_PATH := "res://assets/art/incubator/eggs/shop_egg_rare.png"
 const EGG_SHOP_ULTRA_RARE_PATH := "res://assets/art/incubator/eggs/shop_egg_ultra_rare.png"
 const EGG_SHOP_EXCEPTIONAL_PATH := "res://assets/art/incubator/eggs/shop_egg_exceptional.png"
 
-const LAYOUT_REF_W := 720.0
-const LAYOUT_REF_H := 1280.0
+const LAYOUT_REF_W := 754.0
+const LAYOUT_REF_H := 2084.0
 const PLAY_AREA_REF_TOP := 150.722775   # TOP_BAR_HEIGHT in reference pixels
 const TOP_BAR_HEIGHT := 150.722775
+const TOP_BAR_Y_OFFSET := -10.0
+const TOP_BAR_EXTRA_HEIGHT_RATIO := 0.20
 const BOTTOM_MENU_HEIGHT := 226.157092875
+const SCROLL_DRAG_THRESHOLD := 12.0
+const SCROLL_WHEEL_STEP := 90.0
 
 const SLOT_HITBOX_PAD := 40.0   # extra px added to max(icon_size, habitat_size) for the hitbox
 const SLOT_ICON_DEFAULT := 80.0
@@ -48,6 +52,13 @@ const BACK_BTN_MIN_W       := 253  # Back / Cancel / Close button min width
 const ICON_SIZE_CARD       := 140  # portrait icon in list cards (storage, select)
 const ICON_SIZE_QUALITY    := 140  # egg icon in quality 2×2 grid
 const ICON_SIZE_UPGRADE    := 113  # upgrade card icon
+const EGG_SHOP_SPECIES_PORTRAIT_SIZE := 82.0
+const EGG_SHOP_SPECIES_PORTRAIT_SCALE := 2.0
+const EGG_SHOP_SPECIES_TEXT_SHIFT_RATIO := 0.20
+const EGG_SHOP_SPECIES_SELECT_BUTTON_WIDTH := 100.0
+const EGG_SHOP_SPECIES_SELECT_BUTTON_SCALE := 2.0
+const EGG_SHOP_QUALITY_ICON_SCALE := 1.35
+const EGG_SHOP_QUALITY_BUY_FONT_SCALE := 2.0
 const CARD_CONTENT_MARGIN  := 22   # PanelContainer content_margin_* for cards
 const LIST_SEPARATION      := 15   # VBoxContainer separation between cards
 const CARD_SEPARATION      := 9    # inner card VBoxContainer separation
@@ -56,6 +67,15 @@ const CARD_SEPARATION      := 9    # inner card VBoxContainer separation
 var _config: Dictionary = {}
 var _biome_config: Dictionary = {}
 var _layout: Dictionary = {}
+var _layout_reference_size: Vector2 = Vector2(LAYOUT_REF_W, LAYOUT_REF_H)
+var _scroll_content_reference_size: Vector2 = Vector2(LAYOUT_REF_W, LAYOUT_REF_H)
+var _scroll_map_layer: Control
+var _scroll_offset: float = 0.0
+var _scroll_max: float = 0.0
+var _scroll_drag_active: bool = false
+var _scroll_drag_start: Vector2 = Vector2.ZERO
+var _scroll_drag_start_offset: float = 0.0
+var _scroll_was_drag: bool = false
 var _breeding_slot_nodes: Dictionary = {}    # index (int) → Control
 var _incubation_slot_nodes: Dictionary = {}  # index (int) → Control
 
@@ -109,6 +129,7 @@ func _ready() -> void:
 	_load_config()
 	_load_biome_config()
 	_load_incubator_layout()
+	_migrate_overflow_slot_state()
 	_build_layout()
 	_start_tick_timer()
 	if ReptileSystem.has_signal("reptile_leveled_up") and not ReptileSystem.reptile_leveled_up.is_connected(_on_reptile_leveled_up):
@@ -117,8 +138,83 @@ func _ready() -> void:
 		GameState.language_changed.connect(_on_language_changed)
 
 
+func _rebuild_layout_preserving_scroll(scroll_offset: float) -> void:
+	_rebuild_layout()
+	_scroll_to(scroll_offset)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED and is_inside_tree() and _scroll_map_layer != null:
+		call_deferred("_rebuild_layout_preserving_scroll", _scroll_offset)
+
+
+func _input(event: InputEvent) -> void:
+	if _scroll_map_layer == null or _is_any_overlay_open():
+		_scroll_drag_active = false
+		return
+
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT:
+			if mb.pressed and _is_scroll_input_position(mb.position):
+				_scroll_drag_start = mb.position
+				_scroll_drag_start_offset = _scroll_offset
+				_scroll_drag_active = true
+				_scroll_was_drag = false
+			elif not mb.pressed:
+				_scroll_drag_active = false
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed and _is_scroll_input_position(mb.position):
+			_scroll_to(_scroll_offset - SCROLL_WHEEL_STEP)
+			get_viewport().set_input_as_handled()
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed and _is_scroll_input_position(mb.position):
+			_scroll_to(_scroll_offset + SCROLL_WHEEL_STEP)
+			get_viewport().set_input_as_handled()
+	elif event is InputEventMouseMotion and _scroll_drag_active:
+		var delta_y := (event as InputEventMouseMotion).position.y - _scroll_drag_start.y
+		if not _scroll_was_drag and absf(delta_y) > SCROLL_DRAG_THRESHOLD:
+			_scroll_was_drag = true
+		if _scroll_was_drag:
+			_scroll_to(_scroll_drag_start_offset - delta_y)
+			get_viewport().set_input_as_handled()
+	elif event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed and _is_scroll_input_position(touch.position):
+			_scroll_drag_start = touch.position
+			_scroll_drag_start_offset = _scroll_offset
+			_scroll_drag_active = true
+			_scroll_was_drag = false
+		elif not touch.pressed:
+			_scroll_drag_active = false
+	elif event is InputEventScreenDrag and _scroll_drag_active:
+		var drag := event as InputEventScreenDrag
+		var delta_y := drag.position.y - _scroll_drag_start.y
+		if not _scroll_was_drag and absf(delta_y) > SCROLL_DRAG_THRESHOLD:
+			_scroll_was_drag = true
+		if _scroll_was_drag:
+			_scroll_to(_scroll_drag_start_offset - delta_y)
+			get_viewport().set_input_as_handled()
+
+
+func _is_scroll_input_position(position: Vector2) -> bool:
+	var viewport_height: float = get_viewport_rect().size.y
+	return position.y >= _get_top_bar_bottom_y() and position.y <= viewport_height - BOTTOM_MENU_HEIGHT
+
+
+func _is_any_overlay_open() -> bool:
+	return (
+		(_storage_overlay != null and _storage_overlay.visible)
+		or (_select_overlay != null and _select_overlay.visible)
+		or (_incubation_panel != null and _incubation_panel.visible)
+		or (_egg_shop_overlay != null and _egg_shop_overlay.visible)
+		or (_hatch_results_overlay != null and _hatch_results_overlay.visible)
+		or (_quests_overlay != null and _quests_overlay.visible)
+		or (_upgrades_overlay != null and _upgrades_overlay.visible)
+		or (_settings_modal != null and is_instance_valid(_settings_modal))
+	)
+
+
 func _load_config() -> void:
-	_config = {"breeding_chambers": 6, "incubation_containers": 6}
+	_config = {"breeding_chambers": 4, "incubation_containers": 6}
 	var file := FileAccess.open(INCUBATOR_CONFIG_PATH, FileAccess.READ)
 	if file == null:
 		return
@@ -151,6 +247,8 @@ func _load_biome_config() -> void:
 
 func _load_incubator_layout() -> void:
 	_layout = {}
+	_layout_reference_size = Vector2(LAYOUT_REF_W, LAYOUT_REF_H)
+	_scroll_content_reference_size = Vector2(LAYOUT_REF_W, LAYOUT_REF_H)
 	var file := FileAccess.open(INCUBATOR_LAYOUT_PATH, FileAccess.READ)
 	if file == null:
 		push_warning("IncubatorView: incubator_layout.json not found, using fallback.")
@@ -159,25 +257,57 @@ func _load_incubator_layout() -> void:
 	var data: Variant = JSON.parse_string(file.get_as_text())
 	file.close()
 	if typeof(data) == TYPE_DICTIONARY:
-		var section: Variant = (data as Dictionary).get("incubator", null)
+		var root: Dictionary = data as Dictionary
+		var ref_value: Variant = root.get("reference_resolution", {})
+		if typeof(ref_value) == TYPE_DICTIONARY:
+			var ref_dict: Dictionary = ref_value as Dictionary
+			_layout_reference_size = Vector2(
+				float(ref_dict.get("width", LAYOUT_REF_W)),
+				float(ref_dict.get("height", LAYOUT_REF_H))
+			)
+
+		var section: Variant = root.get("incubator", null)
 		if typeof(section) == TYPE_DICTIONARY:
-			_layout = section as Dictionary
+			_layout = (section as Dictionary).duplicate(true)
+			var content_value: Variant = _layout.get("scroll_content_size", {})
+			if typeof(content_value) == TYPE_DICTIONARY:
+				var content_dict: Dictionary = content_value as Dictionary
+				_scroll_content_reference_size = Vector2(
+					float(content_dict.get("width", _layout_reference_size.x)),
+					float(content_dict.get("height", _layout_reference_size.y))
+				)
+			else:
+				_scroll_content_reference_size = _layout_reference_size
 			return
 	push_warning("IncubatorView: incubator_layout.json malformed, using fallback.")
 	_layout = _get_fallback_layout()
 
 
 func _get_fallback_layout() -> Dictionary:
+	_layout_reference_size = Vector2(LAYOUT_REF_W, LAYOUT_REF_H)
+	_scroll_content_reference_size = Vector2(LAYOUT_REF_W, LAYOUT_REF_H)
 	return {
-		"breeding_chambers": [
-			{"id": 1, "x": 140, "y": 185}, {"id": 2, "x": 565, "y": 185},
-			{"id": 3, "x": 140, "y": 360}, {"id": 4, "x": 565, "y": 360},
-			{"id": 5, "x": 140, "y": 535}, {"id": 6, "x": 565, "y": 535}
+		"background_path": BACKGROUND_PATH,
+		"scroll_content_size": {"width": LAYOUT_REF_W, "height": LAYOUT_REF_H},
+		"slot_defaults": {
+			"plus_size": 74,
+			"overlay_padding": 0,
+			"overlay_scale": 1.0,
+			"overlay_fit": "scale"
+		},
+		"connection_slots": [
+			{"id": "connection_1", "x": 89, "y": 314, "w": 280, "h": 308, "plus_size": 37},
+			{"id": "connection_2", "x": 386, "y": 314, "w": 280, "h": 308, "plus_size": 37},
+			{"id": "connection_3", "x": 89, "y": 638, "w": 280, "h": 308, "plus_size": 37},
+			{"id": "connection_4", "x": 386, "y": 638, "w": 280, "h": 308, "plus_size": 37}
 		],
-		"incubation_containers": [
-			{"id": 1, "x": 140, "y": 720}, {"id": 2, "x": 565, "y": 720},
-			{"id": 3, "x": 140, "y": 895}, {"id": 4, "x": 565, "y": 895},
-			{"id": 5, "x": 140, "y": 1060}, {"id": 6, "x": 565, "y": 1060}
+		"incubation_slots": [
+			{"id": "incubation_1", "x": 77, "y": 1190, "w": 232, "h": 212, "plus_size": 26},
+			{"id": "incubation_2", "x": 445, "y": 1190, "w": 232, "h": 212, "plus_size": 26},
+			{"id": "incubation_3", "x": 77, "y": 1402, "w": 232, "h": 212, "plus_size": 26},
+			{"id": "incubation_4", "x": 445, "y": 1402, "w": 232, "h": 212, "plus_size": 26},
+			{"id": "incubation_5", "x": 77, "y": 1614, "w": 232, "h": 212, "plus_size": 26},
+			{"id": "incubation_6", "x": 445, "y": 1614, "w": 232, "h": 212, "plus_size": 26}
 		]
 	}
 
@@ -193,10 +323,9 @@ func _start_tick_timer() -> void:
 func _build_layout() -> void:
 	_breeding_slot_nodes = {}
 	_incubation_slot_nodes = {}
-	_add_background()
+	_add_scrollable_map()
 	_add_top_bar()
 	_add_bottom_nav()
-	_add_play_area()
 	_add_storage_overlay()
 	_add_select_overlay()
 	_add_incubation_panel()
@@ -209,6 +338,7 @@ func _build_layout() -> void:
 
 func _rebuild_layout() -> void:
 	_load_incubator_layout()
+	_migrate_overflow_slot_state()
 	for child in get_children():
 		if child is Timer:
 			continue
@@ -224,6 +354,9 @@ func _rebuild_layout() -> void:
 	_selected_male_id = ""
 	_select_is_long = false
 	_select_start_in_progress = false
+	_scroll_map_layer = null
+	_scroll_drag_active = false
+	_scroll_was_drag = false
 	_breeding_slot_nodes = {}
 	_incubation_slot_nodes = {}
 	_incubation_panel = null
@@ -250,21 +383,99 @@ func _rebuild_layout() -> void:
 # ─── Background ────────────────────────────────────────────────────────
 
 func _add_background() -> void:
+	_add_scrollable_map()
+
+
+func _get_map_fit_scale() -> float:
+	var viewport_width: float = get_viewport_rect().size.x
+	if viewport_width <= 0.0 or _scroll_content_reference_size.x <= 0.0:
+		return 1.0
+	return viewport_width / _scroll_content_reference_size.x
+
+
+func _get_top_bar_bottom_y() -> float:
+	return TOP_BAR_Y_OFFSET + TOP_BAR_HEIGHT * (1.0 + TOP_BAR_EXTRA_HEIGHT_RATIO)
+
+
+func _add_scrollable_map() -> void:
+	_scroll_map_layer = Control.new()
+	_scroll_map_layer.name = "IncubatorScrollMapLayer"
+	_scroll_map_layer.anchor_left = 0.0
+	_scroll_map_layer.anchor_top = 0.0
+	_scroll_map_layer.anchor_right = 0.0
+	_scroll_map_layer.anchor_bottom = 0.0
+	_scroll_map_layer.mouse_filter = Control.MOUSE_FILTER_PASS
+	add_child(_scroll_map_layer)
+
+	_add_scrollable_background()
+	_add_play_area()
+	_compute_scroll_max()
+	_scroll_to(_scroll_offset)
+
+
+func _add_scrollable_background() -> void:
+	if _scroll_map_layer == null:
+		return
+
+	var bg_path: String = str(_layout.get("background_path", _biome_config.get("background_path", BACKGROUND_PATH)))
+	var texture: Texture2D = AssetPaths.load_texture(bg_path)
+	var scale: float = _get_map_fit_scale()
+	var bg_size: Vector2 = _scroll_content_reference_size * scale
+
+	_scroll_map_layer.offset_left = 0.0
+	_scroll_map_layer.offset_top = 0.0
+	_scroll_map_layer.offset_right = bg_size.x
+	_scroll_map_layer.offset_bottom = bg_size.y
+	_scroll_map_layer.custom_minimum_size = bg_size
+
 	var bg := TextureRect.new()
 	bg.name = "IncubatorBackground"
-	bg.texture = AssetPaths.load_texture(BACKGROUND_PATH)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.texture = texture
 	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	bg.stretch_mode = TextureRect.STRETCH_SCALE
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
-	if bg.texture == null:
+	bg.anchor_left = 0.0
+	bg.anchor_top = 0.0
+	bg.anchor_right = 0.0
+	bg.anchor_bottom = 0.0
+	bg.offset_left = 0.0
+	bg.offset_top = 0.0
+	bg.offset_right = bg_size.x
+	bg.offset_bottom = bg_size.y
+	_scroll_map_layer.add_child(bg)
+
+	if texture == null:
 		var fallback := ColorRect.new()
+		fallback.name = "IncubatorBackgroundFallback"
 		fallback.color = Color(0.15, 0.10, 0.07, 1.0)
-		fallback.set_anchors_preset(Control.PRESET_FULL_RECT)
+		fallback.anchor_left = 0.0
+		fallback.anchor_top = 0.0
+		fallback.anchor_right = 0.0
+		fallback.anchor_bottom = 0.0
+		fallback.offset_right = bg_size.x
+		fallback.offset_bottom = bg_size.y
 		fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(fallback)
-		move_child(fallback, 0)
+		_scroll_map_layer.add_child(fallback)
+		_scroll_map_layer.move_child(fallback, 0)
+
+
+func _compute_scroll_max() -> void:
+	if _scroll_map_layer == null:
+		_scroll_max = 0.0
+		return
+	var viewport_height: float = get_viewport_rect().size.y
+	var fixed_bottom_height: float = BOTTOM_MENU_HEIGHT
+	_scroll_max = max(0.0, _scroll_map_layer.custom_minimum_size.y - max(1.0, viewport_height - fixed_bottom_height))
+	_scroll_to(_scroll_offset)
+
+
+func _scroll_to(offset: float) -> void:
+	_scroll_offset = clamp(offset, 0.0, _scroll_max)
+	if _scroll_map_layer == null:
+		return
+	var map_height: float = _scroll_map_layer.custom_minimum_size.y
+	_scroll_map_layer.offset_top = -_scroll_offset
+	_scroll_map_layer.offset_bottom = map_height - _scroll_offset
 
 
 func _add_top_bar() -> void:
@@ -279,7 +490,8 @@ func _add_top_bar() -> void:
 		if typeof(top_bar_positions) == TYPE_DICTIONARY:
 			top_bar.top_bar_ui_positions = top_bar_positions as Dictionary
 	top_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	top_bar.offset_bottom = TOP_BAR_HEIGHT
+	top_bar.offset_top = TOP_BAR_Y_OFFSET
+	top_bar.offset_bottom = _get_top_bar_bottom_y()
 	if top_bar.has_signal("settings_pressed"):
 		top_bar.connect("settings_pressed", Callable(self, "_show_settings_screen"))
 	add_child(top_bar)
@@ -317,47 +529,89 @@ func _add_bottom_nav() -> void:
 # ─── Play area with anchor-positioned slots ────────────────────────────
 
 func _add_play_area() -> void:
-	var play_area := Control.new()
-	play_area.name = "PlayArea"
-	play_area.anchor_left = 0.0
-	play_area.anchor_top = 0.0
-	play_area.anchor_right = 1.0
-	play_area.anchor_bottom = 1.0
-	play_area.offset_top = TOP_BAR_HEIGHT
-	play_area.offset_bottom = -BOTTOM_MENU_HEIGHT
-	play_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(play_area)
+	if _scroll_map_layer == null:
+		return
 
-	var play_ref_h: float = LAYOUT_REF_H - PLAY_AREA_REF_TOP - float(BOTTOM_MENU_HEIGHT)
-
-	var breeding_defs: Array = _layout.get("breeding_chambers", []) as Array
-	var incubation_defs: Array = _layout.get("incubation_containers", []) as Array
-
-	# Section label: Breeding Chambers
-	if breeding_defs.size() > 0:
-		var first_y: float = float((breeding_defs[0] as Dictionary).get("y", 185))
-		_add_section_label(play_area, "incubator.breeding_chambers", "Breeding Chambers",
-			360.0, first_y - 46.0 - play_ref_h * 0.05, play_ref_h)
+	var breeding_defs: Array = _get_connection_slot_defs()
+	var incubation_defs: Array = _get_incubation_slot_defs()
 
 	# Breeding chamber slots
 	for i in range(breeding_defs.size()):
 		var def: Variant = breeding_defs[i]
 		if typeof(def) == TYPE_DICTIONARY:
-			var node := _add_slot(play_area, def as Dictionary, i, "breeding", play_ref_h)
+			var node := _add_slot(_scroll_map_layer, def as Dictionary, i, "breeding")
 			_breeding_slot_nodes[i] = node
-
-	# Section label: Incubation Containers
-	if incubation_defs.size() > 0:
-		var first_y: float = float((incubation_defs[0] as Dictionary).get("y", 720))
-		_add_section_label(play_area, "incubator.incubation_containers", "Incubation Containers",
-			360.0, first_y - 46.0 - play_ref_h * 0.10, play_ref_h)
 
 	# Incubation container slots
 	for i in range(incubation_defs.size()):
 		var def: Variant = incubation_defs[i]
 		if typeof(def) == TYPE_DICTIONARY:
-			var node := _add_slot(play_area, def as Dictionary, i, "incubation", play_ref_h)
+			var node := _add_slot(_scroll_map_layer, def as Dictionary, i, "incubation")
 			_incubation_slot_nodes[i] = node
+
+
+func _get_connection_slot_defs() -> Array:
+	var defs: Variant = _layout.get("connection_slots", _layout.get("breeding_chambers", []))
+	if typeof(defs) == TYPE_ARRAY:
+		return defs as Array
+	return []
+
+
+func _get_incubation_slot_defs() -> Array:
+	var defs: Variant = _layout.get("incubation_slots", _layout.get("incubation_containers", []))
+	if typeof(defs) == TYPE_ARRAY:
+		return defs as Array
+	return []
+
+
+func _migrate_overflow_slot_state() -> void:
+	_migrate_overflow_dictionary_slots("breeding_chambers", _get_connection_slot_defs().size(), "breeding")
+	_migrate_overflow_dictionary_slots("incubation_containers", _get_incubation_slot_defs().size(), "incubation")
+
+
+func _migrate_overflow_dictionary_slots(state_key: String, visible_count: int, slot_type: String) -> void:
+	if visible_count <= 0:
+		return
+	var value: Variant = GameState.get_value(state_key, {})
+	if typeof(value) != TYPE_DICTIONARY:
+		return
+
+	var slots: Dictionary = (value as Dictionary).duplicate(true)
+	var changed: bool = false
+	for raw_key in slots.keys():
+		var slot_index: int = int(str(raw_key))
+		if slot_index < visible_count:
+			continue
+		var slot_value: Variant = slots.get(raw_key)
+		if _is_saved_slot_empty(slot_value):
+			continue
+
+		var target_index: int = _find_empty_visible_slot(slots, visible_count)
+		if target_index >= 0:
+			slots[str(target_index)] = slot_value
+			slots.erase(raw_key)
+			changed = true
+			push_warning("IncubatorView: migrated hidden " + slot_type + " slot " + str(raw_key) + " to visible slot " + str(target_index) + ".")
+		else:
+			push_warning("IncubatorView: saved " + slot_type + " slot " + str(raw_key) + " is outside the visible layout and was preserved hidden.")
+
+	if changed:
+		GameState.set_value(state_key, slots)
+		SaveSystem.save_game()
+
+
+func _find_empty_visible_slot(slots: Dictionary, visible_count: int) -> int:
+	for i in range(visible_count):
+		if not slots.has(str(i)) or _is_saved_slot_empty(slots.get(str(i))):
+			return i
+	return -1
+
+
+func _is_saved_slot_empty(slot_value: Variant) -> bool:
+	if typeof(slot_value) != TYPE_DICTIONARY:
+		return true
+	var slot: Dictionary = slot_value as Dictionary
+	return str(slot.get("state", "empty")) == "empty"
 
 
 func _add_section_label(parent: Control, key: String, fallback: String,
@@ -385,63 +639,51 @@ func _add_section_label(parent: Control, key: String, fallback: String,
 	parent.add_child(label)
 
 
-func _add_slot(parent: Control, slot_def: Dictionary, index: int,
-		slot_type: String, play_ref_h: float) -> Control:
-	var icon_size := float(slot_def.get("icon_size", SLOT_ICON_DEFAULT))
-	var habitat_size := float(slot_def.get("habitat_size", SLOT_HABITAT_DEFAULT))
-	# Hitbox centered on icon_x/y, sized to icon_size + 30
-	var raw_x := float(slot_def.get("x", 360))
-	var raw_y := float(slot_def.get("y", 640))
-	var x_ref := float(slot_def.get("icon_x", raw_x))
-	var y_ref := float(slot_def.get("icon_y", raw_y))
-	var hitbox_half := (icon_size + 30.0) * 0.5
-
-	# Offsets relative to hitbox center (icon center)
-	var icon_ox := 0.0
-	var icon_oy := 0.0
-	var habitat_ox := float(slot_def.get("habitat_x", raw_x)) - x_ref
-	var habitat_oy := float(slot_def.get("habitat_y", raw_y)) - y_ref
-
-	var ax := x_ref / LAYOUT_REF_W
-	var ay := (y_ref - PLAY_AREA_REF_TOP) / play_ref_h
+func _add_slot(parent: Control, slot_def: Dictionary, index: int, slot_type: String) -> Control:
+	var scale: float = _get_map_fit_scale()
+	var defaults: Dictionary = _get_slot_defaults()
+	var rect: Rect2 = _get_slot_rect(slot_def)
+	var slot_size: Vector2 = rect.size * scale
+	var plus_size: float = float(slot_def.get("plus_size", defaults.get("plus_size", SLOT_ICON_DEFAULT))) * scale
+	var overlay_padding: float = float(slot_def.get("overlay_padding", defaults.get("overlay_padding", 0.0))) * scale
+	var overlay_scale: float = float(slot_def.get("overlay_scale", defaults.get("overlay_scale", 1.0)))
+	var overlay_fit: String = str(slot_def.get("overlay_fit", defaults.get("overlay_fit", "scale")))
+	var plus_offset := Vector2(
+		float(slot_def.get("plus_offset_x", defaults.get("plus_offset_x", 0.0))) * scale,
+		float(slot_def.get("plus_offset_y", defaults.get("plus_offset_y", 0.0))) * scale
+	)
 
 	var container := Control.new()
 	container.name = slot_type + "_slot_" + str(index)
-	container.anchor_left = ax
-	container.anchor_top = ay
-	container.anchor_right = ax
-	container.anchor_bottom = ay
-	container.offset_left = -hitbox_half
-	container.offset_top = -hitbox_half
-	container.offset_right = hitbox_half
-	container.offset_bottom = hitbox_half
-	container.set_meta("icon_size", icon_size)
-	container.set_meta("habitat_size", habitat_size)
-	container.set_meta("icon_ox", icon_ox)
-	container.set_meta("icon_oy", icon_oy)
-	container.set_meta("habitat_ox", habitat_ox)
-	container.set_meta("habitat_oy", habitat_oy)
+	container.anchor_left = 0.0
+	container.anchor_top = 0.0
+	container.anchor_right = 0.0
+	container.anchor_bottom = 0.0
+	container.offset_left = rect.position.x * scale
+	container.offset_top = rect.position.y * scale
+	container.offset_right = container.offset_left + slot_size.x
+	container.offset_bottom = container.offset_top + slot_size.y
+	container.custom_minimum_size = slot_size
+	container.mouse_filter = Control.MOUSE_FILTER_PASS
+	container.set_meta("slot_size", slot_size)
+	container.set_meta("plus_size", plus_size)
+	container.set_meta("plus_offset", plus_offset)
+	container.set_meta("overlay_padding", overlay_padding)
+	container.set_meta("overlay_scale", overlay_scale)
+	container.set_meta("overlay_fit", overlay_fit)
 	parent.add_child(container)
 
-	# Visible icon (centered in hitbox)
 	var icon := TextureRect.new()
 	icon.name = "SlotIcon"
-	icon.anchor_left = 0.5
-	icon.anchor_top = 0.5
-	icon.anchor_right = 0.5
-	icon.anchor_bottom = 0.5
-	_apply_icon_size(icon, icon_size)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	container.add_child(icon)
 
-	# Label centered on the habitat graphic
 	var timer_label := Label.new()
 	timer_label.name = "TimerLabel"
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	timer_label.add_theme_font_size_override("font_size", 17)
+	timer_label.add_theme_font_size_override("font_size", max(14, int(round(17.0 * scale))))
 	timer_label.add_theme_color_override("font_color", Color(0.96, 0.93, 0.76, 1.0))
 	timer_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.90))
 	timer_label.add_theme_constant_override("shadow_offset_x", 1)
@@ -472,12 +714,86 @@ func _add_slot(parent: Control, slot_def: Dictionary, index: int,
 
 # ─── Slot visual refresh ───────────────────────────────────────────────
 
-func _apply_icon_size(icon: TextureRect, px: float, ox: float = 0.0, oy: float = 0.0) -> void:
-	var h := px * 0.5
-	icon.offset_left  = -h + ox
-	icon.offset_top   = -h + oy
-	icon.offset_right =  h + ox
-	icon.offset_bottom =  h + oy
+func _get_slot_defaults() -> Dictionary:
+	var defaults_value: Variant = _layout.get("slot_defaults", {})
+	if typeof(defaults_value) == TYPE_DICTIONARY:
+		return defaults_value as Dictionary
+	return {}
+
+
+func _get_slot_rect(slot_def: Dictionary) -> Rect2:
+	if slot_def.has("w") and slot_def.has("h"):
+		return Rect2(
+			Vector2(float(slot_def.get("x", 0.0)), float(slot_def.get("y", 0.0))),
+			Vector2(float(slot_def.get("w", SLOT_ICON_DEFAULT)), float(slot_def.get("h", SLOT_ICON_DEFAULT)))
+		)
+
+	var raw_x: float = float(slot_def.get("x", _layout_reference_size.x * 0.5))
+	var raw_y: float = float(slot_def.get("y", _layout_reference_size.y * 0.5))
+	var icon_size: float = float(slot_def.get("icon_size", SLOT_ICON_DEFAULT))
+	var habitat_size: float = float(slot_def.get("habitat_size", SLOT_HABITAT_DEFAULT))
+	var size: float = max(icon_size + SLOT_HITBOX_PAD, habitat_size)
+	return Rect2(Vector2(raw_x - size * 0.5, raw_y - size * 0.5), Vector2(size, size))
+
+
+func _get_vector2_meta(container: Control, key: String, fallback: Vector2) -> Vector2:
+	var value: Variant = container.get_meta(key, fallback)
+	if typeof(value) == TYPE_VECTOR2:
+		return value as Vector2
+	return fallback
+
+
+func _apply_plus_visual(icon: TextureRect, container: Control, modulate: Color) -> void:
+	var slot_size: Vector2 = _get_vector2_meta(container, "slot_size", container.size)
+	var plus_size: float = float(container.get_meta("plus_size", SLOT_ICON_DEFAULT))
+	var plus_offset: Vector2 = _get_vector2_meta(container, "plus_offset", Vector2.ZERO)
+	var half: float = plus_size * 0.5
+	var center: Vector2 = slot_size * 0.5 + plus_offset
+	icon.anchor_left = 0.0
+	icon.anchor_top = 0.0
+	icon.anchor_right = 0.0
+	icon.anchor_bottom = 0.0
+	icon.offset_left = center.x - half
+	icon.offset_top = center.y - half
+	icon.offset_right = center.x + half
+	icon.offset_bottom = center.y + half
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
+	icon.modulate = modulate
+
+
+func _apply_overlay_visual(icon: TextureRect, container: Control, texture_path: String, modulate: Color) -> void:
+	var slot_size: Vector2 = _get_vector2_meta(container, "slot_size", container.size)
+	var padding: float = float(container.get_meta("overlay_padding", 0.0))
+	var overlay_scale: float = float(container.get_meta("overlay_scale", 1.0))
+	var overlay_size: Vector2 = Vector2(
+		max(1.0, slot_size.x - padding * 2.0),
+		max(1.0, slot_size.y - padding * 2.0)
+	) * overlay_scale
+	var center: Vector2 = slot_size * 0.5
+	icon.anchor_left = 0.0
+	icon.anchor_top = 0.0
+	icon.anchor_right = 0.0
+	icon.anchor_bottom = 0.0
+	icon.offset_left = center.x - overlay_size.x * 0.5
+	icon.offset_top = center.y - overlay_size.y * 0.5
+	icon.offset_right = center.x + overlay_size.x * 0.5
+	icon.offset_bottom = center.y + overlay_size.y * 0.5
+	icon.stretch_mode = _slot_stretch_mode(str(container.get_meta("overlay_fit", "scale")))
+	icon.texture = AssetPaths.load_texture(texture_path)
+	if icon.texture == null:
+		icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
+	icon.modulate = modulate
+
+
+func _slot_stretch_mode(mode: String):
+	match mode:
+		"keep_aspect":
+			return TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		"cover":
+			return TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		_:
+			return TextureRect.STRETCH_SCALE
 
 
 func _refresh_slot(container: Control, index: int, slot_type: String) -> void:
@@ -486,56 +802,35 @@ func _refresh_slot(container: Control, index: int, slot_type: String) -> void:
 	if icon == null or timer_label == null:
 		return
 
-	var icon_size    := float(container.get_meta("icon_size",    SLOT_ICON_DEFAULT))
-	var habitat_size := float(container.get_meta("habitat_size", SLOT_HABITAT_DEFAULT))
-	var icon_ox      := float(container.get_meta("icon_ox",    0.0))
-	var icon_oy      := float(container.get_meta("icon_oy",    0.0))
-	var habitat_ox   := float(container.get_meta("habitat_ox", 0.0))
-	var habitat_oy   := float(container.get_meta("habitat_oy", 0.0))
-
 	if slot_type == "incubation":
 		var containers: Dictionary = IncubationSystem.get_containers()
 		var cv: Variant = containers.get(str(index), null)
 		if cv == null or typeof(cv) != TYPE_DICTIONARY:
-			_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
-			icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
-			icon.modulate = Color.WHITE
+			_apply_plus_visual(icon, container, Color.WHITE)
 			timer_label.text = ""
 			return
 		var ic: Dictionary = cv as Dictionary
 		var ic_state: String = str(ic.get("state", "empty"))
 		match ic_state:
 			"loaded":
-				_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
-				icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
-				icon.modulate = Color(0.70, 0.88, 1.0, 1.0)
+				_apply_overlay_visual(icon, container, INCUBATION_IN_PROGRESS_PATH, Color(0.82, 0.94, 1.0, 1.0))
 				timer_label.text = str(int(ic.get("egg_count", 0))) + " jaj"
 			"running":
-				_apply_icon_size(icon, habitat_size, habitat_ox, habitat_oy)
-				icon.texture = AssetPaths.load_texture(INCUBATION_IN_PROGRESS_PATH)
-				icon.modulate = Color.WHITE
+				_apply_overlay_visual(icon, container, INCUBATION_IN_PROGRESS_PATH, Color.WHITE)
 				var rem: int = IncubationSystem.get_remaining_seconds(ic)
 				timer_label.text = _format_countdown(rem)
 			"paused_low_humidity":
-				_apply_icon_size(icon, habitat_size, habitat_ox, habitat_oy)
-				icon.texture = AssetPaths.load_texture(INCUBATION_IN_PROGRESS_PATH)
-				icon.modulate = Color(1.0, 0.72, 0.20, 1.0)
+				_apply_overlay_visual(icon, container, INCUBATION_IN_PROGRESS_PATH, Color(1.0, 0.72, 0.20, 1.0))
 				var hum: int = int(float(ic.get("humidity_percent", 0.0)))
 				timer_label.text = str(hum) + "%"
 			"failed_dry":
-				_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
-				icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
-				icon.modulate = Color(1.0, 0.38, 0.32, 1.0)
+				_apply_overlay_visual(icon, container, INCUBATION_IN_PROGRESS_PATH, Color(1.0, 0.38, 0.32, 1.0))
 				timer_label.text = _localized_text("incubation.failed_short", "Failed")
 			"ready_to_hatch":
-				_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
-				icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
-				icon.modulate = Color(0.42, 1.0, 0.52, 1.0)
+				_apply_overlay_visual(icon, container, INCUBATION_IN_PROGRESS_PATH, Color(0.50, 1.0, 0.58, 1.0))
 				timer_label.text = _localized_text("incubation.ready_short", "Ready!")
 			_:
-				_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
-				icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
-				icon.modulate = Color.WHITE
+				_apply_plus_visual(icon, container, Color.WHITE)
 				timer_label.text = ""
 		return
 
@@ -543,9 +838,7 @@ func _refresh_slot(container: Control, index: int, slot_type: String) -> void:
 	var chambers: Dictionary = BreedingSystem.get_chambers()
 	var val: Variant = chambers.get(str(index), null)
 	if val == null or typeof(val) != TYPE_DICTIONARY:
-		_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
-		icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
-		icon.modulate = Color.WHITE
+		_apply_plus_visual(icon, container, Color.WHITE)
 		timer_label.text = ""
 		return
 
@@ -553,25 +846,17 @@ func _refresh_slot(container: Control, index: int, slot_type: String) -> void:
 	var state: String = str(chamber.get("state", "empty"))
 	match state:
 		"breeding":
-			_apply_icon_size(icon, habitat_size, habitat_ox, habitat_oy)
-			icon.texture = AssetPaths.load_texture(CONNECTION_IN_PROGRESS_PATH)
-			icon.modulate = Color.WHITE
+			_apply_overlay_visual(icon, container, CONNECTION_IN_PROGRESS_PATH, Color.WHITE)
 			var secs: int = BreedingSystem.get_breeding_remaining_seconds(chamber)
 			timer_label.text = _format_countdown(secs)
 		"ready":
-			_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
-			icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
-			icon.modulate = Color(0.50, 1.0, 0.55, 1.0)
+			_apply_overlay_visual(icon, container, CONNECTION_IN_PROGRESS_PATH, Color(0.55, 1.0, 0.60, 1.0))
 			timer_label.text = _localized_text("incubator.breeding_ready", "Ready!")
 		"failed":
-			_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
-			icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
-			icon.modulate = Color(1.0, 0.45, 0.40, 1.0)
+			_apply_overlay_visual(icon, container, CONNECTION_IN_PROGRESS_PATH, Color(1.0, 0.45, 0.40, 1.0))
 			timer_label.text = _localized_text("incubator.breeding_failed", "Failed")
 		_:
-			_apply_icon_size(icon, icon_size, icon_ox, icon_oy)
-			icon.texture = AssetPaths.load_texture(PLUS_ICON_PATH)
-			icon.modulate = Color.WHITE
+			_apply_plus_visual(icon, container, Color.WHITE)
 			timer_label.text = ""
 
 
@@ -602,6 +887,9 @@ func _on_reptile_leveled_up(instance_id: String, reptile_id: String, new_level: 
 # ─── Slot press handler ────────────────────────────────────────────────
 
 func _on_slot_pressed(index: int, slot_type: String) -> void:
+	if _scroll_was_drag:
+		return
+
 	if slot_type == "incubation":
 		_show_incubation_panel(index)
 		return
@@ -916,6 +1204,12 @@ func _make_storage_egg_group_card(group: Dictionary) -> Control:
 		_localized_text("incubator_egg_count_value", "Eggs: {count}").replace("{count}", str(int(group.get("count", 0)))) if bool(group.get("loaded", false)) else _localized_text("incubator_egg_available", "Available: {count}").replace("{count}", str(int(group.get("count", 0)))),
 		_localized_text("incubator_egg_incubation_time", "Incubation time: {time}").replace("{time}", _format_hours(int(group.get("incubation_time_hours", 0))))
 	]
+	var rarity_summary: String = _format_egg_rarity_summary(group.get("rarity_counts", {}))
+	if not rarity_summary.is_empty():
+		lines.insert(1, rarity_summary)
+	var quality_summary: String = _format_egg_quality_summary(group.get("quality_counts", {}))
+	if not quality_summary.is_empty():
+		lines.insert(1, quality_summary)
 	var source_counts_value: Variant = group.get("source_counts", {})
 	var has_source_counts: bool = typeof(source_counts_value) == TYPE_DICTIONARY and not (source_counts_value as Dictionary).is_empty()
 	if not bool(group.get("loaded", false)) or has_source_counts:
@@ -934,7 +1228,15 @@ func _make_storage_egg_group_card(group: Dictionary) -> Control:
 	details_btn.custom_minimum_size = Vector2(130, BUTTON_HEIGHT)
 	details_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	details_btn.pressed.connect(func() -> void:
-		_show_toast_raw(str(group.get("egg_name", "")) + " | " + _format_source_summary(group.get("source_counts", {})))
+		var details: Array[String] = [str(group.get("egg_name", ""))]
+		var details_rarity: String = _format_egg_rarity_summary(group.get("rarity_counts", {}))
+		var details_quality: String = _format_egg_quality_summary(group.get("quality_counts", {}))
+		if not details_quality.is_empty():
+			details.append(details_quality)
+		if not details_rarity.is_empty():
+			details.append(details_rarity)
+		details.append(_format_source_summary(group.get("source_counts", {})))
+		_show_toast_raw(_join_plain_text(details, " | "))
 	)
 	row.add_child(details_btn)
 	return card
@@ -988,6 +1290,20 @@ func _make_egg_select_group_card(group: Dictionary) -> Control:
 	count_lbl.add_theme_color_override("font_color", Color(0.82, 0.77, 0.62, 1.0))
 	count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(count_lbl)
+
+	for summary in [
+		_format_egg_quality_summary(group.get("quality_counts", {})),
+		_format_egg_rarity_summary(group.get("rarity_counts", {}))
+	]:
+		if str(summary).is_empty():
+			continue
+		var summary_lbl := Label.new()
+		summary_lbl.text = str(summary)
+		summary_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		summary_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
+		summary_lbl.add_theme_color_override("font_color", Color(0.82, 0.77, 0.62, 1.0))
+		summary_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info.add_child(summary_lbl)
 
 	var time_lbl := Label.new()
 	time_lbl.text = _localized_text("incubator_egg_incubation_time", "Incubation time: {time}").replace("{time}", _format_hours(int(group.get("incubation_time_hours", 0))))
@@ -1049,6 +1365,12 @@ func _make_selected_egg_header(group: Dictionary) -> Control:
 		_localized_text("incubator_egg_count_value", "Eggs: {count}").replace("{count}", str(int(group.get("count", 0)))) if bool(group.get("loaded", false)) else _localized_text("incubator_egg_available", "Available: {count}").replace("{count}", str(int(group.get("count", 0)))),
 		_localized_text("incubator_egg_incubation_time", "Incubation time: {time}").replace("{time}", _format_hours(int(group.get("incubation_time_hours", 0))))
 	]
+	var rarity_summary: String = _format_egg_rarity_summary(group.get("rarity_counts", {}))
+	if not rarity_summary.is_empty():
+		lines.insert(1, rarity_summary)
+	var quality_summary: String = _format_egg_quality_summary(group.get("quality_counts", {}))
+	if not quality_summary.is_empty():
+		lines.insert(1, quality_summary)
 	var source_counts_value: Variant = group.get("source_counts", {})
 	var has_source_counts: bool = typeof(source_counts_value) == TYPE_DICTIONARY and not (source_counts_value as Dictionary).is_empty()
 	if not bool(group.get("loaded", false)) or has_source_counts:
@@ -1920,6 +2242,8 @@ func _get_egg_group_summaries(eggs: Array) -> Array:
 		var first_egg: Dictionary = group_eggs[0] as Dictionary
 		var ids: Array = []
 		var source_counts: Dictionary = {}
+		var rarity_counts: Dictionary = {}
+		var quality_counts: Dictionary = {}
 		for egg_value in group_eggs:
 			if typeof(egg_value) != TYPE_DICTIONARY:
 				continue
@@ -1929,6 +2253,14 @@ func _get_egg_group_summaries(eggs: Array) -> Array:
 				ids.append(egg_id)
 			var source: String = str(egg.get("source", "unknown"))
 			source_counts[source] = int(source_counts.get(source, 0)) + 1
+			var rarity_raw: String = str(egg.get("rarity", "")).strip_edges()
+			if not rarity_raw.is_empty():
+				var rarity: String = ReptileSystem.normalize_rarity(rarity_raw)
+				rarity_counts[rarity] = int(rarity_counts.get(rarity, 0)) + 1
+			else:
+				var quality_id: String = str(egg.get("offer_quality", "")).strip_edges()
+				if not quality_id.is_empty():
+					quality_counts[quality_id] = int(quality_counts.get(quality_id, 0)) + 1
 		result.append({
 			"species_id": str(species_id),
 			"egg_name": _get_egg_display_name(str(species_id), first_egg),
@@ -1936,7 +2268,9 @@ func _get_egg_group_summaries(eggs: Array) -> Array:
 			"egg_ids": ids,
 			"incubation_time_hours": int(first_egg.get("incubation_time_hours", IncubationSystem.get_incubation_time_hours(str(species_id)))),
 			"visual_asset": _get_egg_visual_asset(first_egg),
-			"source_counts": source_counts
+			"source_counts": source_counts,
+			"rarity_counts": rarity_counts,
+			"quality_counts": quality_counts
 		})
 
 	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
@@ -1991,6 +2325,52 @@ func _format_source_summary(source_counts_value: Variant) -> String:
 	if pieces.size() == 1:
 		return pieces[0]
 	return _localized_text("incubator_storage_source_mixed", "Mixed") + " | " + _join_plain_text(pieces, " | ")
+
+
+func _format_egg_rarity_summary(rarity_counts_value: Variant) -> String:
+	var rarity_counts: Dictionary = rarity_counts_value as Dictionary if typeof(rarity_counts_value) == TYPE_DICTIONARY else {}
+	if rarity_counts.is_empty():
+		return ""
+	var pieces: Array[String] = []
+	for rarity in ["common", "rare", "ultra_rare", "exceptional"]:
+		var count: int = int(rarity_counts.get(rarity, 0))
+		if count > 0:
+			pieces.append(_localized_rarity(rarity) + ": " + str(count))
+	if pieces.is_empty():
+		return ""
+	return _localized_text("incubator_egg_rarity_summary", "Rarities: {summary}").replace("{summary}", _join_plain_text(pieces, " | "))
+
+
+func _format_egg_quality_summary(quality_counts_value: Variant) -> String:
+	var quality_counts: Dictionary = quality_counts_value as Dictionary if typeof(quality_counts_value) == TYPE_DICTIONARY else {}
+	if quality_counts.is_empty():
+		return ""
+	var pieces: Array[String] = []
+	var ordered_quality_ids: Array = IncubationSystem.get_quality_order()
+	for quality_id_value in ordered_quality_ids:
+		var quality_id: String = str(quality_id_value)
+		var count: int = int(quality_counts.get(quality_id, 0))
+		if count > 0:
+			pieces.append(_localized_egg_quality(quality_id) + ": " + str(count))
+	for quality_id_value in quality_counts.keys():
+		var quality_id: String = str(quality_id_value)
+		if ordered_quality_ids.has(quality_id):
+			continue
+		var count: int = int(quality_counts.get(quality_id, 0))
+		if count > 0:
+			pieces.append(_localized_egg_quality(quality_id) + ": " + str(count))
+	if pieces.is_empty():
+		return ""
+	return _localized_text("incubator_egg_quality_summary", "Egg types: {summary}").replace("{summary}", _join_plain_text(pieces, " | "))
+
+
+func _localized_egg_quality(quality_id: String) -> String:
+	var qualities: Dictionary = IncubationSystem.get_species_shop_qualities()
+	var quality_value: Variant = qualities.get(quality_id, null)
+	if typeof(quality_value) == TYPE_DICTIONARY:
+		var quality: Dictionary = quality_value as Dictionary
+		return _localized_text(str(quality.get("name_suffix_key", "")), quality_id.capitalize())
+	return quality_id.capitalize()
 
 
 func _localized_storage_source(source: String) -> String:
@@ -2938,13 +3318,20 @@ func _make_egg_shop_species_card(species: Dictionary, _qualities: Dictionary, _q
 	var portrait_path: String = _get_species_portrait_path(sp_id)
 	if portrait_path == PLUS_ICON_PATH:
 		portrait_path = str(species.get("visual_asset", EGG_PATH))
-	hbox.add_child(_make_breeding_portrait(portrait_path, Vector2(82, 82)))
+	var portrait_size: float = EGG_SHOP_SPECIES_PORTRAIT_SIZE * EGG_SHOP_SPECIES_PORTRAIT_SCALE
+	hbox.add_child(_make_breeding_portrait(portrait_path, Vector2(portrait_size, portrait_size)))
+
+	var info_margin := MarginContainer.new()
+	info_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info_margin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	info_margin.add_theme_constant_override("margin_left", int(round(portrait_size * EGG_SHOP_SPECIES_TEXT_SHIFT_RATIO)))
+	hbox.add_child(info_margin)
 
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	info.add_theme_constant_override("separation", CARD_SEPARATION)
-	hbox.add_child(info)
+	info_margin.add_child(info)
 
 	var sp_name_lbl := Label.new()
 	sp_name_lbl.text = _localized_species_name(sp_id)
@@ -2992,7 +3379,11 @@ func _make_egg_shop_species_card(species: Dictionary, _qualities: Dictionary, _q
 	var select_btn := Button.new()
 	select_btn.text = _localized_text("incubator_egg_select", "Select")
 	select_btn.focus_mode = Control.FOCUS_NONE
-	select_btn.custom_minimum_size = Vector2(100, BUTTON_HEIGHT)
+	select_btn.custom_minimum_size = Vector2(
+		EGG_SHOP_SPECIES_SELECT_BUTTON_WIDTH * EGG_SHOP_SPECIES_SELECT_BUTTON_SCALE,
+		BUTTON_HEIGHT * EGG_SHOP_SPECIES_SELECT_BUTTON_SCALE
+	)
+	select_btn.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
 	select_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	select_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var sp_copy: Dictionary = species.duplicate()
@@ -3089,7 +3480,8 @@ func _make_species_quality_card(species: Dictionary, quality_id: String, qdef: D
 	vbox.add_child(icon_row)
 
 	var icon := TextureRect.new()
-	icon.custom_minimum_size = Vector2(ICON_SIZE_QUALITY, ICON_SIZE_QUALITY)
+	var quality_icon_size: float = ICON_SIZE_QUALITY * EGG_SHOP_QUALITY_ICON_SCALE
+	icon.custom_minimum_size = Vector2(quality_icon_size, quality_icon_size)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -3165,6 +3557,7 @@ func _make_species_quality_card(species: Dictionary, quality_id: String, qdef: D
 	buy_btn.focus_mode = Control.FOCUS_NONE
 	buy_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	buy_btn.custom_minimum_size = Vector2(0, BUTTON_HEIGHT)
+	buy_btn.add_theme_font_size_override("font_size", int(round(BUTTON_FONT_SIZE * EGG_SHOP_QUALITY_BUY_FONT_SCALE)))
 	buy_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var sid: String = species_id
 	var qid: String = quality_id
@@ -3299,7 +3692,7 @@ func _show_hatch_results(results: Array) -> void:
 				content.add_child(_make_hatch_result_card(r_val as Dictionary, lang))
 
 	var added_lbl := Label.new()
-	added_lbl.text = _localized_text("hatch.added_to_storage", "Added to storage")
+	added_lbl.text = _localized_text("hatch.added_to_pool", "Added to reptile pool")
 	added_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	added_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	added_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
@@ -3940,4 +4333,4 @@ func _join_reward_pieces(pieces: Array[String], separator: String) -> String:
 
 
 func _on_language_changed(_language: String) -> void:
-	_rebuild_layout()
+	_rebuild_layout_preserving_scroll(_scroll_offset)

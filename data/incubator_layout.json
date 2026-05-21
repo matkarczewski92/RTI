@@ -1,22 +1,30 @@
 {
-  "reference_resolution": { "width": 720, "height": 1280 },
-  "comment": "x/y: hitbox center in 720x1280 reference coords. Play area y=84..1108. icon_x/y: center for the small plus/status icon. habitat_x/y: center for the in-progress graphic. icon_size/habitat_size: display size in px. All coords in reference pixels.",
+  "reference_resolution": { "width": 754, "height": 2084 },
+  "comment": "Incubator special-biome layout. x/y/w/h are top-left rectangle coordinates in the 754x2084 background reference. Slots are special incubator fields, not normal habitats.",
   "incubator": {
-    "breeding_chambers": [
-      { "id": 1, "x": 230, "y": 265, "icon_x": 230, "icon_y": 290, "habitat_x": 225, "habitat_y": 195, "icon_size": 40, "habitat_size": 400 },
-      { "id": 2, "x": 495, "y": 330, "icon_x": 485, "icon_y": 290, "habitat_x": 490, "habitat_y": 232, "icon_size": 40, "habitat_size": 400 },
-      { "id": 3, "x": 220, "y": 415, "icon_x": 220, "icon_y": 390, "habitat_x": 222, "habitat_y": 315, "icon_size": 40, "habitat_size": 400 },
-      { "id": 4, "x": 510, "y": 415, "icon_x": 490, "icon_y": 390, "habitat_x": 495, "habitat_y": 315, "icon_size": 40, "habitat_size": 400 },
-      { "id": 5, "x": 230, "y": 510, "icon_x": 215, "icon_y": 510, "habitat_x": 215, "habitat_y": 435, "icon_size": 40, "habitat_size": 400 },
-      { "id": 6, "x": 505, "y": 510, "icon_x": 500, "icon_y": 510, "habitat_x": 500, "habitat_y": 435, "icon_size": 40, "habitat_size": 400 }
+    "background_path": "res://assets/art/biomes/incubator_background_long.png",
+    "scroll_content_size": { "width": 754, "height": 2084 },
+    "slot_defaults": {
+      "plus_size": 74,
+      "plus_offset_x": 0,
+      "plus_offset_y": 0,
+      "overlay_padding": 0,
+      "overlay_scale": 1.0,
+      "overlay_fit": "scale"
+    },
+    "connection_slots": [
+      { "id": "connection_1", "x": 89,  "y": 314, "w": 280, "h": 308, "plus_size": 37 },
+      { "id": "connection_2", "x": 386, "y": 314, "w": 280, "h": 308, "plus_size": 37 },
+      { "id": "connection_3", "x": 89,  "y": 638, "w": 280, "h": 308, "plus_size": 37 },
+      { "id": "connection_4", "x": 386, "y": 638, "w": 280, "h": 308, "plus_size": 37 }
     ],
-    "incubation_containers": [
-      { "id": 1, "x": 215, "y": 750,  "icon_x": 215, "icon_y": 725,  "habitat_x": 215, "habitat_y": 699,  "icon_size": 40, "habitat_size": 315 },
-      { "id": 2, "x": 505, "y": 750,  "icon_x": 505, "icon_y": 725,  "habitat_x": 515, "habitat_y": 699,  "icon_size": 40, "habitat_size": 315 },
-      { "id": 3, "x": 210, "y": 910,  "icon_x": 210, "icon_y": 860,  "habitat_x": 205, "habitat_y": 845,  "icon_size": 40, "habitat_size": 315 },
-      { "id": 4, "x": 510, "y": 910,  "icon_x": 510, "icon_y": 860,  "habitat_x": 515, "habitat_y": 845,  "icon_size": 40, "habitat_size": 315 },
-      { "id": 5, "x": 205, "y": 1085, "icon_x": 200, "icon_y": 1015, "habitat_x": 200, "habitat_y": 990, "icon_size": 40, "habitat_size": 315 },
-      { "id": 6, "x": 515, "y": 1085, "icon_x": 520, "icon_y": 1015, "habitat_x": 520, "habitat_y": 990, "icon_size": 40, "habitat_size": 315 }
+    "incubation_slots": [
+      { "id": "incubation_1", "x": 77,  "y": 1180, "w": 232, "h": 212, "plus_size": 26 },
+      { "id": "incubation_2", "x": 445, "y": 1180, "w": 232, "h": 212, "plus_size": 26 },
+      { "id": "incubation_3", "x": 77,  "y": 1392, "w": 232, "h": 212, "plus_size": 26 },
+      { "id": "incubation_4", "x": 445, "y": 1392, "w": 232, "h": 212, "plus_size": 26 },
+      { "id": "incubation_5", "x": 77,  "y": 1604, "w": 232, "h": 212, "plus_size": 26 },
+      { "id": "incubation_6", "x": 445, "y": 1604, "w": 232, "h": 212, "plus_size": 26 }
     ]
   }
 }

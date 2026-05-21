@@ -1,6 +1,6 @@
 {
 	"unlock_level": 10,
-	"breeding_chambers": 6,
+	"breeding_chambers": 4,
 	"incubation_containers": 6,
 	"max_eggs_per_container": 10,
 	"humidity_enabled": true,

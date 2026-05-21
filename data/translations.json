@@ -3173,6 +3173,14 @@
 		"pl": "Jaja: {count}",
 		"en": "Eggs: {count}"
 	},
+	"incubator_egg_rarity_summary": {
+		"pl": "Rzadkości: {summary}",
+		"en": "Rarities: {summary}"
+	},
+	"incubator_egg_quality_summary": {
+		"pl": "Typy jaj: {summary}",
+		"en": "Egg types: {summary}"
+	},
 	"incubator_egg_species": {
 		"pl": "Gatunek: {name}",
 		"en": "Species: {name}"
@@ -3538,6 +3546,7 @@
 	"hatch.sex": { "pl": "Płeć", "en": "Sex" },
 	"hatch.ok": { "pl": "OK", "en": "OK" },
 	"hatch.added_to_storage": { "pl": "Dodano do schowka", "en": "Added to storage" },
+	"hatch.added_to_pool": { "pl": "Dodano do puli gadów", "en": "Added to reptile pool" },
 	"hatch.ultra_rare": { "pl": "Ultra rzadki gad!", "en": "Ultra Rare hatch!" },
 	"hatch.exceptional": { "pl": "Wyjątkowe wyklucie!", "en": "Exceptional hatch!" },
 	"hatch.error_incomplete": { "pl": "Nie można wykluć jaj, ponieważ dane są niekompletne.", "en": "Cannot hatch eggs because data is incomplete." },

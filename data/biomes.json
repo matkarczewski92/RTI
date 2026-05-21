@@ -86,7 +86,7 @@
 		"is_starting_biome": false,
 		"has_habitats": false,
 		"habitat_slots": 0,
-		"background_path": "res://assets/art/biomes/incubator_background.png",
+		"background_path": "res://assets/art/biomes/incubator_background_long.png",
 		"top_bar_path": "res://assets/art/ui/top_bar_incubation.png",
 		"bottom_menu_path": "res://assets/art/ui/bottom_menu_incubation.png",
 		"button_locked_pl": "res://assets/art/ui/biomes/incubator_pl.png",
@@ -94,11 +94,11 @@
 		"button_locked_en": "res://assets/art/ui/biomes/incubator_en.png",
 		"button_unlocked_en": "res://assets/art/ui/biomes/incubator_en_unlock.png",
 		"top_bar_ui_positions": {
-			"cash":  {"cx": 0.175, "cy": 0.72, "sw": 0.140, "sh": 0.34},
-			"xp":    {"cx": 0.375, "cy": 0.72, "sw": 0.145, "sh": 0.34},
-			"food":  {"cx": 0.595, "cy": 0.72, "sw": 0.125, "sh": 0.34},
-			"water": {"cx": 0.805, "cy": 0.72, "sw": 0.120, "sh": 0.34},
-			"level": {"cx": 0.935, "cy": 0.79, "sw": 0.075, "sh": 0.34}
+			"cash":  {"cx": 0.180, "cy": 0.60, "sw": 0.140, "sh": 0.34},
+			"xp":    {"cx": 0.390, "cy": 0.60, "sw": 0.145, "sh": 0.34},
+			"food":  {"cx": 0.590, "cy": 0.60, "sw": 0.125, "sh": 0.34},
+			"water": {"cx": 0.800, "cy": 0.60, "sw": 0.120, "sh": 0.34},
+			"level": {"cx": 0.930, "cy": 0.67, "sw": 0.075, "sh": 0.34}
 		},
 		"unlock_requirements": {
 			"level": 10

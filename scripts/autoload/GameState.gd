@@ -372,6 +372,7 @@ func normalize_save_data(data: Dictionary) -> Dictionary:
 	_normalize_assignment_relationships(normalized)
 	normalized["discovered_variants"] = _normalize_discovered_variants(normalized.get("discovered_variants", {}), normalized["owned_reptile_instances"])
 	normalized["incubator_storage"] = _normalize_incubator_storage(normalized.get("incubator_storage", {}))
+	normalized["incubator_storage"] = _release_hatched_reptiles_from_incubator_storage(normalized["incubator_storage"], normalized["owned_reptile_instances"])
 	normalized["breeding_chambers"] = _normalize_breeding_chambers(normalized.get("breeding_chambers", {}))
 	normalized["incubation_containers"] = _normalize_incubation_containers(normalized.get("incubation_containers", {}))
 	return normalized
@@ -386,6 +387,38 @@ func _normalize_incubator_storage(raw: Variant) -> Dictionary:
 		var val: Variant = src.get(key, [])
 		storage[key] = val if typeof(val) == TYPE_ARRAY else []
 	return storage
+
+
+func _release_hatched_reptiles_from_incubator_storage(storage: Dictionary, owned_instances: Dictionary) -> Dictionary:
+	for storage_key in ["reptiles", "hatchlings"]:
+		var reptiles_value: Variant = storage.get(storage_key, [])
+		if typeof(reptiles_value) != TYPE_ARRAY:
+			storage[storage_key] = []
+			continue
+
+		var kept_reptiles: Array = []
+		for entry_value in (reptiles_value as Array):
+			if typeof(entry_value) != TYPE_DICTIONARY:
+				kept_reptiles.append(entry_value)
+				continue
+			var entry: Dictionary = entry_value as Dictionary
+			var instance_id: String = str(entry.get("instance_id", entry.get("animal_instance_id", ""))).strip_edges()
+			if instance_id.is_empty() or not _is_owned_hatched_reptile(instance_id, owned_instances):
+				kept_reptiles.append(entry)
+		storage[storage_key] = kept_reptiles
+	return storage
+
+
+func _is_owned_hatched_reptile(instance_id: String, owned_instances: Dictionary) -> bool:
+	if not owned_instances.has(instance_id):
+		return false
+	var instance_value: Variant = owned_instances.get(instance_id)
+	if typeof(instance_value) != TYPE_DICTIONARY:
+		return false
+	var instance: Dictionary = instance_value as Dictionary
+	var source: String = str(instance.get("source", ""))
+	var source_egg_id: String = str(instance.get("source_egg_id", "")).strip_edges()
+	return source == "incubation" or not source_egg_id.is_empty() or instance_id.begins_with("hatch_")
 
 
 func _normalize_breeding_chambers(raw: Variant) -> Dictionary:
