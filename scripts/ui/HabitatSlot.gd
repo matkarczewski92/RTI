@@ -1,6 +1,7 @@
 extends Control
 
 signal habitat_pressed(habitat_id: String)
+signal speedup_pressed(habitat_id: String)
 
 const AssetPaths := preload("res://scripts/helpers/AssetPaths.gd")
 
@@ -30,6 +31,7 @@ var reptile_icon: TextureRect
 var alert_icon: TextureRect
 var income_progress: ProgressBar
 var upgrade_label: Label
+var speedup_button: Button
 var occupied_icon_path := ""
 var empty_texture_path: String = EMPTY_TEXTURE_PATH
 var purchased_texture_path := PURCHASED_EMPTY_TEXTURE_PATH
@@ -37,6 +39,8 @@ var hide_empty_background: bool = false
 var needs_attention := false
 var income_progress_value := 0.0
 var is_upgrading := false
+var speedup_available := false
+var speedup_tooltip := ""
 var upgrade_status_text := ""
 var hint_label: Label
 var touch_button: Button
@@ -179,15 +183,19 @@ func _build_layout() -> void:
 	upgrade_label.anchor_top = 0.0
 	upgrade_label.anchor_right = 0.5
 	upgrade_label.anchor_bottom = 0.0
-	upgrade_label.offset_left = -68
-	upgrade_label.offset_top = 33
-	upgrade_label.offset_right = 68
-	upgrade_label.offset_bottom = 71
+	upgrade_label.offset_left = -110
+	upgrade_label.offset_top = 18
+	upgrade_label.offset_right = 110
+	upgrade_label.offset_bottom = 100
 	upgrade_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	upgrade_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	upgrade_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	upgrade_label.add_theme_font_size_override("font_size", 14)
-	upgrade_label.add_theme_color_override("font_color", Color(0.0, 0.0, 0.0, 1.0))
+	upgrade_label.add_theme_font_size_override("font_size", 22)
+	upgrade_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+	upgrade_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.85))
+	upgrade_label.add_theme_constant_override("shadow_offset_x", 1)
+	upgrade_label.add_theme_constant_override("shadow_offset_y", 1)
+	upgrade_label.add_theme_constant_override("shadow_outline_size", 2)
 	upgrade_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	visual_root.add_child(upgrade_label)
 
@@ -200,6 +208,30 @@ func _build_layout() -> void:
 	touch_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	touch_button.pressed.connect(func() -> void: habitat_pressed.emit(habitat_id))
 	add_child(touch_button)
+
+	speedup_button = Button.new()
+	speedup_button.name = "SpeedUpButton"
+	speedup_button.text = ""
+	speedup_button.icon = AssetPaths.load_texture(SpeedUpService.get_icon_path())
+	speedup_button.expand_icon = true
+	speedup_button.flat = true
+	speedup_button.focus_mode = Control.FOCUS_NONE
+	speedup_button.visible = false
+	speedup_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var su_normal := StyleBoxFlat.new()
+	su_normal.bg_color = Color(0, 0, 0, 0)
+	su_normal.set_corner_radius_all(8)
+	var su_hover := StyleBoxFlat.new()
+	su_hover.bg_color = Color(1.0, 0.78, 0.20, 0.18)
+	su_hover.set_corner_radius_all(8)
+	var su_pressed := StyleBoxFlat.new()
+	su_pressed.bg_color = Color(1.0, 0.65, 0.12, 0.28)
+	su_pressed.set_corner_radius_all(8)
+	speedup_button.add_theme_stylebox_override("normal", su_normal)
+	speedup_button.add_theme_stylebox_override("hover", su_hover)
+	speedup_button.add_theme_stylebox_override("pressed", su_pressed)
+	speedup_button.pressed.connect(func() -> void: speedup_pressed.emit(habitat_id))
+	add_child(speedup_button)
 
 
 func _refresh_visuals() -> void:
@@ -232,6 +264,9 @@ func _refresh_visuals() -> void:
 	if upgrade_label != null:
 		upgrade_label.text = upgrade_status_text
 		upgrade_label.visible = is_upgrading and not upgrade_status_text.is_empty()
+	if speedup_button != null:
+		speedup_button.visible = is_upgrading and speedup_available and speedup_button.icon != null
+		speedup_button.tooltip_text = speedup_tooltip
 	_refresh_text()
 
 
@@ -273,6 +308,12 @@ func set_habitat_texture(texture_path: String) -> void:
 func set_upgrade_status(value: bool, status_text: String = "") -> void:
 	is_upgrading = value
 	upgrade_status_text = status_text
+	_refresh_visuals()
+
+
+func set_speedup_available(value: bool, tooltip: String = "") -> void:
+	speedup_available = value
+	speedup_tooltip = tooltip
 	_refresh_visuals()
 
 
@@ -329,6 +370,23 @@ func _apply_state_geometry() -> void:
 			touch_button.offset_top = 0.0
 			touch_button.offset_right = 0.0
 			touch_button.offset_bottom = 0.0
+
+	if speedup_button != null:
+		var icon_size: Vector2 = SpeedUpService.get_icon_size()
+		icon_size.x = min(icon_size.x, visual_size.x * 0.32)
+		icon_size.y = min(icon_size.y, visual_size.y * 0.32)
+		var _su_dim: float = min(icon_size.x, icon_size.y)
+		icon_size = Vector2(_su_dim, _su_dim)
+		var center := Vector2(visual_offset.x, (-visual_size.y * 0.5 + visual_offset.y) + 100.0 + 4.0 + icon_size.y * 0.5)
+		speedup_button.anchor_left = 0.5
+		speedup_button.anchor_top = 0.5
+		speedup_button.anchor_right = 0.5
+		speedup_button.anchor_bottom = 0.5
+		speedup_button.offset_left = center.x - icon_size.x * 0.5
+		speedup_button.offset_top = center.y - icon_size.y * 0.5
+		speedup_button.offset_right = center.x + icon_size.x * 0.5
+		speedup_button.offset_bottom = center.y + icon_size.y * 0.5
+		speedup_button.custom_minimum_size = icon_size
 
 
 func _refresh_text() -> void:

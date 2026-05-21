@@ -231,6 +231,9 @@ func get_default_save_data() -> Dictionary:
 		"pending_offline_seconds": 0,
 		"offline_claim_available": false,
 		"last_offline_claim_timestamp": 0,
+		"resource_ads_window_started_at": 0,
+		"resource_ads_used_count": 0,
+		"resource_ads_reward_timestamps": [],
 		"biome_2_ready_popup_seen": false,
 		"incubator_storage": {
 			"reptiles": [],
@@ -356,6 +359,14 @@ func normalize_save_data(data: Dictionary) -> Dictionary:
 	normalized["last_food_regen_timestamp"] = _safe_timestamp(normalized.get("last_food_regen_timestamp", now), now, now)
 	normalized["last_water_regen_timestamp"] = _safe_timestamp(normalized.get("last_water_regen_timestamp", now), now, now)
 	normalized["biome_resources"] = _normalize_biome_resources(normalized.get("biome_resources", {}), now)
+	normalized["resource_ads_window_started_at"] = _safe_timestamp(normalized.get("resource_ads_window_started_at", 0), 0, now)
+	normalized["resource_ads_used_count"] = int(clamp(int(normalized.get("resource_ads_used_count", 0)), 0, 999999))
+	var resource_ad_timestamps: Array = []
+	var raw_resource_ad_timestamps: Variant = normalized.get("resource_ads_reward_timestamps", [])
+	if typeof(raw_resource_ad_timestamps) == TYPE_ARRAY:
+		for timestamp_value in (raw_resource_ad_timestamps as Array):
+			resource_ad_timestamps.append(_safe_timestamp(timestamp_value, 0, now))
+	normalized["resource_ads_reward_timestamps"] = resource_ad_timestamps
 
 	normalized["last_active_timestamp"] = _safe_timestamp(normalized.get("last_active_timestamp", now), now, now)
 	normalized["last_offline_income_at"] = _safe_timestamp(normalized.get("last_offline_income_at", normalized["last_active_timestamp"]), now, now)

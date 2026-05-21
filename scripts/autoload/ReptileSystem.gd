@@ -812,6 +812,47 @@ func buy_resource(biome_id: String, resource_id: String) -> Dictionary:
 	return {"success": true, "amount": amount, "resource": resource_id}
 
 
+func refill_biome_resource(biome_id: String, resource_id: String) -> int:
+	if resource_id != "food" and resource_id != "water":
+		return 0
+
+	var target_biome_id: String = biome_id
+	if target_biome_id.is_empty():
+		target_biome_id = GameState.DEFAULT_BIOME_ID
+
+	var now: int = int(Time.get_unix_time_from_system())
+	_update_global_resources(now)
+	var effective_max: int = get_biome_resource_max(target_biome_id, resource_id)
+	if effective_max <= 0:
+		return 0
+
+	var br_value: Variant = GameState.get_value("biome_resources", {})
+	var br: Dictionary = {}
+	if typeof(br_value) == TYPE_DICTIONARY:
+		br = (br_value as Dictionary).duplicate(true)
+
+	var biome: Dictionary = {}
+	var biome_value: Variant = br.get(target_biome_id, {})
+	if typeof(biome_value) == TYPE_DICTIONARY:
+		biome = (biome_value as Dictionary).duplicate(true)
+	else:
+		var defaults: Dictionary = GameState.get_default_biome_resources() if GameState.has_method("get_default_biome_resources") else {}
+		var default_value: Variant = defaults.get(target_biome_id, defaults.get(GameState.DEFAULT_BIOME_ID, {}))
+		if typeof(default_value) == TYPE_DICTIONARY:
+			biome = (default_value as Dictionary).duplicate(true)
+
+	biome[resource_id + "_current"] = effective_max
+	biome["last_" + resource_id + "_regen_timestamp"] = now
+	br[target_biome_id] = biome
+	GameState.set_value("biome_resources", br)
+
+	if target_biome_id == GameState.DEFAULT_BIOME_ID:
+		_set_global_resource(resource_id, min(effective_max, int(GameState.get_value(resource_id + "_max", effective_max))))
+		GameState.set_value("last_" + resource_id + "_regen_timestamp", now)
+
+	return effective_max
+
+
 func _apply_storage_multiplier(resource_id: String, base_max: int) -> int:
 	if not has_node("/root/UpgradeSystem"):
 		return base_max

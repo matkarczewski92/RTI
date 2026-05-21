@@ -2,18 +2,24 @@
 	"unlock_level": 10,
 	"breeding_chambers": 4,
 	"incubation_containers": 6,
-	"max_eggs_per_container": 10,
+	"max_eggs_per_container": 3,
 	"humidity_enabled": true,
 	"storage_enabled": true,
 	"egg_shop_enabled": true,
 	"breeding_enabled": true,
 	"incubation_enabled": true,
+	"hatch_exp": {
+		"common": 50,
+		"rare": 100,
+		"ultra_rare": 500,
+		"exceptional": 1500
+	},
 	"humidity": {
 		"enabled": true,
 		"start_percent": 100,
 		"pause_below_percent": 50,
 		"fail_at_percent": 0,
-		"base_decay_per_hour": 10,
+		"base_decay_per_hour": 7.5,
 		"stop_decay_when_ready": true,
 		"egg_count_multipliers": [
 			{ "min": 1, "max": 3, "multiplier": 0.85 },

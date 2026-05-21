@@ -3386,8 +3386,8 @@
 		"en": "Standard"
 	},
 	"egg_shop.quality_improved": {
-		"pl": "Ulepszone",
-		"en": "Improved"
+		"pl": "Rzadkie",
+		"en": "Rare"
 	},
 	"egg_shop.quality_rare": {
 		"pl": "Rzadkie",
@@ -3509,6 +3509,10 @@
 		"pl": "Zamknij",
 		"en": "Close"
 	},
+	"incubation.eggs_in_container": {
+		"pl": "Jaja znajdujące się w inkubatorze:",
+		"en": "Eggs in the incubator:"
+	},
 	"incubation.incubation_time": {
 		"pl": "Czas inkubacji: {h}h",
 		"en": "Incubation time: {h}h"
@@ -3524,6 +3528,10 @@
 	"incubation.ready_short": {
 		"pl": "Gotowe!",
 		"en": "Ready!"
+	},
+	"incubation.remaining_prefix": {
+		"pl": "Pozostało:",
+		"en": "Remaining:"
 	},
 	"incubation.paused_short": {
 		"pl": "Wstrzymana",
@@ -3553,6 +3561,7 @@
 	"hatch.error_generic": { "pl": "Wystąpił błąd podczas wykluwania. Spróbuj ponownie.", "en": "An error occurred while hatching. Please try again." },
 	"hatch.already_collected": { "pl": "Wynik został już odebrany.", "en": "This result has already been collected." },
 	"hatch.no_eggs": { "pl": "Brak jaj do wyklucia.", "en": "No eggs to hatch." },
+	"hatch.notification_title": { "pl": "Wylęgły się!", "en": "Hatched!" },
 	"storage.reptiles_header": { "pl": "Gady w schowku", "en": "Reptiles in Storage" },
 	"storage.eggs_header": { "pl": "Jaja w schowku", "en": "Eggs in Storage" },
 	"storage.source_incubation": { "pl": "Źródło: inkubacja", "en": "Source: incubation" },
@@ -3658,5 +3667,31 @@
 	"reptile_breeding_bonus": { "pl": "Bonus łączenia: -{points} p.p. ryzyka", "en": "Breeding bonus: -{points} p.p. failure risk" },
 	"reptile_level_up_toast": { "pl": "{species_name} awansował na poziom {level}!", "en": "{species_name} reached level {level}!" },
 	"achievement.complete_chameleon_collection.title": { "pl": "Kolekcja kameleona", "en": "Chameleon collection" },
-	"achievement.complete_chameleon_collection.desc": { "pl": "Odkryj wszystkie warianty kameleona.", "en": "Discover all chameleon variants." }
+	"achievement.complete_chameleon_collection.desc": { "pl": "Odkryj wszystkie warianty kameleona.", "en": "Discover all chameleon variants." },
+	"rewarded_speedup_title": { "pl": "Przyspieszenie", "en": "Speed up" },
+	"rewarded_speedup_message": { "pl": "Czy chcesz obejrzeć reklamę, aby przyspieszyć ten proces o {time}?", "en": "Do you want to watch an ad to speed up this process by {time}?" },
+	"rewarded_speedup_confirm": { "pl": "Tak oglądam!", "en": "Yes, watch!" },
+	"rewarded_speedup_cancel": { "pl": "Rezygnuję!", "en": "Cancel!" },
+	"rewarded_speedup_error_no_internet": { "pl": "Brak połączenia z internetem. Spróbuj ponownie później.", "en": "No internet connection. Please try again later." },
+	"rewarded_speedup_error_ad_unavailable": { "pl": "Reklama jest chwilowo niedostępna. Spróbuj ponownie później.", "en": "Ad is temporarily unavailable. Please try again later." },
+	"rewarded_speedup_error_ad_failed": { "pl": "Nie udało się odtworzyć reklamy. Nagroda nie została przyznana.", "en": "The ad could not be played. Reward was not granted." },
+	"rewarded_speedup_error_sdk_unavailable": { "pl": "Reklamy nie są dostępne na tym urządzeniu lub w tej wersji aplikacji.", "en": "Ads are not available on this device or in this app version." },
+	"rewarded_speedup_error_closed_without_reward": { "pl": "Reklama została zamknięta przed uzyskaniem nagrody.", "en": "The ad was closed before the reward was earned." },
+	"rewarded_speedup_success": { "pl": "Proces został przyspieszony o {time}.", "en": "The process was sped up by {time}." },
+	"rewarded_speedup_panel_text": { "pl": "KLIKNIJ TUTAJ BY OBEJRZEĆ REKLAMĘ I SKRÓCIĆ CZAS O {time}", "en": "CLICK HERE TO WATCH AN AD AND REDUCE TIME BY {time}" },
+	"resource_ads_title": { "pl": "Dodaj zasoby", "en": "Add resources" },
+	"resource_ads_counter": { "pl": "Reklamy z nagrodą: {used}/5", "en": "Rewarded ads: {used}/5" },
+	"resource_ads_money_option": { "pl": "Dodaj 1000 R$ oglądając reklamę", "en": "Add 1000 R$ by watching an ad" },
+	"resource_ads_food_option": { "pl": "Uzupełnij pojemnik jedzenia oglądając reklamę", "en": "Refill the food container by watching an ad" },
+	"resource_ads_water_option": { "pl": "Uzupełnij pojemnik wody oglądając reklamę", "en": "Refill the water container by watching an ad" },
+	"resource_ads_limit_reached": { "pl": "Wykorzystano limit. Następne reklamy możesz obejrzeć za {time}.", "en": "Limit reached. You can watch more ads in {time}." },
+	"resource_ads_reward_money_success": { "pl": "Dodano 1000 R$.", "en": "Added 1000 R$." },
+	"resource_ads_reward_food_success": { "pl": "Uzupełniono pojemnik jedzenia.", "en": "Food container refilled." },
+	"resource_ads_reward_water_success": { "pl": "Uzupełniono pojemnik wody.", "en": "Water container refilled." },
+	"resource_ads_error_limit_reached": { "pl": "Wykorzystano limit reklam z nagrodą.", "en": "Rewarded ad limit reached." },
+	"resource_ads_error_ad_unavailable": { "pl": "Reklama jest chwilowo niedostępna. Spróbuj ponownie później.", "en": "Ad is temporarily unavailable. Please try again later." },
+	"resource_ads_error_ad_failed": { "pl": "Nie udało się odtworzyć reklamy. Nagroda nie została przyznana.", "en": "The ad could not be played. Reward was not granted." },
+	"resource_ads_error_no_internet": { "pl": "Brak połączenia z internetem. Spróbuj ponownie później.", "en": "No internet connection. Please try again later." },
+	"resource_ads_error_sdk_unavailable": { "pl": "Reklamy nie są dostępne na tym urządzeniu lub w tej wersji aplikacji.", "en": "Ads are not available on this device or in this app version." },
+	"resource_ads_error_closed_without_reward": { "pl": "Reklama została zamknięta przed uzyskaniem nagrody.", "en": "The ad was closed before the reward was earned." }
 }

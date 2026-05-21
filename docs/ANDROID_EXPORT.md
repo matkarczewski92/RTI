@@ -111,6 +111,33 @@ adb install -r path/to/reptile-tycoon-debug.apk
 13. Force close the app, wait, then reopen to test offline progress.
 14. Minimize and resume to check pause/resume stability.
 
+## AdMob Plugin Bridge — Custom Files
+
+The AdMob rewarded ad integration requires two custom files inside the Gradle build template:
+
+```
+android/build/src/main/java/com/godot/game/AdMobPlugin.kt
+android/build/src/main/resources/META-INF/services/org.godotengine.godot.plugin.GodotPlugin
+```
+
+`AdMobPlugin.kt` is the Godot 4 plugin bridge that registers `"AdMob"` as an Engine singleton and exposes `load_rewarded_ad` / `show_rewarded_ad` to GDScript.
+The `META-INF/services/` file is kept for forward-compatibility but is not the primary discovery mechanism.
+
+Godot 4.2+ (Plugin V2) discovers the plugin at runtime via a `<meta-data>` entry in `AndroidManifest.xml`:
+
+```xml
+<meta-data
+    android:name="org.godotengine.plugin.v2.AdMob"
+    android:value="com.godot.game.AdMobPlugin"/>
+```
+
+This entry is in `android/build/src/main/AndroidManifest.xml` alongside the AdMob App ID entry.
+
+**Warning — template reinstallation deletes these files.**
+If you ever run `Editor > Manage Export Templates > Install` (or re-install the Android build template via the Godot project menu), Godot regenerates the entire `android/build/` directory and these files are deleted. Rewarded ads will silently stop working again.
+
+After any template reinstallation, re-create both files from the git history before rebuilding.
+
 ## Troubleshooting
 
 ### Missing Export Templates

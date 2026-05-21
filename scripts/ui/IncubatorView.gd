@@ -27,11 +27,13 @@ const EGG_SHOP_EXCEPTIONAL_PATH := "res://assets/art/incubator/eggs/shop_egg_exc
 
 const LAYOUT_REF_W := 754.0
 const LAYOUT_REF_H := 2084.0
-const PLAY_AREA_REF_TOP := 150.722775   # TOP_BAR_HEIGHT in reference pixels
-const TOP_BAR_HEIGHT := 150.722775
+const PLAY_AREA_REF_TOP := 160.722775   # TOP_BAR_HEIGHT in reference pixels
+const TOP_BAR_HEIGHT := 170.722775
 const TOP_BAR_Y_OFFSET := -10.0
 const TOP_BAR_EXTRA_HEIGHT_RATIO := 0.20
-const BOTTOM_MENU_HEIGHT := 226.157092875
+const BOTTOM_MENU_HEIGHT := 383.65
+const BOTTOM_MENU_Y_OFFSET := 50.0
+const SCROLL_BOTTOM_PADDING := 200.0
 const SCROLL_DRAG_THRESHOLD := 12.0
 const SCROLL_WHEEL_STEP := 90.0
 
@@ -51,7 +53,7 @@ const BUTTON_HEIGHT        := 88   # standard action / confirm button height
 const BACK_BTN_MIN_W       := 253  # Back / Cancel / Close button min width
 const ICON_SIZE_CARD       := 140  # portrait icon in list cards (storage, select)
 const ICON_SIZE_QUALITY    := 140  # egg icon in quality 2×2 grid
-const ICON_SIZE_UPGRADE    := 113  # upgrade card icon
+const ICON_SIZE_UPGRADE    := 170  # upgrade card icon
 const EGG_SHOP_SPECIES_PORTRAIT_SIZE := 82.0
 const EGG_SHOP_SPECIES_PORTRAIT_SCALE := 2.0
 const EGG_SHOP_SPECIES_TEXT_SHIFT_RATIO := 0.20
@@ -109,6 +111,8 @@ var _incubation_panel_step: int = 0   # 0 = species list, 1 = count pick
 var _incubation_panel_species: String = ""
 var _incubation_panel_count: int = 1
 var _incubation_panel_available_ids: Array = []
+var _incubation_panel_rarity_counts: Dictionary = {}
+var _incubation_panel_eggs_by_rarity: Dictionary = {}
 var _incubation_load_in_progress: bool = false
 
 # Egg shop
@@ -122,6 +126,7 @@ var _quests_overlay: Control
 
 var _settings_modal: Control
 var _upgrades_overlay: Control
+var _hatch_notif_panel: Control = null
 
 
 func _ready() -> void:
@@ -377,6 +382,9 @@ func _rebuild_layout() -> void:
 	_hatch_results_overlay = null
 	_quests_overlay = null
 	_upgrades_overlay = null
+	if _hatch_notif_panel != null and is_instance_valid(_hatch_notif_panel):
+		_hatch_notif_panel.queue_free()
+	_hatch_notif_panel = null
 	_build_layout()
 
 
@@ -464,8 +472,8 @@ func _compute_scroll_max() -> void:
 		_scroll_max = 0.0
 		return
 	var viewport_height: float = get_viewport_rect().size.y
-	var fixed_bottom_height: float = BOTTOM_MENU_HEIGHT
-	_scroll_max = max(0.0, _scroll_map_layer.custom_minimum_size.y - max(1.0, viewport_height - fixed_bottom_height))
+	var fixed_bottom_height: float = BOTTOM_MENU_HEIGHT - BOTTOM_MENU_Y_OFFSET
+	_scroll_max = max(0.0, _scroll_map_layer.custom_minimum_size.y - max(1.0, viewport_height - fixed_bottom_height) - SCROLL_BOTTOM_PADDING)
 	_scroll_to(_scroll_offset)
 
 
@@ -519,8 +527,8 @@ func _add_bottom_nav() -> void:
 	if "art_path" in bottom_nav:
 		bottom_nav.art_path = BOTTOM_MENU_ART_PATH
 	bottom_nav.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	bottom_nav.offset_top = -BOTTOM_MENU_HEIGHT
-	bottom_nav.offset_bottom = 0
+	bottom_nav.offset_top = -BOTTOM_MENU_HEIGHT + BOTTOM_MENU_Y_OFFSET
+	bottom_nav.offset_bottom = BOTTOM_MENU_Y_OFFSET
 	if bottom_nav.has_signal("nav_pressed"):
 		bottom_nav.connect("nav_pressed", Callable(self, "_on_nav_pressed"))
 	add_child(bottom_nav)
@@ -683,7 +691,8 @@ func _add_slot(parent: Control, slot_def: Dictionary, index: int, slot_type: Str
 	timer_label.name = "TimerLabel"
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	timer_label.add_theme_font_size_override("font_size", max(14, int(round(17.0 * scale))))
+	var _timer_base_size: int = 20 if slot_type == "incubation" else 17
+	timer_label.add_theme_font_size_override("font_size", max(14, int(round(float(_timer_base_size) * scale))))
 	timer_label.add_theme_color_override("font_color", Color(0.96, 0.93, 0.76, 1.0))
 	timer_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.90))
 	timer_label.add_theme_constant_override("shadow_offset_x", 1)
@@ -707,6 +716,45 @@ func _add_slot(parent: Control, slot_def: Dictionary, index: int, slot_type: Str
 	hit_btn.add_theme_stylebox_override("focus", blank)
 	hit_btn.pressed.connect(func() -> void: _on_slot_pressed(index, slot_type))
 	container.add_child(hit_btn)
+
+	var speedup_btn := Button.new()
+	speedup_btn.name = "SpeedUpButton"
+	var speedup_icon_size: Vector2 = SpeedUpService.get_icon_size() * max(0.80, scale)
+	speedup_icon_size.x = min(speedup_icon_size.x, slot_size.x * 0.50)
+	speedup_icon_size.y = min(speedup_icon_size.y, slot_size.y * 0.50)
+	var _su_dim: float = min(speedup_icon_size.x, speedup_icon_size.y)
+	speedup_icon_size = Vector2(_su_dim, _su_dim)
+	speedup_btn.anchor_left = 0.5
+	speedup_btn.anchor_right = 0.5
+	speedup_btn.anchor_top = 0.72
+	speedup_btn.anchor_bottom = 0.72
+	var _su_y_shift: float = 25.0 * scale if slot_type == "incubation" else 0.0
+	speedup_btn.offset_left = -speedup_icon_size.x * 0.5
+	speedup_btn.offset_right = speedup_icon_size.x * 0.5
+	speedup_btn.offset_top = -speedup_icon_size.y * 0.5 + _su_y_shift
+	speedup_btn.offset_bottom = speedup_icon_size.y * 0.5 + _su_y_shift
+	speedup_btn.custom_minimum_size = speedup_icon_size
+	speedup_btn.text = ""
+	speedup_btn.icon = AssetPaths.load_texture(SpeedUpService.get_icon_path())
+	speedup_btn.expand_icon = true
+	speedup_btn.flat = true
+	speedup_btn.focus_mode = Control.FOCUS_NONE
+	speedup_btn.visible = false
+	speedup_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var su_style_n := StyleBoxFlat.new()
+	su_style_n.bg_color = Color(0.0, 0.0, 0.0, 0.0)
+	su_style_n.set_corner_radius_all(8)
+	var su_style_h := StyleBoxFlat.new()
+	su_style_h.bg_color = Color(1.0, 0.78, 0.20, 0.18)
+	su_style_h.set_corner_radius_all(8)
+	var su_style_p := StyleBoxFlat.new()
+	su_style_p.bg_color = Color(1.0, 0.65, 0.12, 0.28)
+	su_style_p.set_corner_radius_all(8)
+	speedup_btn.add_theme_stylebox_override("normal", su_style_n)
+	speedup_btn.add_theme_stylebox_override("hover", su_style_h)
+	speedup_btn.add_theme_stylebox_override("pressed", su_style_p)
+	speedup_btn.pressed.connect(func() -> void: _on_speedup_pressed(index, slot_type))
+	container.add_child(speedup_btn)
 
 	_refresh_slot(container, index, slot_type)
 	return container
@@ -802,12 +850,16 @@ func _refresh_slot(container: Control, index: int, slot_type: String) -> void:
 	if icon == null or timer_label == null:
 		return
 
+	var speedup_btn: Button = container.get_node_or_null("SpeedUpButton") as Button
+
 	if slot_type == "incubation":
 		var containers: Dictionary = IncubationSystem.get_containers()
 		var cv: Variant = containers.get(str(index), null)
 		if cv == null or typeof(cv) != TYPE_DICTIONARY:
 			_apply_plus_visual(icon, container, Color.WHITE)
 			timer_label.text = ""
+			if speedup_btn != null:
+				speedup_btn.visible = false
 			return
 		var ic: Dictionary = cv as Dictionary
 		var ic_state: String = str(ic.get("state", "empty"))
@@ -815,23 +867,40 @@ func _refresh_slot(container: Control, index: int, slot_type: String) -> void:
 			"loaded":
 				_apply_overlay_visual(icon, container, INCUBATION_IN_PROGRESS_PATH, Color(0.82, 0.94, 1.0, 1.0))
 				timer_label.text = str(int(ic.get("egg_count", 0))) + " jaj"
+				if speedup_btn != null:
+					speedup_btn.visible = false
 			"running":
 				_apply_overlay_visual(icon, container, INCUBATION_IN_PROGRESS_PATH, Color.WHITE)
 				var rem: int = IncubationSystem.get_remaining_seconds(ic)
-				timer_label.text = _format_countdown(rem)
+				timer_label.text = _localized_text("incubation.remaining_prefix", "Remaining:") + "\n" + _format_countdown(rem)
+				if speedup_btn != null:
+					var show_su: bool = SpeedUpService.should_show_button(rem)
+					speedup_btn.visible = show_su
+					if show_su:
+						var reduce: int = SpeedUpService.calculate_reduce_seconds(rem)
+						speedup_btn.text = ""
+						speedup_btn.tooltip_text = SpeedUpService.format_reduce_time(reduce, LocalizationSystem.get_language())
 			"paused_low_humidity":
 				_apply_overlay_visual(icon, container, INCUBATION_IN_PROGRESS_PATH, Color(1.0, 0.72, 0.20, 1.0))
 				var hum: int = int(float(ic.get("humidity_percent", 0.0)))
 				timer_label.text = str(hum) + "%"
+				if speedup_btn != null:
+					speedup_btn.visible = false
 			"failed_dry":
 				_apply_overlay_visual(icon, container, INCUBATION_IN_PROGRESS_PATH, Color(1.0, 0.38, 0.32, 1.0))
 				timer_label.text = _localized_text("incubation.failed_short", "Failed")
+				if speedup_btn != null:
+					speedup_btn.visible = false
 			"ready_to_hatch":
 				_apply_overlay_visual(icon, container, INCUBATION_IN_PROGRESS_PATH, Color(0.50, 1.0, 0.58, 1.0))
 				timer_label.text = _localized_text("incubation.ready_short", "Ready!")
+				if speedup_btn != null:
+					speedup_btn.visible = false
 			_:
 				_apply_plus_visual(icon, container, Color.WHITE)
 				timer_label.text = ""
+				if speedup_btn != null:
+					speedup_btn.visible = false
 		return
 
 	# Breeding chamber
@@ -840,6 +909,8 @@ func _refresh_slot(container: Control, index: int, slot_type: String) -> void:
 	if val == null or typeof(val) != TYPE_DICTIONARY:
 		_apply_plus_visual(icon, container, Color.WHITE)
 		timer_label.text = ""
+		if speedup_btn != null:
+			speedup_btn.visible = false
 		return
 
 	var chamber: Dictionary = val as Dictionary
@@ -849,15 +920,28 @@ func _refresh_slot(container: Control, index: int, slot_type: String) -> void:
 			_apply_overlay_visual(icon, container, CONNECTION_IN_PROGRESS_PATH, Color.WHITE)
 			var secs: int = BreedingSystem.get_breeding_remaining_seconds(chamber)
 			timer_label.text = _format_countdown(secs)
+			if speedup_btn != null:
+				var show_su: bool = SpeedUpService.should_show_button(secs)
+				speedup_btn.visible = show_su
+				if show_su:
+					var reduce: int = SpeedUpService.calculate_reduce_seconds(secs)
+					speedup_btn.text = ""
+					speedup_btn.tooltip_text = SpeedUpService.format_reduce_time(reduce, LocalizationSystem.get_language())
 		"ready":
 			_apply_overlay_visual(icon, container, CONNECTION_IN_PROGRESS_PATH, Color(0.55, 1.0, 0.60, 1.0))
 			timer_label.text = _localized_text("incubator.breeding_ready", "Ready!")
+			if speedup_btn != null:
+				speedup_btn.visible = false
 		"failed":
 			_apply_overlay_visual(icon, container, CONNECTION_IN_PROGRESS_PATH, Color(1.0, 0.45, 0.40, 1.0))
 			timer_label.text = _localized_text("incubator.breeding_failed", "Failed")
+			if speedup_btn != null:
+				speedup_btn.visible = false
 		_:
 			_apply_plus_visual(icon, container, Color.WHITE)
 			timer_label.text = ""
+			if speedup_btn != null:
+				speedup_btn.visible = false
 
 
 func _refresh_all_slots() -> void:
@@ -869,6 +953,24 @@ func _refresh_all_slots() -> void:
 		var node: Variant = _incubation_slot_nodes.get(index)
 		if typeof(node) == TYPE_OBJECT and is_instance_valid(node as Control):
 			_refresh_slot(node as Control, index, "incubation")
+
+
+func _on_speedup_pressed(index: int, slot_type: String) -> void:
+	if _scroll_was_drag:
+		return
+	var target_type: String = "egg_incubation" if slot_type == "incubation" else "incubator_pairing"
+	var remaining: int = SpeedUpService.get_remaining_seconds(target_type, str(index))
+	var reduce: int = SpeedUpService.calculate_reduce_seconds(remaining)
+	var reduce_text: String = SpeedUpService.format_reduce_time(reduce, LocalizationSystem.get_language())
+	var container_node: Control = (_incubation_slot_nodes.get(index) if slot_type == "incubation"
+		else _breeding_slot_nodes.get(index)) as Control
+	var parent_node: Control = container_node if is_instance_valid(container_node) else self
+	var success_callback := func() -> void:
+		_refresh_all_slots()
+		_show_toast_raw(LocalizationSystem.tr_key("rewarded_speedup_success").replace("{time}", reduce_text))
+	var error_callback := func(err_key: String) -> void:
+		_show_toast(err_key, err_key)
+	SpeedUpService.request_speedup(target_type, str(index), parent_node, success_callback, error_callback)
 
 
 func _on_reptile_leveled_up(instance_id: String, reptile_id: String, new_level: int) -> void:
@@ -891,7 +993,11 @@ func _on_slot_pressed(index: int, slot_type: String) -> void:
 		return
 
 	if slot_type == "incubation":
-		_show_incubation_panel(index)
+		var ic_container: Dictionary = IncubationSystem.get_container(index)
+		if str(ic_container.get("state", "")) == "ready_to_hatch":
+			_hatch_immediately(index)
+		else:
+			_show_incubation_panel(index)
 		return
 
 	var chambers: Dictionary = BreedingSystem.get_chambers()
@@ -918,6 +1024,133 @@ func _on_slot_pressed(index: int, slot_type: String) -> void:
 			_refresh_all_slots()
 	elif state == "breeding":
 		_show_toast("incubator.breeding_in_progress", "Breeding In Progress")
+
+
+func _hatch_immediately(container_index: int) -> void:
+	var result: Dictionary = IncubationSystem.hatch_batch(container_index)
+	_refresh_all_slots()
+	if bool(result.get("success", false)):
+		var results: Array = result.get("results", []) as Array
+		var total_exp: int = _calculate_hatch_exp(results)
+		if total_exp > 0:
+			EconomySystem.add_currency("xp", float(total_exp))
+		_show_hatch_center_notification(results, total_exp)
+	else:
+		_show_toast(str(result.get("error_key", "")), "Hatching failed.")
+
+
+func _calculate_hatch_exp(results: Array) -> int:
+	var exp_table: Variant = _config.get("hatch_exp", {})
+	var table: Dictionary = exp_table as Dictionary if typeof(exp_table) == TYPE_DICTIONARY else {}
+	var total: int = 0
+	for r_val in results:
+		if typeof(r_val) != TYPE_DICTIONARY:
+			continue
+		var rarity: String = str((r_val as Dictionary).get("rarity", "common"))
+		total += int(table.get(rarity, 0))
+	return total
+
+
+func _show_hatch_center_notification(results: Array, total_exp: int = 0) -> void:
+	if _hatch_notif_panel != null and is_instance_valid(_hatch_notif_panel):
+		_hatch_notif_panel.queue_free()
+		_hatch_notif_panel = null
+
+	var panel := PanelContainer.new()
+	panel.name = "HatchNotification"
+	panel.z_index = 250
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.10, 0.07, 0.04, 0.94)
+	style.border_color = Color(0.80, 0.65, 0.20, 0.95)
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(18)
+	style.content_margin_left = 20
+	style.content_margin_right = 20
+	style.content_margin_top = 16
+	style.content_margin_bottom = 16
+	panel.add_theme_stylebox_override("panel", style)
+
+	panel.anchor_left = 0.05
+	panel.anchor_right = 0.95
+	panel.anchor_top = 0.30
+	panel.anchor_bottom = 0.70
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	panel.add_child(vbox)
+
+	var title := Label.new()
+	title.text = _localized_text("hatch.notification_title", "Wylęgły się!")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
+	title.add_theme_color_override("font_color", Color(1.0, 0.88, 0.30, 1.0))
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(title)
+
+	var sep := HSeparator.new()
+	sep.add_theme_color_override("color", Color(0.70, 0.55, 0.20, 0.70))
+	vbox.add_child(sep)
+
+	for r_val in results:
+		if typeof(r_val) != TYPE_DICTIONARY:
+			continue
+		var r: Dictionary = r_val as Dictionary
+		var species_name: String = _localized_species_name(str(r.get("species_id", "")))
+		var rarity: String = str(r.get("rarity", "common"))
+		var sex: String = str(r.get("sex", "male"))
+		var sex_text: String = _localized_text("sex." + sex, sex)
+		var lbl := Label.new()
+		lbl.text = species_name + " — " + _localized_rarity(rarity) + " (" + sex_text + ")"
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
+		lbl.add_theme_color_override("font_color", _rarity_color(rarity))
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vbox.add_child(lbl)
+
+	var push_spacer := Control.new()
+	push_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	push_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(push_spacer)
+
+	var exp_lbl := Label.new()
+	exp_lbl.text = "+ " + str(total_exp) + " EXP"
+	exp_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	exp_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
+	exp_lbl.add_theme_color_override("font_color", Color(0.40, 1.0, 0.40, 1.0))
+	exp_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(exp_lbl)
+
+	var sep2 := HSeparator.new()
+	sep2.add_theme_color_override("color", Color(0.70, 0.55, 0.20, 0.70))
+	vbox.add_child(sep2)
+
+	var btn_margin := MarginContainer.new()
+	btn_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var side_margin := int(get_viewport_rect().size.x * 0.90 * 0.05)
+	btn_margin.add_theme_constant_override("margin_left", side_margin)
+	btn_margin.add_theme_constant_override("margin_right", side_margin)
+	btn_margin.add_theme_constant_override("margin_top", 4)
+	btn_margin.add_theme_constant_override("margin_bottom", 4)
+	vbox.add_child(btn_margin)
+
+	var close_btn := Button.new()
+	close_btn.text = _localized_text("button.close", "Zamknij")
+	close_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	close_btn.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
+	close_btn.custom_minimum_size.y = int(BUTTON_FONT_SIZE * 2.5 * 1.25)
+	btn_margin.add_child(close_btn)
+
+	add_child(panel)
+	_hatch_notif_panel = panel
+
+	var notif: Control = panel
+	close_btn.pressed.connect(func() -> void:
+		if is_instance_valid(notif):
+			notif.queue_free()
+		if _hatch_notif_panel == notif:
+			_hatch_notif_panel = null
+	)
 
 
 # ─── Storage overlay ───────────────────────────────────────────────────
@@ -1210,10 +1443,6 @@ func _make_storage_egg_group_card(group: Dictionary) -> Control:
 	var quality_summary: String = _format_egg_quality_summary(group.get("quality_counts", {}))
 	if not quality_summary.is_empty():
 		lines.insert(1, quality_summary)
-	var source_counts_value: Variant = group.get("source_counts", {})
-	var has_source_counts: bool = typeof(source_counts_value) == TYPE_DICTIONARY and not (source_counts_value as Dictionary).is_empty()
-	if not bool(group.get("loaded", false)) or has_source_counts:
-		lines.append(_format_source_summary(group.get("source_counts", {})))
 	for line in lines:
 		var lbl := Label.new()
 		lbl.text = str(line)
@@ -1222,23 +1451,6 @@ func _make_storage_egg_group_card(group: Dictionary) -> Control:
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		info.add_child(lbl)
 
-	var details_btn := Button.new()
-	details_btn.text = _localized_text("incubator_storage_details", "Details")
-	details_btn.focus_mode = Control.FOCUS_NONE
-	details_btn.custom_minimum_size = Vector2(130, BUTTON_HEIGHT)
-	details_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	details_btn.pressed.connect(func() -> void:
-		var details: Array[String] = [str(group.get("egg_name", ""))]
-		var details_rarity: String = _format_egg_rarity_summary(group.get("rarity_counts", {}))
-		var details_quality: String = _format_egg_quality_summary(group.get("quality_counts", {}))
-		if not details_quality.is_empty():
-			details.append(details_quality)
-		if not details_rarity.is_empty():
-			details.append(details_rarity)
-		details.append(_format_source_summary(group.get("source_counts", {})))
-		_show_toast_raw(_join_plain_text(details, " | "))
-	)
-	row.add_child(details_btn)
 	return card
 
 
@@ -1260,7 +1472,7 @@ func _make_egg_select_group_card(group: Dictionary) -> Control:
 	var sp_portrait: String = _get_species_portrait_path(sp_id)
 	if sp_portrait == PLUS_ICON_PATH:
 		sp_portrait = str(group.get("visual_asset", EGG_PATH))
-	top_row.add_child(_make_breeding_portrait(sp_portrait, Vector2(82, 82)))
+	top_row.add_child(_make_breeding_portrait(sp_portrait, Vector2(164, 164)))
 
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1275,14 +1487,6 @@ func _make_egg_select_group_card(group: Dictionary) -> Control:
 	species_name_lbl.add_theme_color_override("font_color", Color(0.96, 0.92, 0.76, 1.0))
 	species_name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(species_name_lbl)
-
-	var egg_name_lbl := Label.new()
-	egg_name_lbl.text = str(group.get("egg_name", ""))
-	egg_name_lbl.clip_text = true
-	egg_name_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
-	egg_name_lbl.add_theme_color_override("font_color", Color(0.72, 0.66, 0.54, 0.90))
-	egg_name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	info.add_child(egg_name_lbl)
 
 	var count_lbl := Label.new()
 	count_lbl.text = _localized_text("incubator_egg_available", "Available: {count}").replace("{count}", str(int(group.get("count", 0))))
@@ -1312,14 +1516,6 @@ func _make_egg_select_group_card(group: Dictionary) -> Control:
 	time_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.add_child(time_lbl)
 
-	var source_lbl := Label.new()
-	source_lbl.text = _format_source_summary(group.get("source_counts", {}))
-	source_lbl.clip_text = true
-	source_lbl.add_theme_font_size_override("font_size", META_FONT_SIZE)
-	source_lbl.add_theme_color_override("font_color", Color(0.72, 0.66, 0.54, 0.95))
-	source_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	body.add_child(source_lbl)
-
 	var select_btn := Button.new()
 	select_btn.text = _localized_text("incubator_egg_select", "Select")
 	select_btn.focus_mode = Control.FOCUS_NONE
@@ -1330,6 +1526,8 @@ func _make_egg_select_group_card(group: Dictionary) -> Control:
 		_incubation_panel_species = str(group.get("species_id", ""))
 		_incubation_panel_available_ids = group.get("egg_ids", []) as Array
 		_incubation_panel_count = 1
+		_incubation_panel_rarity_counts = {}
+		_incubation_panel_eggs_by_rarity = {}
 		_incubation_panel_step = 1
 		_populate_incubation_panel()
 	)
@@ -2413,18 +2611,18 @@ func _add_toast() -> void:
 	style.border_width_right = 2
 	style.border_width_top = 2
 	style.border_width_bottom = 2
-	style.set_corner_radius_all(14)
+	style.set_corner_radius_all(21)
 	_toast_panel.add_theme_stylebox_override("panel", style)
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.add_theme_constant_override("margin_left", 27)
+	margin.add_theme_constant_override("margin_right", 27)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_bottom", 18)
 	_toast_panel.add_child(margin)
 	_toast_label = Label.new()
 	_toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_toast_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_toast_label.add_theme_font_size_override("font_size", 16)
+	_toast_label.add_theme_font_size_override("font_size", 24)
 	_toast_label.add_theme_color_override("font_color", Color.WHITE)
 	_toast_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(_toast_label)
@@ -2441,9 +2639,9 @@ func _show_toast_raw(text: String) -> void:
 	_toast_label.text = text
 	_toast_panel.visible = true
 	var vp := get_viewport_rect().size
-	var w: float = min(vp.x - 48.0, 580.0)
-	_toast_panel.size = Vector2(w, 70.0)
-	_toast_panel.position = Vector2((vp.x - w) * 0.5, vp.y - 110.0)
+	var w: float = min(vp.x - 48.0, 870.0)
+	_toast_panel.size = Vector2(w, 105.0)
+	_toast_panel.position = Vector2((vp.x - w) * 0.5, vp.y - 150.0)
 	_toast_timer = get_tree().create_timer(2.5)
 	var active := _toast_timer
 	active.timeout.connect(func() -> void:
@@ -2718,22 +2916,28 @@ func _add_incubation_panel() -> void:
 	scroll.add_child(_incubation_panel_content)
 	_make_scroll_safe(_incubation_panel_content)
 
-	var close_row := HBoxContainer.new()
-	close_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	close_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	outer.add_child(close_row)
+	var close_margin := MarginContainer.new()
+	close_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var close_side_px := int(get_viewport_rect().size.x * 0.05)
+	close_margin.add_theme_constant_override("margin_left", close_side_px)
+	close_margin.add_theme_constant_override("margin_right", close_side_px)
+	close_margin.add_theme_constant_override("margin_top", 4)
+	close_margin.add_theme_constant_override("margin_bottom", 4)
+	outer.add_child(close_margin)
 
 	_incubation_panel_close_btn = Button.new()
 	_incubation_panel_close_btn.name = "IPClose"
 	_incubation_panel_close_btn.text = _localized_text("incubation.close", "Close")
 	_incubation_panel_close_btn.focus_mode = Control.FOCUS_NONE
-	_incubation_panel_close_btn.custom_minimum_size = Vector2(BACK_BTN_MIN_W, BUTTON_HEIGHT)
+	_incubation_panel_close_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_incubation_panel_close_btn.custom_minimum_size = Vector2(0, int(BUTTON_HEIGHT * 1.5))
+	_incubation_panel_close_btn.add_theme_font_size_override("font_size", int(BUTTON_FONT_SIZE * 1.5))
 	_incubation_panel_close_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	_incubation_panel_close_btn.pressed.connect(func() -> void:
 		_incubation_panel.visible = false
 		_incubation_panel_idx = -1
 	)
-	close_row.add_child(_incubation_panel_close_btn)
+	close_margin.add_child(_incubation_panel_close_btn)
 
 
 func _show_incubation_panel(index: int) -> void:
@@ -2742,6 +2946,8 @@ func _show_incubation_panel(index: int) -> void:
 	_incubation_panel_species = ""
 	_incubation_panel_count = 1
 	_incubation_panel_available_ids = []
+	_incubation_panel_rarity_counts = {}
+	_incubation_panel_eggs_by_rarity = {}
 	_incubation_load_in_progress = false
 	_populate_incubation_panel()
 	if _incubation_panel != null:
@@ -2813,66 +3019,92 @@ func _ip_show_count_select() -> void:
 		_ip_show_species_select()
 		return
 
-	_incubation_panel_available_ids = group.get("egg_ids", []) as Array
-	var egg_name: String = str(group.get("egg_name", _get_egg_display_name(_incubation_panel_species)))
-	var max_count: int = mini(IncubationSystem.get_max_eggs_per_container(), _incubation_panel_available_ids.size())
-	if max_count < 1:
+	_incubation_panel_eggs_by_rarity = _get_eggs_by_rarity_for_species(_incubation_panel_species)
+	if _incubation_panel_eggs_by_rarity.is_empty():
 		_incubation_panel_step = 0
 		_ip_show_species_select()
 		return
-	_incubation_panel_count = clampi(_incubation_panel_count, 1, max_count)
+
+	var max_total: int = IncubationSystem.get_max_eggs_per_container()
+	for rarity in _incubation_panel_eggs_by_rarity.keys():
+		if not _incubation_panel_rarity_counts.has(rarity):
+			_incubation_panel_rarity_counts[rarity] = 0
+	for rarity in _incubation_panel_rarity_counts.keys().duplicate():
+		if not _incubation_panel_eggs_by_rarity.has(rarity):
+			_incubation_panel_rarity_counts.erase(rarity)
+
+	var total_selected: int = _get_total_selected_rarity_count()
+
+	var back_wrapper := MarginContainer.new()
+	back_wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var back_side_px := int(get_viewport_rect().size.x * 0.05)
+	back_wrapper.add_theme_constant_override("margin_left", back_side_px)
+	back_wrapper.add_theme_constant_override("margin_right", back_side_px)
+	back_wrapper.add_theme_constant_override("margin_top", 4)
+	back_wrapper.add_theme_constant_override("margin_bottom", 4)
+	_incubation_panel_content.add_child(back_wrapper)
+	var top_back_btn := Button.new()
+	top_back_btn.text = _localized_text("incubator_egg_back", "Back")
+	top_back_btn.focus_mode = Control.FOCUS_NONE
+	top_back_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_back_btn.custom_minimum_size = Vector2(0, int(BUTTON_HEIGHT * 1.5))
+	top_back_btn.add_theme_font_size_override("font_size", int(BUTTON_FONT_SIZE * 1.5))
+	top_back_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	top_back_btn.pressed.connect(func() -> void:
+		_incubation_panel_step = 0
+		_populate_incubation_panel()
+	)
+	back_wrapper.add_child(top_back_btn)
 
 	_incubation_panel_content.add_child(_make_selected_egg_header(group))
 	_incubation_panel_content.add_child(_make_ip_info_label(
-		_localized_text("incubator_egg_available", "Available: {count}").replace("{count}", str(_incubation_panel_available_ids.size()))
-	))
-	_incubation_panel_content.add_child(_make_ip_info_label(
-		_localized_text("incubator_egg_max", "Max: {count}").replace("{count}", str(IncubationSystem.get_max_eggs_per_container()))
+		_localized_text("incubator_egg_max", "Max: {count}").replace("{count}", str(max_total))
 	))
 
-	var count_row := HBoxContainer.new()
-	count_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	count_row.add_theme_constant_override("separation", 16)
-	_incubation_panel_content.add_child(count_row)
+	var known_rarities: Array = ["common", "rare", "ultra_rare", "exceptional"]
+	var quality_order: Array = IncubationSystem.get_quality_order()
+	var ordered_keys: Array = []
+	for k in quality_order:
+		if _incubation_panel_eggs_by_rarity.has(k):
+			ordered_keys.append(k)
+	for k in known_rarities:
+		if _incubation_panel_eggs_by_rarity.has(k) and not ordered_keys.has(k):
+			ordered_keys.append(k)
+	for k in _incubation_panel_eggs_by_rarity.keys():
+		if not ordered_keys.has(k):
+			ordered_keys.append(k)
 
-	var minus_btn := Button.new()
-	minus_btn.text = "−"
-	minus_btn.custom_minimum_size = Vector2(64, BUTTON_HEIGHT)   # COUNT_STEPPER_SIZE
-	minus_btn.focus_mode = Control.FOCUS_NONE
-	minus_btn.disabled = _incubation_panel_count <= 1
-	minus_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	minus_btn.pressed.connect(func() -> void:
-		_incubation_panel_count = maxi(1, _incubation_panel_count - 1)
-		_populate_incubation_panel()
-	)
-	count_row.add_child(minus_btn)
+	for key in ordered_keys:
+		var available: int = (_incubation_panel_eggs_by_rarity[key] as Array).size()
+		var selected: int = int(_incubation_panel_rarity_counts.get(key, 0))
+		var display_name: String
+		var display_color: Color
+		if known_rarities.has(key):
+			display_name = _localized_rarity(key)
+			display_color = _rarity_color(key)
+		else:
+			display_name = _localized_egg_quality(key)
+			var quality_colors: Dictionary = {
+				"improved": Color(0.20, 0.80, 0.30, 1.0),
+				"elite": Color(0.90, 0.20, 0.20, 1.0),
+			}
+			display_color = quality_colors.get(key, Color(0.80, 0.75, 0.60, 1.0))
+		_add_rarity_count_row(key, display_name, display_color, selected, available, total_selected, max_total)
+		total_selected = _get_total_selected_rarity_count()
 
-	var count_lbl := Label.new()
-	count_lbl.text = _localized_text("incubator_egg_count", "Egg Count") + "\n" + str(_incubation_panel_count)
-	count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	count_lbl.custom_minimum_size = Vector2(140, 0)
-	count_lbl.add_theme_font_size_override("font_size", 22)   # COUNT_LABEL_FONT_SIZE
-	count_lbl.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
-	count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	count_row.add_child(count_lbl)
-
-	var plus_btn := Button.new()
-	plus_btn.text = "+"
-	plus_btn.custom_minimum_size = Vector2(64, BUTTON_HEIGHT)   # COUNT_STEPPER_SIZE
-	plus_btn.focus_mode = Control.FOCUS_NONE
-	plus_btn.disabled = _incubation_panel_count >= max_count
-	plus_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	plus_btn.pressed.connect(func() -> void:
-		_incubation_panel_count = mini(max_count, _incubation_panel_count + 1)
-		_populate_incubation_panel()
-	)
-	count_row.add_child(plus_btn)
+	var total_lbl := Label.new()
+	total_lbl.text = _localized_text("incubator_egg_count", "Egg Count") + ": " + str(_get_total_selected_rarity_count()) + " / " + str(max_total)
+	total_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	total_lbl.add_theme_font_size_override("font_size", 20)
+	total_lbl.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
+	total_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_incubation_panel_content.add_child(total_lbl)
 
 	_incubation_panel_content.add_child(_make_ip_info_label(
 		_localized_text("incubator_egg_incubation_time", "Incubation time: {time}").replace("{time}", _format_hours(int(group.get("incubation_time_hours", 0))))
 	))
 
-	if _incubation_panel_count >= 8:
+	if _get_total_selected_rarity_count() >= 8:
 		_incubation_panel_content.add_child(_make_ip_info_label(
 			_localized_text("incubation.large_batch_warning", "More eggs → faster humidity drop"),
 			Color(1.0, 0.80, 0.35, 0.90)
@@ -2883,51 +3115,36 @@ func _ip_show_count_select() -> void:
 	sp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_incubation_panel_content.add_child(sp)
 
-	var btn_row := HBoxContainer.new()
-	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	btn_row.add_theme_constant_override("separation", 12)
-	_incubation_panel_content.add_child(btn_row)
-
-	var back_btn := Button.new()
-	back_btn.text = _localized_text("incubator_egg_back", "Back")
-	back_btn.focus_mode = Control.FOCUS_NONE
-	back_btn.custom_minimum_size = Vector2(120, BUTTON_HEIGHT)
-	back_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	back_btn.pressed.connect(func() -> void:
-		_incubation_panel_step = 0
-		_populate_incubation_panel()
-	)
-	btn_row.add_child(back_btn)
-
-	var cancel_btn := Button.new()
-	cancel_btn.text = _localized_text("incubator_egg_cancel", "Cancel")
-	cancel_btn.focus_mode = Control.FOCUS_NONE
-	cancel_btn.custom_minimum_size = Vector2(120, BUTTON_HEIGHT)
-	cancel_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	cancel_btn.pressed.connect(func() -> void:
-		_incubation_load_in_progress = false
-		_incubation_panel.visible = false
-		_incubation_panel_idx = -1
-	)
-	btn_row.add_child(cancel_btn)
+	var confirm_wrapper := MarginContainer.new()
+	confirm_wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var confirm_side_px := int(get_viewport_rect().size.x * 0.05)
+	confirm_wrapper.add_theme_constant_override("margin_left", confirm_side_px)
+	confirm_wrapper.add_theme_constant_override("margin_right", confirm_side_px)
+	confirm_wrapper.add_theme_constant_override("margin_top", 4)
+	confirm_wrapper.add_theme_constant_override("margin_bottom", 4)
+	_incubation_panel_content.add_child(confirm_wrapper)
 
 	var confirm_btn := Button.new()
 	confirm_btn.text = _localized_text("incubator_egg_place_in_container", "Place in Container")
 	confirm_btn.focus_mode = Control.FOCUS_NONE
-	confirm_btn.custom_minimum_size = Vector2(190, BUTTON_HEIGHT)
-	confirm_btn.disabled = _incubation_load_in_progress
+	confirm_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	confirm_btn.custom_minimum_size = Vector2(0, int(BUTTON_HEIGHT * 1.5))
+	confirm_btn.add_theme_font_size_override("font_size", int(BUTTON_FONT_SIZE * 1.5))
+	confirm_btn.disabled = _incubation_load_in_progress or _get_total_selected_rarity_count() < 1
 	confirm_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var ids_slice: Array = _incubation_panel_available_ids.slice(0, _incubation_panel_count)
+	var ids_to_load: Array = _collect_selected_egg_ids()
 	var sid: String = _incubation_panel_species
 	var cidx: int = _incubation_panel_idx
 	confirm_btn.pressed.connect(func() -> void:
 		if _incubation_load_in_progress:
 			return
 		_incubation_load_in_progress = true
-		var result: Dictionary = IncubationSystem.load_eggs_into_container(cidx, ids_slice, sid)
+		var result: Dictionary = IncubationSystem.load_eggs_into_container(cidx, ids_to_load, sid)
 		if bool(result.get("success", false)):
 			_incubation_load_in_progress = false
 			_incubation_panel_step = 0
+			_incubation_panel_rarity_counts = {}
+			_incubation_panel_eggs_by_rarity = {}
 			_populate_incubation_panel()
 			_refresh_all_slots()
 		else:
@@ -2935,7 +3152,103 @@ func _ip_show_count_select() -> void:
 			_show_toast(str(result.get("error_key", "")), "Error.")
 			_populate_incubation_panel()
 	)
-	btn_row.add_child(confirm_btn)
+	confirm_wrapper.add_child(confirm_btn)
+
+
+func _get_eggs_by_rarity_for_species(species_id: String) -> Dictionary:
+	var result: Dictionary = {}
+	var eggs: Array = IncubationSystem.get_available_storage_eggs()
+	for egg_value in eggs:
+		if typeof(egg_value) != TYPE_DICTIONARY:
+			continue
+		var egg: Dictionary = egg_value as Dictionary
+		if _get_egg_species_id(egg) != species_id:
+			continue
+		var egg_id: String = str(egg.get("egg_id", egg.get("egg_instance_id", "")))
+		if egg_id.is_empty():
+			continue
+		var rarity_raw: String = str(egg.get("rarity", "")).strip_edges()
+		var key: String
+		if not rarity_raw.is_empty():
+			key = ReptileSystem.normalize_rarity(rarity_raw)
+		else:
+			var quality_id: String = str(egg.get("offer_quality", "")).strip_edges()
+			key = quality_id if not quality_id.is_empty() else "common"
+		if not result.has(key):
+			result[key] = []
+		(result[key] as Array).append(egg_id)
+	return result
+
+
+func _get_total_selected_rarity_count() -> int:
+	var total: int = 0
+	for v in _incubation_panel_rarity_counts.values():
+		total += int(v)
+	return total
+
+
+func _collect_selected_egg_ids() -> Array:
+	var ids: Array = []
+	for rarity in _incubation_panel_rarity_counts.keys():
+		var count: int = int(_incubation_panel_rarity_counts.get(rarity, 0))
+		if count <= 0:
+			continue
+		var available_ids: Array = (_incubation_panel_eggs_by_rarity.get(rarity, []) as Array)
+		ids.append_array(available_ids.slice(0, count))
+	return ids
+
+
+func _add_rarity_count_row(key: String, display_name: String, display_color: Color, selected: int, available: int, total_selected: int, max_total: int) -> void:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 14)
+	_incubation_panel_content.add_child(row)
+
+	var rarity_lbl := Label.new()
+	rarity_lbl.text = display_name + " (" + str(available) + ")"
+	rarity_lbl.custom_minimum_size = Vector2(190, 0)
+	rarity_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	rarity_lbl.add_theme_font_size_override("font_size", 38)
+	rarity_lbl.add_theme_color_override("font_color", display_color)
+	rarity_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(rarity_lbl)
+
+	var minus_btn := Button.new()
+	minus_btn.text = "−"
+	minus_btn.custom_minimum_size = Vector2(100, int(BUTTON_HEIGHT * 2))
+	minus_btn.focus_mode = Control.FOCUS_NONE
+	minus_btn.disabled = selected <= 0
+	minus_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	minus_btn.add_theme_font_size_override("font_size", 36)
+	minus_btn.pressed.connect(func() -> void:
+		_incubation_panel_rarity_counts[key] = maxi(0, int(_incubation_panel_rarity_counts.get(key, 0)) - 1)
+		_populate_incubation_panel()
+	)
+	row.add_child(minus_btn)
+
+	var count_lbl := Label.new()
+	count_lbl.text = str(selected)
+	count_lbl.custom_minimum_size = Vector2(70, 0)
+	count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	count_lbl.add_theme_font_size_override("font_size", 42)
+	count_lbl.add_theme_color_override("font_color", Color(0.95, 0.88, 0.68, 1.0))
+	count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(count_lbl)
+
+	var plus_btn := Button.new()
+	plus_btn.text = "+"
+	plus_btn.custom_minimum_size = Vector2(100, int(BUTTON_HEIGHT * 2))
+	plus_btn.focus_mode = Control.FOCUS_NONE
+	plus_btn.disabled = selected >= available or total_selected >= max_total
+	plus_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	plus_btn.add_theme_font_size_override("font_size", 36)
+	plus_btn.pressed.connect(func() -> void:
+		var cur_total: int = _get_total_selected_rarity_count()
+		if cur_total < max_total and int(_incubation_panel_rarity_counts.get(key, 0)) < available:
+			_incubation_panel_rarity_counts[key] = int(_incubation_panel_rarity_counts.get(key, 0)) + 1
+		_populate_incubation_panel()
+	)
+	row.add_child(plus_btn)
 
 
 func _ip_show_loaded(container: Dictionary) -> void:
@@ -2988,6 +3301,40 @@ func _ip_show_loaded(container: Dictionary) -> void:
 			_refresh_all_slots()
 	)
 	_incubation_panel_content.add_child(cancel_btn)
+
+	var egg_ids: Array = container.get("egg_instance_ids", []) as Array
+	if not egg_ids.is_empty():
+		var loaded_eggs: Array = IncubationSystem.get_eggs_by_ids(egg_ids)
+		var quality_counts: Dictionary = {}
+		var rarity_counts: Dictionary = {}
+		for egg_val in loaded_eggs:
+			if typeof(egg_val) != TYPE_DICTIONARY:
+				continue
+			var egg: Dictionary = egg_val as Dictionary
+			var rarity_raw: String = str(egg.get("rarity", "")).strip_edges()
+			if not rarity_raw.is_empty():
+				var r: String = ReptileSystem.normalize_rarity(rarity_raw)
+				rarity_counts[r] = int(rarity_counts.get(r, 0)) + 1
+			else:
+				var q: String = str(egg.get("offer_quality", "")).strip_edges()
+				if not q.is_empty():
+					quality_counts[q] = int(quality_counts.get(q, 0)) + 1
+
+		var sep := HSeparator.new()
+		sep.add_theme_color_override("color", Color(0.70, 0.55, 0.20, 0.50))
+		_incubation_panel_content.add_child(sep)
+
+		_incubation_panel_content.add_child(_make_ip_info_label(
+			_localized_text("incubation.eggs_in_container", "Eggs in the incubator:"),
+			Color(0.95, 0.88, 0.68, 1.0)
+		))
+
+		var quality_summary: String = _format_egg_quality_summary(quality_counts)
+		if not quality_summary.is_empty():
+			_incubation_panel_content.add_child(_make_ip_info_label(quality_summary))
+		var rarity_summary: String = _format_egg_rarity_summary(rarity_counts)
+		if not rarity_summary.is_empty():
+			_incubation_panel_content.add_child(_make_ip_info_label(rarity_summary))
 
 
 func _ip_show_running(container: Dictionary) -> void:
@@ -3229,6 +3576,8 @@ func _add_egg_shop_overlay() -> void:
 	close_btn.focus_mode = Control.FOCUS_NONE
 	close_btn.custom_minimum_size = Vector2(BACK_BTN_MIN_W, BUTTON_HEIGHT)
 	close_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	close_btn.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE + 5)
+	close_btn.add_theme_color_override("font_color", Color(0.76, 0.70, 0.22, 1.0))
 	close_btn.pressed.connect(func() -> void:
 		_egg_shop_step = 0
 		_egg_shop_selected_species = {}
@@ -3408,6 +3757,8 @@ func _populate_egg_shop_qualities() -> void:
 	back_btn.focus_mode = Control.FOCUS_NONE
 	back_btn.custom_minimum_size = Vector2(BACK_BTN_MIN_W, BUTTON_HEIGHT)
 	back_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	back_btn.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE + 5)
+	back_btn.add_theme_color_override("font_color", Color(0.76, 0.70, 0.22, 1.0))
 	back_btn.pressed.connect(func() -> void:
 		_egg_shop_step = 0
 		_egg_shop_selected_species = {}
@@ -3879,6 +4230,7 @@ func _add_upgrades_overlay() -> void:
 	close_btn.text = _localized_text("button.back", "Back")
 	close_btn.focus_mode = Control.FOCUS_NONE
 	close_btn.custom_minimum_size = Vector2(BACK_BTN_MIN_W, BUTTON_HEIGHT)
+	close_btn.add_theme_font_size_override("font_size", int(BUTTON_FONT_SIZE * 1.35))
 	close_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	close_btn.pressed.connect(func() -> void: _upgrades_overlay.visible = false)
 	close_row.add_child(close_btn)
@@ -3975,13 +4327,6 @@ func _make_incubator_upgrade_card(upgrade: Dictionary) -> Control:
 	desc_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	name_desc_vbox.add_child(desc_lbl)
 
-	var level_lbl := Label.new()
-	level_lbl.text = _localized_text("upgrade.level_label", "Level") + ": " + str(level) + "/" + str(max_level)
-	level_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	level_lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.60, 1.0))
-	level_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	main_vbox.add_child(level_lbl)
-
 	var effect_text: String = _get_incubator_upgrade_effect_text(upgrade_id, level, upgrade)
 	if not effect_text.is_empty():
 		var effect_lbl := Label.new()
@@ -3991,9 +4336,22 @@ func _make_incubator_upgrade_card(upgrade: Dictionary) -> Control:
 		effect_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		main_vbox.add_child(effect_lbl)
 
+	var buy_wrapper := MarginContainer.new()
+	buy_wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	buy_wrapper.add_theme_constant_override("margin_left", int(get_viewport_rect().size.x * 0.05))
+	main_vbox.add_child(buy_wrapper)
+
 	var buy_row := HBoxContainer.new()
 	buy_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	main_vbox.add_child(buy_row)
+	buy_row.add_theme_constant_override("separation", 8)
+	buy_wrapper.add_child(buy_row)
+
+	var level_lbl := Label.new()
+	level_lbl.text = _localized_text("upgrade.level_label", "Level") + ": " + str(level) + "/" + str(max_level)
+	level_lbl.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
+	level_lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.60, 1.0))
+	level_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	buy_row.add_child(level_lbl)
 
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL

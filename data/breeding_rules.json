@@ -21,10 +21,10 @@
 		"5": 3.33
 	},
 	"failure_chance_by_condition": {
-		"75": 5,
-		"50": 20,
-		"25": 40,
-		"0": 70
+		"75": 4,
+		"50": 15,
+		"25": 30,
+		"0": 52
 	},
 	"rarity_pair_drop_rates": {
 		"common+common": {

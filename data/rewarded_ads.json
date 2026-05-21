@@ -1,0 +1,45 @@
+{
+  "rewarded_ads": {
+    "mock_ads_enabled": false,
+    "mock_ads_success_delay_seconds": 0.5,
+    "mock_ads_force_failure": false,
+    "mock_ads_failure_error_key": "rewarded_speedup_error_ad_failed",
+    "test_mode": true,
+    "speed_up_icon_path": "res://assets/art/ui/icons/speed_up_ico.png",
+    "speed_up_icon_width": 124,
+    "speed_up_icon_height": 124,
+    "show_only_above_minutes": 30,
+    "button_cooldown_seconds": 3,
+    "add_resources_icon_path": "res://assets/art/ui/icons/add_resources_ico.png",
+    "add_resources_icon_width": 96,
+    "add_resources_icon_height": 96,
+    "resource_ads_limit_count": 5,
+    "resource_ads_limit_window_hours": 24,
+    "money_reward_amount": 1000,
+    "rewards": [
+      {
+        "min_remaining_minutes_exclusive": 30,
+        "max_remaining_minutes_inclusive": 120,
+        "reduce_by_minutes": 30
+      },
+      {
+        "min_remaining_minutes_exclusive": 120,
+        "max_remaining_minutes_inclusive": 300,
+        "reduce_by_minutes": 60
+      },
+      {
+        "min_remaining_minutes_exclusive": 300,
+        "max_remaining_minutes_inclusive": null,
+        "reduce_by_minutes": 120
+      }
+    ],
+    "admob": {
+      "test_rewarded_ad_unit_id": "ca-app-pub-3940256099942544/5224354917",
+      "production_speedup_rewarded_ad_unit_id": "ca-app-pub-4702453383923319/4748012955",
+      "production_resources_rewarded_ad_unit_id": "ca-app-pub-4702453383923319/8888088428",
+      "production_app_id": "ca-app-pub-4702453383923319~8715178120",
+      "production_rewarded_ad_unit_id": "ca-app-pub-4702453383923319/4748012955",
+      "production_notes": "Production IDs are inactive while test_mode=true. During development and closed testing both speedup and resources placements use the official Google rewarded test ad unit above."
+    }
+  }
+}

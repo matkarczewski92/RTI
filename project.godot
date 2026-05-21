@@ -33,6 +33,9 @@ IncubationSystem="*res://scripts/autoload/IncubationSystem.gd"
 IncubatorUpgradeSystem="*res://scripts/autoload/IncubatorUpgradeSystem.gd"
 LevelUpOverlay="*res://scripts/autoload/LevelUpOverlay.gd"
 OnboardingSystem="*res://scripts/autoload/OnboardingSystem.gd"
+RewardedAdService="*res://scripts/autoload/RewardedAdService.gd"
+SpeedUpService="*res://scripts/autoload/SpeedUpService.gd"
+ResourceAdService="*res://scripts/autoload/ResourceAdService.gd"
 
 [display]
 

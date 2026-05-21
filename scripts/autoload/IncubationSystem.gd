@@ -265,6 +265,41 @@ func get_remaining_seconds(container: Dictionary) -> int:
 	return max(0, required - completed)
 
 
+func apply_speedup_to_container(container_index: int, reduce_seconds: int) -> bool:
+	if reduce_seconds <= 0:
+		return false
+
+	var containers: Dictionary = _read_containers()
+	var key: String = str(container_index)
+	var val: Variant = containers.get(key, null)
+	if typeof(val) != TYPE_DICTIONARY:
+		return false
+
+	var now: int = int(Time.get_unix_time_from_system())
+	var container: Dictionary = _tick_container((val as Dictionary).duplicate(true), now)
+	if str(container.get("state", "")) != "running":
+		containers[key] = container
+		_write_containers(containers)
+		return false
+
+	var required: int = int(container.get("required_active_seconds", 0))
+	var completed: int = int(container.get("active_seconds_completed", 0))
+	if required <= 0:
+		return false
+
+	var new_completed: int = min(completed + reduce_seconds, required)
+	container["active_seconds_completed"] = new_completed
+	container["last_updated_at"] = now
+	if new_completed >= required:
+		container["last_updated_at"] = max(0, now - 1)
+
+	containers[key] = container
+	_write_containers(containers)
+	if new_completed >= required:
+		_tick_all_containers()
+	return true
+
+
 # ─── Public: container actions ──────────────────────────────────────────
 
 func load_eggs_into_container(container_index: int, egg_ids: Array, species_id: String) -> Dictionary:
@@ -517,6 +552,23 @@ func get_available_storage_eggs() -> Array:
 			continue
 		var egg: Dictionary = egg_val as Dictionary
 		if not bool(egg.get("in_container", false)):
+			result.append(egg.duplicate(true))
+	return result
+
+
+func get_eggs_by_ids(ids: Array) -> Array:
+	var storage: Dictionary = _read_storage()
+	var all_eggs: Array = storage.get("eggs", []) as Array
+	var id_set: Dictionary = {}
+	for v in ids:
+		id_set[str(v)] = true
+	var result: Array = []
+	for egg_val in all_eggs:
+		if typeof(egg_val) != TYPE_DICTIONARY:
+			continue
+		var egg: Dictionary = egg_val as Dictionary
+		var eid: String = _egg_id(egg)
+		if id_set.has(eid):
 			result.append(egg.duplicate(true))
 	return result
 

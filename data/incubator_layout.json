@@ -7,24 +7,24 @@
     "slot_defaults": {
       "plus_size": 74,
       "plus_offset_x": 0,
-      "plus_offset_y": 0,
+      "plus_offset_y": 14,
       "overlay_padding": 0,
       "overlay_scale": 1.0,
       "overlay_fit": "scale"
     },
     "connection_slots": [
-      { "id": "connection_1", "x": 89,  "y": 314, "w": 280, "h": 308, "plus_size": 37 },
-      { "id": "connection_2", "x": 386, "y": 314, "w": 280, "h": 308, "plus_size": 37 },
-      { "id": "connection_3", "x": 89,  "y": 638, "w": 280, "h": 308, "plus_size": 37 },
-      { "id": "connection_4", "x": 386, "y": 638, "w": 280, "h": 308, "plus_size": 37 }
+      { "id": "connection_1", "x": 89,  "y": 300, "w": 280, "h": 308, "plus_size": 37 },
+      { "id": "connection_2", "x": 386, "y": 300, "w": 280, "h": 308, "plus_size": 37 },
+      { "id": "connection_3", "x": 89,  "y": 600, "w": 280, "h": 308, "plus_size": 37 },
+      { "id": "connection_4", "x": 386, "y": 600, "w": 280, "h": 308, "plus_size": 37 }
     ],
     "incubation_slots": [
-      { "id": "incubation_1", "x": 77,  "y": 1180, "w": 232, "h": 212, "plus_size": 26 },
-      { "id": "incubation_2", "x": 445, "y": 1180, "w": 232, "h": 212, "plus_size": 26 },
-      { "id": "incubation_3", "x": 77,  "y": 1392, "w": 232, "h": 212, "plus_size": 26 },
-      { "id": "incubation_4", "x": 445, "y": 1392, "w": 232, "h": 212, "plus_size": 26 },
-      { "id": "incubation_5", "x": 77,  "y": 1604, "w": 232, "h": 212, "plus_size": 26 },
-      { "id": "incubation_6", "x": 445, "y": 1604, "w": 232, "h": 212, "plus_size": 26 }
+      { "id": "incubation_1", "x": 81,  "y": 1183, "w": 224, "h": 155, "plus_size": 26 },
+      { "id": "incubation_2", "x": 445, "y": 1183, "w": 224, "h": 155, "plus_size": 26 },
+      { "id": "incubation_3", "x": 81,  "y": 1395, "w": 224, "h": 155, "plus_size": 26 },
+      { "id": "incubation_4", "x": 445, "y": 1395, "w": 224, "h": 155, "plus_size": 26 },
+      { "id": "incubation_5", "x": 81,  "y": 1618, "w": 224, "h": 155, "plus_size": 26 },
+      { "id": "incubation_6", "x": 445, "y": 1618, "w": 224, "h": 155, "plus_size": 26 }
     ]
   }
 }

@@ -10,6 +10,7 @@ const BOTTOM_NAV_SCENE := preload("res://scenes/ui/BottomNav.tscn")
 const HABITAT_SLOT_SCENE := preload("res://scenes/habitat/HabitatSlot.tscn")
 const OFFLINE_INCOME_POPUP_SCRIPT := preload("res://scripts/ui/OfflineIncomePopup.gd")
 const SETTINGS_MODAL_SCRIPT := preload("res://scripts/ui/SettingsModal.gd")
+const ADD_RESOURCES_MODAL_SCRIPT := preload("res://scripts/ui/AddResourcesModal.gd")
 
 const BACKGROUND_PATH := "res://assets/art/biomes/green_meadow_background.png"
 const ASSIGN_CARD_BG_PATH := "res://assets/art/ui/small_design/blank_card_background.png"
@@ -423,6 +424,8 @@ const MGMT_POPUP_ROW_LABEL_SIZE := Vector2(280.0, 100.0)
 const MGMT_POPUP_ROW_VALUE_X := 918.0
 const MGMT_POPUP_ROW_VALUE_SIZE := Vector2(190.0, 100.0)
 const MGMT_POPUP_ROW_FONT_SIZE := 26
+const MGMT_POPUP_SPEEDUP_PANEL_CENTER := Vector2(529.0, -115.0)
+const MGMT_POPUP_SPEEDUP_PANEL_SIZE := Vector2(975.0, 198.0)
 const MGMT_POPUP_BTN1_CENTER := Vector2(559.0, 790.0)
 const MGMT_POPUP_BTN2_CENTER := Vector2(555.0, 943.0)
 const MGMT_POPUP_BTN3_CENTER := Vector2(559.0, 1099.0)
@@ -450,6 +453,8 @@ var quests_view: Control
 var workers_view: Control
 var upgrades_view: Control
 var settings_modal: Control
+var add_resources_button: Button
+var add_resources_modal: Control
 var _animals_step: int = 0
 var _animals_selected_species_id: String = ""
 var _animals_group_navigating: bool = false
@@ -684,6 +689,8 @@ func _rebuild_layout() -> void:
 	workers_view = null
 	upgrades_view = null
 	settings_modal = null
+	add_resources_button = null
+	add_resources_modal = null
 	_animals_step = 0
 	_animals_selected_species_id = ""
 	_animals_group_navigating = false
@@ -832,6 +839,7 @@ func _build_layout() -> void:
 	_add_top_bar()
 	_add_progress_bars_widget()
 	_add_map_area()
+	_add_add_resources_shortcut()
 	_add_workers_shortcut()
 	_add_biome_unlock_bar_widget()
 	_add_bottom_nav()
@@ -1001,6 +1009,63 @@ func _add_workers_shortcut() -> void:
 	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	content.add_child(icon)
+
+
+func _add_add_resources_shortcut() -> void:
+	var icon_size: Vector2 = Vector2(96.0, 96.0)
+	var icon_path: String = "res://assets/art/ui/icons/add_resources_ico.png"
+	if has_node("/root/ResourceAdService"):
+		icon_size = ResourceAdService.get_add_resources_icon_size()
+		icon_path = ResourceAdService.get_add_resources_icon_path()
+
+	var button_size: Vector2 = icon_size
+	add_resources_button = Button.new()
+	add_resources_button.name = "AddResourcesShortcut"
+	add_resources_button.anchor_left = 0.0
+	add_resources_button.anchor_top = 0.0
+	add_resources_button.anchor_right = 0.0
+	add_resources_button.anchor_bottom = 0.0
+	add_resources_button.offset_left = 14.0
+	add_resources_button.offset_top = TOP_BAR_HEIGHT + 8.0
+	add_resources_button.offset_right = add_resources_button.offset_left + button_size.x
+	add_resources_button.offset_bottom = add_resources_button.offset_top + button_size.y
+	add_resources_button.custom_minimum_size = button_size
+	add_resources_button.text = ""
+	add_resources_button.flat = true
+	add_resources_button.focus_mode = Control.FOCUS_NONE
+	add_resources_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	add_resources_button.tooltip_text = LocalizationSystem.tr_key("resource_ads_title")
+	add_resources_button.add_theme_stylebox_override("normal", _make_transparent_button_style())
+	add_resources_button.add_theme_stylebox_override("hover", _make_transparent_button_style())
+	add_resources_button.add_theme_stylebox_override("pressed", _make_transparent_button_style())
+	add_resources_button.pressed.connect(_show_add_resources_modal)
+	add_child(add_resources_button)
+
+	var content := CenterContainer.new()
+	content.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_resources_button.add_child(content)
+
+	var icon: TextureRect = _make_fixed_texture(icon_path, icon_size)
+	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	content.add_child(icon)
+
+
+func _show_add_resources_modal() -> void:
+	if add_resources_modal != null and is_instance_valid(add_resources_modal):
+		add_resources_modal.move_to_front()
+		return
+
+	add_resources_modal = ADD_RESOURCES_MODAL_SCRIPT.new() as Control
+	add_resources_modal.name = "AddResourcesModal"
+	add_resources_modal.z_index = 230
+	if add_resources_modal.has_method("set_biome_id"):
+		add_resources_modal.call("set_biome_id", biome_id)
+	add_resources_modal.connect("closed", func() -> void:
+		add_resources_modal = null
+	)
+	add_child(add_resources_modal)
 
 
 func _add_bottom_nav() -> void:
@@ -1284,6 +1349,8 @@ func _get_next_biome_unlock_data() -> Dictionary:
 		var biome_id_value: String = str(biome.get("id", ""))
 		if _is_biome_unlocked_in_save(biome_id_value):
 			continue
+		if str(biome.get("type", "")) == "paid":
+			continue
 		var req_value: Variant = biome.get("unlock_requirements", {})
 		if typeof(req_value) != TYPE_DICTIONARY:
 			continue
@@ -1411,8 +1478,11 @@ func _add_habitat_slots(parent: Control) -> void:
 			slot.call("set_habitat_texture", _get_habitat_texture_path(habitat_id))
 		if slot.has_method("set_upgrade_status"):
 			slot.call("set_upgrade_status", _is_habitat_in_progress(habitat_id), _get_habitat_in_progress_status_text(habitat_id))
+		_update_habitat_slot_speedup(slot, habitat_id)
 		slot.call("set_occupied_icon", _get_habitat_reptile_icon_path(habitat_id) if state == STATE_OCCUPIED else "")
 		slot.connect("habitat_pressed", Callable(self, "_on_habitat_pressed"))
+		if slot.has_signal("speedup_pressed"):
+			slot.connect("speedup_pressed", Callable(self, "_on_habitat_speedup_pressed"))
 		parent.add_child(slot)
 		habitat_slots[habitat_id] = slot
 
@@ -3200,6 +3270,69 @@ func _make_management_wide_button(texture_path: String, label_key: String, press
 	return button
 
 
+func _make_speedup_panel_style(bg_color: Color, border_color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg_color
+	style.border_color = border_color
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(10)
+	style.content_margin_left = 18
+	style.content_margin_right = 18
+	style.content_margin_top = 12
+	style.content_margin_bottom = 12
+	return style
+
+
+func _make_habitat_speedup_panel_button(reduce_text: String, pressed_callable: Callable, scale: float) -> Button:
+	var button := Button.new()
+	button.name = "HabitatSpeedUpPanel"
+	button.text = ""
+	button.flat = false
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_stylebox_override("normal", _make_speedup_panel_style(Color(0.20, 0.14, 0.07, 0.94), Color(0.86, 0.65, 0.18, 0.95)))
+	button.add_theme_stylebox_override("hover", _make_speedup_panel_style(Color(0.25, 0.18, 0.08, 0.98), Color(1.0, 0.78, 0.22, 1.0)))
+	button.add_theme_stylebox_override("pressed", _make_speedup_panel_style(Color(0.16, 0.10, 0.05, 0.98), Color(0.75, 0.48, 0.10, 1.0)))
+	button.add_theme_stylebox_override("disabled", _make_speedup_panel_style(Color(0.30, 0.30, 0.28, 0.75), Color(0.50, 0.50, 0.46, 0.80)))
+	button.pressed.connect(pressed_callable)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", max(10, int(round(18.0 * scale))))
+	margin.add_theme_constant_override("margin_right", max(10, int(round(18.0 * scale))))
+	margin.add_theme_constant_override("margin_top", max(7, int(round(12.0 * scale))))
+	margin.add_theme_constant_override("margin_bottom", max(7, int(round(12.0 * scale))))
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", max(10, int(round(16.0 * scale))))
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(row)
+
+	var icon := TextureRect.new()
+	icon.texture = AssetPaths.load_texture(SpeedUpService.get_icon_path())
+	icon.custom_minimum_size = SpeedUpService.get_icon_size() * max(0.85, scale)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(icon)
+
+	var label := Label.new()
+	label.text = LocalizationSystem.tr_key("rewarded_speedup_panel_text").replace("{time}", reduce_text)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_font_size_override("font_size", max(16, int(round(22.0 * scale))))
+	label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.76, 1.0))
+	label.add_theme_color_override("font_shadow_color", Color(0.04, 0.02, 0.0, 0.90))
+	label.add_theme_constant_override("shadow_offset_y", max(1, int(round(2.0 * scale))))
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(label)
+
+	return button
+
+
 func _show_habitat_management_popup(habitat_id: String) -> void:
 	var habitat: Dictionary = _get_saved_habitat_state(habitat_id)
 	if habitat.is_empty() or not bool(habitat.get("purchased", false)):
@@ -3307,6 +3440,25 @@ func _show_habitat_management_popup(habitat_id: String) -> void:
 			LocalizationSystem.tr_key("habitat.max_level"),
 			MGMT_POPUP_ROW3_CENTER, reference_origin, reference_scale)
 
+	if is_building or is_upgrading:
+		var su_type: String = "habitat_build" if is_building else "habitat_upgrade"
+		var su_remaining: int = (ReptileSystem.get_habitat_build_remaining_seconds(habitat_id)
+			if is_building else ReptileSystem.get_habitat_upgrade_remaining_seconds(habitat_id))
+		if SpeedUpService.should_show_button(su_remaining):
+			var su_reduce: int = SpeedUpService.calculate_reduce_seconds(su_remaining)
+			var su_time: String = SpeedUpService.format_reduce_time(su_reduce, LocalizationSystem.get_language())
+			var su_pressed := func() -> void:
+				var success_callback := func() -> void:
+					_close_management_modal()
+					_refresh_habitat_slots()
+					_show_toast_raw(LocalizationSystem.tr_key("rewarded_speedup_success").replace("{time}", su_time))
+				var error_callback := func(err_key: String) -> void:
+					_show_message_popup(err_key)
+				SpeedUpService.request_speedup(su_type, habitat_id, management_modal, success_callback, error_callback)
+			var su_btn: Button = _make_habitat_speedup_panel_button(su_time, su_pressed, reference_scale * 1.5)
+			management_modal.add_child(su_btn)
+			_position_reference_control(su_btn, MGMT_POPUP_SPEEDUP_PANEL_CENTER, MGMT_POPUP_SPEEDUP_PANEL_SIZE, reference_origin, reference_scale)
+
 	var place_btn: Button = _make_reference_hitbox_button(func() -> void:
 		_close_management_modal()
 		_show_reptile_assignment_popup(habitat_id)
@@ -3412,6 +3564,27 @@ func _build_habitat_mgmt_popup_legacy(habitat_id: String, habitat: Dictionary) -
 		column.add_child(_make_management_text_row("habitat.upgrade_time", _format_duration_compact(ReptileSystem.get_habitat_upgrade_duration_seconds(habitat_level))))
 	else:
 		column.add_child(_make_management_text_row("habitat.next_level", LocalizationSystem.tr_key("habitat.max_level")))
+
+	if is_building or is_upgrading:
+		var leg_su_type: String = "habitat_build" if is_building else "habitat_upgrade"
+		var leg_su_remaining: int = (ReptileSystem.get_habitat_build_remaining_seconds(habitat_id)
+			if is_building else ReptileSystem.get_habitat_upgrade_remaining_seconds(habitat_id))
+		if SpeedUpService.should_show_button(leg_su_remaining):
+			var leg_su_reduce: int = SpeedUpService.calculate_reduce_seconds(leg_su_remaining)
+			var leg_su_time: String = SpeedUpService.format_reduce_time(leg_su_reduce, LocalizationSystem.get_language())
+			var leg_su_pressed := func() -> void:
+				var success_callback := func() -> void:
+					_close_management_modal()
+					_refresh_habitat_slots()
+					_show_toast_raw(LocalizationSystem.tr_key("rewarded_speedup_success").replace("{time}", leg_su_time))
+				var error_callback := func(err_key: String) -> void:
+					_show_message_popup(err_key)
+				SpeedUpService.request_speedup(leg_su_type, habitat_id, management_modal, success_callback, error_callback)
+			var leg_su_btn: Button = _make_habitat_speedup_panel_button(leg_su_time, leg_su_pressed, 1.5)
+			leg_su_btn.custom_minimum_size = Vector2(0, 138)
+			leg_su_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			column.add_child(leg_su_btn)
+			column.move_child(leg_su_btn, 0)
 
 	var actions: VBoxContainer = VBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
@@ -6582,6 +6755,14 @@ func _try_sell_reptile(instance_id: String) -> void:
 		_show_message_popup(str(result.get("message_key", "animals.sell_error_unavailable")))
 		return
 	var sell_price: int = int(result.get("sell_price", 0))
+	if _animals_step == 1 and not _animals_selected_species_id.is_empty():
+		var remaining: Array = _get_sorted_owned_instances()
+		for inst_val in remaining:
+			if typeof(inst_val) != TYPE_DICTIONARY:
+				continue
+			if str((inst_val as Dictionary).get("reptile_id", "")) == _animals_selected_species_id:
+				_animals_group_navigating = true
+				break
 	_show_animals_view("owned")
 	var toast_text: String = LocalizationSystem.tr_key("animals.sell_success").format({"price": str(sell_price)})
 	_show_toast_raw(toast_text)
@@ -7850,21 +8031,25 @@ func _refresh_habitat_slots() -> void:
 				slot.call("set_habitat_texture", _get_habitat_texture_path(habitat_id))
 			if slot.has_method("set_upgrade_status"):
 				slot.call("set_upgrade_status", _is_habitat_in_progress(habitat_id), _get_habitat_in_progress_status_text(habitat_id))
+			_update_habitat_slot_speedup(slot, habitat_id)
 			slot.call("set_occupied_icon", _get_habitat_reptile_icon_path(habitat_id) if state == STATE_OCCUPIED else "")
 			if slot.has_method("set_needs_attention"):
 				slot.call("set_needs_attention", _habitat_needs_attention(habitat_id) if state == STATE_OCCUPIED else false)
 			if slot.has_method("set_income_progress"):
-				slot.call("set_income_progress", EconomySystem.get_income_progress() if state == STATE_OCCUPIED else 0.0)
+				var _show_progress: bool = state == STATE_OCCUPIED and str(_biome_config.get("type", "")) != "paid"
+				slot.call("set_income_progress", EconomySystem.get_income_progress() if _show_progress else 0.0)
 
 
 func _refresh_habitat_income_progress() -> void:
+	var _is_paid: bool = str(_biome_config.get("type", "")) == "paid"
 	for habitat_id in habitat_slots.keys():
 		var slot: Node = habitat_slots[habitat_id] as Node
 		if not slot.has_method("set_income_progress"):
 			continue
 
 		var state: String = _get_habitat_state(str(habitat_id))
-		slot.call("set_income_progress", EconomySystem.get_income_progress() if state == STATE_OCCUPIED else 0.0)
+		var _show_progress: bool = state == STATE_OCCUPIED and not _is_paid
+		slot.call("set_income_progress", EconomySystem.get_income_progress() if _show_progress else 0.0)
 
 
 func _get_habitat_state(habitat_id: String) -> String:
@@ -7974,6 +8159,64 @@ func _get_habitat_in_progress_status_text(habitat_id: String) -> String:
 
 	var remaining: int = ReptileSystem.get_habitat_upgrade_remaining_seconds(habitat_id)
 	return LocalizationSystem.tr_key("habitat.upgrade_in_progress") + "\n" + LocalizationSystem.tr_key("habitat.upgrade_time_remaining").replace("{time}", _format_duration_compact(remaining))
+
+
+func _get_habitat_speedup_context(habitat_id: String) -> Dictionary:
+	var habitat: Dictionary = _get_saved_habitat_state(habitat_id)
+	if habitat.is_empty() or not bool(habitat.get("purchased", false)):
+		return {}
+
+	var target_type: String = ""
+	var remaining: int = 0
+	if bool(habitat.get("is_building", false)):
+		target_type = "habitat_build"
+		remaining = ReptileSystem.get_habitat_build_remaining_seconds(habitat_id)
+	elif bool(habitat.get("is_upgrading", false)):
+		target_type = "habitat_upgrade"
+		remaining = ReptileSystem.get_habitat_upgrade_remaining_seconds(habitat_id)
+	else:
+		return {}
+
+	if not SpeedUpService.should_show_button(remaining):
+		return {}
+
+	var reduce_seconds: int = SpeedUpService.calculate_reduce_seconds(remaining)
+	if reduce_seconds <= 0:
+		return {}
+
+	return {
+		"target_type": target_type,
+		"remaining": remaining,
+		"reduce_seconds": reduce_seconds,
+		"reduce_text": SpeedUpService.format_reduce_time(reduce_seconds, LocalizationSystem.get_language())
+	}
+
+
+func _update_habitat_slot_speedup(slot: Node, habitat_id: String) -> void:
+	if slot == null or not slot.has_method("set_speedup_available"):
+		return
+
+	var context: Dictionary = _get_habitat_speedup_context(habitat_id)
+	if context.is_empty():
+		slot.call("set_speedup_available", false, "")
+	else:
+		slot.call("set_speedup_available", true, str(context.get("reduce_text", "")))
+
+
+func _on_habitat_speedup_pressed(habitat_id: String) -> void:
+	var context: Dictionary = _get_habitat_speedup_context(habitat_id)
+	if context.is_empty():
+		_show_message_popup("rewarded_speedup_error_ad_unavailable")
+		return
+
+	var target_type: String = str(context.get("target_type", ""))
+	var reduce_text: String = str(context.get("reduce_text", ""))
+	var success_callback := func() -> void:
+		_refresh_habitat_slots()
+		_show_toast_raw(LocalizationSystem.tr_key("rewarded_speedup_success").replace("{time}", reduce_text))
+	var error_callback := func(err_key: String) -> void:
+		_show_message_popup(err_key)
+	SpeedUpService.request_speedup(target_type, habitat_id, self, success_callback, error_callback)
 
 
 func _get_habitat_data(habitat_id: String) -> Dictionary:

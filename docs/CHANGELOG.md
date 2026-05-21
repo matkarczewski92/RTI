@@ -66,6 +66,17 @@ Nowe wpisy powinny znajdować sie na samym dole/końcu.  NIE DODAWAJ NOWEJ WERSJ
 ## v0.1.3
 
 # EN
-
+- Introduced a new Incubator layout and visual design.
+- Improved Incubator window behavior, scaling, and appearance based on tester reports.
+- Reduced the probability of incubation and breeding failure.
+- Restricted the Egg Shop to only show reptiles from biomes the player has unlocked.
+- Various UI fixes and polish based on tester feedback.
+- Added optional rewarded-ad speed-ups for habitat construction, habitat upgrades, incubator pairings and egg incubation timers.
+- Enlarged building/upgrading status text on habitat slots for better readability on device.
 
 # PL
+- Wprowadzono nowy układ i wygląd Inkubatora.
+- Wprowadzono zmiany w działaniu, skalowaniu i wyglądzie okien Inkubatora zgodnie z raportami testerów.
+- Zmniejszono prawdopodobieństwo niepowodzenia inkubacji i łączenia.
+- Ograniczono widoczność gadów w sklepie jaj wyłącznie do odblokowanych biomów.
+- Ogólne poprawki UI wynikające z raportów testerów.
