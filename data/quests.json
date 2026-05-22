@@ -576,7 +576,6 @@
     "sort_order": 280,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 5,
     "reward_water_max": 5
   },
   {
@@ -762,7 +761,6 @@
     "sort_order": 360,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 5,
     "reward_water_max": 5
   },
   {
@@ -930,7 +928,6 @@
     "sort_order": 420,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 5,
     "reward_water_max": 5
   },
   {
@@ -944,8 +941,6 @@
     "reward_type": "repticash",
     "reward_amount": 2000,
     "reward_xp": 1200,
-    "reward_food_max": 5,
-    "reward_water_max": 5,
     "sort_order": 425,
     "is_active": true,
     "is_hidden": false
@@ -993,7 +988,6 @@
     "reward_type": "repticash",
     "reward_amount": 2200,
     "reward_xp": 1500,
-    "reward_food_max": 5,
     "reward_water_max": 5,
     "sort_order": 440,
     "is_active": true,
@@ -1010,8 +1004,6 @@
     "reward_type": "repticash",
     "reward_amount": 4500,
     "reward_xp": 2500,
-    "reward_food_max": 5,
-    "reward_water_max": 5,
     "sort_order": 445,
     "is_active": true,
     "is_hidden": false
@@ -1027,7 +1019,6 @@
     "reward_type": "repticash",
     "reward_amount": 6500,
     "reward_xp": 2200,
-    "reward_food_max": 5,
     "reward_water_max": 5,
     "sort_order": 450,
     "is_active": true,
@@ -1197,7 +1188,6 @@
     "reward_amount": 4200,
     "reward_xp": 2200,
     "reward_food_max": 5,
-    "reward_water_max": 5,
     "sort_order": 465,
     "is_active": true,
     "is_hidden": false,
@@ -1387,7 +1377,6 @@
     "sort_order": 610,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 5,
     "reward_water_max": 5
   },
   {
@@ -1434,8 +1423,7 @@
     "sort_order": 640,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 5,
-    "reward_water_max": 5
+    "reward_food_max": 5
   },
   {
     "id": "incubator_run_6_containers",
@@ -1451,7 +1439,6 @@
     "sort_order": 650,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 5,
     "reward_water_max": 5
   },
   {
@@ -1527,8 +1514,7 @@
     "reward_xp": 700,
     "sort_order": 700,
     "is_active": true,
-    "is_hidden": false,
-    "reward_water_max": 5
+    "is_hidden": false
   },
   {
     "id": "incubator_hatch_ultra_rare",
@@ -1577,7 +1563,6 @@
     "sort_order": 730,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 5,
-    "reward_water_max": 5
+    "reward_food_max": 5
   }
 ]

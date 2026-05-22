@@ -727,7 +727,7 @@ func _get_happiness_income_threshold() -> float:
 	if ReptileSystem.has_method("get_happiness_multiplier"):
 		for value in range(100, -1, -1):
 			if float(ReptileSystem.call("get_happiness_multiplier", value)) < 1.0:
-				return float(value)
+				return float(value + 1)
 	return 50.0
 
 

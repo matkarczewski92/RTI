@@ -28,6 +28,7 @@ const FEED_XP_REWARD := 2
 const WATER_XP_REWARD := 2
 const CLEAN_XP_REWARD := 3
 const PLAY_XP_REWARD := 0.1
+const HAPPINESS_MULTIPLIER_NEED_KEYS: Array[String] = ["happiness", "hunger", "hydration", "cleanliness"]
 const HABITAT_TYPES: Array[String] = ["grass", "sand", "stone", "jungle"]
 const HABITAT_BIOMES: Array[String] = ["green_meadow", "dry_prairie", "house"]
 const DEFAULT_RESOURCE_REGEN_INTERVAL := 600
@@ -581,16 +582,31 @@ func get_habitat_max_level() -> int:
 	return HABITAT_MAX_LEVEL
 
 
-func get_happiness_multiplier(happiness: Variant) -> float:
-	var value: float = clamp(float(happiness), 0.0, 100.0)
-	if value <= 25.0:
-		return 0.25
-	if value <= 50.0:
-		return 0.50
-	if value <= 80.0:
+func get_happiness_multiplier(value_source: Variant) -> float:
+	var value: float = get_happiness_multiplier_average(value_source)
+	if value >= 95.0:
+		return 1.25
+	if value >= 80.0:
+		return 1.10
+	if value >= 40.0:
 		return 1.00
+	if value >= 26.0:
+		return 0.75
+	if value >= 5.0:
+		return 0.50
 
-	return 1.25
+	return 0.25
+
+
+func get_happiness_multiplier_average(value_source: Variant) -> float:
+	if typeof(value_source) != TYPE_DICTIONARY:
+		return clamp(float(value_source), 0.0, 100.0)
+
+	var needs: Dictionary = value_source as Dictionary
+	var total: float = 0.0
+	for need_key in HAPPINESS_MULTIPLIER_NEED_KEYS:
+		total += clamp(float(needs.get(need_key, 100)), 0.0, 100.0)
+	return total / float(HAPPINESS_MULTIPLIER_NEED_KEYS.size())
 
 
 func get_rarity_income_multiplier(rarity: String) -> float:
@@ -621,7 +637,7 @@ func get_effective_animal_income_per_min(instance: Dictionary) -> float:
 		return 0.0
 
 	var base_income: float = get_base_reptile_income(str(normalized.get("reptile_id", "")))
-	var happiness_multiplier: float = get_happiness_multiplier(normalized.get("happiness", 100))
+	var happiness_multiplier: float = get_happiness_multiplier(normalized)
 	var variant_multiplier: float = get_variant_income_multiplier(get_owned_animal_variant(normalized))
 	var habitat_match_multiplier: float = get_habitat_match_multiplier(normalized)
 	var habitat_level_multiplier: float = get_habitat_level_income_multiplier(normalized)
@@ -629,13 +645,13 @@ func get_effective_animal_income_per_min(instance: Dictionary) -> float:
 	return base_income * happiness_multiplier * variant_multiplier * habitat_match_multiplier * habitat_level_multiplier * reptile_level_multiplier * get_worker_income_multiplier(normalized) * get_upgrade_income_multiplier(normalized)
 
 
-func get_worker_income_multiplier(_instance: Dictionary) -> float:
+func get_worker_income_multiplier(instance: Dictionary) -> float:
 	if not has_node("/root/WorkerSystem"):
 		return 1.0
 
 	var worker_system: Node = get_node("/root/WorkerSystem")
 	if worker_system.has_method("get_manager_income_multiplier"):
-		return float(worker_system.call("get_manager_income_multiplier"))
+		return float(worker_system.call("get_manager_income_multiplier", _get_biome_id_for_instance(instance)))
 
 	return 1.0
 
@@ -734,7 +750,7 @@ func get_biome_resource_current(biome_id: String, resource_id: String) -> int:
 func get_biome_resource_max(biome_id: String, resource_id: String) -> int:
 	var biome: Dictionary = _get_biome_resources(biome_id)
 	var base_max: int = max(1, int(biome.get(resource_id + "_max", 100)))
-	return _apply_storage_multiplier(resource_id, base_max)
+	return _apply_storage_multiplier(resource_id, base_max, biome_id)
 
 
 func increase_resource_max(resource_id: String, amount: int) -> int:
@@ -853,13 +869,13 @@ func refill_biome_resource(biome_id: String, resource_id: String) -> int:
 	return effective_max
 
 
-func _apply_storage_multiplier(resource_id: String, base_max: int) -> int:
+func _apply_storage_multiplier(resource_id: String, base_max: int, biome_id: String = "") -> int:
 	if not has_node("/root/UpgradeSystem"):
 		return base_max
 	var upgrade_system: Node = get_node("/root/UpgradeSystem")
 	if not upgrade_system.has_method("get_resource_storage_multiplier"):
 		return base_max
-	var mult: float = float(upgrade_system.call("get_resource_storage_multiplier", resource_id))
+	var mult: float = float(upgrade_system.call("get_resource_storage_multiplier", resource_id, biome_id))
 	return max(1, int(round(float(base_max) * mult)))
 
 
@@ -883,7 +899,7 @@ func _set_biome_resource(biome_id: String, resource_id: String, value: int) -> v
 	var biome_value: Variant = br.get(biome_id, {})
 	if typeof(biome_value) == TYPE_DICTIONARY:
 		biome = (biome_value as Dictionary).duplicate(true)
-	var maximum: int = max(1, int(biome.get(resource_id + "_max", 100)))
+	var maximum: int = get_biome_resource_max(biome_id, resource_id)
 	biome[resource_id + "_current"] = int(clamp(value, 0, maximum))
 	br[biome_id] = biome
 	GameState.set_value("biome_resources", br)
@@ -994,7 +1010,7 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 	}
 
 
-func apply_worker_care_effect(instance_id: String, worker_type: String, threshold: float, effect_value: float) -> bool:
+func apply_worker_care_effect(instance_id: String, worker_type: String, threshold: float, effect_value: float, biome_id: String = "") -> bool:
 	var instances: Dictionary = get_owned_reptile_instances()
 	if not instances.has(instance_id):
 		return false
@@ -1009,6 +1025,8 @@ func apply_worker_care_effect(instance_id: String, worker_type: String, threshol
 
 	var now: int = Time.get_unix_time_from_system()
 	var worker_biome_id: String = _get_biome_id_for_instance(instance)
+	if not biome_id.is_empty() and worker_biome_id != biome_id:
+		return false
 	var changed := false
 	match worker_type:
 		"food":
@@ -1977,7 +1995,7 @@ func _update_global_resources(now: int, is_offline: bool = false) -> bool:
 			continue
 		var biome: Dictionary = (biome_value as Dictionary).duplicate(true)
 		for resource_id in ["food", "water"]:
-			var eff_max: int = _apply_storage_multiplier(resource_id, max(1, int((biome as Dictionary).get(resource_id + "_max", 100))))
+			var eff_max: int = _apply_storage_multiplier(resource_id, max(1, int((biome as Dictionary).get(resource_id + "_max", 100))), biome_id)
 			if _regenerate_biome_resource_in_place(biome, resource_id, now, eff_max, is_offline):
 				changed = true
 		br[biome_id] = biome

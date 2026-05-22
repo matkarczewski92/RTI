@@ -5,6 +5,7 @@ signal worker_effect_applied(worker_id: String, affected_count: int)
 
 const WORKERS_PATH := "res://data/workers.json"
 const PROCESS_TICK_SECONDS := 1.0
+const DEFAULT_WORKER_BIOMES: Array[String] = ["green_meadow", "dry_prairie", "house"]
 
 var workers: Array = []
 var worker_by_id: Dictionary = {}
@@ -48,27 +49,51 @@ func load_data() -> bool:
 
 func migrate_save_state() -> bool:
 	var changed := false
+	var workers_by_biome_value: Variant = GameState.get_value("workers_by_biome", {})
+	var workers_by_biome: Dictionary = {}
+	if typeof(workers_by_biome_value) == TYPE_DICTIONARY:
+		workers_by_biome = workers_by_biome_value as Dictionary
+
 	var workers_state_value: Variant = GameState.get_value("workers", {})
 	if typeof(workers_state_value) != TYPE_DICTIONARY:
 		GameState.set_value("workers", {})
 		changed = true
+	elif not workers_by_biome.has(GameState.DEFAULT_BIOME_ID):
+		var legacy_workers: Dictionary = workers_state_value as Dictionary
+		if not legacy_workers.is_empty():
+			workers_by_biome[GameState.DEFAULT_BIOME_ID] = legacy_workers.duplicate(true)
+			changed = true
 
-	var workers_state: Dictionary = GameState.get_value("workers", {}) as Dictionary
-	for worker_id in workers_state.keys():
-		var state_value: Variant = workers_state.get(worker_id)
-		if typeof(state_value) != TYPE_DICTIONARY:
-			workers_state.erase(worker_id)
+	for biome_id_value in workers_by_biome.keys():
+		var biome_id: String = _normalize_biome_id(str(biome_id_value))
+		var biome_workers_value: Variant = workers_by_biome.get(biome_id_value)
+		if typeof(biome_workers_value) != TYPE_DICTIONARY:
+			workers_by_biome.erase(biome_id_value)
 			changed = true
 			continue
 
-		var state: Dictionary = state_value as Dictionary
-		var normalized: Dictionary = _normalize_worker_state(str(worker_id), state)
-		if normalized != state:
-			workers_state[worker_id] = normalized
+		var biome_workers: Dictionary = biome_workers_value as Dictionary
+		for worker_id in biome_workers.keys():
+			var state_value: Variant = biome_workers.get(worker_id)
+			if typeof(state_value) != TYPE_DICTIONARY:
+				biome_workers.erase(worker_id)
+				changed = true
+				continue
+
+			var state: Dictionary = state_value as Dictionary
+			var normalized: Dictionary = _normalize_worker_state(str(worker_id), state)
+			if normalized != state:
+				biome_workers[worker_id] = normalized
+				changed = true
+
+		if biome_id != str(biome_id_value):
+			workers_by_biome.erase(biome_id_value)
 			changed = true
+		workers_by_biome[biome_id] = biome_workers
 
 	if changed:
-		GameState.set_value("workers", workers_state)
+		GameState.set_value("workers_by_biome", workers_by_biome)
+		GameState.set_value("workers", _get_workers_state_for_biome(GameState.DEFAULT_BIOME_ID, workers_by_biome))
 		SaveSystem.save_game()
 
 	return changed
@@ -93,12 +118,11 @@ func get_worker_definition(worker_id: String) -> Dictionary:
 	return {}
 
 
-func get_worker_state(worker_id: String) -> Dictionary:
-	var workers_state_value: Variant = GameState.get_value("workers", {})
-	if typeof(workers_state_value) != TYPE_DICTIONARY:
+func get_worker_state(worker_id: String, biome_id: String = "") -> Dictionary:
+	var workers_state: Dictionary = _get_workers_state_for_biome(biome_id)
+	if workers_state.is_empty():
 		return _make_default_worker_state()
 
-	var workers_state: Dictionary = workers_state_value as Dictionary
 	var state_value: Variant = workers_state.get(worker_id, {})
 	if typeof(state_value) != TYPE_DICTIONARY:
 		return _make_default_worker_state()
@@ -106,16 +130,16 @@ func get_worker_state(worker_id: String) -> Dictionary:
 	return _normalize_worker_state(worker_id, state_value as Dictionary)
 
 
-func get_worker_level(worker_id: String) -> int:
-	return int(get_worker_state(worker_id).get("level", 0))
+func get_worker_level(worker_id: String, biome_id: String = "") -> int:
+	return int(get_worker_state(worker_id, biome_id).get("level", 0))
 
 
-func get_next_cost(worker_id: String) -> int:
+func get_next_cost(worker_id: String, biome_id: String = "") -> int:
 	var worker: Dictionary = get_worker_definition(worker_id)
 	if worker.is_empty():
 		return -1
 
-	var level: int = get_worker_level(worker_id)
+	var level: int = get_worker_level(worker_id, biome_id)
 	var max_level: int = int(worker.get("max_level", 1))
 	if level >= max_level:
 		return -1
@@ -125,42 +149,47 @@ func get_next_cost(worker_id: String) -> int:
 	return int(round(base_cost * pow(multiplier, level)))
 
 
-func buy_or_upgrade_worker(worker_id: String) -> Dictionary:
+func buy_or_upgrade_worker(worker_id: String, biome_id: String = "") -> Dictionary:
 	var worker: Dictionary = get_worker_definition(worker_id)
 	if worker.is_empty() or not bool(worker.get("enabled", true)):
 		return {"success": false, "message_key": "workers.unavailable"}
 
-	var level: int = get_worker_level(worker_id)
+	var target_biome_id: String = _normalize_biome_id(biome_id)
+	var level: int = get_worker_level(worker_id, target_biome_id)
 	var max_level: int = int(worker.get("max_level", 1))
 	if level >= max_level:
 		return {"success": false, "message_key": "ui.worker_max"}
 
-	var cost: int = get_next_cost(worker_id)
+	var cost: int = get_next_cost(worker_id, target_biome_id)
 	if cost > 0 and not EconomySystem.can_afford("repticash", cost):
 		return {"success": false, "message_key": "ui.not_enough_currency", "cost": cost}
 
 	if cost > 0 and not EconomySystem.spend_currency("repticash", cost):
 		return {"success": false, "message_key": "ui.not_enough_currency", "cost": cost}
 
-	var workers_state: Dictionary = GameState.get_value("workers", {}) as Dictionary
-	var state: Dictionary = get_worker_state(worker_id)
+	var workers_by_biome: Dictionary = _get_workers_by_biome_state()
+	var workers_state: Dictionary = _get_workers_state_for_biome(target_biome_id, workers_by_biome)
+	var state: Dictionary = get_worker_state(worker_id, target_biome_id)
 	var now: int = Time.get_unix_time_from_system()
 	state["level"] = level + 1
 	state["last_processed_at"] = now
 	workers_state[worker_id] = state
-	GameState.set_value("workers", workers_state)
+	workers_by_biome[target_biome_id] = workers_state
+	GameState.set_value("workers_by_biome", workers_by_biome)
+	if target_biome_id == GameState.DEFAULT_BIOME_ID:
+		GameState.set_value("workers", workers_state)
 	SaveSystem.save_game()
 	_notify_progress_changed()
 	workers_changed.emit()
-	return {"success": true, "worker_id": worker_id, "level": level + 1, "cost": cost}
+	return {"success": true, "worker_id": worker_id, "biome_id": target_biome_id, "level": level + 1, "cost": cost}
 
 
-func get_worker_interval(worker_id: String, level: int = -1) -> int:
+func get_worker_interval(worker_id: String, level: int = -1, biome_id: String = "") -> int:
 	var worker: Dictionary = get_worker_definition(worker_id)
 	if worker.is_empty():
 		return 0
 	if level < 0:
-		level = get_worker_level(worker_id)
+		level = get_worker_level(worker_id, biome_id)
 	if level <= 0:
 		return int(worker.get("base_interval_sec", 0))
 
@@ -170,12 +199,12 @@ func get_worker_interval(worker_id: String, level: int = -1) -> int:
 	return int(max(minimum, base_interval - ((level - 1) * reduction)))
 
 
-func get_worker_effect_value(worker_id: String, level: int = -1) -> float:
+func get_worker_effect_value(worker_id: String, level: int = -1, biome_id: String = "") -> float:
 	var worker: Dictionary = get_worker_definition(worker_id)
 	if worker.is_empty():
 		return 0.0
 	if level < 0:
-		level = get_worker_level(worker_id)
+		level = get_worker_level(worker_id, biome_id)
 	if level <= 0:
 		return 0.0
 
@@ -183,7 +212,7 @@ func get_worker_effect_value(worker_id: String, level: int = -1) -> float:
 	if str(worker.get("type", "")) != "manager" and has_node("/root/UpgradeSystem"):
 		var upgrade_system: Node = get_node("/root/UpgradeSystem")
 		if upgrade_system.has_method("get_worker_efficiency_multiplier"):
-			effect_value *= float(upgrade_system.call("get_worker_efficiency_multiplier"))
+			effect_value *= float(upgrade_system.call("get_worker_efficiency_multiplier", _normalize_biome_id(biome_id)))
 
 	return effect_value
 
@@ -195,55 +224,60 @@ func get_worker_threshold(worker_id: String) -> float:
 	return float(worker.get("threshold_value", 0.0))
 
 
-func get_manager_income_multiplier() -> float:
-	var manager_level: int = get_worker_level("worker_manager")
+func get_manager_income_multiplier(biome_id: String = "") -> float:
+	var target_biome_id: String = _normalize_biome_id(biome_id)
+	var manager_level: int = get_worker_level("worker_manager", target_biome_id)
 	if manager_level <= 0:
 		return 1.0
 
-	return 1.0 + get_worker_effect_value("worker_manager", manager_level)
+	return 1.0 + get_worker_effect_value("worker_manager", manager_level, target_biome_id)
 
 
 func process_workers() -> bool:
 	migrate_save_state()
 	var now: int = Time.get_unix_time_from_system()
-	var workers_state: Dictionary = GameState.get_value("workers", {}) as Dictionary
+	var workers_by_biome: Dictionary = _get_workers_by_biome_state()
 	var changed := false
 	var effect_changed := false
 
-	for worker in get_worker_definitions(false):
-		var worker_id: String = str(worker.get("id", ""))
-		var worker_type: String = str(worker.get("type", ""))
-		if worker_type == "manager":
-			continue
+	for biome_id in _get_worker_biome_ids(workers_by_biome):
+		var workers_state: Dictionary = _get_workers_state_for_biome(biome_id, workers_by_biome)
+		for worker in get_worker_definitions(false):
+			var worker_id: String = str(worker.get("id", ""))
+			var worker_type: String = str(worker.get("type", ""))
+			if worker_type == "manager":
+				continue
 
-		var state: Dictionary = get_worker_state(worker_id)
-		var level: int = int(state.get("level", 0))
-		if level <= 0:
-			continue
+			var state: Dictionary = get_worker_state(worker_id, biome_id)
+			var level: int = int(state.get("level", 0))
+			if level <= 0:
+				continue
 
-		var interval: int = get_worker_interval(worker_id, level)
-		if interval <= 0:
-			continue
+			var interval: int = get_worker_interval(worker_id, level, biome_id)
+			if interval <= 0:
+				continue
 
-		var last_processed_at: int = int(state.get("last_processed_at", 0))
-		if last_processed_at <= 0:
+			var last_processed_at: int = int(state.get("last_processed_at", 0))
+			if last_processed_at <= 0:
+				state["last_processed_at"] = now
+				workers_state[worker_id] = state
+				changed = true
+				continue
+			if now - last_processed_at < interval:
+				continue
+
+			var affected: int = _apply_worker_effect(worker_id, worker_type, level, biome_id)
 			state["last_processed_at"] = now
 			workers_state[worker_id] = state
 			changed = true
-			continue
-		if now - last_processed_at < interval:
-			continue
-
-		var affected: int = _apply_worker_effect(worker_id, worker_type, level)
-		state["last_processed_at"] = now
-		workers_state[worker_id] = state
-		changed = true
-		if affected > 0:
-			effect_changed = true
-			worker_effect_applied.emit(worker_id, affected)
+			if affected > 0:
+				effect_changed = true
+				worker_effect_applied.emit(worker_id, affected)
+		workers_by_biome[biome_id] = workers_state
 
 	if changed:
-		GameState.set_value("workers", workers_state)
+		GameState.set_value("workers_by_biome", workers_by_biome)
+		GameState.set_value("workers", _get_workers_state_for_biome(GameState.DEFAULT_BIOME_ID, workers_by_biome))
 		SaveSystem.save_game()
 	if effect_changed:
 		workers_changed.emit()
@@ -263,20 +297,54 @@ func _start_worker_timer() -> void:
 	add_child(worker_timer)
 
 
-func _apply_worker_effect(worker_id: String, worker_type: String, level: int) -> int:
+func _apply_worker_effect(worker_id: String, worker_type: String, level: int, biome_id: String) -> int:
 	var affected := 0
 	var threshold: float = get_worker_threshold(worker_id)
-	var effect_value: float = get_worker_effect_value(worker_id, level)
+	var effect_value: float = get_worker_effect_value(worker_id, level, biome_id)
 	if effect_value <= 0.0:
 		return 0
 
 	var instances: Dictionary = ReptileSystem.get_owned_reptile_instances()
 	for instance_id_value in instances.keys():
 		var instance_id: String = str(instance_id_value)
-		if ReptileSystem.apply_worker_care_effect(instance_id, worker_type, threshold, effect_value):
+		if ReptileSystem.apply_worker_care_effect(instance_id, worker_type, threshold, effect_value, biome_id):
 			affected += 1
 
 	return affected
+
+
+func _normalize_biome_id(biome_id: String) -> String:
+	var normalized: String = biome_id.strip_edges()
+	return GameState.DEFAULT_BIOME_ID if normalized.is_empty() else normalized
+
+
+func _get_workers_by_biome_state() -> Dictionary:
+	var value: Variant = GameState.get_value("workers_by_biome", {})
+	if typeof(value) == TYPE_DICTIONARY:
+		return (value as Dictionary).duplicate(true)
+	return {}
+
+
+func _get_workers_state_for_biome(biome_id: String, source: Dictionary = {}) -> Dictionary:
+	var target_biome_id: String = _normalize_biome_id(biome_id)
+	var workers_by_biome: Dictionary = source
+	if workers_by_biome.is_empty():
+		workers_by_biome = _get_workers_by_biome_state()
+	var state_value: Variant = workers_by_biome.get(target_biome_id, {})
+	if typeof(state_value) == TYPE_DICTIONARY:
+		return (state_value as Dictionary).duplicate(true)
+	return {}
+
+
+func _get_worker_biome_ids(workers_by_biome: Dictionary) -> Array[String]:
+	var result: Array[String] = []
+	for biome_id in DEFAULT_WORKER_BIOMES:
+		result.append(biome_id)
+	for biome_id_value in workers_by_biome.keys():
+		var biome_id: String = _normalize_biome_id(str(biome_id_value))
+		if not result.has(biome_id):
+			result.append(biome_id)
+	return result
 
 
 func _normalize_worker_definition(worker: Dictionary) -> Dictionary:

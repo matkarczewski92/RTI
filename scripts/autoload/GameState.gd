@@ -66,14 +66,16 @@ func get_default_achievement_state() -> Dictionary:
 func get_default_worker_state() -> Dictionary:
 	return {
 		"workers": {},
-		"worker_levels": {}
+		"worker_levels": {},
+		"workers_by_biome": {}
 	}
 
 
 func get_default_upgrade_state() -> Dictionary:
 	return {
 		"upgrades": {},
-		"upgrade_levels": {}
+		"upgrade_levels": {},
+		"upgrade_levels_by_biome": {}
 	}
 
 
@@ -339,7 +341,7 @@ func normalize_save_data(data: Dictionary) -> Dictionary:
 	for key in ["unlocked_biomes", "completed_achievements", "claimed_achievements", "completed_quests", "claimed_quests", "claimed_collection_rewards"]:
 		normalized[key] = _normalize_unique_string_array(normalized.get(key, []))
 
-	for key in ["biomes", "biome_progress", "biome_progress_points", "quests", "quest_progress", "quest_event_counters", "workers", "worker_levels", "upgrades", "upgrade_levels", "owned_variant_instances"]:
+	for key in ["biomes", "biome_progress", "biome_progress_points", "quests", "quest_progress", "quest_event_counters", "workers", "worker_levels", "workers_by_biome", "upgrades", "upgrade_levels", "upgrade_levels_by_biome", "owned_variant_instances"]:
 		normalized[key] = _normalize_dictionary(normalized.get(key, {}))
 
 	normalized["onboarding_state"] = _normalize_onboarding_state(normalized.get("onboarding_state", {}))
@@ -359,7 +361,12 @@ func normalize_save_data(data: Dictionary) -> Dictionary:
 	normalized["water_regen_interval_seconds"] = max(1, int(normalized.get("water_regen_interval_seconds", 600)))
 	normalized["last_food_regen_timestamp"] = _safe_timestamp(normalized.get("last_food_regen_timestamp", now), now, now)
 	normalized["last_water_regen_timestamp"] = _safe_timestamp(normalized.get("last_water_regen_timestamp", now), now, now)
-	normalized["biome_resources"] = _normalize_biome_resources(normalized.get("biome_resources", {}), now)
+	normalized["biome_resources"] = _normalize_biome_resources(
+		normalized.get("biome_resources", {}),
+		now,
+		int(normalized["food_max"]),
+		int(normalized["water_max"])
+	)
 	normalized["resource_ads_window_started_at"] = _safe_timestamp(normalized.get("resource_ads_window_started_at", 0), 0, now)
 	normalized["resource_ads_used_count"] = int(clamp(int(normalized.get("resource_ads_used_count", 0)), 0, 999999))
 	var resource_ad_timestamps: Array = []
@@ -457,11 +464,17 @@ func _normalize_incubation_containers(raw: Variant) -> Dictionary:
 	return result
 
 
-func _normalize_biome_resources(value: Variant, now: int) -> Dictionary:
+func _normalize_biome_resources(value: Variant, now: int, base_food_max: int = 100, base_water_max: int = 100) -> Dictionary:
 	var defaults: Dictionary = get_default_biome_resources()
+	var safe_food_max: int = max(1, base_food_max)
+	var safe_water_max: int = max(1, base_water_max)
 	var result: Dictionary = {}
 	for biome_id in defaults.keys():
 		var d: Dictionary = (defaults[biome_id] as Dictionary).duplicate(true)
+		d["food_max"] = safe_food_max
+		d["water_max"] = safe_water_max
+		d["food_current"] = int(clamp(int(d.get("food_current", safe_food_max)), 0, safe_food_max))
+		d["water_current"] = int(clamp(int(d.get("water_current", safe_water_max)), 0, safe_water_max))
 		d["last_food_regen_timestamp"] = now
 		d["last_water_regen_timestamp"] = now
 		result[biome_id] = d
@@ -476,6 +489,8 @@ func _normalize_biome_resources(value: Variant, now: int) -> Dictionary:
 			var incoming: Dictionary = biome_value as Dictionary
 			if not result.has(biome_id):
 				result[biome_id] = (defaults.get("green_meadow", {}) as Dictionary).duplicate(true)
+				result[biome_id]["food_max"] = safe_food_max
+				result[biome_id]["water_max"] = safe_water_max
 			var existing: Dictionary = result[biome_id]
 			existing["food_max"] = max(1, int(incoming.get("food_max", existing["food_max"])))
 			existing["water_max"] = max(1, int(incoming.get("water_max", existing["water_max"])))

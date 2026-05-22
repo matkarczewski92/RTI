@@ -719,6 +719,18 @@ func _get_claimed_quests_count() -> int:
 
 
 func _get_workers_hired_count() -> int:
+	var workers_by_biome_value: Variant = GameState.get_value("workers_by_biome", {})
+	if typeof(workers_by_biome_value) == TYPE_DICTIONARY:
+		var biome_count := 0
+		for biome_workers_value in (workers_by_biome_value as Dictionary).values():
+			if typeof(biome_workers_value) != TYPE_DICTIONARY:
+				continue
+			for worker_value in (biome_workers_value as Dictionary).values():
+				if typeof(worker_value) == TYPE_DICTIONARY and int((worker_value as Dictionary).get("level", 0)) > 0:
+					biome_count += 1
+		if biome_count > 0:
+			return biome_count
+
 	var workers_value: Variant = GameState.get_value("workers", {})
 	if typeof(workers_value) == TYPE_DICTIONARY:
 		var count := 0

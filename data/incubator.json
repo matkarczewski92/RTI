@@ -19,6 +19,7 @@
 		"start_percent": 100,
 		"pause_below_percent": 50,
 		"fail_at_percent": 0,
+		"zero_humidity_failure_seconds": 43200,
 		"base_decay_per_hour": 7.5,
 		"stop_decay_when_ready": true,
 		"egg_count_multipliers": [

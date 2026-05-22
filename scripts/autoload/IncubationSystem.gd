@@ -4,6 +4,7 @@ const EGG_SHOP_PATH := "res://data/egg_shop.json"
 const SPECIES_INCUBATION_PATH := "res://data/species_incubation.json"
 const INCUBATOR_CONFIG_PATH := "res://data/incubator.json"
 const BIOMES_PATH := "res://data/biomes.json"
+const HUMIDITY_ZERO_FAILURE_SECONDS := 12 * 60 * 60
 
 var _shop_offers: Array = []
 var _shop_qualities: Dictionary = {}
@@ -421,6 +422,8 @@ func start_incubation(container_index: int) -> Dictionary:
 	container["state"] = "running"
 	container["humidity_percent"] = humidity_start
 	container["humidity_decay_rate_per_hour"] = decay_rate
+	container["humidity_zero_since"] = 0
+	container["failed_at"] = 0
 	container["started_at"] = now
 	container["last_updated_at"] = now
 	container["active_seconds_completed"] = 0
@@ -453,6 +456,8 @@ func water_container(container_index: int) -> Dictionary:
 	var pre_water_state: String = state
 	var pre_water_humidity: float = float(container.get("humidity_percent", 0.0))
 	container["humidity_percent"] = float(_humidity_cfg.get("start_percent", 100))
+	container["humidity_zero_since"] = 0
+	container["failed_at"] = 0
 	container["state"] = "running"
 	containers[key] = container
 	_write_containers(containers)
@@ -646,11 +651,8 @@ func _tick_container(container: Dictionary, now: int) -> Dictionary:
 				else:
 					c["humidity_percent"] = 0.0
 			else:
-				# Eggs dry out
-				c["failed_at"] = last_updated + int(secs_to_dry)
-				c["state"] = "failed_dry"
-				c["humidity_percent"] = 0.0
-				_destroy_eggs_in_container(c)
+				c["active_seconds_completed"] = active_completed + active_before_dry
+				_apply_zero_humidity_state(c, last_updated + int(secs_to_dry), now)
 		else:
 			var active_elapsed: float = min(elapsed, secs_to_pause) if humidity > pause_below else 0.0
 			var new_active: float = active_completed + active_elapsed
@@ -675,12 +677,26 @@ func _tick_container(container: Dictionary, now: int) -> Dictionary:
 		c["humidity_percent"] = new_humidity
 		if new_humidity <= 0.0:
 			var secs_to_dry: float = (humidity / decay_rate) * 3600.0 if decay_rate > 0.0 else 0.0
-			c["failed_at"] = last_updated + int(secs_to_dry)
-			c["state"] = "failed_dry"
-			_destroy_eggs_in_container(c)
+			var zero_since: int = int(c.get("humidity_zero_since", 0))
+			if zero_since <= 0:
+				zero_since = last_updated + int(secs_to_dry)
+			_apply_zero_humidity_state(c, zero_since, now)
 
 	c["last_updated_at"] = now
 	return c
+
+
+func _apply_zero_humidity_state(container: Dictionary, zero_since: int, now: int) -> void:
+	container["humidity_percent"] = 0.0
+	container["humidity_zero_since"] = zero_since
+	var failure_seconds: int = int(_humidity_cfg.get("zero_humidity_failure_seconds", HUMIDITY_ZERO_FAILURE_SECONDS))
+	if failure_seconds <= 0 or now - zero_since > failure_seconds:
+		container["failed_at"] = zero_since + max(0, failure_seconds)
+		container["state"] = "failed_dry"
+		_destroy_eggs_in_container(container)
+		return
+
+	container["state"] = "paused_low_humidity"
 
 
 # ─── Private helpers ────────────────────────────────────────────────────
@@ -699,6 +715,7 @@ func _empty_container() -> Dictionary:
 		"completed_at": 0,
 		"humidity_percent": 100.0,
 		"humidity_decay_rate_per_hour": 10.0,
+		"humidity_zero_since": 0,
 		"failed_at": 0,
 		"ready_at": 0,
 		"is_closed": false

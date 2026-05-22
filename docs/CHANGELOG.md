@@ -74,6 +74,12 @@ Nowe wpisy powinny znajdować sie na samym dole/końcu.  NIE DODAWAJ NOWEJ WERSJ
 - Added AdMob rewarded-ad options for timer speed-ups and resource rewards.
 - Added optional rewarded-ad speed-ups for habitat construction, habitat upgrades, incubator pairings and egg incubation timers.
 - Enlarged building/upgrading status text on habitat slots for better readability on device.
+- Changed the happiness income multiplier to use the average of happiness, hunger, hydration, and cleanliness, making overall care more important.
+- Eggs in the Incubator are now lost only after staying at 0% humidity for more than 12 hours, instead of failing immediately when humidity reaches 0%.
+- Worker and upgrade windows now preserve scroll position after buying or upgrading an item.
+- Workers are now biome-specific, so hiring or upgrading workers in one biome no longer affects other biomes.
+- Food and water capacity upgrades are now biome-specific, while quest rewards still increase the base capacity globally.
+- Replaced biome-specific Better Food and Better Water upgrade duplicates with one local upgrade per type that applies to the current biome.
 
 # PL
 - Wprowadzono nowy układ i wygląd Inkubatora.
@@ -84,3 +90,9 @@ Nowe wpisy powinny znajdować sie na samym dole/końcu.  NIE DODAWAJ NOWEJ WERSJ
 - Dodano opcje reklam z nagrodą AdMob dla przyspieszeń liczników oraz nagród zasobów.
 - Dodano opcjonalne przyspieszenia za reklamę z nagrodą dla budowy habitatów, ulepszeń habitatów, łączeń w Inkubatorze i liczników inkubacji jaj.
 - Powiększono tekst statusu budowy i ulepszania na polach habitatów, aby był czytelniejszy na urządzeniu.
+- Mnożnik dochodu z zadowolenia jest teraz liczony ze średniej zadowolenia, najedzenia, nawodnienia i czystości, dzięki czemu pełna opieka nad gadem ma większe znaczenie.
+- Jaja w Inkubatorze przepadają dopiero po ponad 12 godzinach przy wilgotności 0%, zamiast natychmiast po osiągnięciu 0%.
+- Okna Pracowników i Ulepszeń zachowują pozycję przewijania po zakupie lub ulepszeniu.
+- Pracownicy są teraz przypisani do konkretnego biomu, więc zatrudnienie lub ulepszenie w jednym biomie nie wpływa na pozostałe.
+- Ulepszenia pojemności jedzenia i wody są teraz osobne dla każdego biomu, a nagrody z zadań nadal zwiększają bazową pojemność globalnie.
+- Zastąpiono duplikaty ulepszeń Lepsza karma i Lepsza woda dla konkretnych biomów jedną lokalną wersją każdego ulepszenia, działającą w aktualnym biomie.

@@ -2742,8 +2742,8 @@
 	"onboarding.care_for_reptile.title": { "pl": "Opieka", "en": "Care" },
 	"onboarding.care_for_reptile.body": { "pl": "Zadowolenie, najedzenie, nawodnienie i czystosc wplywaja na kondycje gada. Uzywaj akcji opieki, aby utrzymac potrzeby na dobrym poziomie.", "en": "Happiness, hunger, hydration and cleanliness affect your reptile's condition. Use care actions to keep needs in good shape." },
 	"onboarding.care_for_reptile.action": { "pl": "Wykonaj dowolna akcje opieki: karmienie, wode, czyszczenie albo zabawe.", "en": "Perform any care action: feeding, water, cleaning or play." },
-	"onboarding.learn_happiness_income.title": { "pl": "Zadowolenie a dochod", "en": "Happiness and income" },
-	"onboarding.learn_happiness_income.body": { "pl": "Zadowolenie z czasem spada. Jezeli spadnie ponizej {happiness_income_threshold}, dochod gada zostanie zmniejszony.", "en": "Happiness decreases over time. If it falls below {happiness_income_threshold}, the reptile's income will be reduced." },
+	"onboarding.learn_happiness_income.title": { "pl": "Potrzeby a dochod", "en": "Needs and income" },
+	"onboarding.learn_happiness_income.body": { "pl": "Srednia zadowolenia, najedzenia, nawodnienia i czystosci wplywa na dochod gada. Jezeli spadnie ponizej {happiness_income_threshold}, dochod zostanie zmniejszony.", "en": "The average of happiness, hunger, hydration and cleanliness affects your reptile's income. If it falls below {happiness_income_threshold}, income will be reduced." },
 	"onboarding.learn_happiness_income.action": { "pl": "Otworz okno zarzadzania gadem i sprawdz panel potrzeb oraz dochodu.", "en": "Open reptile management and check the needs and income panels." },
 	"onboarding.learn_resources_regeneration.title": { "pl": "Jedzenie i woda", "en": "Food and water" },
 	"onboarding.learn_resources_regeneration.body": { "pl": "Jedzenie i woda odnawiaja sie automatycznie. Podczas aktywnej gry odnawiaja sie szybciej niz offline.", "en": "Food and water regenerate automatically. They regenerate faster while actively playing than while offline." },
@@ -3569,8 +3569,8 @@
 		"en": "Humidity too low — incubation paused"
 	},
 	"incubation.failed_dry_message": {
-		"pl": "Wilgotność spadła do 0%. Jaja przepadły.",
-		"en": "Humidity reached 0%. The eggs were lost."
+		"pl": "Wilgotność była na 0% dłużej niż 12 godzin. Jaja przepadły.",
+		"en": "Humidity stayed at 0% for more than 12 hours. The eggs were lost."
 	},
 	"incubation.clear_container": {
 		"pl": "Wyczyść pojemnik",

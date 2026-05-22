@@ -70,6 +70,7 @@
 		"max_level": 10,
 		"effect_type": "worker_efficiency_multiplier",
 		"effect_per_level": 0.10,
+		"scope": "biome",
 		"unlocked_by_default": true,
 		"enabled": true,
 		"sort_order": 50
@@ -100,6 +101,7 @@
 		"max_level": 10,
 		"effect_type": "food_max_increase",
 		"effect_per_level": 50,
+		"scope": "biome",
 		"unlocked_by_default": true,
 		"enabled": true,
 		"sort_order": 65
@@ -115,6 +117,7 @@
 		"max_level": 10,
 		"effect_type": "water_max_increase",
 		"effect_per_level": 50,
+		"scope": "biome",
 		"unlocked_by_default": true,
 		"enabled": true,
 		"sort_order": 66
@@ -130,8 +133,9 @@
 		"max_level": 10,
 		"effect_type": "food_cost_reduction",
 		"effect_per_level": 0.05,
+		"scope": "biome",
 		"unlocked_by_default": true,
-		"enabled": false,
+		"enabled": true,
 		"sort_order": 70
 	},
 	{
@@ -145,8 +149,9 @@
 		"max_level": 10,
 		"effect_type": "water_cost_reduction",
 		"effect_per_level": 0.05,
+		"scope": "biome",
 		"unlocked_by_default": true,
-		"enabled": false,
+		"enabled": true,
 		"sort_order": 71
 	},
 	{
@@ -161,7 +166,7 @@
 		"effect_type": "food_cost_reduction",
 		"effect_per_level": 0.05,
 		"unlocked_by_default": true,
-		"enabled": true,
+		"enabled": false,
 		"sort_order": 72
 	},
 	{
@@ -176,7 +181,7 @@
 		"effect_type": "water_cost_reduction",
 		"effect_per_level": 0.05,
 		"unlocked_by_default": true,
-		"enabled": true,
+		"enabled": false,
 		"sort_order": 73
 	},
 	{
@@ -191,7 +196,7 @@
 		"effect_type": "food_cost_reduction",
 		"effect_per_level": 0.05,
 		"unlocked_by_default": true,
-		"enabled": true,
+		"enabled": false,
 		"sort_order": 74
 	},
 	{
@@ -206,7 +211,7 @@
 		"effect_type": "water_cost_reduction",
 		"effect_per_level": 0.05,
 		"unlocked_by_default": true,
-		"enabled": true,
+		"enabled": false,
 		"sort_order": 75
 	},
 	{

@@ -476,6 +476,8 @@ var _toast_panel: PanelContainer
 var _toast_label: Label
 var _toast_timer: SceneTreeTimer
 var _upgrade_purchase_in_progress: bool = false
+var _workers_scroll_restore: int = 0
+var _upgrades_scroll_restore: int = 0
 
 # --- Scrollable biome state ---
 var _is_biome_scrollable: bool = false
@@ -820,7 +822,7 @@ func _on_upgrades_changed() -> void:
 	if management_modal != null and not current_management_instance_id.is_empty():
 		_show_management_for_instance_id(current_management_instance_id, false)
 	if upgrades_view != null:
-		_show_upgrades_view()
+		_show_upgrades_view(true)
 
 
 func _on_language_changed(_language: String) -> void:
@@ -2901,7 +2903,7 @@ func _show_management_for_instance(instance: Dictionary) -> void:
 	_add_management_need_row(panel_layer, "care.cleanliness", cleanliness, Color(0.98, 0.65, 0.08, 1.0), REPTILE_MGMT_NEED_ROW_START_Y + REPTILE_MGMT_NEED_ROW_STEP * 3.0, reference_origin, reference_scale)
 
 	var base_income: float = ReptileSystem.get_base_reptile_income(str(instance.get("reptile_id", "")))
-	var happiness_multiplier: float = ReptileSystem.get_happiness_multiplier(instance.get("happiness", 100))
+	var happiness_multiplier: float = ReptileSystem.get_happiness_multiplier(instance)
 	var variant_multiplier: float = ReptileSystem.get_variant_income_multiplier(variant)
 	var habitat_multiplier: float = ReptileSystem.get_habitat_match_multiplier(instance)
 	var habitat_level_multiplier: float = ReptileSystem.get_habitat_level_income_multiplier(instance)
@@ -4342,7 +4344,26 @@ func _show_quests_view() -> void:
 	_populate_quests_list(list)
 
 
-func _show_workers_view() -> void:
+func _get_scroll_vertical_from_view(view: Control, scroll_name: String) -> int:
+	if view == null or not is_instance_valid(view):
+		return 0
+	var node: Node = view.find_child(scroll_name, true, false)
+	if node is ScrollContainer:
+		return int((node as ScrollContainer).scroll_vertical)
+	return 0
+
+
+func _restore_scroll_deferred(scroll: ScrollContainer, scroll_value: int) -> void:
+	if scroll_value <= 0:
+		return
+	scroll.set_deferred("scroll_vertical", scroll_value)
+
+
+func _show_workers_view(restore_scroll: bool = false) -> void:
+	if restore_scroll:
+		_workers_scroll_restore = _get_scroll_vertical_from_view(workers_view, "WorkersScroll")
+	else:
+		_workers_scroll_restore = 0
 	_close_workers_view()
 	_close_animals_view()
 	_close_quests_view()
@@ -4446,9 +4467,14 @@ func _show_workers_view() -> void:
 	scroll.add_child(list)
 	_make_scroll_safe(list)
 	_populate_workers_list(list)
+	_restore_scroll_deferred(scroll, _workers_scroll_restore)
 
 
-func _show_upgrades_view() -> void:
+func _show_upgrades_view(restore_scroll: bool = false) -> void:
+	if restore_scroll:
+		_upgrades_scroll_restore = _get_scroll_vertical_from_view(upgrades_view, "UpgradesScroll")
+	else:
+		_upgrades_scroll_restore = 0
 	_close_upgrades_view()
 	_close_workers_view()
 	_close_animals_view()
@@ -4538,6 +4564,7 @@ func _show_upgrades_view() -> void:
 	scroll.add_child(list)
 	_make_scroll_safe(list)
 	_populate_upgrades_list(list)
+	_restore_scroll_deferred(scroll, _upgrades_scroll_restore)
 
 
 func _show_upgrades_view_fallback() -> void:
@@ -4586,6 +4613,7 @@ func _show_upgrades_view_fallback() -> void:
 	header.add_child(close_button)
 
 	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.name = "UpgradesScroll"
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
@@ -4596,6 +4624,7 @@ func _show_upgrades_view_fallback() -> void:
 	list.add_theme_constant_override("separation", 10)
 	scroll.add_child(list)
 	_populate_upgrades_list_fallback(list)
+	_restore_scroll_deferred(scroll, _upgrades_scroll_restore)
 
 
 func _populate_upgrades_list(parent: VBoxContainer) -> void:
@@ -4637,9 +4666,9 @@ func _populate_upgrades_list_fallback(parent: VBoxContainer) -> void:
 
 func _make_upgrade_card(upgrade: Dictionary) -> Control:
 	var upgrade_id: String = str(upgrade.get("id", ""))
-	var level: int = UpgradeSystem.get_upgrade_level(upgrade_id)
+	var level: int = UpgradeSystem.get_upgrade_level(upgrade_id, biome_id)
 	var max_level: int = int(upgrade.get("max_level", 1))
-	var next_cost: int = UpgradeSystem.get_upgrade_cost(upgrade_id)
+	var next_cost: int = UpgradeSystem.get_upgrade_cost(upgrade_id, biome_id)
 	var at_max: bool = level >= max_level
 
 	var can_afford: bool = at_max or EconomySystem.can_afford("repticash", next_cost)
@@ -4780,9 +4809,9 @@ func _make_upgrade_card(upgrade: Dictionary) -> Control:
 
 func _make_upgrade_card_fallback(upgrade: Dictionary) -> Control:
 	var upgrade_id: String = str(upgrade.get("id", ""))
-	var level: int = UpgradeSystem.get_upgrade_level(upgrade_id)
+	var level: int = UpgradeSystem.get_upgrade_level(upgrade_id, biome_id)
 	var max_level: int = int(upgrade.get("max_level", 1))
-	var next_cost: int = UpgradeSystem.get_upgrade_cost(upgrade_id)
+	var next_cost: int = UpgradeSystem.get_upgrade_cost(upgrade_id, biome_id)
 	var at_max: bool = level >= max_level
 
 	var card: PanelContainer = PanelContainer.new()
@@ -5008,6 +5037,7 @@ func _show_workers_view_fallback_content(parent: Control) -> void:
 	header.add_child(close_button)
 
 	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.name = "WorkersScroll"
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -5019,6 +5049,7 @@ func _show_workers_view_fallback_content(parent: Control) -> void:
 	list.add_theme_constant_override("separation", 10)
 	scroll.add_child(list)
 	_populate_workers_list(list)
+	_restore_scroll_deferred(scroll, _workers_scroll_restore)
 
 
 func _show_quests_view_fallback_content(parent: Control) -> void:
@@ -5336,14 +5367,15 @@ func _try_buy_upgrade(upgrade_id: String) -> void:
 	if _upgrade_purchase_in_progress:
 		return
 	_upgrade_purchase_in_progress = true
-	var result: Dictionary = UpgradeSystem.buy_upgrade(upgrade_id)
+	var result: Dictionary = UpgradeSystem.buy_upgrade(upgrade_id, biome_id)
 	if not bool(result.get("success", false)):
 		_upgrade_purchase_in_progress = false
 		_show_message_popup(str(result.get("message_key", "ui.not_enough_rs")))
 		return
 
 	_upgrade_purchase_in_progress = false
-	_show_upgrades_view()
+	if upgrades_view == null:
+		_show_upgrades_view(true)
 
 
 func _populate_workers_list(parent: VBoxContainer) -> void:
@@ -5375,9 +5407,9 @@ func _set_workers_card_rect(control: Control, rect_position: Vector2, rect_size:
 
 func _make_worker_card(worker: Dictionary) -> Control:
 	var worker_id: String = str(worker.get("id", ""))
-	var level: int = WorkerSystem.get_worker_level(worker_id)
+	var level: int = WorkerSystem.get_worker_level(worker_id, biome_id)
 	var max_level: int = int(worker.get("max_level", 1))
-	var next_cost: int = WorkerSystem.get_next_cost(worker_id)
+	var next_cost: int = WorkerSystem.get_next_cost(worker_id, biome_id)
 	var at_max: bool = level >= max_level
 
 	var card: Control = Control.new()
@@ -5460,13 +5492,13 @@ func _format_worker_status(worker_id: String, level: int) -> String:
 func _format_worker_effect_summary(worker_id: String, worker: Dictionary, level: int) -> String:
 	var worker_type: String = str(worker.get("type", ""))
 	var display_level: int = max(1, level)
-	var interval: int = WorkerSystem.get_worker_interval(worker_id, display_level)
-	var effect_value: float = WorkerSystem.get_worker_effect_value(worker_id, display_level)
+	var interval: int = WorkerSystem.get_worker_interval(worker_id, display_level, biome_id)
+	var effect_value: float = WorkerSystem.get_worker_effect_value(worker_id, display_level, biome_id)
 	var threshold: int = int(WorkerSystem.get_worker_threshold(worker_id))
 	var prefix: String = LocalizationSystem.tr_key("ui.worker_effect") if level > 0 else LocalizationSystem.tr_key("ui.worker_next_effect")
 
 	if worker_type == "manager":
-		var multiplier: float = 1.0 + WorkerSystem.get_worker_effect_value(worker_id, display_level)
+		var multiplier: float = 1.0 + WorkerSystem.get_worker_effect_value(worker_id, display_level, biome_id)
 		return prefix + ": " + LocalizationSystem.tr_key("ui.worker_income_bonus") + " " + _format_multiplier(multiplier)
 
 	var stat_key: String = "ui.happiness"
@@ -5484,12 +5516,12 @@ func _format_worker_effect_summary(worker_id: String, worker: Dictionary, level:
 
 
 func _try_buy_or_upgrade_worker(worker_id: String) -> void:
-	var result: Dictionary = WorkerSystem.buy_or_upgrade_worker(worker_id)
+	var result: Dictionary = WorkerSystem.buy_or_upgrade_worker(worker_id, biome_id)
 	if not bool(result.get("success", false)):
 		_show_message_popup(str(result.get("message_key", "ui.not_enough_currency")))
 		return
 
-	_show_workers_view()
+	_show_workers_view(true)
 
 
 func _populate_quests_list(parent: VBoxContainer) -> void:
@@ -8045,20 +8077,17 @@ func _refresh_habitat_slots() -> void:
 			if slot.has_method("set_needs_attention"):
 				slot.call("set_needs_attention", _habitat_needs_attention(habitat_id) if state == STATE_OCCUPIED else false)
 			if slot.has_method("set_income_progress"):
-				var _show_progress: bool = state == STATE_OCCUPIED and str(_biome_config.get("type", "")) != "paid"
-				slot.call("set_income_progress", EconomySystem.get_income_progress() if _show_progress else 0.0)
+				slot.call("set_income_progress", EconomySystem.get_income_progress() if state == STATE_OCCUPIED else 0.0)
 
 
 func _refresh_habitat_income_progress() -> void:
-	var _is_paid: bool = str(_biome_config.get("type", "")) == "paid"
 	for habitat_id in habitat_slots.keys():
 		var slot: Node = habitat_slots[habitat_id] as Node
 		if not slot.has_method("set_income_progress"):
 			continue
 
 		var state: String = _get_habitat_state(str(habitat_id))
-		var _show_progress: bool = state == STATE_OCCUPIED and not _is_paid
-		slot.call("set_income_progress", EconomySystem.get_income_progress() if _show_progress else 0.0)
+		slot.call("set_income_progress", EconomySystem.get_income_progress() if state == STATE_OCCUPIED else 0.0)
 
 
 func _get_habitat_state(habitat_id: String) -> String:

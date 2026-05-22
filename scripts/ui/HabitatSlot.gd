@@ -144,7 +144,6 @@ func _build_layout() -> void:
 	reptile_icon.offset_right = 51
 	reptile_icon.offset_bottom = 39
 	visual_root.add_child(reptile_icon)
-	_apply_animal_geometry()
 
 	alert_icon = TextureRect.new()
 	alert_icon.name = "NeedAlertIcon"
@@ -241,6 +240,8 @@ func _build_layout() -> void:
 	speedup_button.add_theme_stylebox_override("pressed", su_pressed)
 	speedup_button.pressed.connect(func() -> void: speedup_pressed.emit(habitat_id))
 	add_child(speedup_button)
+
+	_apply_animal_geometry()
 
 
 func _refresh_visuals() -> void:
@@ -414,6 +415,18 @@ func _apply_animal_geometry() -> void:
 	reptile_icon.offset_top = center.y - icon_size.y * 0.5
 	reptile_icon.offset_right = center.x + icon_size.x * 0.5
 	reptile_icon.offset_bottom = center.y + icon_size.y * 0.5
+
+	if alert_icon != null:
+		alert_icon.offset_left = -20 + animal_visual_offset.x
+		alert_icon.offset_top = -35 + animal_visual_offset.y
+		alert_icon.offset_right = 20 + animal_visual_offset.x
+		alert_icon.offset_bottom = 5 + animal_visual_offset.y
+
+	if income_progress != null:
+		income_progress.offset_left = -52 + animal_visual_offset.x
+		income_progress.offset_top = -26 + INCOME_PROGRESS_VERTICAL_OFFSET - 25 + animal_visual_offset.y
+		income_progress.offset_right = 52 + animal_visual_offset.x
+		income_progress.offset_bottom = -10 + INCOME_PROGRESS_VERTICAL_OFFSET - 25 + animal_visual_offset.y
 
 
 func _refresh_text() -> void:
