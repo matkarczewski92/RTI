@@ -11,9 +11,9 @@ signal player_level_up(levels: Array, reward_amount: float)
 const ECONOMY_PATH := "res://data/economy.json"
 const LEVEL_PROGRESSION_PATH := "res://data/level_progression.json"
 const INCOME_TICK_SECONDS := 60.0
-const MAX_OFFLINE_SECONDS := 14400
+const MAX_OFFLINE_SECONDS := 28800
 const MIN_OFFLINE_SECONDS := 30
-const OFFLINE_INCOME_MULTIPLIER := 0.5
+const OFFLINE_INCOME_MULTIPLIER := 0.8
 
 var economy_data: Dictionary = {}
 var _level_progression: Dictionary = {}

@@ -96,3 +96,17 @@ Nowe wpisy powinny znajdować sie na samym dole/końcu.  NIE DODAWAJ NOWEJ WERSJ
 - Pracownicy są teraz przypisani do konkretnego biomu, więc zatrudnienie lub ulepszenie w jednym biomie nie wpływa na pozostałe.
 - Ulepszenia pojemności jedzenia i wody są teraz osobne dla każdego biomu, a nagrody z zadań nadal zwiększają bazową pojemność globalnie.
 - Zastąpiono duplikaty ulepszeń Lepsza karma i Lepsza woda dla konkretnych biomów jedną lokalną wersją każdego ulepszenia, działającą w aktualnym biomie.
+
+## v1.0.0
+
+# EN
+- Official production release of Reptile Tycoon Idle.
+- All AdMob rewarded ad placements (speed-up and resource refill) are now served with production ad unit IDs.
+- Enabled production AdMob integration for timer speed-ups and resource reward ads.
+- Removed internal developer tools from the Settings screen.
+
+# EN
+- Rebalanced early and mid-game progression: improved first-hour pacing, adjusted habitat costs and timers, increased reptile income, improved offline income, and increased quest and achievement rewards.
+
+# PL
+- Poprawiono balans wczesnej i środkowej fazy gry: usprawniono tempo pierwszej godziny, dostosowano koszty i czasy habitatów, zwiększono dochód gadów, poprawiono dochód offline oraz podniesiono nagrody za zadania i osiągnięcia.

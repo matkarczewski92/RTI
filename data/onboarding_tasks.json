@@ -180,6 +180,18 @@
     "skippable": true
   },
   {
+    "id": "learn_rewarded_ads",
+    "order": 145,
+    "title_key": "onboarding.learn_rewarded_ads.title",
+    "body_key": "onboarding.learn_rewarded_ads.body",
+    "action_key": "onboarding.learn_rewarded_ads.action",
+    "target_ui_key": "add_resources_button",
+    "completion_event": "manual",
+    "completion_amount": 1,
+    "reward": {"coins": 500, "xp": 80},
+    "skippable": true
+  },
+  {
     "id": "finish_onboarding",
     "order": 150,
     "title_key": "onboarding.finish_onboarding.title",

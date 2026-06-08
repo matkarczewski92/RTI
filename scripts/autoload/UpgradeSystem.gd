@@ -4,7 +4,7 @@ signal upgrades_changed
 signal upgrade_purchased(upgrade_id: String, level: int)
 
 const UPGRADES_PATH := "res://data/upgrades.json"
-const BASE_OFFLINE_CAP_SECONDS := 14400
+const BASE_OFFLINE_CAP_SECONDS := 28800
 const CARE_UPGRADE_ACTION_MAP := {
 	"feed": "better_food",
 	"water": "better_water",

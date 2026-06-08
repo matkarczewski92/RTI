@@ -9,7 +9,7 @@
 		"requirement_target": "",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 100,
+		"reward_amount": 400,
 		"reward_xp": 30,
 		"sort_order": 10,
 		"repeatable": false
@@ -24,7 +24,7 @@
 		"requirement_target": "",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 125,
+		"reward_amount": 500,
 		"reward_xp": 40,
 		"sort_order": 20,
 		"repeatable": false
@@ -39,7 +39,7 @@
 		"requirement_target": "",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 100,
+		"reward_amount": 400,
 		"reward_xp": 35,
 		"sort_order": 30,
 		"repeatable": false
@@ -54,7 +54,7 @@
 		"requirement_target": "",
 		"requirement_value": 3,
 		"reward_type": "repticash",
-		"reward_amount": 250,
+		"reward_amount": 800,
 		"reward_xp": 80,
 		"sort_order": 40,
 		"repeatable": false
@@ -69,7 +69,7 @@
 		"requirement_target": "rare",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 400,
+		"reward_amount": 1500,
 		"reward_xp": 120,
 		"sort_order": 50,
 		"repeatable": false
@@ -84,7 +84,7 @@
 		"requirement_target": "female",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 90,
+		"reward_amount": 300,
 		"reward_xp": 30,
 		"sort_order": 60,
 		"repeatable": false
@@ -99,7 +99,7 @@
 		"requirement_target": "male",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 90,
+		"reward_amount": 300,
 		"reward_xp": 30,
 		"sort_order": 70,
 		"repeatable": false
@@ -114,7 +114,7 @@
 		"requirement_target": "leopard_gecko",
 		"requirement_value": 0,
 		"reward_type": "repticash",
-		"reward_amount": 800,
+		"reward_amount": 2000,
 		"reward_xp": 200,
 		"sort_order": 80,
 		"repeatable": false
@@ -129,7 +129,7 @@
 		"requirement_target": "green_meadow",
 		"requirement_value": 5,
 		"reward_type": "repticash",
-		"reward_amount": 1200,
+		"reward_amount": 3000,
 		"reward_xp": 350,
 		"sort_order": 90,
 		"repeatable": false
@@ -144,7 +144,7 @@
 		"requirement_target": "",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 125,
+		"reward_amount": 400,
 		"reward_xp": 60,
 		"sort_order": 100,
 		"repeatable": false
@@ -159,7 +159,7 @@
 		"requirement_target": "",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 80,
+		"reward_amount": 250,
 		"reward_xp": 50,
 		"sort_order": 105,
 		"repeatable": false
@@ -174,7 +174,7 @@
 		"requirement_target": "repticash",
 		"requirement_value": 500,
 		"reward_type": "repticash",
-		"reward_amount": 140,
+		"reward_amount": 500,
 		"reward_xp": 70,
 		"sort_order": 106,
 		"repeatable": false
@@ -189,7 +189,7 @@
 		"requirement_target": "",
 		"requirement_value": 2,
 		"reward_type": "repticash",
-		"reward_amount": 180,
+		"reward_amount": 500,
 		"reward_xp": 80,
 		"sort_order": 107,
 		"repeatable": false
@@ -204,7 +204,7 @@
 		"requirement_target": "",
 		"requirement_value": 2,
 		"reward_type": "repticash",
-		"reward_amount": 160,
+		"reward_amount": 500,
 		"reward_xp": 80,
 		"sort_order": 108,
 		"repeatable": false
@@ -219,7 +219,7 @@
 		"requirement_target": "",
 		"requirement_value": 2,
 		"reward_type": "repticash",
-		"reward_amount": 170,
+		"reward_amount": 500,
 		"reward_xp": 90,
 		"sort_order": 109,
 		"repeatable": false
@@ -234,7 +234,7 @@
 		"requirement_target": "",
 		"requirement_value": 3,
 		"reward_type": "repticash",
-		"reward_amount": 380,
+		"reward_amount": 1000,
 		"reward_xp": 110,
 		"sort_order": 110,
 		"repeatable": false
@@ -249,7 +249,7 @@
 		"requirement_target": "2",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 480,
+		"reward_amount": 1500,
 		"reward_xp": 140,
 		"sort_order": 120,
 		"repeatable": false
@@ -264,7 +264,7 @@
 		"requirement_target": "3",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 1100,
+		"reward_amount": 3500,
 		"reward_xp": 320,
 		"sort_order": 130,
 		"repeatable": false
@@ -279,7 +279,7 @@
 		"requirement_target": "",
 		"requirement_value": 4,
 		"reward_type": "repticash",
-		"reward_amount": 520,
+		"reward_amount": 1500,
 		"reward_xp": 150,
 		"sort_order": 140,
 		"repeatable": false
@@ -294,7 +294,7 @@
 		"requirement_target": "",
 		"requirement_value": 3,
 		"reward_type": "repticash",
-		"reward_amount": 220,
+		"reward_amount": 800,
 		"reward_xp": 70,
 		"sort_order": 150,
 		"repeatable": false
@@ -309,7 +309,7 @@
 		"requirement_target": "",
 		"requirement_value": 5,
 		"reward_type": "repticash",
-		"reward_amount": 500,
+		"reward_amount": 1500,
 		"reward_xp": 150,
 		"sort_order": 160,
 		"repeatable": false
@@ -324,7 +324,7 @@
 		"requirement_target": "",
 		"requirement_value": 3,
 		"reward_type": "repticash",
-		"reward_amount": 280,
+		"reward_amount": 800,
 		"reward_xp": 85,
 		"sort_order": 170,
 		"repeatable": false
@@ -339,7 +339,7 @@
 		"requirement_target": "",
 		"requirement_value": 6,
 		"reward_type": "repticash",
-		"reward_amount": 900,
+		"reward_amount": 2500,
 		"reward_xp": 220,
 		"sort_order": 180,
 		"repeatable": false
@@ -354,7 +354,7 @@
 		"requirement_target": "",
 		"requirement_value": 5,
 		"reward_type": "repticash",
-		"reward_amount": 380,
+		"reward_amount": 1200,
 		"reward_xp": 110,
 		"sort_order": 190,
 		"repeatable": false
@@ -369,7 +369,7 @@
 		"requirement_target": "",
 		"requirement_value": 10,
 		"reward_type": "repticash",
-		"reward_amount": 850,
+		"reward_amount": 2500,
 		"reward_xp": 220,
 		"sort_order": 200,
 		"repeatable": false
@@ -384,7 +384,7 @@
 		"requirement_target": "exceptional",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 650,
+		"reward_amount": 2000,
 		"reward_xp": 190,
 		"sort_order": 210,
 		"repeatable": false
@@ -399,7 +399,7 @@
 		"requirement_target": "ultra_rare",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 1200,
+		"reward_amount": 3500,
 		"reward_xp": 350,
 		"sort_order": 220,
 		"repeatable": false
@@ -414,7 +414,7 @@
 		"requirement_target": "bearded_dragon",
 		"requirement_value": 0,
 		"reward_type": "repticash",
-		"reward_amount": 750,
+		"reward_amount": 1800,
 		"reward_xp": 180,
 		"sort_order": 230,
 		"repeatable": false
@@ -429,7 +429,7 @@
 		"requirement_target": "chameleon",
 		"requirement_value": 0,
 		"reward_type": "repticash",
-		"reward_amount": 900,
+		"reward_amount": 2200,
 		"reward_xp": 230,
 		"sort_order": 235,
 		"repeatable": false
@@ -444,7 +444,7 @@
 		"requirement_target": "repticash",
 		"requirement_value": 2500,
 		"reward_type": "repticash",
-		"reward_amount": 320,
+		"reward_amount": 1200,
 		"reward_xp": 95,
 		"sort_order": 240,
 		"repeatable": false
@@ -459,7 +459,7 @@
 		"requirement_target": "repticash",
 		"requirement_value": 25000,
 		"reward_type": "repticash",
-		"reward_amount": 1400,
+		"reward_amount": 4000,
 		"reward_xp": 400,
 		"sort_order": 250,
 		"repeatable": false
@@ -474,7 +474,7 @@
 		"requirement_target": "",
 		"requirement_value": 3,
 		"reward_type": "repticash",
-		"reward_amount": 450,
+		"reward_amount": 1200,
 		"reward_xp": 130,
 		"sort_order": 260,
 		"repeatable": false
@@ -489,7 +489,7 @@
 		"requirement_target": "",
 		"requirement_value": 5,
 		"reward_type": "repticash",
-		"reward_amount": 1100,
+		"reward_amount": 3000,
 		"reward_xp": 300,
 		"sort_order": 270,
 		"repeatable": false
@@ -504,7 +504,7 @@
 		"requirement_target": "",
 		"requirement_value": 60,
 		"reward_type": "repticash",
-		"reward_amount": 420,
+		"reward_amount": 1000,
 		"reward_xp": 120,
 		"sort_order": 280,
 		"repeatable": false
@@ -519,7 +519,7 @@
 		"requirement_target": "",
 		"requirement_value": 200,
 		"reward_type": "repticash",
-		"reward_amount": 950,
+		"reward_amount": 3000,
 		"reward_xp": 260,
 		"sort_order": 290,
 		"repeatable": false
@@ -534,7 +534,7 @@
 		"requirement_target": "dry_prairie",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 1500,
+		"reward_amount": 3500,
 		"reward_xp": 450,
 		"sort_order": 300,
 		"repeatable": false
@@ -549,7 +549,7 @@
 		"requirement_target": "",
 		"requirement_value": 10,
 		"reward_type": "repticash",
-		"reward_amount": 2500,
+		"reward_amount": 6000,
 		"reward_xp": 0,
 		"sort_order": 310,
 		"repeatable": false
@@ -564,7 +564,7 @@
 		"requirement_target": "dry_prairie",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 600,
+		"reward_amount": 1500,
 		"reward_xp": 180,
 		"sort_order": 320,
 		"repeatable": false
@@ -579,7 +579,7 @@
 		"requirement_target": "dry_prairie",
 		"requirement_value": 5,
 		"reward_type": "repticash",
-		"reward_amount": 1500,
+		"reward_amount": 3500,
 		"reward_xp": 450,
 		"sort_order": 330,
 		"repeatable": false
@@ -594,7 +594,7 @@
 		"requirement_target": "dry_prairie",
 		"requirement_value": 10,
 		"reward_type": "repticash",
-		"reward_amount": 3000,
+		"reward_amount": 6000,
 		"reward_xp": 850,
 		"sort_order": 340,
 		"repeatable": false
@@ -609,7 +609,7 @@
 		"requirement_target": "bullsnake",
 		"requirement_value": 0,
 		"reward_type": "repticash",
-		"reward_amount": 900,
+		"reward_amount": 2500,
 		"reward_xp": 250,
 		"sort_order": 350,
 		"repeatable": false
@@ -624,7 +624,7 @@
 		"requirement_target": "prairie_rattlesnake",
 		"requirement_value": 0,
 		"reward_type": "repticash",
-		"reward_amount": 1200,
+		"reward_amount": 3500,
 		"reward_xp": 350,
 		"sort_order": 360,
 		"repeatable": false
@@ -639,7 +639,7 @@
 		"requirement_target": "emerald_tree_skink",
 		"requirement_value": 0,
 		"reward_type": "repticash",
-		"reward_amount": 1100,
+		"reward_amount": 3000,
 		"reward_xp": 300,
 		"sort_order": 365,
 		"repeatable": false
@@ -654,7 +654,7 @@
 		"requirement_target": "",
 		"requirement_value": 10,
 		"reward_type": "repticash",
-		"reward_amount": 800,
+		"reward_amount": 3000,
 		"reward_xp": 200,
 		"sort_order": 370,
 		"repeatable": false
@@ -828,7 +828,7 @@
 		"requirement_target": "total_eggs",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 80,
+		"reward_amount": 200,
 		"reward_xp": 25,
 		"sort_order": 400,
 		"repeatable": false
@@ -843,7 +843,7 @@
 		"requirement_target": "total_hatches",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 150,
+		"reward_amount": 400,
 		"reward_xp": 50,
 		"sort_order": 410,
 		"repeatable": false
@@ -858,7 +858,7 @@
 		"requirement_target": "successful_pairings",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 150,
+		"reward_amount": 400,
 		"reward_xp": 50,
 		"sort_order": 420,
 		"repeatable": false
@@ -873,7 +873,7 @@
 		"requirement_target": "full_chamber_loads",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 200,
+		"reward_amount": 500,
 		"reward_xp": 60,
 		"sort_order": 430,
 		"repeatable": false
@@ -888,7 +888,7 @@
 		"requirement_target": "proactive_waters",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 120,
+		"reward_amount": 300,
 		"reward_xp": 40,
 		"sort_order": 440,
 		"repeatable": false
@@ -903,7 +903,7 @@
 		"requirement_target": "saves",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 120,
+		"reward_amount": 300,
 		"reward_xp": 40,
 		"sort_order": 450,
 		"repeatable": false
@@ -918,7 +918,7 @@
 		"requirement_target": "rare_hatches",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 300,
+		"reward_amount": 800,
 		"reward_xp": 90,
 		"sort_order": 460,
 		"repeatable": false
@@ -933,7 +933,7 @@
 		"requirement_target": "ultra_rare_hatches",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 600,
+		"reward_amount": 1500,
 		"reward_xp": 180,
 		"sort_order": 470,
 		"repeatable": false
@@ -948,7 +948,7 @@
 		"requirement_target": "exceptional_hatches",
 		"requirement_value": 1,
 		"reward_type": "repticash",
-		"reward_amount": 1000,
+		"reward_amount": 3000,
 		"reward_xp": 300,
 		"sort_order": 480,
 		"repeatable": false
@@ -963,7 +963,7 @@
 		"requirement_target": "total_hatches",
 		"requirement_value": 50,
 		"reward_type": "repticash",
-		"reward_amount": 2000,
+		"reward_amount": 5000,
 		"reward_xp": 600,
 		"sort_order": 490,
 		"repeatable": false

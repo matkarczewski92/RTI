@@ -105,7 +105,7 @@
 			"level": {"cx": 0.930, "cy": 0.67, "sw": 0.075, "sh": 0.34}
 		},
 		"unlock_requirements": {
-			"level": 10
+			"level": 6
 		}
 	}
 ]

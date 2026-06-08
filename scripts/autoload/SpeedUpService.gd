@@ -10,7 +10,7 @@ var _rewards: Array = []
 var _icon_path: String = "res://assets/art/ui/icons/speed_up_ico.png"
 var _icon_width: int = 64
 var _icon_height: int = 64
-var _show_above_minutes: int = 30
+var _show_above_minutes: int = 5
 var _cooldown_seconds: float = 3.0
 
 var _cooldowns: Dictionary = {}

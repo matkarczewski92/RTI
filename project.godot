@@ -36,6 +36,7 @@ OnboardingSystem="*res://scripts/autoload/OnboardingSystem.gd"
 RewardedAdService="*res://scripts/autoload/RewardedAdService.gd"
 SpeedUpService="*res://scripts/autoload/SpeedUpService.gd"
 ResourceAdService="*res://scripts/autoload/ResourceAdService.gd"
+FirebaseAnalyticsService="*res://scripts/autoload/FirebaseAnalyticsService.gd"
 
 [display]
 

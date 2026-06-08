@@ -10,7 +10,8 @@ const MUSIC_ICON_PATH := "res://assets/art/ui/icons/menu/music.png"
 const SFX_ICON_PATH := "res://assets/art/ui/icons/menu/sfx.png"
 const VIBRATION_ICON_PATH := "res://assets/art/ui/icons/menu/vibration.png"
 const ALERT_ICON_PATH := "res://assets/art/ui/icons/menu/alert.png"
-const APP_VERSION := "v0.1 MVP"
+const APP_VERSION := "v1.0.0"
+const PRIVACY_POLICY_URL := "https://rt.makssnake.pl/"
 
 var title_label: Label
 var language_label: Label
@@ -18,8 +19,6 @@ var polish_button: Button
 var english_button: Button
 var reset_button: Button
 var version_label: Label
-var privacy_title_label: Label
-var privacy_body_label: Label
 var privacy_button: Button
 var toggle_labels: Dictionary = {}
 var toggle_status_labels: Dictionary = {}
@@ -147,54 +146,11 @@ func _build_layout() -> void:
 
 	column.add_child(_make_separator())
 
-	privacy_button = _make_action_button("", Callable(self, "_show_privacy_placeholder"))
+	privacy_button = _make_action_button("", func() -> void: OS.shell_open(PRIVACY_POLICY_URL))
 	privacy_button.custom_minimum_size = Vector2(0, 50)
 	column.add_child(privacy_button)
 
-	privacy_title_label = _make_label("", 18, Color(0.22, 0.15, 0.08, 1.0), HORIZONTAL_ALIGNMENT_LEFT)
-	column.add_child(privacy_title_label)
-
-	privacy_body_label = _make_label("", 14, Color(0.38, 0.30, 0.20, 1.0), HORIZONTAL_ALIGNMENT_LEFT)
-	privacy_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(privacy_body_label)
-
 	column.add_child(_make_separator())
-
-	var dev_label := _make_label("DEV", 13, Color(0.55, 0.18, 0.08, 0.75), HORIZONTAL_ALIGNMENT_LEFT)
-	column.add_child(dev_label)
-
-	var dev_row := HBoxContainer.new()
-	dev_row.add_theme_constant_override("separation", 8)
-	column.add_child(dev_row)
-
-	var dev_input := LineEdit.new()
-	dev_input.name = "DevInput"
-	dev_input.placeholder_text = "command..."
-	dev_input.custom_minimum_size = Vector2(0, 48)
-	dev_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	dev_input.add_theme_font_size_override("font_size", 14)
-	dev_row.add_child(dev_input)
-
-	var dev_result := _make_label("", 13, Color(0.20, 0.50, 0.18, 1.0), HORIZONTAL_ALIGNMENT_LEFT)
-	dev_result.name = "DevResult"
-	column.add_child(dev_result)
-
-	var dev_accept := Button.new()
-	dev_accept.text = "OK"
-	dev_accept.custom_minimum_size = Vector2(64, 48)
-	dev_accept.focus_mode = Control.FOCUS_NONE
-	_style_button(dev_accept, Color(0.22, 0.38, 0.60, 1.0), Color(0.28, 0.46, 0.72, 1.0), Color(0.16, 0.28, 0.48, 1.0))
-	dev_accept.pressed.connect(func() -> void:
-		var msg := _execute_dev_command(dev_input.text)
-		dev_result.text = msg
-		dev_input.text = ""
-	)
-	dev_input.text_submitted.connect(func(text: String) -> void:
-		var msg := _execute_dev_command(text)
-		dev_result.text = msg
-		dev_input.text = ""
-	)
-	dev_row.add_child(dev_accept)
 
 
 func _make_toggle_row(setting_key: String, label_key: String, icon_path: String) -> Control:
@@ -276,8 +232,6 @@ func _refresh_from_state() -> void:
 	reset_button.text = LocalizationSystem.tr_key("settings.reset_game")
 	version_label.text = LocalizationSystem.tr_key("settings.version") + ": " + APP_VERSION
 	privacy_button.text = LocalizationSystem.tr_key("settings.privacy_policy")
-	privacy_title_label.text = LocalizationSystem.tr_key("settings.privacy_policy")
-	privacy_body_label.text = LocalizationSystem.tr_key("settings.privacy_placeholder")
 
 	_style_language_button(polish_button, GameState.get_language() == "pl")
 	_style_language_button(english_button, GameState.get_language() == "en")
@@ -294,22 +248,6 @@ func _refresh_from_state() -> void:
 		var toggle: CheckButton = toggle_buttons.get(setting_key, null) as CheckButton
 		if toggle != null:
 			toggle.set_pressed_no_signal(enabled)
-
-
-func _show_privacy_placeholder() -> void:
-	_show_message_modal("settings.privacy_policy", "settings.privacy_placeholder")
-
-
-func _show_message_modal(title_key: String, message_key: String) -> void:
-	var modal := _make_overlay_modal("SettingsMessageModal")
-	var column := _make_centered_modal_column(modal, Vector2(430, 240))
-	column.add_child(_make_label(LocalizationSystem.tr_key(title_key), 22, Color(0.17, 0.11, 0.06, 1.0), HORIZONTAL_ALIGNMENT_CENTER))
-	var message := _make_label(LocalizationSystem.tr_key(message_key), 15, Color(0.30, 0.22, 0.14, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
-	message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(message)
-	column.add_child(_make_action_button(LocalizationSystem.tr_key("ui.ok"), func() -> void:
-		modal.queue_free()
-	))
 
 
 func _show_reset_confirmation() -> void:
@@ -495,126 +433,6 @@ func _make_button_style(color: Color) -> StyleBoxFlat:
 	style.content_margin_top = 8
 	style.content_margin_bottom = 8
 	return style
-
-
-func _execute_dev_command(command: String) -> String:
-	var cmd := command.strip_edges().to_lower()
-	if cmd.is_empty():
-		return ""
-
-	match cmd:
-		"add_10000_money":
-			EconomySystem.add_currency("repticash", 10000.0)
-			return "+10000 repticash"
-		"add_10000_exp":
-			EconomySystem.add_currency("xp", 10000.0)
-			return "+10000 XP"
-		"skip_all_buildings":
-			_skip_all_buildings()
-			return "Buildings skipped"
-		"skip_all_pairings":
-			_skip_all_pairings()
-			return "Pairings skipped"
-		"skip_all_incubations":
-			_skip_all_incubations()
-			return "Incubations skipped"
-		"add_house_access":
-			_grant_house_access()
-			return "House access granted"
-		_:
-			return "Unknown: " + cmd
-
-
-func _skip_all_buildings() -> void:
-	var habitats_value: Variant = GameState.get_value("habitats", {})
-	if typeof(habitats_value) != TYPE_DICTIONARY:
-		return
-
-	var habitats: Dictionary = (habitats_value as Dictionary).duplicate(true)
-	var changed: bool = false
-	for habitat_id in habitats.keys():
-		var habitat_value: Variant = habitats.get(habitat_id)
-		if typeof(habitat_value) != TYPE_DICTIONARY:
-			continue
-
-		var habitat: Dictionary = (habitat_value as Dictionary).duplicate(true)
-		var habitat_changed: bool = false
-		if bool(habitat.get("is_building", false)):
-			habitat["build_finish_at"] = 1
-			habitat_changed = true
-		if bool(habitat.get("is_upgrading", false)):
-			habitat["upgrade_finish_at"] = 1
-			habitat_changed = true
-		if habitat_changed:
-			habitats[habitat_id] = habitat
-			changed = true
-
-	if not changed:
-		return
-
-	GameState.set_value("habitats", habitats)
-	var reptile_system: Node = get_node_or_null("/root/ReptileSystem")
-	if reptile_system != null and reptile_system.has_method("apply_time_updates"):
-		reptile_system.call("apply_time_updates", true)
-	else:
-		SaveSystem.save_game()
-	GameState.state_changed.emit()
-
-
-func _skip_all_pairings() -> void:
-	var chambers_value: Variant = GameState.get_value("breeding_chambers", {})
-	if typeof(chambers_value) != TYPE_DICTIONARY:
-		return
-
-	var chambers: Dictionary = (chambers_value as Dictionary).duplicate(true)
-	var changed: bool = false
-	for chamber_key in chambers.keys():
-		var chamber_value: Variant = chambers.get(chamber_key)
-		if typeof(chamber_value) != TYPE_DICTIONARY:
-			continue
-
-		var chamber: Dictionary = (chamber_value as Dictionary).duplicate(true)
-		if str(chamber.get("state", "")) == "breeding":
-			chamber["ends_at"] = 1
-			chambers[chamber_key] = chamber
-			changed = true
-
-	if not changed:
-		return
-
-	GameState.set_value("breeding_chambers", chambers)
-	var breeding_system: Node = get_node_or_null("/root/BreedingSystem")
-	if breeding_system != null and breeding_system.has_method("tick_chambers"):
-		breeding_system.call("tick_chambers")
-	SaveSystem.save_game()
-	GameState.state_changed.emit()
-
-
-func _skip_all_incubations() -> void:
-	var incubation_system: Node = get_node_or_null("/root/IncubationSystem")
-	if incubation_system != null and incubation_system.has_method("skip_all_incubations"):
-		incubation_system.call("skip_all_incubations")
-	SaveSystem.save_game()
-	GameState.state_changed.emit()
-
-
-func _grant_house_access() -> void:
-	var unlocked_value: Variant = GameState.get_value("unlocked_biomes", [])
-	var unlocked: Array = []
-	if typeof(unlocked_value) == TYPE_ARRAY:
-		unlocked = (unlocked_value as Array).duplicate()
-
-	if not unlocked.has(GameState.DEFAULT_BIOME_ID):
-		unlocked.append(GameState.DEFAULT_BIOME_ID)
-	if not unlocked.has("house"):
-		unlocked.append("house")
-
-	GameState.set_value("unlocked_biomes", unlocked)
-	var achievement_system: Node = get_node_or_null("/root/AchievementSystem")
-	if achievement_system != null and achievement_system.has_method("notify_progress_changed"):
-		achievement_system.call("notify_progress_changed")
-	SaveSystem.save_game()
-	GameState.state_changed.emit()
 
 
 func _make_separator() -> HSeparator:

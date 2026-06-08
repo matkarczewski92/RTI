@@ -23,7 +23,7 @@ const SETTINGS_SIZE := Vector2(470.6, 135.5)
 
 signal play_pressed
 
-const VERSION_STRING := "v. 0.1.2 - pre-release-beta"
+const VERSION_STRING := "v. 1.0.2"
 
 var background: TextureRect
 var ui_layer: Control
@@ -33,6 +33,7 @@ var english_button: TextureButton
 var settings_button: TextureButton
 var settings_modal: Control
 var version_label: Label
+var copyright_label: Label
 
 
 func _ready() -> void:
@@ -71,6 +72,25 @@ func _build_layout() -> void:
 
 	settings_button = _make_texture_button("SettingsButton", Callable(self, "_open_existing_settings_flow"))
 	_add_fallback_label(settings_button, "SettingsFallbackLabel")
+
+	copyright_label = Label.new()
+	copyright_label.name = "CopyrightLabel"
+	copyright_label.text = "© by Mateusz Karczewski"
+	copyright_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	copyright_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	copyright_label.anchor_left = 0.0
+	copyright_label.anchor_right = 1.0
+	copyright_label.anchor_top = 1.0
+	copyright_label.anchor_bottom = 1.0
+	copyright_label.offset_top = -92.0
+	copyright_label.offset_bottom = -52.0
+	copyright_label.add_theme_font_size_override("font_size", 20)
+	copyright_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.45))
+	copyright_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.6))
+	copyright_label.add_theme_constant_override("shadow_offset_x", 1)
+	copyright_label.add_theme_constant_override("shadow_offset_y", 1)
+	copyright_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui_layer.add_child(copyright_label)
 
 	version_label = Label.new()
 	version_label.name = "VersionLabel"
@@ -139,6 +159,8 @@ func _layout_buttons() -> void:
 	_layout_fallback_label(play_button, scale, 42)
 	_layout_fallback_label(settings_button, scale, 28)
 
+	if copyright_label != null:
+		copyright_label.add_theme_font_size_override("font_size", max(12, int(round(20.0 * scale))))
 	if version_label != null:
 		version_label.add_theme_font_size_override("font_size", max(14, int(round(24.0 * scale))))
 
