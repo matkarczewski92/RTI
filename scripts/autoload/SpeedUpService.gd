@@ -4,6 +4,7 @@ extends Node
 signal speedup_applied(target_type: String, target_id: String, reduced_by_seconds: int)
 
 const CONFIG_PATH := "res://data/rewarded_ads.json"
+const T := preload("res://scripts/modern/SanctuaryTheme.gd")
 
 var _config: Dictionary = {}
 var _rewards: Array = []
@@ -132,6 +133,7 @@ func _show_confirmation(
 
 	var modal := Control.new()
 	modal.name = "SpeedUpConfirmModal"
+	modal.theme = T.make_theme()
 	modal.set_anchors_preset(Control.PRESET_FULL_RECT)
 	modal.z_index = 200
 	modal_parent.add_child(modal)
@@ -144,22 +146,14 @@ func _show_confirmation(
 
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.offset_left = 36
-	center.offset_right = -36
+	center.offset_left = 24
+	center.offset_right = -24
 	modal.add_child(center)
 
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(645, 390)
+	panel.custom_minimum_size = Vector2(minf(624.0, parent.get_viewport_rect().size.x - 48.0), 390)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	var pstyle := StyleBoxFlat.new()
-	pstyle.bg_color = Color(0.13, 0.10, 0.06, 0.97)
-	pstyle.border_color = Color(0.80, 0.65, 0.20, 0.95)
-	pstyle.set_border_width_all(4)
-	pstyle.set_corner_radius_all(18)
-	pstyle.content_margin_left = 34
-	pstyle.content_margin_right = 34
-	pstyle.content_margin_top = 30
-	pstyle.content_margin_bottom = 30
+	var pstyle := T.Controls.parchment()
 	panel.add_theme_stylebox_override("panel", pstyle)
 	center.add_child(panel)
 
@@ -171,7 +165,10 @@ func _show_confirmation(
 	title_lbl.text = LocalizationSystem.tr_key("rewarded_speedup_title")
 	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_lbl.add_theme_font_size_override("font_size", 33)
-	title_lbl.add_theme_color_override("font_color", Color(0.95, 0.85, 0.35, 1.0))
+	title_lbl.add_theme_color_override("font_color", Color("382006"))
+	title_lbl.add_theme_constant_override("outline_size", 0)
+	title_lbl.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(title_lbl)
 
@@ -181,15 +178,18 @@ func _show_confirmation(
 	msg_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	msg_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	msg_lbl.add_theme_font_size_override("font_size", 24)
-	msg_lbl.add_theme_color_override("font_color", Color(0.90, 0.84, 0.70, 1.0))
+	msg_lbl.add_theme_color_override("font_color", Color("382006"))
+	msg_lbl.add_theme_constant_override("outline_size", 0)
+	msg_lbl.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
 	msg_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(msg_lbl)
 
-	var actions := HBoxContainer.new()
+	var actions := VBoxContainer.new()
 	actions.add_theme_constant_override("separation", 16)
 	column.add_child(actions)
 
 	var cancel_btn := Button.new()
+	T.Controls.apply(cancel_btn, "wood")
 	cancel_btn.text = LocalizationSystem.tr_key("rewarded_speedup_cancel")
 	cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cancel_btn.focus_mode = Control.FOCUS_NONE
@@ -199,20 +199,13 @@ func _show_confirmation(
 	actions.add_child(cancel_btn)
 
 	var confirm_btn := Button.new()
+	T.Controls.apply(confirm_btn, "green")
 	confirm_btn.text = LocalizationSystem.tr_key("rewarded_speedup_confirm")
 	confirm_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	confirm_btn.focus_mode = Control.FOCUS_NONE
 	confirm_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	confirm_btn.add_theme_font_size_override("font_size", 24)
 	confirm_btn.custom_minimum_size = Vector2(0, 72)
-	var confirm_style := StyleBoxFlat.new()
-	confirm_style.bg_color = Color(0.22, 0.52, 0.20, 1.0)
-	confirm_style.border_color = Color(0.35, 0.75, 0.30, 0.90)
-	confirm_style.set_border_width_all(2)
-	confirm_style.set_corner_radius_all(8)
-	confirm_style.content_margin_left = 10
-	confirm_style.content_margin_right = 10
-	confirm_btn.add_theme_stylebox_override("normal", confirm_style)
 	actions.add_child(confirm_btn)
 
 	cancel_btn.pressed.connect(func() -> void:

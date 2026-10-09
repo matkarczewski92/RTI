@@ -2,8 +2,14 @@ extends Node
 
 signal quest_completed(quest_id: String)
 signal quest_claimed(quest_id: String)
+signal gameplay_event_recorded(event_type: String, payload: Dictionary)
 
 const QUESTS_PATH := "res://data/quests.json"
+const GUIDED_NURSERY_QUEST_IDS := [
+	"incubator_enter_first_time", "incubator_obtain_first_egg",
+	"incubator_start_first_pairing", "incubator_start_first_incubation",
+	"incubator_first_hatch_task"
+]
 
 var quests: Array = []
 
@@ -171,6 +177,8 @@ func claim_quest_reward(quest_id: String) -> Dictionary:
 	var quest: Dictionary = _get_quest(quest_id)
 	if quest.is_empty():
 		return {"success": false, "message_key": "quests.in_progress"}
+	if _is_replaced_onboarding_quest(quest):
+		return {"success": false, "message_key": "quests.claimed"}
 
 	var state: Dictionary = _make_quest_state(quest)
 	if not bool(state.get("completed", false)):
@@ -274,7 +282,7 @@ func notify_event(event_type: String, payload: Dictionary = {}) -> void:
 		"incubator_hatched":
 			var hatch_count: int = max(0, int(payload.get("count", 0)))
 			_increment_counter("incubator_hatches_total", hatch_count)
-			var rarities_value: Variant = payload.get("rarities", [])
+			var rarities_value: Variant = payload.get("progress_rarities", payload.get("rarities", []))
 			var rarities: Array = rarities_value as Array if typeof(rarities_value) == TYPE_ARRAY else []
 			for rarity_value in rarities:
 				match str(rarity_value):
@@ -288,6 +296,7 @@ func notify_event(event_type: String, payload: Dictionary = {}) -> void:
 			pass
 	_mark_new_completions()
 	SaveSystem.save_game()
+	gameplay_event_recorded.emit(event_type, payload.duplicate(true))
 
 
 func is_claimed(quest_id: String) -> bool:
@@ -316,6 +325,8 @@ func _make_quest_state(quest: Dictionary) -> Dictionary:
 
 
 func _is_quest_visible(quest: Dictionary) -> bool:
+	if _is_replaced_onboarding_quest(quest):
+		return false
 	if not _is_quest_accessible(quest):
 		return false
 	if bool(quest.get("hide_until_prerequisites_met", false)):
@@ -323,6 +334,12 @@ func _is_quest_visible(quest: Dictionary) -> bool:
 	if not bool(quest.get("is_onboarding", false)):
 		return true
 	return _are_prerequisites_met(quest)
+
+
+func _is_replaced_onboarding_quest(quest: Dictionary) -> bool:
+	# Existing players keep the rewards they were promised. New saves use one
+	# short guided track instead of receiving two rewards for the same action.
+	return int(GameState.get_value("onboarding_track_version", 1)) >= 2 and (bool(quest.get("is_onboarding", false)) or GUIDED_NURSERY_QUEST_IDS.has(str(quest.get("id", ""))))
 
 
 func _are_prerequisites_met(quest: Dictionary) -> bool:
@@ -333,6 +350,8 @@ func _are_prerequisites_met(quest: Dictionary) -> bool:
 	for prerequisite_value in (prerequisites_value as Array):
 		var prerequisite_id: String = str(prerequisite_value)
 		if prerequisite_id.is_empty():
+			continue
+		if _is_replaced_onboarding_quest(_get_quest(prerequisite_id)):
 			continue
 		if is_claimed(prerequisite_id):
 			continue
@@ -492,6 +511,8 @@ func _get_quest(quest_id: String) -> Dictionary:
 
 
 func _is_quest_accessible(quest: Dictionary) -> bool:
+	if int(GameState.get_value("level", 1)) < int(quest.get("requires_level", 1)):
+		return false
 	var required_dlc: String = str(quest.get("requires_dlc", ""))
 	if not required_dlc.is_empty() and not _is_biome_unlocked(required_dlc):
 		return false
@@ -513,11 +534,27 @@ func _is_biome_unlocked(biome_id: String) -> bool:
 		return true
 	if biome_id == GameState.DEFAULT_BIOME_ID:
 		return true
+	if biome_id == "incubator":
+		var incubator: Node = get_node_or_null("/root/IncubationSystem")
+		if incubator != null and incubator.has_method("is_unlocked"):
+			return bool(incubator.call("is_unlocked"))
 
 	var unlocked_value: Variant = GameState.get_value("unlocked_biomes", [])
-	if typeof(unlocked_value) != TYPE_ARRAY:
+	if typeof(unlocked_value) == TYPE_ARRAY and (unlocked_value as Array).has(biome_id):
+		return true
+	var file: FileAccess = FileAccess.open("res://data/biomes.json", FileAccess.READ)
+	if file == null:
 		return false
-	return (unlocked_value as Array).has(biome_id)
+	var data: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(data) != TYPE_ARRAY:
+		return false
+	for entry in data:
+		if typeof(entry) == TYPE_DICTIONARY and str(entry.get("id", "")) == biome_id:
+			if str(entry.get("type", "")) == "paid":
+				return false
+			return int(GameState.get_value("level", 1)) >= int(entry.get("unlock_requirements", {}).get("level", 1))
+	return false
 
 
 func _get_purchased_habitats_count(biome_id: String = "") -> int:
@@ -662,7 +699,7 @@ func _has_species_assigned_to_habitat_type(reptile_id: String, habitat_type: Str
 
 
 func _has_any_biome_reptile_assigned_to_habitat_type(biome_id: String, habitat_type: String) -> bool:
-	if biome_id.is_empty() or habitat_type.is_empty():
+	if habitat_type.is_empty():
 		return false
 
 	var habitats_value: Variant = GameState.get_value("habitats", {})
@@ -673,12 +710,13 @@ func _has_any_biome_reptile_assigned_to_habitat_type(biome_id: String, habitat_t
 		if typeof(habitat_value) != TYPE_DICTIONARY:
 			continue
 		var habitat: Dictionary = habitat_value as Dictionary
-		if str(habitat.get("biome_id", "")) != biome_id:
+		var habitat_biome: String = str(habitat.get("biome_id", ""))
+		if not biome_id.is_empty() and habitat_biome != biome_id:
 			continue
 		if ReptileSystem.normalize_habitat_type(str(habitat.get("habitat_type", ""))) != habitat_type:
 			continue
 		var reptile_id: String = str(habitat.get("reptile_id", ""))
-		if not reptile_id.is_empty() and ReptileSystem.is_reptile_available_in_biome(reptile_id, biome_id):
+		if not reptile_id.is_empty() and ReptileSystem.is_reptile_available_in_biome(reptile_id, habitat_biome):
 			return true
 	return false
 

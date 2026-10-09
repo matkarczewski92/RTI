@@ -22,8 +22,8 @@
 		"reptile_id": "leopard_gecko",
 		"rarity": "rare",
 		"name_key": "variant.leopard_gecko.rare.name",
-		"portrait_path": "res://assets/art/reptiles/portraits/leopard_gecko_portrait_rare.png",
-		"icon_path": "res://assets/art/reptiles/portraits/leopard_gecko_portrait_rare.png",
+		"portrait_path": "res://assets/art/modern/gecko_white_v2.png",
+		"icon_path": "res://assets/art/modern/gecko_white_v2.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/leopard_gecko_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_rare.png",
 		"obtain_method": "future_drop"
@@ -33,8 +33,8 @@
 		"reptile_id": "leopard_gecko",
 		"rarity": "exceptional",
 		"name_key": "variant.leopard_gecko.exceptional.name",
-		"portrait_path": "res://assets/art/reptiles/portraits/leopard_gecko_portrait_exceptional.png",
-		"icon_path": "res://assets/art/reptiles/portraits/leopard_gecko_portrait_exceptional.png",
+		"portrait_path": "res://assets/art/modern/gecko_red_v2.png",
+		"icon_path": "res://assets/art/modern/gecko_red_v2.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/leopard_gecko_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_exceptional.png",
 		"obtain_method": "future_drop"
@@ -44,8 +44,8 @@
 		"reptile_id": "leopard_gecko",
 		"rarity": "ultra_rare",
 		"name_key": "variant.leopard_gecko.ultra_rare.name",
-		"portrait_path": "res://assets/art/reptiles/portraits/leopard_gecko_portrait_ultra_rare.png",
-		"icon_path": "res://assets/art/reptiles/portraits/leopard_gecko_portrait_ultra_rare.png",
+		"portrait_path": "res://assets/art/modern/gecko_pink_v2.png",
+		"icon_path": "res://assets/art/modern/gecko_pink_v2.png",
 		"gallery_shadow_path": "res://assets/art/reptiles/gallery/leopard_gecko_shadow.png",
 		"rarity_icon_path": "res://assets/art/ui/icons/icon_rarity_ultra_rare.png",
 		"obtain_method": "future_drop"

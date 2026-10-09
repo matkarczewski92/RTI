@@ -19,6 +19,7 @@ var economy_data: Dictionary = {}
 var _level_progression: Dictionary = {}
 var income_elapsed_seconds: float = 0.0
 var income_timer: Timer
+var _silent_action_commit := false
 
 
 func _ready() -> void:
@@ -77,6 +78,41 @@ func can_afford(currency_id: String, amount: int) -> bool:
 	return float(get_currency(currency_id)) >= float(amount)
 
 
+func get_action_xp_reward(action_id: String) -> int:
+	return maxi(0, int(economy_data.get("action_xp_rewards", {}).get(action_id, 0)))
+
+
+func commit_action_xp(previous_state: Dictionary, amount: int) -> bool:
+	# Commit the domain mutation, its reward/claim marker and any level-up together.
+	# Failed persistence cannot publish a level-up or leave a claimed reward behind.
+	var old_level := int(previous_state.get("level", 1))
+	var cash_before_reward := float(get_currency())
+	var economy_signals_blocked := is_blocking_signals()
+	var state_signals_blocked := GameState.is_blocking_signals()
+	_silent_action_commit = true
+	set_block_signals(true)
+	GameState.set_block_signals(true)
+	add_currency("xp", amount)
+	var level_reward := maxi(0, roundi(float(get_currency()) - cash_before_reward))
+	var saved := SaveSystem.save_game()
+	if not saved: GameState.state = previous_state.duplicate(true)
+	GameState.set_block_signals(state_signals_blocked)
+	set_block_signals(economy_signals_blocked)
+	_silent_action_commit = false
+	GameState.state_changed.emit()
+	currency_changed.emit("repticash", get_currency())
+	if not saved: return false
+	if amount > 0: currency_changed.emit("xp", get_currency("xp"))
+	var new_level := int(GameState.get_value("level", 1))
+	if new_level > old_level:
+		var levels: Array = []
+		for level in range(old_level + 1, new_level + 1): levels.append(level)
+		player_level_changed.emit(new_level)
+		player_level_up.emit(levels, level_reward)
+		_notify_progression_changed()
+	return true
+
+
 func spend_currency(currency_id: String, amount: int) -> bool:
 	if amount <= 0:
 		return true
@@ -106,20 +142,8 @@ func _load_level_progression() -> void:
 
 
 func get_required_xp_for_level(level: int) -> int:
-	if level <= 1:
-		return 0
-	var levels_val: Variant = _level_progression.get("levels", null)
-	if typeof(levels_val) == TYPE_DICTIONARY:
-		var levels_dict: Dictionary = levels_val as Dictionary
-		var key := str(level)
-		if levels_dict.has(key):
-			return int(levels_dict[key])
-	var base: float = float(_level_progression.get("level_2_xp", 1000.0))
-	var mult: float = float(_level_progression.get("multiplier", 1.75))
-	var required: float = base
-	for _i in range(3, level + 1):
-		required *= mult
-	return int(round(required))
+	# Save migration and live progression must use exactly the same curve.
+	return GameState.get_required_xp_for_level(level)
 
 
 func get_next_level_required_xp(current_level: int) -> int:
@@ -188,6 +212,7 @@ func _grant_level_rewards(levels_gained: Array) -> int:
 
 
 func _notify_progression_changed() -> void:
+	if _silent_action_commit: return
 	if has_node("/root/QuestSystem"):
 		var quest_system: Node = get_node("/root/QuestSystem")
 		if quest_system.has_method("notify_event"):
@@ -196,6 +221,7 @@ func _notify_progression_changed() -> void:
 
 
 func _notify_achievement_progress_changed() -> void:
+	if _silent_action_commit: return
 	if has_node("/root/AchievementSystem"):
 		var achievement_system: Node = get_node("/root/AchievementSystem")
 		if achievement_system.has_method("notify_progress_changed"):
@@ -236,6 +262,8 @@ func has_pending_offline_income() -> bool:
 
 
 func save_last_active_timestamp() -> void:
+	ReptileSystem.apply_time_updates(false)
+	GameState.set_value("offline_income_rate_per_minute", get_total_assigned_income_per_min())
 	GameState.set_value("last_active_timestamp", Time.get_unix_time_from_system())
 	SaveSystem.save_game()
 
@@ -342,7 +370,11 @@ func _calculate_offline_income_on_resume() -> void:
 		SaveSystem.save_game()
 		return
 
-	var total_income_per_min: float = get_total_assigned_income_per_min()
+	# Use the departure rate, so later need decay does not retroactively lower
+	# every minute earned while away. Legacy saves fall back to their saved rate.
+	var total_income_per_min: float = float(GameState.get_value("offline_income_rate_per_minute", -1.0))
+	if total_income_per_min < 0.0:
+		total_income_per_min = get_total_assigned_income_per_min()
 	if total_income_per_min <= 0.0:
 		_clear_pending_offline_income(now)
 		return

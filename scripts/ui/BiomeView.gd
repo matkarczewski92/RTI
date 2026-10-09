@@ -6405,55 +6405,16 @@ func _make_assign_habitat_button(instance_id: String, habitat_id: String, slot_i
 	return button
 
 
-func _try_purchase_habitat(habitat_id: String, slot_index: int, habitat_type: String = "grass") -> void:
-	var purchase_cost: int = EconomySystem.get_next_habitat_price(biome_id, habitat_data.size())
-	if purchase_cost < 0:
+func _try_purchase_habitat(habitat_id: String, _slot_index: int, habitat_type: String = "grass") -> void:
+	var result: Dictionary = ReptileSystem.start_habitat_build(habitat_id, habitat_type)
+	if not bool(result.get("success", false)):
+		_show_message_popup(str(result.get("message_key", "ui.habitat_unavailable")))
 		return
-
-	if not EconomySystem.can_afford("repticash", purchase_cost):
-		_show_message_popup("ui.not_enough_currency")
-		return
-
-	if not EconomySystem.spend_currency("repticash", purchase_cost):
-		_show_message_popup("ui.not_enough_currency")
-		return
-
 	var scroll_offset_before_purchase := _scroll_offset
-	var now: int = Time.get_unix_time_from_system()
-	var build_duration: int = ReptileSystem.get_habitat_build_duration_seconds(biome_id)
-	var vv_cfg: Variant = _biome_config.get("habitat_visual_variants", null)
-	var visual_variant: int = randi() % 2 if vv_cfg != null and typeof(vv_cfg) == TYPE_DICTIONARY else 0
-	var habitats: Dictionary = _get_habitats_state()
-	habitats[habitat_id] = {
-		"habitat_id": habitat_id,
-		"biome_id": biome_id,
-		"slot_index": slot_index,
-		"purchased": true,
-		"habitat_type": ReptileSystem.normalize_habitat_type(habitat_type),
-		"habitat_level": 1,
-		"is_building": true,
-		"build_started_at": now,
-		"build_finish_at": now + build_duration,
-		"is_upgrading": false,
-		"upgrade_target_level": 0,
-		"upgrade_started_at": 0,
-		"upgrade_finish_at": 0,
-		"habitat_variant_id": "default",
-		"habitat_skin_id": "default",
-		"habitat_visual_variant": visual_variant,
-		"reptile_id": "",
-		"reptile_instance_id": "",
-		"animal_instance_id": ""
-	}
-	GameState.set_value("habitats", habitats)
-	SaveSystem.save_game()
 	_refresh_habitat_slots()
-	_notify_quest_event("habitat_purchased")
 	_close_habitat_purchase_modal()
-
 	if action_popup != null:
 		action_popup.hide()
-
 	_rebuild_layout_preserving_scroll(scroll_offset_before_purchase)
 
 

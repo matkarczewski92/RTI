@@ -30,11 +30,11 @@ const CLEAN_XP_REWARD := 3
 const PLAY_XP_REWARD := 0.1
 const HAPPINESS_MULTIPLIER_NEED_KEYS: Array[String] = ["happiness", "hunger", "hydration", "cleanliness"]
 const HABITAT_TYPES: Array[String] = ["grass", "sand", "stone", "jungle"]
-const HABITAT_BIOMES: Array[String] = ["green_meadow", "dry_prairie", "house"]
+const HABITAT_BIOMES: Array[String] = ["green_meadow", "dry_prairie"]
 const DEFAULT_RESOURCE_REGEN_INTERVAL := 600
 const DEFAULT_RESOURCE_REGEN_AMOUNT := 1
 const HABITAT_MAX_LEVEL := 3
-const HABITAT_UPGRADE_COST := 3000
+const HABITAT_UPGRADE_COST := 500
 const HABITAT_BUILD_BASE_DURATIONS_SECONDS: Array[int] = [10, 60, 180]
 const HABITAT_BUILD_SCALE_AFTER_THIRD := 1.35
 const HABITAT_UPGRADE_LEVEL_2_DURATION_SECONDS := 600
@@ -59,9 +59,14 @@ func _ready() -> void:
 	call_deferred("_initialize_runtime_state")
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_RESUMED:
+		apply_time_updates(true, true)
+
+
 func _initialize_runtime_state() -> void:
 	migrate_save_state()
-	apply_time_updates(true)
+	apply_time_updates(true, true)
 	sync_discovered_variants_from_owned_reptiles()
 
 
@@ -110,11 +115,11 @@ func get_owned_reptile_count() -> int:
 
 
 func is_first_reptile_free() -> bool:
-	return get_owned_reptile_count() == 0
+	return not bool(GameState.get_value("starter_reptile_claimed", false)) and get_owned_reptile_count() == 0
 
 
 func get_reptile_purchase_price(reptile_id: String) -> int:
-	if is_first_reptile_free():
+	if is_first_reptile_free() and reptile_id == "leopard_gecko":
 		return 0
 
 	var reptile: Dictionary = get_reptile(reptile_id)
@@ -157,7 +162,7 @@ func _find_explicit_variant_for_reptile_rarity(reptile_id: String, rarity: Strin
 
 
 func get_shop_purchase_price(reptile_id: String, rarity: String) -> int:
-	if is_first_reptile_free():
+	if is_first_reptile_free() and reptile_id == "leopard_gecko" and rarity == "common":
 		return 0
 
 	var reptile: Dictionary = get_reptile(reptile_id)
@@ -167,7 +172,7 @@ func get_shop_purchase_price(reptile_id: String, rarity: String) -> int:
 	var normalized_rarity: String = normalize_rarity(rarity)
 	var base_cost: int = int(reptile.get("base_cost", 0))
 	if normalized_rarity == "rare":
-		return base_cost * 10
+		return base_cost * 3
 	if normalized_rarity != "common":
 		return -1
 
@@ -307,6 +312,11 @@ func get_owned_animal_image_path(instance: Dictionary) -> String:
 	# actual rarity (stale data or null variant_id), prefer the rarity-based portrait.
 	var instance_rarity: String = normalize_rarity(str(instance.get("rarity", "")))
 	var variant_rarity: String = normalize_rarity(str(variant.get("rarity", "common")))
+	# Use one portrait across the enclosure, shop, collection and hatch reveal.
+	if instance_rarity == "common" and variant_rarity == "common":
+		var modern_name: String = {"leopard_gecko": "leopard_gecko", "bearded_dragon": "center_bearded_dragon_v2", "ball_python": "ball_python", "chameleon": "center_panther_chameleon_v2"}.get(reptile_id, "")
+		var modern_path := "res://assets/prototype/art/reptiles/" + modern_name + ".png"
+		if not modern_name.is_empty() and ResourceLoader.exists(modern_path): return modern_path
 	if not instance_rarity.is_empty() and instance_rarity != variant_rarity:
 		var rarity_variant: Dictionary = get_variant_for_reptile_rarity(reptile_id, instance_rarity)
 		if not rarity_variant.is_empty():
@@ -916,6 +926,28 @@ func _get_biome_id_for_instance(instance: Dictionary) -> String:
 	return str((habitat_value as Dictionary).get("biome_id", GameState.DEFAULT_BIOME_ID))
 
 
+func get_care_action_availability(instance: Dictionary, action_id: String) -> Dictionary:
+	var action: Dictionary = _get_care_action_config(action_id)
+	if action.is_empty():
+		return {"available": false, "reason": "invalid_action", "message_key": "ui.reptile_unavailable"}
+	if not _is_assigned_to_valid_habitat(instance):
+		return {"available": false, "reason": "not_assigned", "message_key": "ui.place_reptile_to_care"}
+	var stat: String = str(action.get("stat", ""))
+	var missing: float = 100.0 - float(instance.get(stat, 100.0))
+	var minimum_missing: float = maxf(1.0, float(action.get("minimum_missing_percent", 10.0)))
+	if missing < minimum_missing:
+		return {"available": false, "reason": "satisfied", "message_key": "care.already_satisfied"}
+	var cooldown: int = get_care_cooldown_remaining(instance, action_id)
+	if cooldown > 0:
+		return {"available": false, "reason": "cooldown", "message_key": "ui.on_cooldown", "cooldown_remaining": cooldown}
+	var resource: String = "food" if action_id == "feed" else "water"
+	if action_id == "feed" or action_id == "water":
+		var cost: int = _get_habitat_resource_cost(instance, action_id)
+		if get_biome_resource_current(_get_biome_id_for_instance(instance), resource) < cost:
+			return {"available": false, "reason": "not_enough_" + resource, "message_key": "care.not_enough_" + resource}
+	return {"available": true, "reason": "ready", "message_key": ""}
+
+
 func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 	apply_time_updates(false)
 	var instances: Dictionary = get_owned_reptile_instances()
@@ -927,8 +959,10 @@ func perform_care_action(instance_id: String, action_id: String) -> Dictionary:
 		return {"success": false, "message_key": "ui.reptile_unavailable"}
 
 	var instance: Dictionary = _normalize_owned_instance(instance_value as Dictionary)
-	if not _is_assigned_to_valid_habitat(instance):
-		return {"success": false, "message_key": "ui.place_reptile_to_care"}
+	var availability: Dictionary = get_care_action_availability(instance, action_id)
+	if not bool(availability.get("available", false)):
+		availability["success"] = false
+		return availability
 
 	var now: int = Time.get_unix_time_from_system()
 	var remaining: int = get_care_cooldown_remaining(instance, action_id, now)
@@ -1127,6 +1161,8 @@ func is_variant_discovered(variant_id: String) -> bool:
 
 
 func purchase_and_assign_reptile(reptile_id: String, habitat_id: String, biome_id: String, sex: String = "male") -> Dictionary:
+	if not _is_habitat_biome_unlocked(biome_id):
+		return {"success": false, "message_key": "ui.habitat_unavailable"}
 	var reptile: Dictionary = get_reptile(reptile_id)
 	if reptile.is_empty():
 		return {"success": false, "message_key": "ui.reptile_unavailable"}
@@ -1158,6 +1194,7 @@ func purchase_and_assign_reptile(reptile_id: String, habitat_id: String, biome_i
 	):
 		return {"success": false, "message_key": "ui.habitat_occupied"}
 
+	var before_transaction: Dictionary = GameState.state.duplicate(true)
 	if price > 0 and not EconomySystem.spend_currency("repticash", price):
 		return {"success": false, "message_key": "ui.not_enough_currency"}
 
@@ -1169,9 +1206,11 @@ func purchase_and_assign_reptile(reptile_id: String, habitat_id: String, biome_i
 		"instance_id": instance_id,
 		"reptile_id": reptile_id,
 		"variant_id": variant_id,
+		"source": "starter" if price == 0 else "shop",
 		"sex": normalized_sex,
 		"custom_name": "",
 		"habitat_id": habitat_id,
+		"first_assignment_xp_claimed": true,
 		"created_at": now,
 		"reptile_level": 1,
 		"reptile_xp": 0,
@@ -1198,6 +1237,10 @@ func purchase_and_assign_reptile(reptile_id: String, habitat_id: String, biome_i
 		"eggs": [],
 		"incubator_entry_id": ""
 	}
+	if price == 0:
+		instance["hunger"] = 85
+		instance["hydration"] = 85
+	GameState.set_value("starter_reptile_claimed", true)
 
 	var instances: Dictionary = get_owned_reptile_instances()
 	instances[instance_id] = instance
@@ -1216,7 +1259,8 @@ func purchase_and_assign_reptile(reptile_id: String, habitat_id: String, biome_i
 	GameState.set_value("habitats", habitats)
 
 	var new_variant_discovered: bool = mark_variant_discovered(variant_id)
-	SaveSystem.save_game()
+	var xp_reward := EconomySystem.get_action_xp_reward("reptile_purchase") + EconomySystem.get_action_xp_reward("first_assignment")
+	if not EconomySystem.commit_action_xp(before_transaction, xp_reward): return _action_save_error()
 	_notify_achievement_progress_changed()
 
 	return {
@@ -1225,7 +1269,8 @@ func purchase_and_assign_reptile(reptile_id: String, habitat_id: String, biome_i
 		"instance_id": instance_id,
 		"variant_id": variant_id,
 		"new_variant_discovered": new_variant_discovered,
-		"price": price
+		"price": price,
+		"xp_reward": xp_reward
 	}
 
 
@@ -1245,6 +1290,7 @@ func purchase_reptile_from_shop(reptile_id: String, rarity: String, sex: String 
 	if price > 0 and not EconomySystem.can_afford("repticash", price):
 		return {"success": false, "message_key": "ui.not_enough_currency"}
 
+	var before_transaction: Dictionary = GameState.state.duplicate(true)
 	if price > 0 and not EconomySystem.spend_currency("repticash", price):
 		return {"success": false, "message_key": "ui.not_enough_currency"}
 
@@ -1260,7 +1306,8 @@ func purchase_reptile_from_shop(reptile_id: String, rarity: String, sex: String 
 		"sex": _normalize_sex(sex),
 		"custom_name": "",
 		"habitat_id": null,
-		"source": "shop",
+		"first_assignment_xp_claimed": false,
+		"source": "starter" if price == 0 else "shop",
 		"created_at": now,
 		"reptile_level": 1,
 		"reptile_xp": 0,
@@ -1287,13 +1334,18 @@ func purchase_reptile_from_shop(reptile_id: String, rarity: String, sex: String 
 		"eggs": [],
 		"incubator_entry_id": ""
 	}
+	if price == 0:
+		instance["hunger"] = 85
+		instance["hydration"] = 85
+	GameState.set_value("starter_reptile_claimed", true)
 
 	var instances: Dictionary = get_owned_reptile_instances()
 	instances[instance_id] = instance
 	GameState.set_value("owned_reptile_instances", instances)
 
 	var new_variant_discovered: bool = mark_variant_discovered(variant_id)
-	SaveSystem.save_game()
+	var xp_reward := EconomySystem.get_action_xp_reward("reptile_purchase")
+	if not EconomySystem.commit_action_xp(before_transaction, xp_reward): return _action_save_error()
 	_notify_achievement_progress_changed()
 
 	return {
@@ -1302,7 +1354,8 @@ func purchase_reptile_from_shop(reptile_id: String, rarity: String, sex: String 
 		"instance_id": instance_id,
 		"variant_id": variant_id,
 		"new_variant_discovered": new_variant_discovered,
-		"price": price
+		"price": price,
+		"xp_reward": xp_reward
 	}
 
 
@@ -1326,6 +1379,14 @@ func get_owned_unassigned_reptiles(biome_id: String = "") -> Array:
 
 
 func assign_reptile_to_habitat(instance_id: String, habitat_id: String, biome_id: String) -> Dictionary:
+	return _assign_or_move_reptile(instance_id, habitat_id, biome_id, false)
+
+
+func move_reptile_to_habitat(instance_id: String, habitat_id: String, biome_id: String) -> Dictionary:
+	return _assign_or_move_reptile(instance_id, habitat_id, biome_id, true)
+
+
+func _assign_or_move_reptile(instance_id: String, habitat_id: String, biome_id: String, moving: bool) -> Dictionary:
 	var instances: Dictionary = get_owned_reptile_instances()
 	if not instances.has(instance_id):
 		return {"success": false, "message_key": "ui.reptile_unavailable"}
@@ -1336,8 +1397,14 @@ func assign_reptile_to_habitat(instance_id: String, habitat_id: String, biome_id
 
 	var instance: Dictionary = _normalize_owned_instance(instance_value as Dictionary)
 	var current_habitat: Variant = instance.get("habitat_id", null)
-	if current_habitat != null and not str(current_habitat).is_empty():
+	var source_id := _id_or_empty(current_habitat)
+	if moving:
+		if source_id.is_empty() or source_id == habitat_id or not _is_assigned_to_valid_habitat(instance):
+			return {"success": false, "message_key": "ui.habitat_unavailable"}
+	elif not source_id.is_empty():
 		return {"success": false, "message_key": "ui.habitat_occupied"}
+	if not _is_habitat_biome_unlocked(biome_id):
+		return {"success": false, "message_key": "ui.habitat_unavailable"}
 	if str(instance.get("breeding_state", "none")) == "breeding":
 		return {"success": false, "message_key": "ui.reptile_unavailable"}
 	if not is_reptile_available_in_biome(str(instance.get("reptile_id", "")), biome_id):
@@ -1364,6 +1431,13 @@ func assign_reptile_to_habitat(instance_id: String, habitat_id: String, biome_id
 	):
 		return {"success": false, "message_key": "ui.habitat_occupied"}
 
+	var before_transaction: Dictionary = GameState.state.duplicate(true)
+	var xp_reward := 0 if moving or bool(instance.get("first_assignment_xp_claimed", true)) else EconomySystem.get_action_xp_reward("first_assignment")
+	if moving:
+		var source_habitat: Dictionary = (habitats[source_id] as Dictionary).duplicate(true)
+		_unassign_instance_from_habitat(instance_id, source_id, instances, source_habitat)
+		habitats[source_id] = source_habitat
+	instance["first_assignment_xp_claimed"] = true
 	instance["habitat_id"] = habitat_id
 	instances[instance_id] = instance
 	GameState.set_value("owned_reptile_instances", instances)
@@ -1379,14 +1453,17 @@ func assign_reptile_to_habitat(instance_id: String, habitat_id: String, biome_id
 	habitat["is_upgrading"] = false
 	habitats[habitat_id] = habitat
 	GameState.set_value("habitats", habitats)
-	SaveSystem.save_game()
-	_notify_achievement_progress_changed()
+	if not EconomySystem.commit_action_xp(before_transaction, xp_reward): return _action_save_error()
+	# Moving preserves collection/progress counts, so no second quest-state save.
+	if not moving: _notify_achievement_progress_changed()
 
 	return {
 		"success": true,
 		"message_key": "ui.reptile_added",
 		"instance_id": instance_id,
-		"variant_id": str(instance.get("variant_id", ""))
+		"variant_id": str(instance.get("variant_id", "")),
+		"previous_habitat_id": source_id,
+		"xp_reward": xp_reward
 	}
 
 
@@ -1515,6 +1592,8 @@ func release_reptile_instance(instance_id: String) -> Dictionary:
 
 
 func calculate_sell_price(instance: Dictionary) -> int:
+	if str(instance.get("source", "")) == "starter":
+		return 0
 	var reptile_id: String = str(instance.get("reptile_id", ""))
 	var rarity: String = normalize_rarity(str(instance.get("rarity", "common")))
 	var level: int = get_reptile_level(instance)
@@ -1527,23 +1606,20 @@ func calculate_sell_price(instance: Dictionary) -> int:
 	else:
 		base_cost = int(reptile.get("base_cost", 100))
 
-	var common_price: int = base_cost
-	var rare_price: int = base_cost * 10
-
-	var rarity_base: int
+	var rarity_multiplier: float
 	match rarity:
 		"common":
-			rarity_base = common_price
+			rarity_multiplier = 0.4
 		"rare":
-			rarity_base = rare_price
+			rarity_multiplier = 1.2
 		"ultra_rare":
-			rarity_base = rare_price * 2
+			rarity_multiplier = 8.0
 		"exceptional", "shadow":
-			rarity_base = rare_price * 10
+			rarity_multiplier = 40.0
 		_:
-			rarity_base = common_price
+			rarity_multiplier = 0.4
 
-	var sell_price: int = max(1, roundi(float(rarity_base) * pow(1.1, level - 1)))
+	var sell_price: int = max(1, roundi(float(base_cost) * rarity_multiplier * pow(1.04, level - 1)))
 	return sell_price
 
 
@@ -1570,6 +1646,63 @@ func sell_reptile_instance(instance_id: String) -> Dictionary:
 	return {"success": true, "sell_price": sell_price}
 
 
+func _action_save_error() -> Dictionary:
+	return {"success": false, "reason": "save_failed", "message_key": "expeditions.error_save_failed", "xp_reward": 0}
+
+
+func _claim_habitat_action_xp(habitat_id: String, suffix: String, action: String) -> int:
+	var claims: Dictionary = GameState.get_value("habitat_action_xp_claims", {}).duplicate(true)
+	var key := habitat_id + ":" + suffix
+	if bool(claims.get(key, false)): return 0
+	claims[key] = true
+	GameState.set_value("habitat_action_xp_claims", claims)
+	return EconomySystem.get_action_xp_reward(action)
+
+
+func _is_habitat_biome_unlocked(biome_id: String) -> bool:
+	if not HABITAT_BIOMES.has(biome_id): return false
+	if biome_id in GameState.get_value("unlocked_biomes", []): return true
+	for biome: Dictionary in _load_array("res://data/biomes.json"):
+		if str(biome.get("id", "")) == biome_id:
+			return int(GameState.get_value("level", 1)) >= int(biome.get("unlock_requirements", {}).get("level", 1))
+	return false
+
+
+func start_habitat_build(habitat_id: String, habitat_type: String) -> Dictionary:
+	if not HABITAT_TYPES.has(habitat_type): return {"success": false, "message_key": "ui.habitat_unavailable"}
+	var definition: Dictionary = {}
+	for entry: Dictionary in _load_array("res://data/habitats.json"):
+		if str(entry.get("id", "")) == habitat_id:
+			definition = entry
+			break
+	if definition.is_empty(): return {"success": false, "message_key": "ui.habitat_unavailable"}
+	var biome_id := str(definition.get("biome_id", ""))
+	if not _is_habitat_biome_unlocked(biome_id): return {"success": false, "message_key": "ui.habitat_unavailable"}
+	var habitats := _get_habitats_state()
+	if bool(habitats.get(habitat_id, {}).get("purchased", false)):
+		return {"success": false, "message_key": "ui.habitat_occupied"}
+	var price := EconomySystem.get_next_habitat_price(biome_id)
+	if price < 0 or not EconomySystem.can_afford("repticash", price):
+		return {"success": false, "message_key": "ui.not_enough_currency"}
+	var before_transaction: Dictionary = GameState.state.duplicate(true)
+	var duration := get_habitat_build_duration_seconds(biome_id)
+	if not EconomySystem.spend_currency("repticash", price):
+		return {"success": false, "message_key": "ui.not_enough_currency"}
+	var habitat := GameState.get_default_habitat_state(habitat_id, biome_id, int(definition.get("slot_index", 1)))
+	habitat["purchased"] = true
+	habitat["habitat_type"] = habitat_type
+	habitat["is_building"] = true
+	habitat["build_started_at"] = int(Time.get_unix_time_from_system())
+	habitat["build_finish_at"] = int(habitat["build_started_at"]) + duration
+	habitats[habitat_id] = habitat
+	GameState.set_value("habitats", habitats)
+	var xp_reward := _claim_habitat_action_xp(habitat_id, "build", "habitat_build")
+	if not EconomySystem.commit_action_xp(before_transaction, xp_reward): return _action_save_error()
+	QuestSystem.notify_event("habitat_purchased", {"biome_id": biome_id})
+	_notify_achievement_progress_changed()
+	return {"success": true, "message_key": "habitat.building_in_progress", "habitat_id": habitat_id, "price": price, "xp_reward": xp_reward}
+
+
 func start_habitat_upgrade(habitat_id: String) -> Dictionary:
 	var now: int = Time.get_unix_time_from_system()
 	_update_habitat_timers(now)
@@ -1590,11 +1723,11 @@ func start_habitat_upgrade(habitat_id: String) -> Dictionary:
 	if current_level >= HABITAT_MAX_LEVEL:
 		return {"success": false, "message_key": "habitat.max_level"}
 	var instances: Dictionary = get_owned_reptile_instances()
-	var assigned_instance_id: String = _get_assigned_instance_id_for_habitat(habitat, instances)
-	if not assigned_instance_id.is_empty():
-		return {"success": false, "message_key": "habitat.remove_reptile_first"}
+	# Improvements happen around the resident. Preserve both sides of its
+	# assignment and keep the current level's care/income until completion.
 	if not EconomySystem.can_afford("repticash", HABITAT_UPGRADE_COST):
 		return {"success": false, "message_key": "ui.not_enough_currency"}
+	var before_transaction: Dictionary = GameState.state.duplicate(true)
 	if not EconomySystem.spend_currency("repticash", HABITAT_UPGRADE_COST):
 		return {"success": false, "message_key": "ui.not_enough_currency"}
 
@@ -1607,9 +1740,10 @@ func start_habitat_upgrade(habitat_id: String) -> Dictionary:
 
 	GameState.set_value("owned_reptile_instances", instances)
 	GameState.set_value("habitats", habitats)
-	SaveSystem.save_game()
+	var xp_reward := _claim_habitat_action_xp(habitat_id, "upgrade:" + str(current_level + 1), "habitat_upgrade")
+	if not EconomySystem.commit_action_xp(before_transaction, xp_reward): return _action_save_error()
 	_notify_achievement_progress_changed()
-	return {"success": true, "message_key": "habitat.upgrading", "animal_removed": false}
+	return {"success": true, "message_key": "habitat.upgrading", "animal_removed": false, "xp_reward": xp_reward}
 
 
 func remove_habitat(habitat_id: String) -> Dictionary:
@@ -1781,8 +1915,7 @@ func _is_assigned_to_valid_habitat(instance: Dictionary) -> bool:
 		return false
 	if bool(habitat.get("is_building", false)):
 		return false
-	if bool(habitat.get("is_upgrading", false)):
-		return false
+	# An upgrade does not evict the resident or pause its normal care/income.
 
 	var reptile_instance_id: String = _id_or_empty(habitat.get("reptile_instance_id", null))
 	var animal_instance_id: String = _id_or_empty(habitat.get("animal_instance_id", null))
@@ -2144,6 +2277,7 @@ func _get_happiness_decay_multiplier() -> float:
 
 func _normalize_owned_instance(instance: Dictionary) -> Dictionary:
 	var normalized: Dictionary = instance.duplicate(true)
+	normalized["first_assignment_xp_claimed"] = bool(instance.get("first_assignment_xp_claimed", true))
 	var reptile_id: String = str(normalized.get("reptile_id", ""))
 
 	var raw_rarity: String = str(normalized.get("rarity", ""))
@@ -2348,6 +2482,9 @@ func _sync_incubator_hatch_progress_counters(instances: Dictionary) -> bool:
 			continue
 
 		total_hatches += 1
+		# The guaranteed introduction teaches hatching, not a random rare discovery.
+		if source_egg_id == "welcome_gecko_egg_v1":
+			continue
 		var reptile_id: String = str(instance.get("reptile_id", instance.get("species_id", "")))
 		var variant_id: String = str(instance.get("variant_id", ""))
 		var variant: Dictionary = get_variant_for_reptile(reptile_id, variant_id)

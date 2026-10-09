@@ -1,6 +1,12 @@
 {
 	"starting_repticash": 100,
 	"starting_premium_currency": 0,
+	"action_xp_rewards": {
+		"reptile_purchase": 25,
+		"habitat_build": 50,
+		"first_assignment": 25,
+		"habitat_upgrade": 75
+	},
 	"currencies": [
 		"repticash",
 		"premium_currency",

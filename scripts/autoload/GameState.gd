@@ -4,10 +4,19 @@ signal language_changed(language: String)
 signal state_changed
 signal save_loaded
 
-const SAVE_VERSION := 2
+const SAVE_VERSION := 4
 const CURRENT_SAVE_VERSION := SAVE_VERSION
 const DEFAULT_BIOME_ID := "green_meadow"
 const LEVEL_PROGRESSION_PATH := "res://data/level_progression.json"
+const FORMER_HOUSE_SPECIES_BIOMES := {
+	"crested_gecko": "green_meadow",
+	"ball_python": "green_meadow",
+	"amur_snake": "green_meadow",
+	"greek_tortoise": "dry_prairie",
+	"uromastyx": "dry_prairie",
+	"veiled_chameleon": "green_meadow",
+	"green_iguana": "green_meadow"
+}
 
 var state: Dictionary = {}
 var _level_progression_cache: Dictionary = {}
@@ -135,6 +144,7 @@ func get_default_animal_instance(instance_id: String = "") -> Dictionary:
 		"custom_name": "",
 		"name": "",
 		"habitat_id": null,
+		"first_assignment_xp_claimed": false,
 		"source": "migration",
 		"created_at": now,
 		"reptile_level": 1,
@@ -182,8 +192,7 @@ func get_default_biome_resources() -> Dictionary:
 	}
 	return {
 		"green_meadow": biome_default.duplicate(true),
-		"dry_prairie": biome_default.duplicate(true),
-		"house": biome_default.duplicate(true)
+		"dry_prairie": biome_default.duplicate(true)
 	}
 
 
@@ -202,6 +211,14 @@ func get_default_save_data() -> Dictionary:
 		"level": 1,
 		"player_level": 1,
 		"last_rewarded_level": 1,
+		"starter_reptile_claimed": false,
+		"habitat_action_xp_claims": {},
+		"first_hatch_starter_granted": false,
+		"onboarding_track_version": 2,
+		"offline_income_rate_per_minute": -1.0,
+		"expeditions": [],
+		"expedition_log": [],
+		"expedition_counter": 0,
 		"onboarding_state": get_default_onboarding_state(),
 		"food_current": 100,
 		"food_max": 100,
@@ -283,6 +300,8 @@ func migrate_save_data(data: Dictionary) -> Dictionary:
 	if version < 2:
 		migrated = migrate_from_v1_to_v2(migrated)
 		version = 2
+	if version < 3:
+		migrated["onboarding_track_version"] = int(migrated.get("onboarding_track_version", 1))
 
 	migrated["save_version"] = CURRENT_SAVE_VERSION
 	return normalize_save_data(migrated)
@@ -385,6 +404,7 @@ func normalize_save_data(data: Dictionary) -> Dictionary:
 
 	normalized["habitats"] = _normalize_habitats(normalized.get("habitats", {}), now)
 	normalized["owned_reptile_instances"] = _normalize_animals(_get_loaded_animals(normalized))
+	_migrate_removed_house(normalized)
 	var normalized_animals_value: Variant = normalized.get("owned_reptile_instances", {})
 	var normalized_animals: Dictionary = normalized_animals_value as Dictionary
 	normalized["owned_animals"] = normalized_animals.duplicate(true)
@@ -394,7 +414,184 @@ func normalize_save_data(data: Dictionary) -> Dictionary:
 	normalized["incubator_storage"] = _release_hatched_reptiles_from_incubator_storage(normalized["incubator_storage"], normalized["owned_reptile_instances"])
 	normalized["breeding_chambers"] = _normalize_breeding_chambers(normalized.get("breeding_chambers", {}))
 	normalized["incubation_containers"] = _normalize_incubation_containers(normalized.get("incubation_containers", {}))
+	# Check the incoming keys: defaults must not erase evidence from older saves.
+	normalized["starter_reptile_claimed"] = bool(data.get("starter_reptile_claimed", _has_reptile_history(normalized)))
+	normalized["first_hatch_starter_granted"] = bool(data.get("first_hatch_starter_granted", _has_incubator_history(normalized)))
+	normalized["onboarding_track_version"] = max(1, int(data.get("onboarding_track_version", 1)))
+	normalized["offline_income_rate_per_minute"] = max(-1.0, float(normalized.get("offline_income_rate_per_minute", -1.0)))
+	_normalize_expeditions(normalized)
+	normalized["habitat_action_xp_claims"] = _normalize_dictionary(data.get("habitat_action_xp_claims", {}))
+	if not data.has("habitat_action_xp_claims"):
+		# Existing progress is already settled; never grant action XP retroactively.
+		for habitat_id: String in normalized["habitats"]:
+			var habitat: Dictionary = normalized["habitats"][habitat_id]
+			if not bool(habitat.get("purchased", false)): continue
+			normalized["habitat_action_xp_claims"][habitat_id + ":build"] = true
+			var last_level := int(habitat.get("habitat_level", 1))
+			if bool(habitat.get("is_upgrading", false)): last_level = maxi(last_level, int(habitat.get("upgrade_target_level", last_level)))
+			for level in range(2, last_level + 1):
+				normalized["habitat_action_xp_claims"][habitat_id + ":upgrade:" + str(level)] = true
 	return normalized
+
+
+func _migrate_removed_house(data: Dictionary) -> void:
+	# Keep stable animal/habitat IDs: saved pairings, eggs and discoveries refer to them.
+	var habitats: Dictionary = data.get("habitats", {})
+	var animals: Dictionary = data.get("owned_reptile_instances", {})
+	var unlocked: Array = data.get("unlocked_biomes", [])
+	var had_house_access: bool = unlocked.has("house")
+	var had_house_records: bool = had_house_access
+	for key in ["biomes", "biome_resources", "workers_by_biome", "upgrade_levels_by_biome"]:
+		if _normalize_dictionary(data.get(key, {})).has("house"):
+			had_house_records = true
+	unlocked.erase("house")
+	var next_slot: Dictionary = {"green_meadow": 13, "dry_prairie": 12}
+	for habitat in habitats.values():
+		var target: String = str(habitat.get("biome_id", ""))
+		if next_slot.has(target):
+			next_slot[target] = maxi(int(next_slot[target]), int(habitat.get("slot_index", 0)) + 1)
+	var habitat_ids: Array = habitats.keys()
+	habitat_ids.sort()
+	for habitat_id in habitat_ids:
+		var habitat: Dictionary = habitats[habitat_id]
+		if str(habitat.get("biome_id", "")) != "house":
+			continue
+		had_house_records = true
+		var animal_id: String = str(habitat.get("animal_instance_id", habitat.get("reptile_instance_id", "")))
+		var animal: Dictionary = animals.get(animal_id, {})
+		var species: String = str(animal.get("reptile_id", habitat.get("reptile_id", "")))
+		var fallback: String = "dry_prairie" if str(habitat.get("habitat_type", "")) in ["sand", "stone"] else DEFAULT_BIOME_ID
+		var target: String = str(FORMER_HOUSE_SPECIES_BIOMES.get(species, fallback))
+		habitat["biome_id"] = target
+		habitat["legacy_biome_id"] = "house"
+		habitat["legacy_slot_index"] = int(habitat.get("slot_index", 0))
+		habitat["slot_index"] = int(next_slot[target])
+		next_slot[target] = int(next_slot[target]) + 1
+		habitats[habitat_id] = habitat
+		if (bool(habitat.get("purchased", false)) or not animal.is_empty()) and not unlocked.has(target):
+			unlocked.append(target)
+	for animal_id in animals.keys():
+		var animal: Dictionary = animals[animal_id]
+		var species: String = str(animal.get("reptile_id", ""))
+		if FORMER_HOUSE_SPECIES_BIOMES.has(species):
+			animal["biome_id"] = FORMER_HOUSE_SPECIES_BIOMES[species]
+			# An owned animal must remain assignable even in an unusual low-level old save.
+			if had_house_records and not unlocked.has(animal["biome_id"]):
+				unlocked.append(animal["biome_id"])
+		elif str(animal.get("biome_id", "")) == "house":
+			animal["biome_id"] = DEFAULT_BIOME_ID
+		animals[animal_id] = animal
+	if had_house_access:
+		for target in [DEFAULT_BIOME_ID, "dry_prairie"]:
+			if not unlocked.has(target):
+				unlocked.append(target)
+	data["unlocked_biomes"] = unlocked
+	data["habitats"] = habitats
+	data["owned_reptile_instances"] = animals
+
+	# Retain old regional records as an archive while transferring their usable value.
+	var archive: Dictionary = _normalize_dictionary(data.get("legacy_house_progress", {}))
+	for key in ["biomes", "biome_progress", "biome_progress_points", "biome_resources", "workers_by_biome", "upgrade_levels_by_biome"]:
+		var regional: Dictionary = _normalize_dictionary(data.get(key, {}))
+		if not regional.has("house"):
+			continue
+		var former: Variant = regional["house"]
+		if not archive.has(key):
+			archive[key] = former.duplicate(true) if typeof(former) in [TYPE_DICTIONARY, TYPE_ARRAY] else former
+		if key == "biome_resources" and typeof(former) == TYPE_DICTIONARY:
+			var destination: Dictionary = _normalize_dictionary(regional.get(DEFAULT_BIOME_ID, {}))
+			for resource in ["food", "water"]:
+				for suffix in ["_max", "_current"]:
+					var stat: String = resource + suffix
+					destination[stat] = int(destination.get(stat, 0)) + int(former.get(stat, 0))
+			regional[DEFAULT_BIOME_ID] = destination
+		elif key in ["workers_by_biome", "upgrade_levels_by_biome"] and typeof(former) == TYPE_DICTIONARY:
+			# Existing caretakers/upgrades follow both groups of relocated residents.
+			for target in [DEFAULT_BIOME_ID, "dry_prairie"]:
+				var destination: Dictionary = _normalize_dictionary(regional.get(target, {}))
+				for entry_id in former.keys():
+					var old_entry: Variant = former[entry_id]
+					if key == "workers_by_biome" and typeof(old_entry) == TYPE_DICTIONARY:
+						var current: Dictionary = _normalize_dictionary(destination.get(entry_id, {}))
+						if int(old_entry.get("level", 0)) > int(current.get("level", 0)):
+							destination[entry_id] = old_entry.duplicate(true)
+					elif key == "upgrade_levels_by_biome":
+						destination[entry_id] = maxi(int(destination.get(entry_id, 0)), int(old_entry))
+				regional[target] = destination
+		elif typeof(former) in [TYPE_INT, TYPE_FLOAT]:
+			regional[DEFAULT_BIOME_ID] = float(regional.get(DEFAULT_BIOME_ID, 0)) + float(former)
+		regional.erase("house")
+		data[key] = regional
+	if not archive.is_empty():
+		data["legacy_house_progress"] = archive
+		data["workers"] = _normalize_dictionary(data.get("workers_by_biome", {}).get(DEFAULT_BIOME_ID, data.get("workers", {})))
+	for key in ["current_biome", "current_biome_id", "active_biome", "active_biome_id", "selected_biome", "selected_biome_id"]:
+		if str(data.get(key, "")) == "house":
+			data[key] = DEFAULT_BIOME_ID
+
+
+func _normalize_expeditions(data: Dictionary) -> void:
+	var counter: int = maxi(0, int(data.get("expedition_counter", 0)))
+	for key in ["expeditions", "expedition_log"]:
+		var records: Array = []
+		var seen: Dictionary = {}
+		var raw: Variant = data.get(key, [])
+		if raw is Array:
+			for entry in raw:
+				if not entry is Dictionary: continue
+				var record: Dictionary = (entry as Dictionary).duplicate(true)
+				var id: String = str(record.get("id", ""))
+				if id.is_empty() or seen.has(id): continue
+				seen[id] = true
+				if id.begins_with("expedition_"):
+					counter = maxi(counter, int(id.trim_prefix("expedition_")))
+				record["started_at"] = maxi(0, int(record.get("started_at", 0)))
+				record["ends_at"] = maxi(int(record["started_at"]), int(record.get("ends_at", 0)))
+				record["reward"] = _normalize_dictionary(record.get("reward", {}))
+				records.append(record)
+		data[key] = records.slice(maxi(0, records.size() - 20)) if key == "expedition_log" else records
+	data["expedition_counter"] = counter
+
+
+func _has_reptile_history(data: Dictionary) -> bool:
+	if not (data.get("owned_reptile_instances", {}) as Dictionary).is_empty() or not (data.get("discovered_variants", {}) as Dictionary).is_empty():
+		return true
+	var onboarding: Dictionary = data.get("onboarding_state", {})
+	var evidence_ids: Array[String] = ["buy_first_reptile", "assign_first_reptile", "assign_first_reptile_to_habitat", "care_for_reptile", "own_two_reptiles"]
+	for list_key in ["completed_quests", "claimed_quests"]:
+		for task_id in data.get(list_key, []):
+			if evidence_ids.has(str(task_id)):
+				return true
+	for list_key in ["completed_task_ids", "claimed_task_ids"]:
+		for task_id in onboarding.get(list_key, []):
+			if evidence_ids.has(str(task_id)):
+				return true
+	var counters: Dictionary = onboarding.get("event_counters", {})
+	for event_id in ["reptile_bought", "reptile_owned", "reptile_assigned", "any_reptile_care_action"]:
+		if int(counters.get(event_id, 0)) > 0:
+			return true
+	return false
+
+
+func _has_incubator_history(data: Dictionary) -> bool:
+	var storage: Dictionary = data.get("incubator_storage", {})
+	for key in ["eggs", "reptiles", "hatchlings"]:
+		if not (storage.get(key, []) as Array).is_empty():
+			return true
+	for key in ["breeding_chambers", "incubation_containers"]:
+		if not (data.get(key, {}) as Dictionary).is_empty():
+			return true
+	for instance in (data.get("owned_reptile_instances", {}) as Dictionary).values():
+		if str((instance as Dictionary).get("source", "")) in ["incubation", "starter_egg"]:
+			return true
+	for counter_key in (data.get("quest_event_counters", {}) as Dictionary).keys():
+		if str(counter_key).begins_with("incubator") and int(data["quest_event_counters"][counter_key]) > 0:
+			return true
+	for key in ["completed_quests", "claimed_quests"]:
+		for quest_id in data.get(key, []):
+			if str(quest_id).begins_with("incubator_"):
+				return true
+	return false
 
 
 func _normalize_incubator_storage(raw: Variant) -> Dictionary:
@@ -630,6 +827,7 @@ func _migrate_old_embedded_habitat_animals(data: Dictionary) -> void:
 		animal["custom_name"] = _first_non_empty_string([embedded.get("custom_name", ""), embedded.get("name", ""), habitat.get("custom_reptile_name", ""), habitat.get("name", "")])
 		animal["name"] = str(animal["custom_name"])
 		animal["habitat_id"] = habitat_id
+		animal["first_assignment_xp_claimed"] = true
 		for care_key in ["happiness", "hunger", "satiety", "hydration", "cleanliness", "last_feed_timestamp", "last_water_timestamp", "last_clean_timestamp", "last_play_timestamp", "last_fed_at", "last_water_at", "last_cleaned_at"]:
 			if embedded.has(care_key):
 				animal[care_key] = embedded[care_key]
@@ -719,6 +917,8 @@ func _normalize_animals(value: Variant) -> Dictionary:
 		instance_id = _make_unique_instance_id(instance_id, used_ids)
 		used_ids[instance_id] = true
 		var normalized: Dictionary = _merge_dictionary(get_default_animal_instance(instance_id), incoming)
+		# Missing means a pre-feature animal, including those currently in storage.
+		normalized["first_assignment_xp_claimed"] = bool(incoming.get("first_assignment_xp_claimed", true))
 		normalized["instance_id"] = instance_id
 		normalized["animal_instance_id"] = instance_id
 		var reptile_id: String = _first_non_empty_string([normalized.get("reptile_id", ""), normalized.get("species_id", ""), "unknown_reptile"])
@@ -756,6 +956,8 @@ func _normalize_animals(value: Variant) -> Dictionary:
 
 
 func _normalize_assignment_relationships(save_data: Dictionary) -> void:
+	# Existing residents stay assigned during habitat upgrades, including reloads.
+	# New construction still cannot hold a resident.
 	var habitats: Dictionary = save_data.get("habitats", {})
 	var animals: Dictionary = save_data.get("owned_reptile_instances", {})
 	var occupied_habitats: Dictionary = {}
@@ -768,7 +970,7 @@ func _normalize_assignment_relationships(save_data: Dictionary) -> void:
 			continue
 		var habitat: Dictionary = habitat_value as Dictionary
 		var instance_id: Variant = _nullable_id(habitat.get("animal_instance_id", habitat.get("reptile_instance_id", null)))
-		if instance_id == null or not animals.has(str(instance_id)) or bool(habitat.get("is_building", false)) or bool(habitat.get("is_upgrading", false)):
+		if instance_id == null or not animals.has(str(instance_id)) or bool(habitat.get("is_building", false)):
 			habitat["animal_instance_id"] = null
 			habitat["reptile_instance_id"] = ""
 			habitat["reptile_id"] = ""
@@ -820,7 +1022,7 @@ func _normalize_assignment_relationships(save_data: Dictionary) -> void:
 			animals[animal_id] = animal
 			continue
 		var habitat: Dictionary = target_habitat_value as Dictionary
-		if not bool(habitat.get("purchased", false)) or bool(habitat.get("is_building", false)) or bool(habitat.get("is_upgrading", false)):
+		if not bool(habitat.get("purchased", false)) or bool(habitat.get("is_building", false)):
 			animal["habitat_id"] = null
 			animals[animal_id] = animal
 			continue
@@ -961,22 +1163,22 @@ func _get_level_for_xp(total_xp: float) -> int:
 
 
 func _get_required_xp_for_level(level: int) -> int:
+	return get_required_xp_for_level(level)
+
+
+func get_required_xp_for_level(level: int) -> int:
 	if level <= 1:
 		return 0
 
 	var progression: Dictionary = _get_level_progression()
-	var levels_val: Variant = progression.get("levels", null)
-	if typeof(levels_val) == TYPE_DICTIONARY:
-		var levels_dict: Dictionary = levels_val as Dictionary
-		var key := str(level)
-		if levels_dict.has(key):
-			return int(levels_dict[key])
-
-	var required: float = float(progression.get("level_2_xp", 1000.0))
-	var multiplier: float = float(progression.get("multiplier", 1.75))
-	for _next_level in range(3, level + 1):
-		required *= multiplier
-	return int(round(required))
+	var levels_value: Variant = progression.get("levels", {})
+	var levels: Dictionary = levels_value as Dictionary if typeof(levels_value) == TYPE_DICTIONARY else {}
+	var multiplier: float = maxf(1.01, float(progression.get("multiplier", 1.45)))
+	var previous: int = 0
+	for next_level in range(2, level + 1):
+		var fallback: int = int(round(float(previous) * multiplier)) if next_level > 2 else int(progression.get("level_2_xp", 600))
+		previous = maxi(previous + 1, int(levels.get(str(next_level), fallback)))
+	return previous
 
 
 func _get_level_progression() -> Dictionary:

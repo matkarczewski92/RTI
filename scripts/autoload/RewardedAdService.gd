@@ -83,6 +83,8 @@ func _load_config() -> void:
 
 
 func _select_mode_and_ad_unit() -> void:
+	# Both APK debug and editor sessions must use Google's demo inventory.
+	_test_mode = _test_mode or OS.is_debug_build()
 	if _mock_ads_enabled:
 		_mode_name = "mock"
 	elif _test_mode:
@@ -132,6 +134,13 @@ func _try_connect_plugin() -> void:
 		return
 
 	_admob = Engine.get_singleton("AdMob")
+	if _has_plugin_method("configure_test_devices"):
+		var device_ids := PackedStringArray()
+		var configured: Variant = _admob_cfg.get("test_device_ids", [])
+		if configured is Array:
+			for device_id: Variant in configured:
+				device_ids.append(str(device_id))
+		_admob.call("configure_test_devices", ",".join(device_ids))
 	_log("[AdMobRuntime] _try_connect_plugin: singleton acquired — _admob null=" + str(_admob == null))
 	_connect_plugin_signals()
 

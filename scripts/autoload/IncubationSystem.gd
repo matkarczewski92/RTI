@@ -4,7 +4,7 @@ const EGG_SHOP_PATH := "res://data/egg_shop.json"
 const SPECIES_INCUBATION_PATH := "res://data/species_incubation.json"
 const INCUBATOR_CONFIG_PATH := "res://data/incubator.json"
 const BIOMES_PATH := "res://data/biomes.json"
-const HUMIDITY_ZERO_FAILURE_SECONDS := 12 * 60 * 60
+const STARTER_EGG_ID := "welcome_gecko_egg_v1"
 
 var _shop_offers: Array = []
 var _shop_qualities: Dictionary = {}
@@ -99,6 +99,62 @@ func get_quality_order() -> Array:
 	return _quality_order.duplicate(true)
 
 
+func get_unlock_level() -> int:
+	return maxi(1, int(_incubator_cfg.get("unlock_level", 2)))
+
+
+func is_unlocked() -> bool:
+	var unlocked: Array = GameState.get_value("unlocked_biomes", []) as Array
+	return unlocked.has("incubator") or int(GameState.get_value("level", 1)) >= get_unlock_level()
+
+
+func get_species_egg_price(species_id: String, quality_id: String) -> int:
+	var quality: Dictionary = _shop_qualities.get(quality_id, {}) as Dictionary
+	var species: Dictionary = ReptileSystem.get_reptile(species_id)
+	if quality.is_empty() or species.is_empty():
+		return -1
+	var species_multiplier: float = maxf(1.0, float(species.get("base_cost", 100)) / 100.0)
+	return int(ceil(float(quality.get("price", 0)) * species_multiplier))
+
+
+func get_egg_incubation_duration_seconds(egg: Dictionary) -> int:
+	if str(egg.get("source", "")) == "starter" and _egg_id(egg) == STARTER_EGG_ID:
+		return 60
+	return maxi(1, get_incubation_time_hours(_egg_species_id(egg))) * 3600
+
+
+func ensure_starter_egg() -> Dictionary:
+	if not is_unlocked() or bool(GameState.get_value("first_hatch_starter_granted", false)):
+		return {"granted": false, "egg_id": ""}
+	var storage: Dictionary = _read_storage()
+	var eggs: Array = storage.get("eggs", []) as Array
+	# A migration or an interrupted older session must not issue a second gift.
+	var counters: Dictionary = GameState.get_value("quest_event_counters", {}) as Dictionary
+	if not eggs.is_empty() or not _read_containers().is_empty() or int(counters.get("incubator_hatches_total", 0)) > 0:
+		GameState.set_value("first_hatch_starter_granted", true)
+		SaveSystem.save_game()
+		return {"granted": false, "egg_id": ""}
+	var egg: Dictionary = {
+		"egg_id": STARTER_EGG_ID,
+		"reptile_id": "leopard_gecko",
+		"rarity": "rare",
+		"source": "starter",
+		"incubation_duration_seconds": 60,
+		"visual_asset": "res://assets/art/incubator/eggs/egg.png",
+		"in_container": false,
+		"container_index": -1,
+		"created_at": int(Time.get_unix_time_from_system())
+	}
+	eggs.append(egg)
+	storage["eggs"] = eggs
+	GameState.set_value("first_hatch_starter_granted", true)
+	_write_storage(storage)
+	_inc_counter("incubator:total_eggs", 1)
+	_notify_quest_event("incubator_egg_obtained", {"amount": 1, "source": "starter"})
+	SaveSystem.save_game()
+	return {"granted": true, "egg_id": STARTER_EGG_ID}
+
+
 func _get_accessible_biome_ids() -> Dictionary:
 	var current_level: int = int(GameState.get_value("level", 1))
 	var accessible: Dictionary = {}
@@ -108,6 +164,8 @@ func _get_accessible_biome_ids() -> Dictionary:
 		var b: Dictionary = bv as Dictionary
 		var bid: String = str(b.get("id", ""))
 		if bid.is_empty() or bid == "incubator":
+			continue
+		if str(b.get("type", "")) == "paid" or not str(b.get("requires_dlc", "")).is_empty():
 			continue
 		var req: Variant = b.get("unlock_requirements", {})
 		var req_level: int = 0
@@ -126,7 +184,6 @@ func _get_accessible_biome_ids() -> Dictionary:
 
 func get_available_species_for_shop() -> Array:
 	var accessible: Dictionary = _get_accessible_biome_ids()
-	print("[EggShop] Available biomes: ", accessible.keys())
 
 	var result: Array = []
 	for rv in ReptileSystem.reptiles:
@@ -138,27 +195,24 @@ func get_available_species_for_shop() -> Array:
 		if species_id.is_empty() or biome_id.is_empty() or biome_id == "incubator":
 			continue
 		if not accessible.has(biome_id):
-			print("[EggShop] Skipping: ", species_id, " biome=", biome_id, " -> biome not accessible")
 			continue
 		var cfg_val: Variant = _species_data.get(species_id, null)
 		if typeof(cfg_val) != TYPE_DICTIONARY:
 			push_warning("IncubationSystem: species " + species_id + " missing incubation config, skipped in shop.")
-			print("[EggShop] Skipping: ", species_id, " biome=", biome_id, " -> no incubation config")
 			continue
 		var cfg: Dictionary = (cfg_val as Dictionary).duplicate(true)
 		if not bool(cfg.get("enabled_in_egg_shop", true)):
-			print("[EggShop] Skipping: ", species_id, " biome=", biome_id, " -> disabled in shop config")
 			continue
-		print("[EggShop] Including: ", species_id, " biome=", biome_id)
 		cfg["species_id"] = species_id
 		cfg["biome_id"] = biome_id
 		result.append(cfg)
 
-	print("[EggShop] Total species available: ", result.size(), " | offers will be: ", result.size(), " x ", _quality_order.size(), " = ", result.size() * _quality_order.size())
 	return result
 
 
 func buy_species_egg(species_id: String, quality_id: String) -> Dictionary:
+	if not is_unlocked():
+		return {"success": false, "error_key": "egg_shop.locked_species"}
 	var quality_val: Variant = _shop_qualities.get(quality_id, null)
 	if typeof(quality_val) != TYPE_DICTIONARY:
 		return {"success": false, "error_key": "egg_shop.no_species_available"}
@@ -173,11 +227,12 @@ func buy_species_egg(species_id: String, quality_id: String) -> Dictionary:
 	if species_cfg.is_empty():
 		return {"success": false, "error_key": "egg_shop.locked_species"}
 
-	var price: int = int(quality.get("price", 0))
-	if not EconomySystem.can_afford("repticash", price):
+	var price: int = get_species_egg_price(species_id, quality_id)
+	if price < 0 or not EconomySystem.can_afford("repticash", price):
 		return {"success": false, "error_key": "egg_shop.not_enough_coins"}
 
-	EconomySystem.spend_currency("repticash", price)
+	if not EconomySystem.spend_currency("repticash", price):
+		return {"success": false, "error_key": "egg_shop.not_enough_coins"}
 
 	var now: int = int(Time.get_unix_time_from_system())
 	var rates_val: Variant = quality.get("drop_rates", {})
@@ -205,8 +260,8 @@ func buy_species_egg(species_id: String, quality_id: String) -> Dictionary:
 	SaveSystem.save_game()
 	_inc_counter("incubator:total_eggs", 1)
 	AchievementSystem.notify_progress_changed()
-	_notify_quest_event("incubator_egg_obtained", {"amount": 1, "source": "shop"})
-	return {"success": true, "species_id": species_id, "quality_id": quality_id, "egg_id": str(egg.get("egg_id", ""))}
+	_notify_quest_event("incubator_egg_obtained", {"amount": 1, "source": "shop", "species_id": species_id, "quality_id": quality_id, "price": price})
+	return {"success": true, "species_id": species_id, "quality_id": quality_id, "price": price, "egg_id": str(egg.get("egg_id", ""))}
 
 
 func get_species_incubation(species_id: String) -> Dictionary:
@@ -304,6 +359,8 @@ func apply_speedup_to_container(container_index: int, reduce_seconds: int) -> bo
 # ─── Public: container actions ──────────────────────────────────────────
 
 func load_eggs_into_container(container_index: int, egg_ids: Array, species_id: String) -> Dictionary:
+	if not is_unlocked() or container_index < 0 or container_index >= int(_incubator_cfg.get("incubation_containers", 6)):
+		return {"success": false, "error_key": "incubation.error_already_started"}
 	var containers: Dictionary = _read_containers()
 	var key: String = str(container_index)
 	var existing: Variant = containers.get(key, null)
@@ -329,13 +386,17 @@ func load_eggs_into_container(container_index: int, egg_ids: Array, species_id: 
 		if not eid.is_empty() and not bool(egg.get("in_container", false)):
 			available_by_id[eid] = egg
 
+	var unique_ids: Dictionary = {}
+	var duration_seconds: int = 0
 	for eid_v in egg_ids:
 		var eid: String = str(eid_v)
-		if not available_by_id.has(eid):
+		if not available_by_id.has(eid) or unique_ids.has(eid):
 			return {"success": false, "error_key": "incubation.no_eggs_in_storage"}
+		unique_ids[eid] = true
 		var egg: Dictionary = available_by_id[eid] as Dictionary
 		if _egg_species_id(egg) != species_id:
 			return {"success": false, "error_key": "incubation.error_one_species"}
+		duration_seconds = maxi(duration_seconds, get_egg_incubation_duration_seconds(egg))
 
 	for i in range(stored_eggs.size()):
 		var egg_val: Variant = stored_eggs[i]
@@ -362,7 +423,10 @@ func load_eggs_into_container(container_index: int, egg_ids: Array, species_id: 
 	container["egg_instance_ids"] = ids_copy
 	container["egg_count"] = egg_ids.size()
 	container["incubation_time_hours"] = get_incubation_time_hours(species_id)
-	container["required_active_seconds"] = container["incubation_time_hours"] * 3600
+	# Mixed batches always use the longest duration; a welcome egg cannot
+	# accelerate normal purchased or bred eggs.
+	container["required_active_seconds"] = duration_seconds
+	container["starter_batch"] = duration_seconds == 60 and egg_ids.size() == 1 and str(egg_ids[0]) == STARTER_EGG_ID
 	containers[key] = container
 	_write_containers(containers)
 	SaveSystem.save_game()
@@ -411,7 +475,7 @@ func start_incubation(container_index: int) -> Dictionary:
 
 	if has_node("/root/IncubatorUpgradeSystem"):
 		var sys: Node = get_node("/root/IncubatorUpgradeSystem")
-		if sys.has_method("get_incubation_time_multiplier"):
+		if sys.has_method("get_incubation_time_multiplier") and not bool(container.get("starter_batch", false)):
 			var time_mult: float = float(sys.call("get_incubation_time_multiplier"))
 			var base_seconds: int = int(container.get("required_active_seconds", 86400))
 			container["required_active_seconds"] = max(10800, int(float(base_seconds) * time_mult))
@@ -455,6 +519,11 @@ func water_container(container_index: int) -> Dictionary:
 		return {"success": false, "error_key": "incubation.water_no_effect"}
 	var pre_water_state: String = state
 	var pre_water_humidity: float = float(container.get("humidity_percent", 0.0))
+	# Full trays do not need care. Repeated taps must not farm watering quests.
+	if pre_water_state == "running" and pre_water_humidity >= 99.5:
+		containers[key] = container
+		_write_containers(containers)
+		return {"success": false, "error_key": "incubation.water_no_effect"}
 	container["humidity_percent"] = float(_humidity_cfg.get("start_percent", 100))
 	container["humidity_zero_since"] = 0
 	container["failed_at"] = 0
@@ -496,54 +565,19 @@ func clear_failed_container(container_index: int) -> Dictionary:
 # ─── Public: egg shop ───────────────────────────────────────────────────
 
 func buy_egg(offer_id: String) -> Dictionary:
-	var offer: Dictionary = {}
-	for ov in _shop_offers:
-		if typeof(ov) != TYPE_DICTIONARY:
-			continue
-		var od: Dictionary = ov as Dictionary
-		if str(od.get("id", "")) == offer_id:
-			offer = od
-			break
-	if offer.is_empty():
-		return {"success": false, "error_key": "egg_shop.no_species_available"}
-
-	var price: int = int(offer.get("price", 0))
-	if not EconomySystem.can_afford("repticash", price):
-		return {"success": false, "error_key": "egg_shop.not_enough_coins"}
-
-	var species_mode: String = str(offer.get("species_mode", "unlocked_species_pool"))
-	var species_id: String = ""
-	if species_mode == "unlocked_species_pool":
-		species_id = _pick_random_unlocked_species()
-	elif species_mode == "fixed_species":
-		species_id = str(offer.get("species_id", ""))
-	if species_id.is_empty():
-		return {"success": false, "error_key": "egg_shop.no_species_available"}
-
-	EconomySystem.spend_currency("repticash", price)
-
-	var now: int = int(Time.get_unix_time_from_system())
-	var rates_val: Variant = offer.get("drop_rates", {})
-	var rates: Dictionary = rates_val as Dictionary if typeof(rates_val) == TYPE_DICTIONARY else {}
-	var egg: Dictionary = {
-		"egg_id": _create_shop_egg_id(),
-		"reptile_id": species_id,
-		"source": "shop",
-		"hidden_drop_rates": rates.duplicate(true),
-		"in_container": false,
-		"container_index": -1,
-		"created_at": now
+	# Compatibility for the former random-species shop. It now shares the same
+	# species-adjusted pricing and validation as the visible nursery shop.
+	var quality_by_offer: Dictionary = {
+		"shop_egg_common": "standard", "shop_egg_rare": "improved",
+		"shop_egg_ultra_rare": "rare", "shop_egg_exceptional": "elite"
 	}
-	var storage: Dictionary = _read_storage()
-	var stored_eggs: Array = storage.get("eggs", []) as Array
-	stored_eggs.append(egg)
-	storage["eggs"] = stored_eggs
-	_write_storage(storage)
-	SaveSystem.save_game()
-	_inc_counter("incubator:total_eggs", 1)
-	AchievementSystem.notify_progress_changed()
-	_notify_quest_event("incubator_egg_obtained", {"amount": 1, "source": "shop"})
-	return {"success": true, "species_id": species_id, "egg_id": str(egg.get("egg_id", ""))}
+	if not quality_by_offer.has(offer_id):
+		return {"success": false, "error_key": "egg_shop.no_species_available"}
+	var available: Array = get_available_species_for_shop()
+	if available.is_empty():
+		return {"success": false, "error_key": "egg_shop.no_species_available"}
+	var species_id: String = str(available[0].get("species_id", ""))
+	return buy_species_egg(species_id, str(quality_by_offer[offer_id]))
 
 
 # ─── Public: storage helpers ────────────────────────────────────────────
@@ -686,16 +720,11 @@ func _tick_container(container: Dictionary, now: int) -> Dictionary:
 	return c
 
 
-func _apply_zero_humidity_state(container: Dictionary, zero_since: int, now: int) -> void:
+func _apply_zero_humidity_state(container: Dictionary, zero_since: int, _now: int) -> void:
 	container["humidity_percent"] = 0.0
 	container["humidity_zero_since"] = zero_since
-	var failure_seconds: int = int(_humidity_cfg.get("zero_humidity_failure_seconds", HUMIDITY_ZERO_FAILURE_SECONDS))
-	if failure_seconds <= 0 or now - zero_since > failure_seconds:
-		container["failed_at"] = zero_since + max(0, failure_seconds)
-		container["state"] = "failed_dry"
-		_destroy_eggs_in_container(container)
-		return
-
+	container["failed_at"] = 0
+	# Time away pauses incubation. Eggs and earned progress are never destroyed.
 	container["state"] = "paused_low_humidity"
 
 
@@ -914,6 +943,7 @@ func hatch_batch(container_index: int) -> Dictionary:
 			"variant_id": variant_id,
 			"rarity": rarity,
 			"sex": sex,
+			"source": str(egg.get("source", "breeding")),
 			"is_new_discovery": is_new,
 			"portrait_path": str(variant.get("portrait_path", ""))
 		})
@@ -970,20 +1000,29 @@ func hatch_batch(container_index: int) -> Dictionary:
 	SaveSystem.save_game()
 	_inc_counter("incubator:total_hatches", new_instances.size())
 	for result_val in hatch_results:
-		if typeof(result_val) == TYPE_DICTIONARY:
+		if typeof(result_val) == TYPE_DICTIONARY and str(result_val.get("source", "")) != "starter":
 			match str((result_val as Dictionary).get("rarity", "")):
 				"rare":       _inc_counter("incubator:rare_hatches", 1)
 				"ultra_rare": _inc_counter("incubator:ultra_rare_hatches", 1)
 				"exceptional": _inc_counter("incubator:exceptional_hatches", 1)
 	AchievementSystem.notify_progress_changed()
 	var rarities: Array = []
+	var progress_rarities: Array = []
+	var sources: Array = []
 	for result_val in hatch_results:
 		if typeof(result_val) == TYPE_DICTIONARY:
 			rarities.append(str((result_val as Dictionary).get("rarity", "")))
+			var source: String = str(result_val.get("source", "breeding"))
+			if not sources.has(source):
+				sources.append(source)
+			if source != "starter":
+				progress_rarities.append(str(result_val.get("rarity", "")))
 	_notify_quest_event("incubator_hatched", {
 		"container_index": container_index,
 		"count": new_instances.size(),
-		"rarities": rarities
+		"rarities": rarities,
+		"progress_rarities": progress_rarities,
+		"source": str(sources[0]) if sources.size() == 1 else "mixed"
 	})
 	ReptileSystem.sync_discovered_variants_from_owned_reptiles()
 	return {"success": true, "results": hatch_results}

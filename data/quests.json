@@ -1028,35 +1028,26 @@
     "id": "house_task_10_unlock_house",
     "title_key": "quest.house_task_10_unlock_house.title",
     "description_key": "quest.house_task_10_unlock_house.desc",
-    "category": "house_tasks",
-    "biome_id": "house",
-    "requires_biome": "house",
-    "requires_biome_unlocked": true,
-    "requires_dlc": "house",
-    "is_paid_content": true,
-    "requirement_type": "biome_unlocked",
-    "requirement_target": "house",
-    "requirement_value": 1,
+    "category": "collection_tasks",
+    "requirement_type": "player_level_at_least",
+    "requirement_target": "",
+    "requirement_value": 10,
     "reward_type": "repticash",
     "reward_amount": 1200,
     "reward_xp": 700,
     "sort_order": 460,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_level": 10
   },
   {
     "id": "house_task_11_first_home_habitat",
     "title_key": "quest.house_task_11_first_home_habitat.title",
     "description_key": "quest.house_task_11_first_home_habitat.desc",
-    "category": "house_tasks",
-    "biome_id": "house",
-    "requires_biome": "house",
-    "requires_biome_unlocked": true,
-    "requires_dlc": "house",
-    "is_paid_content": true,
-    "requirement_type": "purchased_habitats_count_in_biome",
-    "requirement_target": "house",
-    "requirement_value": 1,
+    "category": "collection_tasks",
+    "requirement_type": "purchased_habitats_count",
+    "requirement_target": "",
+    "requirement_value": 10,
     "reward_type": "repticash",
     "reward_amount": 1400,
     "reward_xp": 850,
@@ -1066,18 +1057,14 @@
     "hide_until_prerequisites_met": true,
     "prerequisite_quest_ids": [
       "house_task_10_unlock_house"
-    ]
+    ],
+    "requires_level": 10
   },
   {
     "id": "house_task_12_crested_gecko_jungle",
     "title_key": "quest.house_task_12_crested_gecko_jungle.title",
     "description_key": "quest.house_task_12_crested_gecko_jungle.desc",
-    "category": "house_tasks",
-    "biome_id": "house",
-    "requires_biome": "house",
-    "requires_biome_unlocked": true,
-    "requires_dlc": "house",
-    "is_paid_content": true,
+    "category": "collection_tasks",
     "requirement_type": "species_assignments_count",
     "requirement_target": "",
     "requirement_value": 1,
@@ -1096,18 +1083,14 @@
     "hide_until_prerequisites_met": true,
     "prerequisite_quest_ids": [
       "house_task_11_first_home_habitat"
-    ]
+    ],
+    "requires_level": 10
   },
   {
     "id": "house_task_13_grassland_duo",
     "title_key": "quest.house_task_13_grassland_duo.title",
     "description_key": "quest.house_task_13_grassland_duo.desc",
-    "category": "house_tasks",
-    "biome_id": "house",
-    "requires_biome": "house",
-    "requires_biome_unlocked": true,
-    "requires_dlc": "house",
-    "is_paid_content": true,
+    "category": "collection_tasks",
     "requirement_type": "species_assignments_count",
     "requirement_target": "",
     "requirement_value": 2,
@@ -1130,20 +1113,16 @@
     "hide_until_prerequisites_met": true,
     "prerequisite_quest_ids": [
       "house_task_12_crested_gecko_jungle"
-    ]
+    ],
+    "requires_level": 10
   },
   {
     "id": "house_task_14_four_habitat_types",
     "title_key": "quest.house_task_14_four_habitat_types.title",
     "description_key": "quest.house_task_14_four_habitat_types.desc",
-    "category": "house_tasks",
-    "biome_id": "house",
-    "requires_biome": "house",
-    "requires_biome_unlocked": true,
-    "requires_dlc": "house",
-    "is_paid_content": true,
+    "category": "collection_tasks",
     "requirement_type": "habitat_types_covered_by_biome_reptiles",
-    "requirement_target": "house",
+    "requirement_target": "",
     "requirement_value": 4,
     "required_habitat_types": [
       "grass",
@@ -1160,20 +1139,16 @@
     "hide_until_prerequisites_met": true,
     "prerequisite_quest_ids": [
       "house_task_13_grassland_duo"
-    ]
+    ],
+    "requires_level": 10
   },
   {
     "id": "house_task_15_home_keeper_collection",
     "title_key": "quest.house_task_15_home_keeper_collection.title",
     "description_key": "quest.house_task_15_home_keeper_collection.desc",
-    "category": "house_tasks",
-    "biome_id": "house",
-    "requires_biome": "house",
-    "requires_biome_unlocked": true,
-    "requires_dlc": "house",
-    "is_paid_content": true,
+    "category": "collection_tasks",
     "requirement_type": "owned_reptile_species_count",
-    "requirement_target": "house",
+    "requirement_target": "",
     "requirement_value": 7,
     "required_reptile_ids": [
       "crested_gecko",
@@ -1194,7 +1169,8 @@
     "hide_until_prerequisites_met": true,
     "prerequisite_quest_ids": [
       "house_task_14_four_habitat_types"
-    ]
+    ],
+    "requires_level": 10
   },
   {
     "id": "incubator_enter_first_time",
@@ -1209,7 +1185,9 @@
     "reward_xp": 100,
     "sort_order": 500,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_obtain_first_egg",
@@ -1224,7 +1202,9 @@
     "reward_xp": 150,
     "sort_order": 510,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_buy_first_egg",
@@ -1239,7 +1219,9 @@
     "reward_xp": 100,
     "sort_order": 520,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_buy_5_eggs",
@@ -1254,7 +1236,9 @@
     "reward_xp": 300,
     "sort_order": 530,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_buy_25_eggs",
@@ -1270,7 +1254,9 @@
     "sort_order": 540,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 5
+    "reward_food_max": 5,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_start_first_pairing",
@@ -1285,7 +1271,9 @@
     "reward_xp": 150,
     "sort_order": 550,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_complete_successful_pairing",
@@ -1300,7 +1288,9 @@
     "reward_xp": 300,
     "sort_order": 560,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_complete_long_pairing",
@@ -1315,7 +1305,9 @@
     "reward_xp": 500,
     "sort_order": 570,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_successful_pairings_5",
@@ -1330,7 +1322,9 @@
     "reward_xp": 800,
     "sort_order": 580,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_successful_pairings_25",
@@ -1346,7 +1340,9 @@
     "sort_order": 590,
     "is_active": true,
     "is_hidden": false,
-    "reward_water_max": 5
+    "reward_water_max": 5,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_collect_3_eggs_from_pairing",
@@ -1361,7 +1357,9 @@
     "reward_xp": 400,
     "sort_order": 600,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_collect_5_eggs_from_pairing",
@@ -1377,7 +1375,9 @@
     "sort_order": 610,
     "is_active": true,
     "is_hidden": false,
-    "reward_water_max": 5
+    "reward_water_max": 5,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_start_first_incubation",
@@ -1392,7 +1392,9 @@
     "reward_xp": 200,
     "sort_order": 620,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_load_10_eggs_container",
@@ -1407,7 +1409,9 @@
     "reward_xp": 600,
     "sort_order": 630,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_run_3_containers",
@@ -1423,7 +1427,9 @@
     "sort_order": 640,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 5
+    "reward_food_max": 5,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_run_6_containers",
@@ -1439,7 +1445,9 @@
     "sort_order": 650,
     "is_active": true,
     "is_hidden": false,
-    "reward_water_max": 5
+    "reward_water_max": 5,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_water_before_pause",
@@ -1454,7 +1462,9 @@
     "reward_xp": 200,
     "sort_order": 660,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_resume_paused_incubation",
@@ -1469,7 +1479,9 @@
     "reward_xp": 400,
     "sort_order": 670,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_water_25_times",
@@ -1484,7 +1496,9 @@
     "reward_xp": 1200,
     "sort_order": 680,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_first_hatch_task",
@@ -1499,7 +1513,9 @@
     "reward_xp": 500,
     "sort_order": 690,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_hatch_rare",
@@ -1514,7 +1530,9 @@
     "reward_xp": 700,
     "sort_order": 700,
     "is_active": true,
-    "is_hidden": false
+    "is_hidden": false,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_hatch_ultra_rare",
@@ -1530,7 +1548,9 @@
     "sort_order": 710,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 5
+    "reward_food_max": 5,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_hatch_exceptional",
@@ -1547,7 +1567,9 @@
     "is_active": true,
     "is_hidden": false,
     "reward_food_max": 5,
-    "reward_water_max": 5
+    "reward_water_max": 5,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   },
   {
     "id": "incubator_hatch_50_reptiles",
@@ -1563,6 +1585,8 @@
     "sort_order": 730,
     "is_active": true,
     "is_hidden": false,
-    "reward_food_max": 5
+    "reward_food_max": 5,
+    "requires_biome": "incubator",
+    "requires_biome_unlocked": true
   }
 ]

@@ -2,6 +2,7 @@ extends CanvasLayer
 
 signal onboarding_finished
 signal onboarding_task_changed(task_id: String)
+signal onboarding_progress_changed
 
 const TASKS_PATH := "res://data/onboarding_tasks.json"
 const MODAL_BACKGROUND_PATH := "res://assets/art/ui/small_design/blank_card_background.png"
@@ -18,11 +19,14 @@ var bubble_dot: Control
 var _claim_in_progress: bool = false
 var _biome_seen: bool = false
 var _bubble_allowed_on_current_screen: bool = false
+var _embedded_mode: bool = false
 
 
 func _ready() -> void:
 	layer = 130
 	load_tasks()
+	if not QuestSystem.gameplay_event_recorded.is_connected(notify_event):
+		QuestSystem.gameplay_event_recorded.connect(notify_event)
 	if not GameState.language_changed.is_connected(_on_language_changed):
 		GameState.language_changed.connect(_on_language_changed)
 	call_deferred("_restore_or_wait")
@@ -51,6 +55,57 @@ func load_tasks() -> bool:
 	return true
 
 
+func set_embedded_mode(enabled: bool) -> void:
+	_embedded_mode = enabled
+	if enabled:
+		_close_modal()
+		_update_bubble()
+		# Legacy tutorials keep their claimed IDs and rewards, but do not restart.
+		if int(GameState.get_value("onboarding_track_version", 1)) < 2:
+			complete_onboarding()
+			return
+		var state: Dictionary = _get_state()
+		state["welcome_seen"] = true
+		_set_state(state)
+		_biome_seen = true
+		_try_start_onboarding()
+	onboarding_progress_changed.emit()
+
+
+func get_current_task_state() -> Dictionary:
+	var state: Dictionary = _get_state()
+	if bool(state.get("onboarding_finished", false)):
+		return {}
+	var task: Dictionary = _get_task(str(state.get("active_task_id", "")))
+	if task.is_empty():
+		return {}
+	var result: Dictionary = task.duplicate(true)
+	var progress: Dictionary = _get_task_progress(task)
+	result["current"] = progress["current"]
+	result["target"] = progress["target"]
+	result["completed"] = int(progress["current"]) >= int(progress["target"])
+	result["claimable"] = result["completed"]
+	result["step"] = tasks.find(task) + 1
+	result["total_steps"] = tasks.size()
+	var language: String = GameState.get_language()
+	for field in ["title", "body", "action"]:
+		result[field] = str(task.get(str(field) + "_" + language, _resolve_text(str(task.get(str(field) + "_key", "")))))
+	return result
+
+
+func claim_current_task() -> bool:
+	_refresh_active_completion()
+	if not bool(_get_state().get("active_task_completed", false)):
+		return false
+	_claim_active_reward()
+	return true
+
+
+func skip_current_task() -> void:
+	_skip_active_task()
+	onboarding_progress_changed.emit()
+
+
 func notify_event(event_type: String, payload: Dictionary = {}) -> void:
 	_ensure_state()
 	if event_type == "screen_opened":
@@ -65,6 +120,7 @@ func notify_event(event_type: String, payload: Dictionary = {}) -> void:
 	_refresh_active_completion()
 	_update_bubble()
 	_save_state()
+	onboarding_progress_changed.emit()
 
 
 func _update_screen_context(screen_id: String) -> void:
@@ -89,6 +145,7 @@ func reset_onboarding(show_now: bool = true) -> void:
 
 func complete_onboarding() -> void:
 	var state: Dictionary = _get_state()
+	var was_finished: bool = bool(state.get("onboarding_finished", false))
 	state["welcome_seen"] = true
 	state["active_task_id"] = ""
 	state["active_task_accepted"] = false
@@ -99,7 +156,9 @@ func complete_onboarding() -> void:
 	_close_modal()
 	_update_bubble()
 	_save_state()
-	onboarding_finished.emit()
+	if not was_finished:
+		onboarding_finished.emit()
+	onboarding_progress_changed.emit()
 
 
 func start_onboarding() -> void:
@@ -153,6 +212,9 @@ func _try_start_onboarding() -> void:
 
 
 func _show_welcome_window() -> void:
+	if _embedded_mode:
+		_show_next_task_window()
+		return
 	_close_modal()
 	modal_root = _make_modal_root("OnboardingWelcome")
 	var column: VBoxContainer = _make_modal_column(Vector2(620, 460))
@@ -186,10 +248,14 @@ func _show_next_task_window() -> void:
 	_update_bubble()
 	_save_state()
 	onboarding_task_changed.emit(str(next_task.get("id", "")))
+	_log_onboarding_event("tutorial_step_viewed", str(next_task.get("id", "")))
 	_show_task_window(next_task)
 
 
 func _show_task_window(task: Dictionary) -> void:
+	if _embedded_mode:
+		onboarding_progress_changed.emit()
+		return
 	if task.is_empty():
 		_show_next_task_window()
 		return
@@ -278,6 +344,7 @@ func _skip_active_task() -> void:
 	if not skipped.has(task_id):
 		skipped.append(task_id)
 	state["skipped_task_ids"] = skipped
+	_log_onboarding_event("tutorial_step_skipped", task_id)
 	state["active_task_id"] = ""
 	state["active_task_accepted"] = false
 	state["active_task_completed"] = false
@@ -305,6 +372,7 @@ func _claim_active_reward() -> void:
 	_grant_reward(task)
 	claimed.append(task_id)
 	state["claimed_task_ids"] = claimed
+	_log_onboarding_event("tutorial_step_completed", task_id)
 
 	var completed: Array = state.get("completed_task_ids", []) as Array
 	if not completed.has(task_id):
@@ -373,6 +441,12 @@ func _get_current_amount(event_id: String) -> int:
 			return max(_get_event_counter(event_id), ReptileSystem.get_owned_reptile_count())
 		"reptile_assigned":
 			return max(_get_event_counter(event_id), _get_assigned_reptile_count())
+		"first_hatch":
+			return int((GameState.get_value("quest_event_counters", {}) as Dictionary).get("incubator_hatches_total", 0))
+		"first_pair":
+			return int((GameState.get_value("quest_event_counters", {}) as Dictionary).get("incubator_pairings_started_total", 0))
+		"incubator_entered":
+			return int((GameState.get_value("quest_event_counters", {}) as Dictionary).get("incubator_entered_total", 0))
 		_:
 			return _get_event_counter(event_id)
 
@@ -436,7 +510,7 @@ func _get_event_aliases(event_type: String, payload: Dictionary) -> Array[String
 func _update_bubble() -> void:
 	var state: Dictionary = _get_state()
 	var should_show: bool = (
-		_bubble_allowed_on_current_screen
+		not _embedded_mode and _bubble_allowed_on_current_screen
 		and
 		not bool(state.get("onboarding_finished", false))
 		and bool(state.get("bubble_visible", false))
@@ -695,6 +769,8 @@ func _format_reward(task: Dictionary) -> String:
 
 
 func _resolve_text(key: String) -> String:
+	if key.is_empty():
+		return ""
 	var text: String = LocalizationSystem.tr_key(key)
 	text = text.replace("{incubator_unlock_level}", str(_get_incubator_unlock_level()))
 	text = text.replace("{happiness_income_threshold}", _format_percent(_get_happiness_income_threshold()))
@@ -771,7 +847,7 @@ func _get_purchased_habitat_count() -> int:
 func _get_assigned_reptile_count() -> int:
 	var count: int = 0
 	for instance_value in ReptileSystem.get_owned_reptile_instances().values():
-		if typeof(instance_value) == TYPE_DICTIONARY and not str((instance_value as Dictionary).get("habitat_id", "")).is_empty():
+		if typeof(instance_value) == TYPE_DICTIONARY and (instance_value as Dictionary).get("habitat_id") != null and not str((instance_value as Dictionary).get("habitat_id", "")).is_empty():
 			count += 1
 	return count
 
@@ -812,6 +888,11 @@ func _set_state(state: Dictionary) -> void:
 func _save_state() -> void:
 	if has_node("/root/SaveSystem"):
 		SaveSystem.save_game()
+
+
+func _log_onboarding_event(event_name: String, task_id: String) -> void:
+	if has_node("/root/FirebaseAnalyticsService"):
+		get_node("/root/FirebaseAnalyticsService").call("log_gameplay_event", event_name, {"task_id": task_id})
 
 
 func _on_language_changed(_language: String) -> void:

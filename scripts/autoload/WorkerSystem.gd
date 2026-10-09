@@ -5,7 +5,7 @@ signal worker_effect_applied(worker_id: String, affected_count: int)
 
 const WORKERS_PATH := "res://data/workers.json"
 const PROCESS_TICK_SECONDS := 1.0
-const DEFAULT_WORKER_BIOMES: Array[String] = ["green_meadow", "dry_prairie", "house"]
+const DEFAULT_WORKER_BIOMES: Array[String] = ["green_meadow", "dry_prairie"]
 
 var workers: Array = []
 var worker_by_id: Dictionary = {}
@@ -234,6 +234,8 @@ func get_manager_income_multiplier(biome_id: String = "") -> float:
 
 
 func process_workers() -> bool:
+	# Care continues on the map, in the nursery and in menus, not only in BiomeView.
+	ReptileSystem.apply_time_updates(false)
 	migrate_save_state()
 	var now: int = Time.get_unix_time_from_system()
 	var workers_by_biome: Dictionary = _get_workers_by_biome_state()

@@ -13,11 +13,36 @@
 		"habitat_in_progress_path": "res://assets/art/habitats/in_progress.png",
 		"habitat_art_folder": "res://assets/art/habitats/",
 		"top_bar_ui_positions": {
-			"cash":  {"cx": 0.165, "cy": 0.72, "sw": 0.140, "sh": 0.34},
-			"xp":    {"cx": 0.375, "cy": 0.72, "sw": 0.145, "sh": 0.34},
-			"food":  {"cx": 0.595, "cy": 0.72, "sw": 0.125, "sh": 0.34},
-			"water": {"cx": 0.805, "cy": 0.72, "sw": 0.120, "sh": 0.34},
-			"level": {"cx": 0.935, "cy": 0.76, "sw": 0.075, "sh": 0.34}
+			"cash": {
+				"cx": 0.165,
+				"cy": 0.72,
+				"sw": 0.14,
+				"sh": 0.34
+			},
+			"xp": {
+				"cx": 0.375,
+				"cy": 0.72,
+				"sw": 0.145,
+				"sh": 0.34
+			},
+			"food": {
+				"cx": 0.595,
+				"cy": 0.72,
+				"sw": 0.125,
+				"sh": 0.34
+			},
+			"water": {
+				"cx": 0.805,
+				"cy": 0.72,
+				"sw": 0.12,
+				"sh": 0.34
+			},
+			"level": {
+				"cx": 0.935,
+				"cy": 0.76,
+				"sw": 0.075,
+				"sh": 0.34
+			}
 		},
 		"next_biome_id": "dry_prairie"
 	},
@@ -35,52 +60,39 @@
 		"habitat_in_progress_path": "res://assets/art/habitats_dry_praire/in_progress.png",
 		"habitat_art_folder": "res://assets/art/habitats_dry_praire/",
 		"top_bar_ui_positions": {
-			"cash":  {"cx": 0.165, "cy": 0.72, "sw": 0.140, "sh": 0.34},
-			"xp":    {"cx": 0.375, "cy": 0.72, "sw": 0.145, "sh": 0.34},
-			"food":  {"cx": 0.595, "cy": 0.72, "sw": 0.125, "sh": 0.34},
-			"water": {"cx": 0.805, "cy": 0.72, "sw": 0.120, "sh": 0.34},
-			"level": {"cx": 0.935, "cy": 0.76, "sw": 0.075, "sh": 0.34}
+			"cash": {
+				"cx": 0.165,
+				"cy": 0.72,
+				"sw": 0.14,
+				"sh": 0.34
+			},
+			"xp": {
+				"cx": 0.375,
+				"cy": 0.72,
+				"sw": 0.145,
+				"sh": 0.34
+			},
+			"food": {
+				"cx": 0.595,
+				"cy": 0.72,
+				"sw": 0.125,
+				"sh": 0.34
+			},
+			"water": {
+				"cx": 0.805,
+				"cy": 0.72,
+				"sw": 0.12,
+				"sh": 0.34
+			},
+			"level": {
+				"cx": 0.935,
+				"cy": 0.76,
+				"sw": 0.075,
+				"sh": 0.34
+			}
 		},
 		"unlock_requirements": {
 			"level": 5
-		}
-	},
-	{
-		"id": "house",
-		"name_key": "biome.house.name",
-		"description_key": "biome.house.description",
-		"is_starting_biome": false,
-		"scrollable": true,
-		"habitat_slots": 10,
-		"type": "paid",
-		"requires_dlc": "house",
-		"background_path": "res://assets/art/biomes/house.png",
-		"top_bar_path": "res://assets/art/ui/top_bar_house.png",
-		"bottom_menu_path": "res://assets/art/ui/bottom_menu_house.png",
-		"habitat_in_progress_path": "res://assets/art/habitats_home/in_progress.png",
-		"habitat_art_folder": "res://assets/art/habitats_home/",
-		"habitat_slot_empty_filename": "empty.png",
-		"show_empty_slot_background": false,
-		"habitat_visual_variants": {
-			"grass":  ["grass_v1.png",  "grass_v2.png"],
-			"sand":   ["sand_v1.png",   "sand_v2.png"],
-			"stone":  ["stone_b1.png",  "stone_v2.png"],
-			"jungle": ["jungle_v1.png", "jungle_v2.png"]
-		},
-		"top_bar_ui_positions": {
-			"cash":  {"cx": 0.155, "cy": 0.66, "sw": 0.140, "sh": 0.34},
-			"xp":    {"cx": 0.375, "cy": 0.66, "sw": 0.145, "sh": 0.34},
-			"food":  {"cx": 0.595, "cy": 0.66, "sw": 0.125, "sh": 0.34},
-			"water": {"cx": 0.805, "cy": 0.66, "sw": 0.120, "sh": 0.34},
-			"level": {"cx": 0.932, "cy": 0.70, "sw": 0.075, "sh": 0.34}
-		},
-		"button_locked_pl": "res://assets/art/ui/biomes/house_biome_locked_pl.png",
-		"button_unlocked_pl": "res://assets/art/ui/biomes/house_biome_play_pl.png",
-		"button_locked_en": "res://assets/art/ui/biomes/house_biome_locked_en.png",
-		"button_unlocked_en": "res://assets/art/ui/biomes/house_biome_play_en.png",
-		"next_biome_id": "incubator",
-		"unlock_requirements": {
-			"level": 9999
 		}
 	},
 	{
@@ -98,14 +110,39 @@
 		"button_locked_en": "res://assets/art/ui/biomes/incubator_en.png",
 		"button_unlocked_en": "res://assets/art/ui/biomes/incubator_en_unlock.png",
 		"top_bar_ui_positions": {
-			"cash":  {"cx": 0.180, "cy": 0.60, "sw": 0.140, "sh": 0.34},
-			"xp":    {"cx": 0.390, "cy": 0.60, "sw": 0.145, "sh": 0.34},
-			"food":  {"cx": 0.590, "cy": 0.60, "sw": 0.125, "sh": 0.34},
-			"water": {"cx": 0.800, "cy": 0.60, "sw": 0.120, "sh": 0.34},
-			"level": {"cx": 0.930, "cy": 0.67, "sw": 0.075, "sh": 0.34}
+			"cash": {
+				"cx": 0.18,
+				"cy": 0.6,
+				"sw": 0.14,
+				"sh": 0.34
+			},
+			"xp": {
+				"cx": 0.39,
+				"cy": 0.6,
+				"sw": 0.145,
+				"sh": 0.34
+			},
+			"food": {
+				"cx": 0.59,
+				"cy": 0.6,
+				"sw": 0.125,
+				"sh": 0.34
+			},
+			"water": {
+				"cx": 0.8,
+				"cy": 0.6,
+				"sw": 0.12,
+				"sh": 0.34
+			},
+			"level": {
+				"cx": 0.93,
+				"cy": 0.67,
+				"sw": 0.075,
+				"sh": 0.34
+			}
 		},
 		"unlock_requirements": {
-			"level": 6
+			"level": 2
 		}
 	}
 ]

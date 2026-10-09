@@ -18,9 +18,17 @@ var last_save_error_time := -9999.0
 
 func _ready() -> void:
 	load_game()
+	if _has_local_test_cash_request():
+		save_game()
 
 
 func save_game() -> bool:
+	var local_grant: Dictionary = {}
+	var local_helper: Script = null
+	if _has_local_test_cash_request():
+		local_helper = load("res://tools/local_test_cash_grant.gd") as Script
+		if local_helper != null:
+			local_grant = local_helper.call("apply_pending", GameState.state) as Dictionary
 	GameState.state = GameState.normalize_save_data(GameState.state)
 	GameState.state["save_version"] = CURRENT_SAVE_VERSION
 	GameState.state["last_saved_at"] = Time.get_unix_time_from_system()
@@ -54,8 +62,17 @@ func save_game() -> bool:
 		_push_save_error("SaveSystem: Failed to write save file: %s error=%s" % [SAVE_PATH, save_error])
 		return false
 
+	if not local_grant.is_empty() and local_helper != null:
+		local_helper.call("acknowledge_saved", local_grant, SAVE_PATH)
+		var economy: Node = get_node_or_null("/root/EconomySystem")
+		if economy != null:
+			economy.currency_changed.emit("repticash", GameState.get_value("repticash", 0.0))
 	save_saved.emit()
 	return true
+
+
+func _has_local_test_cash_request() -> bool:
+	return OS.has_feature("editor") and not Engine.is_editor_hint() and OS.get_name() == "Windows" and FileAccess.file_exists("res://.godot/local_test_cash_request.json") and FileAccess.file_exists("res://tools/local_test_cash_grant.gd")
 
 
 func load_game() -> bool:

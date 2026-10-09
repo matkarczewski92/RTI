@@ -101,6 +101,10 @@ func get_available_breeding_reptiles() -> Array:
 
 
 func can_pair(instance_a: Dictionary, instance_b: Dictionary) -> Dictionary:
+	if str(instance_a.get("instance_id", "")).is_empty() or str(instance_a.get("instance_id", "")) == str(instance_b.get("instance_id", "")):
+		return {"ok": false, "error_key": "incubator.error_same_sex"}
+	if not ["male", "female"].has(str(instance_a.get("sex", ""))) or not ["male", "female"].has(str(instance_b.get("sex", ""))):
+		return {"ok": false, "error_key": "incubator.error_same_sex"}
 	if str(instance_a.get("reptile_id", "")) != str(instance_b.get("reptile_id", "")):
 		return {"ok": false, "error_key": "incubator.error_wrong_species"}
 	if str(instance_a.get("sex", "")) == str(instance_b.get("sex", "")):
@@ -180,6 +184,8 @@ func start_breeding(
 	instance_id_b: String,
 	is_long: bool
 ) -> Dictionary:
+	if not IncubationSystem.is_unlocked() or chamber_index < 0 or chamber_index >= 4:
+		return {"success": false, "error_key": "incubator.error_chamber_full"}
 	var chambers: Dictionary = _get_chambers()
 	var chamber_key: String = str(chamber_index)
 	if chambers.has(chamber_key) and str(chambers.get(chamber_key, {}).get("state", "empty")) != "empty":

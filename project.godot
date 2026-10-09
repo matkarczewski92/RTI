@@ -12,9 +12,10 @@ config_version=5
 
 config/name="Reptile Tycoon"
 run/main_scene="res://scenes/main/Main.tscn"
-config/features=PackedStringArray("4.6", "GL Compatibility")
-boot_splash/image="res://assets/art/ui/welcome_screen/welcome_screen.png"
-config/icon="uid://bc2ij03yk5o5h"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+boot_splash/bg_color=Color(0.063, 0.122, 0.114, 1)
+boot_splash/image="res://assets/prototype/art/ui/prototype/logo_reptile_tycoon_cutout_v2.png"
+config/icon="res://assets/prototype/art/ui/app_icon.png"
 
 [autoload]
 
@@ -31,19 +32,21 @@ UpgradeSystem="*res://scripts/autoload/UpgradeSystem.gd"
 BreedingSystem="*res://scripts/autoload/BreedingSystem.gd"
 IncubationSystem="*res://scripts/autoload/IncubationSystem.gd"
 IncubatorUpgradeSystem="*res://scripts/autoload/IncubatorUpgradeSystem.gd"
+ExpeditionSystem="*res://scripts/autoload/ExpeditionSystem.gd"
 LevelUpOverlay="*res://scripts/autoload/LevelUpOverlay.gd"
 OnboardingSystem="*res://scripts/autoload/OnboardingSystem.gd"
 RewardedAdService="*res://scripts/autoload/RewardedAdService.gd"
 SpeedUpService="*res://scripts/autoload/SpeedUpService.gd"
 ResourceAdService="*res://scripts/autoload/ResourceAdService.gd"
 FirebaseAnalyticsService="*res://scripts/autoload/FirebaseAnalyticsService.gd"
+AppUpdateService="*res://scripts/autoload/AppUpdateService.gd"
 
 [display]
 
-window/size/viewport_width=1080
-window/size/viewport_height=1920
-window/size/window_width_override=675
-window/size/window_height_override=1200
+window/size/viewport_width=720
+window/size/viewport_height=1440
+window/size/window_width_override=450
+window/size/window_height_override=1025
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=1

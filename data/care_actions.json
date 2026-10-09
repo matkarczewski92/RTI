@@ -13,21 +13,21 @@
 	},
 	"shop": {
 		"buy_food": {
-			"price": 500,
-			"amount": 20,
+			"price": 100,
+			"amount": 50,
 			"icon_path": "res://assets/art/ui/icons/menu/food.png"
 		},
 		"buy_water": {
-			"price": 500,
-			"amount": 20,
+			"price": 100,
+			"amount": 50,
 			"icon_path": "res://assets/art/ui/icons/menu/water.png"
 		}
 	},
 	"decay": {
-		"happiness_interval_seconds": 30,
-		"hunger_interval_seconds": 30,
-		"hydration_interval_seconds": 30,
-		"cleanliness_interval_seconds": 30,
+		"happiness_interval_seconds": 180,
+		"hunger_interval_seconds": 180,
+		"hydration_interval_seconds": 180,
+		"cleanliness_interval_seconds": 180,
 		"amount_per_interval": 1.0
 	},
 	"decay_offline": {
@@ -47,7 +47,8 @@
 			"cost_upgrade_id": "better_food",
 			"regen_interval_seconds": 30,
 			"regen_interval_seconds_offline": 60,
-			"regen_amount": 1
+			"regen_amount": 1,
+			"minimum_missing_percent": 10
 		},
 		"water": {
 			"stat": "hydration",
@@ -58,21 +59,24 @@
 			"cost_upgrade_id": "better_water",
 			"regen_interval_seconds": 30,
 			"regen_interval_seconds_offline": 60,
-			"regen_amount": 1
+			"regen_amount": 1,
+			"minimum_missing_percent": 10
 		},
 		"clean": {
 			"stat": "cleanliness",
 			"increase_percent": 35,
 			"resource": null,
 			"cooldown_seconds": 60,
-			"cost_upgrade_id": "better_clean"
+			"cost_upgrade_id": "better_clean",
+			"minimum_missing_percent": 10
 		},
 		"play": {
 			"stat": "happiness",
 			"increase_percent": 20,
 			"resource": null,
 			"cooldown_seconds": 5,
-			"cost_upgrade_id": "better_play"
+			"cost_upgrade_id": "better_play",
+			"minimum_missing_percent": 10
 		}
 	}
 }

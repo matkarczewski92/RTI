@@ -1,0 +1,108 @@
+{
+	"resource_biome_id": "green_meadow",
+	"initial_slots": 1,
+	"second_slot_level": 8,
+	"history_limit": 20,
+	"undiscovered_species_weight": 4,
+	"reward_kind_chances": {"egg": 85, "reptile": 15},
+	"modes": [
+		{
+			"id": "scout",
+			"name_en": "Trail scout",
+			"name_pl": "Rozpoznanie szlaku",
+			"description_en": "A short search for one egg or reptile. A gentle first expedition.",
+			"description_pl": "Krótkie poszukiwania jednego jaja lub gada. Dobry początek przygody.",
+			"duration_seconds": 1800,
+			"cash_multiplier": 1.0,
+			"food_cost": 5,
+			"water_cost": 5,
+			"rarity_chances": {"common": 72, "rare": 23, "ultra_rare": 4, "exceptional": 1}
+		},
+		{
+			"id": "survey",
+			"name_en": "Deep exploration",
+			"name_pl": "W głąb dziczy",
+			"description_en": "Search further for one discovery, with better odds of rare varieties.",
+			"description_pl": "Dalsze poszukiwania jednego odkrycia, z większą szansą na rzadkie odmiany.",
+			"duration_seconds": 7200,
+			"cash_multiplier": 2.5,
+			"food_cost": 15,
+			"water_cost": 15,
+			"rarity_chances": {"common": 50, "rare": 35, "ultra_rare": 12, "exceptional": 3}
+		},
+		{
+			"id": "camp",
+			"name_en": "Overnight expedition",
+			"name_pl": "Wyprawa z biwakiem",
+			"description_en": "An eight-hour search for one discovery. The best chances of an unusual variety.",
+			"description_pl": "Osiem godzin poszukiwań jednego odkrycia. Największa szansa na niezwykłą odmianę.",
+			"duration_seconds": 28800,
+			"cash_multiplier": 5.0,
+			"food_cost": 30,
+			"water_cost": 35,
+			"rarity_chances": {"common": 25, "rare": 45, "ultra_rare": 23, "exceptional": 7}
+		}
+	],
+	"regions": [
+		{
+			"id": "green_meadow",
+			"name_en": "Green Meadow",
+			"name_pl": "Zielona Łąka",
+			"description_en": "Follow sunny paths through grasses and wildflowers.",
+			"description_pl": "Podążaj słonecznymi ścieżkami wśród traw i polnych kwiatów.",
+			"unlock_level": 1,
+			"base_cash_cost": 100,
+			"species_pool": ["corn_snake", "garter_snake", "sand_lizard", "steppe_tortoise"]
+		},
+		{
+			"id": "dry_prairie",
+			"name_en": "Dry Prairie",
+			"name_pl": "Sucha Preria",
+			"description_en": "Explore warm grassland, sandy trails and sheltered burrows.",
+			"description_pl": "Odkrywaj ciepłe trawiaste tereny, piaszczyste szlaki i zaciszne nory.",
+			"unlock_level": 5,
+			"base_cash_cost": 250,
+			"species_pool": ["leopard_gecko", "bearded_dragon", "bullsnake", "western_earless_lizard"]
+		},
+		{
+			"id": "rainforest_canopy",
+			"name_en": "Rainforest Canopy",
+			"name_pl": "Korony Lasu Deszczowego",
+			"description_en": "Look among lush branches for the forest's colourful climbers.",
+			"description_pl": "Szukaj wśród bujnych gałęzi barwnych leśnych wspinaczy.",
+			"unlock_level": 8,
+			"base_cash_cost": 450,
+			"species_pool": ["crested_gecko", "chameleon", "emerald_tree_skink", "veiled_chameleon", "green_iguana"]
+		},
+		{
+			"id": "rocky_canyon",
+			"name_en": "Rocky Canyon",
+			"name_pl": "Skalisty Kanion",
+			"description_en": "Trace sunlit ledges and cool cracks between ancient rocks.",
+			"description_pl": "Przemierzaj słoneczne półki i chłodne szczeliny między starymi skałami.",
+			"unlock_level": 11,
+			"base_cash_cost": 650,
+			"species_pool": ["small_monitor", "collared_lizard", "uromastyx", "greek_tortoise"]
+		},
+		{
+			"id": "mangrove_swamps",
+			"name_en": "Mangrove Swamps",
+			"name_pl": "Namorzynowe Mokradła",
+			"description_en": "Search winding roots, wet banks and the woodland edge.",
+			"description_pl": "Przeszukuj wijące się korzenie, wilgotne brzegi i skraj lasu.",
+			"unlock_level": 15,
+			"base_cash_cost": 900,
+			"species_pool": ["garter_snake", "amur_snake", "ornate_box_turtle", "ball_python"]
+		},
+		{
+			"id": "volcanic_isles",
+			"name_en": "Volcanic Isles",
+			"name_pl": "Wulkaniczne Wyspy",
+			"description_en": "A distant expedition across dark stone, dry slopes and hidden oases.",
+			"description_pl": "Daleka wyprawa przez ciemne skały, suche zbocza i ukryte oazy.",
+			"unlock_level": 20,
+			"base_cash_cost": 1400,
+			"species_pool": ["prairie_rattlesnake", "uromastyx", "small_monitor", "bearded_dragon"]
+		}
+	]
+}

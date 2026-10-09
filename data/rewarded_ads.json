@@ -36,12 +36,13 @@
       }
     ],
     "admob": {
+      "test_device_ids": [],
       "test_rewarded_ad_unit_id": "ca-app-pub-3940256099942544/5224354917",
       "production_speedup_rewarded_ad_unit_id": "ca-app-pub-4702453383923319/4748012955",
       "production_resources_rewarded_ad_unit_id": "ca-app-pub-4702453383923319/8888088428",
       "production_app_id": "ca-app-pub-4702453383923319~8715178120",
       "production_rewarded_ad_unit_id": "ca-app-pub-4702453383923319/4748012955",
-      "production_notes": "Production IDs are inactive while test_mode=true. During development and closed testing both speedup and resources placements use the official Google rewarded test ad unit above."
+      "production_notes": "Debug builds always use Google's demo rewarded unit. Release builds use these production units unless test_mode=true. Console test devices require the Android Advertising ID; optional test_device_ids accepts the 32-character SDK test ID printed in logcat, not the Advertising ID."
     }
   }
 }

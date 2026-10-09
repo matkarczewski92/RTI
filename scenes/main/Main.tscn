@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://b4hfa3tuxg71s"]
 
-[ext_resource type="Script" uid="uid://c8rlegq3pdaf" path="res://scripts/core/Main.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/modern/SanctuaryApp.gd" id="1"]
 
 [node name="Main" type="Control" unique_id=128216036]
 layout_mode = 3
